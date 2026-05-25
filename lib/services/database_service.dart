@@ -362,7 +362,7 @@ class DatabaseService {
           d.corso_id,
           d.data,
           d.prot,
-          d.scadenza,
+          s.data_scadenza AS scadenza,
           d.da_fatturare,
           d.fattura,
           d.invio,
@@ -378,6 +378,7 @@ class DatabaseService {
         LEFT JOIN discenti dis ON dis.id = d.discente_id
         LEFT JOIN imprese imp ON imp.id = d.impresa_id
         LEFT JOIN corsi c ON c.id = d.corso_id
+        LEFT JOIN scadenze s ON s.diario_id = d.id
         ORDER BY d.id DESC
       ''');
     }
@@ -391,7 +392,7 @@ class DatabaseService {
         d.corso_id,
         d.data,
         d.prot,
-        d.scadenza,
+        s.data_scadenza AS scadenza,
         d.da_fatturare,
         d.fattura,
         d.invio,
@@ -407,6 +408,7 @@ class DatabaseService {
       LEFT JOIN discenti dis ON dis.id = d.discente_id
       LEFT JOIN imprese imp ON imp.id = d.impresa_id
       LEFT JOIN corsi c ON c.id = d.corso_id
+      LEFT JOIN scadenze s ON s.diario_id = d.id
 
       WHERE
         dis.nome LIKE ?
@@ -441,7 +443,8 @@ class DatabaseService {
 
     for (final riga in diario) {
       final dataCorso = riga['data']?.toString();
-      final validitaAnni = riga['validita_anni'] as int?;
+      final validitaAnni =
+    int.tryParse(riga['validita_anni']?.toString() ?? '0') ?? 0;
 
       final dataScadenza = _calcolaScadenza(dataCorso, validitaAnni);
       final stato = _statoScadenza(dataScadenza);
@@ -479,36 +482,42 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> caricaScadenze() async {
   final db = await _db;
 
+  await aggiornaScadenzeDaDiario();
+
   return await db.rawQuery('''
     SELECT
-      diario.id,
-
-      diario.discente_id AS id_discente,
-      diario.impresa_id AS id_impresa,
-      diario.corso_id AS id_corso,
-
-      discenti.nome || ' ' || discenti.cognome AS discente,
-      imprese.intestazione AS impresa,
-      corsi.denominazione AS corso,
-
-      diario.data AS data_corso,
-      diario.scadenza AS scadenza
-
-    FROM diario
-
-    LEFT JOIN discenti
-      ON discenti.id = diario.discente_id
-
-    LEFT JOIN imprese
-      ON imprese.id = diario.impresa_id
-
-    LEFT JOIN corsi
-      ON corsi.id = diario.corso_id
-
-    ORDER BY diario.scadenza ASC
+      s.id,
+      s.diario_id,
+      s.discente_id,
+      s.impresa_id,
+      s.corso_id,
+      s.discente_id AS id_discente,
+      s.impresa_id AS id_impresa,
+      s.corso_id AS id_corso,
+      s.data_corso,
+      s.data_scadenza,
+      s.stato,
+      s.note,
+      d.nome,
+      d.cognome,
+      d.nome || ' ' || d.cognome AS discente,
+      i.intestazione AS impresa,
+      c.denominazione AS corso,
+      s.data_corso AS data,
+      s.data_scadenza AS scadenza
+    FROM scadenze s
+    LEFT JOIN discenti d ON d.id = s.discente_id
+    LEFT JOIN imprese i ON i.id = s.impresa_id
+    LEFT JOIN corsi c ON c.id = s.corso_id
+    ORDER BY
+      CASE s.stato
+        WHEN 'SCADUTO' THEN 1
+        WHEN 'IN SCADENZA' THEN 2
+        ELSE 3
+      END,
+      s.data_scadenza ASC
   ''');
 }
-
   Future<int> contaScaduti() async {
     final db = await _db;
     await aggiornaScadenzeDaDiario();

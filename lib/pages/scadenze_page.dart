@@ -59,21 +59,30 @@ class _ScadenzePageState extends State<ScadenzePage> {
 }
 
   String formattaData(dynamic valore) {
-    if (valore == null || valore.toString().isEmpty) {
-      return '-';
-    }
-
-    try {
-      final data = DateTime.parse(valore.toString());
-
-      return DateFormat(
-        'dd/MM/yyyy',
-        'it_IT',
-      ).format(data);
-    } catch (_) {
-      return valore.toString();
-    }
+  if (valore == null || valore.toString().isEmpty) {
+    return '-';
   }
+
+  try {
+    final testo = valore.toString();
+
+    DateTime data;
+
+    // SQLITE YYYY-MM-DD
+    if (testo.contains('-')) {
+      data = DateTime.parse(testo);
+    } else {
+      return testo;
+    }
+
+    return
+        '${data.day.toString().padLeft(2, '0')}/'
+        '${data.month.toString().padLeft(2, '0')}/'
+        '${data.year}';
+  } catch (_) {
+    return valore.toString();
+  }
+}
 
   String calcolaStato(Map<String, dynamic> riga) {
     final valore = riga['scadenza'];

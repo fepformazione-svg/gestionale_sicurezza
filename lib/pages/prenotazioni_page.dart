@@ -7,6 +7,11 @@ import '../widgets/prenotazione_dialog.dart';
 import '../widgets/section_card.dart';
 import '../widgets/table_status_badge.dart';
 
+import 'dart:io';
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
+
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
   final String filtro;
@@ -22,22 +27,42 @@ class PrenotazioniPage extends StatefulWidget {
 }
  
 class _PrenotazioniPageState extends State<PrenotazioniPage> {
+
   List<Map<String, dynamic>> prenotazioni = [];
   List<Map<String, dynamic>> prenotazioniFiltrate = [];
-List<Map<String, dynamic>> get prenotazioniVisibili {
+
+  int paginaCorrente = 0;
+  final int righePerPagina = 10;
+
+String filtroLocale = '';
+
+  List<Map<String, dynamic>> get prenotazioniVisibili {
+  final filtroAttivo = filtroLocale.isNotEmpty ? filtroLocale : widget.filtro;
+
   return prenotazioniFiltrate.where((p) {
     final stato = statoPrenotazione(p);
 
-    if (widget.filtro == 'aperte') {
-  return stato != 'Chiuso';
-}
-
-if (widget.filtro == 'chiuse') {
-  return stato == 'Chiuso';
-}
+    if (filtroAttivo == 'aperte') return stato == 'Aperto';
+    if (filtroAttivo == 'registro') return stato == 'Registro';
+    if (filtroAttivo == 'chiuse') return stato == 'Chiuso';
+    if (filtroAttivo == 'da_fare') return stato == 'Da fare';
 
     return true;
   }).toList();
+}
+
+List<Map<String, dynamic>> get prenotazioniPaginata {
+  final start = paginaCorrente * righePerPagina;
+  final end = start + righePerPagina;
+
+  if (start >= prenotazioniVisibili.length) {
+    return [];
+  }
+
+  return prenotazioniVisibili.sublist(
+    start,
+    end > prenotazioniVisibili.length ? prenotazioniVisibili.length : end,
+  );
 }
   bool loading = true;
 
@@ -300,9 +325,189 @@ void didUpdateWidget(
 
     await caricaPrenotazioni();
   }
+Widget filtroChip({
+  required String titolo,
+  required String filtro,
+  required Color colore,
+}) {
+  final attivo =
+    (filtroLocale.isNotEmpty
+        ? filtroLocale
+        : widget.filtro) == filtro;
 
+  return InkWell(
+    borderRadius: BorderRadius.circular(14),
+    onTap: () {
+  setState(() {
+    filtroLocale = filtro;
+    paginaCorrente = 0;
+  });
+},
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      padding: const EdgeInsets.symmetric(
+        horizontal: 18,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: attivo ? colore.withOpacity(0.12) : Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: attivo ? colore : Colors.grey.shade300,
+          width: attivo ? 1.8 : 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 10,
+            height: 10,
+            decoration: BoxDecoration(
+              color: colore,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            titolo,
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              color: attivo ? colore : Colors.grey.shade800,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+Widget compactKpiCard({
+  required String titolo,
+  required String valore,
+  required Color colore,
+  required String filtro,
+}) {
+  final attivo =
+      (filtroLocale.isNotEmpty
+          ? filtroLocale
+          : widget.filtro) == filtro;
+
+  return InkWell(
+    borderRadius: BorderRadius.circular(18),
+    onTap: () {
+      setState(() {
+        filtroLocale = filtro;
+        paginaCorrente = 0;
+      });
+    },
+    child: AnimatedContainer(
+      duration: const Duration(milliseconds: 180),
+      width: 150,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: attivo
+              ? colore
+              : Colors.grey.shade300,
+          width: attivo ? 1.8 : 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+
+          Container(
+            width: 12,
+            height: 12,
+            decoration: BoxDecoration(
+              color: colore,
+              shape: BoxShape.circle,
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          Text(
+            valore,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: colore,
+            ),
+          ),
+
+          const SizedBox(height: 4),
+
+          Text(
+            titolo,
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+Future<void> exportPrenotazioniExcel() async {
+  final excel = Excel.createExcel();
+
+  final sheet = excel['Prenotazioni'];
+
+  // HEADER
+  sheet.appendRow([
+    TextCellValue('Discente'),
+    TextCellValue('Impresa'),
+    TextCellValue('Corso'),
+    TextCellValue('Data'),
+    TextCellValue('Protocollo'),
+    TextCellValue('Stato'),
+  ]);
+
+  // DATI
+  for (final p in prenotazioniVisibili) {
+    sheet.appendRow([
+      TextCellValue(nomeDiscente(p)),
+      TextCellValue(testo(p['impresa_nome'])),
+      TextCellValue(testo(p['corso_nome'])),
+      TextCellValue(testo(p['data'])),
+      TextCellValue(testo(p['prot'])),
+      TextCellValue(statoPrenotazione(p)),
+    ]);
+  }
+
+  final directory = await getApplicationDocumentsDirectory();
+
+  final path =
+      '${directory.path}/prenotazioni_export.xlsx';
+
+  final fileBytes = excel.encode();
+
+  if (fileBytes == null) return;
+
+  final file = File(path)
+    ..createSync(recursive: true)
+    ..writeAsBytesSync(fileBytes);
+
+  await OpenFile.open(file.path);
+}
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+
+final ultraWide = width > 1800;
+final desktop = width > 1400;
+final tablet = width < 1100;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -324,23 +529,46 @@ void didUpdateWidget(
 
             const SizedBox(width: 16),
 
-            ElevatedButton.icon(
-              onPressed: apriDialogNuovaPrenotazione,
-              icon: const Icon(Icons.add),
-              label: const Text('Nuova prenotazione'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 18,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-            ),
+ElevatedButton.icon(
+  onPressed: exportPrenotazioniExcel,
+  icon: const Icon(Icons.table_view_outlined),
+  label: const Text('Export Excel'),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: Colors.white,
+    foregroundColor: const Color(0xFF2563EB),
+    padding: const EdgeInsets.symmetric(
+      horizontal: 20,
+      vertical: 18,
+    ),
+    shape: RoundedRectangleBorder(
+  borderRadius: BorderRadius.circular(14),
+  side: BorderSide(
+    color: Colors.grey.shade300,
+  ),
+),
+    elevation: 0,
+  ),
+),
+
+const SizedBox(width: 12),
+
+ElevatedButton.icon(
+  onPressed: apriDialogNuovaPrenotazione,
+  icon: const Icon(Icons.add),
+  label: const Text('Nuova prenotazione'),
+  style: ElevatedButton.styleFrom(
+    backgroundColor: const Color(0xFF2563EB),
+    foregroundColor: Colors.white,
+    padding: const EdgeInsets.symmetric(
+      horizontal: 22,
+      vertical: 18,
+    ),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(14),
+    ),
+    elevation: 0,
+  ),
+),
           ],
         ),
 
@@ -377,164 +605,367 @@ void didUpdateWidget(
                       ),
 
                       const SizedBox(height: 18),
+                      Wrap(
+  spacing: 14,
+  runSpacing: 10,
+  children: [
 
+    compactKpiCard(
+      titolo: 'Totale',
+      valore: prenotazioniFiltrate.length.toString(),
+      colore: const Color(0xFF2563EB),
+      filtro: '',
+    ),
+
+    compactKpiCard(
+      titolo: 'Aperte',
+      valore: prenotazioniFiltrate
+          .where((p) => statoPrenotazione(p) == 'Aperto')
+          .length
+          .toString(),
+      colore: Colors.green,
+      filtro: 'aperte',
+    ),
+
+    compactKpiCard(
+      titolo: 'Registro',
+      valore: prenotazioniFiltrate
+          .where((p) => statoPrenotazione(p) == 'Registro')
+          .length
+          .toString(),
+      colore: Colors.orange,
+      filtro: 'registro',
+    ),
+
+    compactKpiCard(
+      titolo: 'Chiuse',
+      valore: prenotazioniFiltrate
+          .where((p) => statoPrenotazione(p) == 'Chiuso')
+          .length
+          .toString(),
+      colore: Colors.grey,
+      filtro: 'chiuse',
+    ),
+
+    compactKpiCard(
+      titolo: 'Da fare',
+      valore: prenotazioniFiltrate
+          .where((p) => statoPrenotazione(p) == 'Da fare')
+          .length
+          .toString(),
+      colore: Colors.red,
+      filtro: 'da_fare',
+    ),
+  ],
+),
+
+const SizedBox(height: 12),
+Wrap(
+  spacing: 10,
+  runSpacing: 10,
+  children: [
+    filtroChip(
+      titolo: 'Tutte (${prenotazioniFiltrate.length})',
+      filtro: '',
+      colore: Colors.blue,
+    ),
+
+    filtroChip(
+      titolo: 'Aperte (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Aperto').length})',
+      filtro: 'aperte',
+      colore: Colors.green,
+    ),
+
+    filtroChip(
+      titolo: 'Registro (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Registro').length})',
+      filtro: 'registro',
+      colore: Colors.orange,
+    ),
+
+    filtroChip(
+      titolo: 'Chiuse (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Chiuso').length})',
+      filtro: 'chiuse',
+      colore: Colors.grey,
+    ),
+
+    filtroChip(
+      titolo: 'Da fare (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Da fare').length})',
+      filtro: 'da_fare',
+      colore: Colors.red,
+    ),
+  ],
+),
+
+const SizedBox(height: 10),
                       Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: Container(
-                            color: Colors.white,
-                            child: SingleChildScrollView(
-                              scrollDirection: Axis.horizontal,
-                              child: DataTable(
-                                sortColumnIndex: sortColumnIndex,
-                                sortAscending: sortAscending,
-                                headingRowColor:
-                                    WidgetStateProperty.all(
-                                  const Color(0xFFF3F4F6),
-                                ),
-                                dataRowMinHeight: 64,
-                                dataRowMaxHeight: 64,
-                                columnSpacing: 28,
-                                horizontalMargin: 20,
-                                columns: [
-                                  DataColumn(
-                                    label: const Text('Discente'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        nomeDiscente,
-                                      );
-                                    },
-                                  ),
-                                  DataColumn(
-                                    label: const Text('Impresa'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        (p) => testo(p['impresa_nome']),
-                                      );
-                                    },
-                                  ),
-                                  DataColumn(
-                                    label: const Text('Corso'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        (p) => testo(p['corso_nome']),
-                                      );
-                                    },
-                                  ),
-                                  DataColumn(
-                                    label: const Text('Data'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        (p) => testo(p['data']),
-                                      );
-                                    },
-                                  ),
-                                  DataColumn(
-                                    label: const Text('Prot.'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        (p) => testo(p['prot']),
-                                      );
-                                    },
-                                  ),
-                                  DataColumn(
-                                    label: const Text('Stato'),
-                                    onSort: (columnIndex, ascending) {
-                                      ordina<String>(
-                                        columnIndex,
-                                        ascending,
-                                        statoPrenotazione,
-                                      );
-                                    },
-                                  ),
-                                  const DataColumn(
-                                    label: Text('Azioni'),
-                                  ),
-                                ],
-                                rows: prenotazioniVisibili.map((p) {
-                                  return DataRow(
-  color: WidgetStateProperty.resolveWith<Color?>(
-    (states) {
-      final stato = statoPrenotazione(p);
+  child: ClipRRect(
+    borderRadius: BorderRadius.circular(16),
+    child: Container(
+      color: Colors.white,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: ultraWide
+              ? MediaQuery.of(context).size.width - 320
+              : desktop
+                  ? MediaQuery.of(context).size.width - 280
+                  : 1100,
+          child: Column(
+            children: [
+              DataTable(
+                sortColumnIndex: sortColumnIndex,
+                sortAscending: sortAscending,
+                headingRowColor: WidgetStateProperty.all(
+                  const Color(0xFFF3F4F6),
+                ),
+                dataRowMinHeight: 0,
+                dataRowMaxHeight: 0,
+                columnSpacing: ultraWide
+                    ? 42
+                    : desktop
+                        ? 32
+                        : tablet
+                            ? 18
+                            : 24,
+                horizontalMargin: tablet ? 12 : 20,
+                columns: [
+                  DataColumn(
+                    label: const Text('Discente'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        nomeDiscente,
+                      );
+                    },
+                  ),
+                  DataColumn(
+                    label: const Text('Impresa'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        (p) => testo(p['impresa_nome']),
+                      );
+                    },
+                  ),
+                  DataColumn(
+                    label: const Text('Corso'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        (p) => testo(p['corso_nome']),
+                      );
+                    },
+                  ),
+                  DataColumn(
+                    label: const Text('Data'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        (p) => testo(p['data']),
+                      );
+                    },
+                  ),
+                  DataColumn(
+                    label: const Text('Prot.'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        (p) => testo(p['prot']),
+                      );
+                    },
+                  ),
+                  DataColumn(
+                    label: const Text('Stato'),
+                    onSort: (columnIndex, ascending) {
+                      ordina<String>(
+                        columnIndex,
+                        ascending,
+                        statoPrenotazione,
+                      );
+                    },
+                  ),
+                  const DataColumn(
+                    label: Text('Azioni'),
+                  ),
+                ],
+                rows: const [],
+              ),
 
-      if (stato == 'Chiuso') {
-        return Colors.grey.shade100;
-      }
+              Expanded(
+                child: SingleChildScrollView(
+                  child: DataTable(
+                    headingRowHeight: 0,
+                    dataRowMinHeight: 64,
+                    dataRowMaxHeight: 64,
+                    columnSpacing: ultraWide
+                        ? 42
+                        : desktop
+                            ? 32
+                            : tablet
+                                ? 18
+                                : 24,
+                    horizontalMargin: tablet ? 12 : 20,
+                    columns: const [
+                      DataColumn(label: SizedBox(width: 150, child: Text('Discente'))),
+                      DataColumn(label: SizedBox(width: 130, child: Text('Impresa'))),
+                      DataColumn(label: SizedBox(width: 180, child: Text('Corso'))),
+                      DataColumn(label: SizedBox(width: 100, child: Text('Data'))),
+                      DataColumn(label: SizedBox(width: 80, child: Text('Prot.'))),
+                      DataColumn(label: SizedBox(width: 120, child: Text('Stato'))),
+                      DataColumn(label: SizedBox(width: 120, child: Text('Azioni'))),
+                    ],
+                    rows: prenotazioniPaginata.map((p) {
+                      return DataRow(
+                        color: WidgetStateProperty.resolveWith<Color?>(
+                          (states) {
+                            final stato = statoPrenotazione(p);
 
-      if (stato == 'Registro') {
-        return Colors.orange.shade50;
-      }
+                            if (stato == 'Chiuso') {
+                              return Colors.grey.shade100;
+                            }
 
-      if (stato == 'Aperto') {
-        return Colors.green.shade50;
-      }
+                            if (stato == 'Registro') {
+                              return Colors.orange.shade50;
+                            }
 
-      return null;
-    },
-  ),
-                                    cells: [
-                                      DataCell(
-                                        Text(nomeDiscente(p)),
-                                      ),
-                                      DataCell(
-                                        Text(testo(p['impresa_nome'])),
-                                      ),
-                                      DataCell(
-                                        Text(testo(p['corso_nome'])),
-                                      ),
-                                      DataCell(
-                                        Text(testo(p['data'])),
-                                      ),
-                                      DataCell(
-                                        Text(testo(p['prot'])),
-                                      ),
-                                      DataCell(
-                                        TableStatusBadge(
-                                          status: statoPrenotazione(p),
-                                        ),
-                                      ),
-                                      DataCell(
-                                        Row(
-                                          children: [
-                                            IconButton(
-                                              tooltip: 'Modifica',
-                                              onPressed: () =>
-                                                  modificaPrenotazione(p),
-                                              icon: const Icon(
-                                                Icons.edit,
-                                                color: Color(0xFF2563EB),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              tooltip: 'Elimina',
-                                              onPressed: () =>
-                                                  eliminaPrenotazione(p),
-                                              icon: const Icon(
-                                                Icons.delete_outline,
-                                                color: Color(0xFFDC2626),
-                                              ),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                              ),
-                            ),
-                          ),
+                            if (stato == 'Aperto') {
+                              return Colors.green.shade50;
+                            }
+
+                            return null;
+                          },
                         ),
-                      ),
+                        cells: [
+  DataCell(SizedBox(width: 150, child: Text(nomeDiscente(p)))),
+  DataCell(SizedBox(width: 130, child: Text(testo(p['impresa_nome'])))),
+  DataCell(SizedBox(width: 180, child: Text(testo(p['corso_nome'])))),
+  DataCell(SizedBox(width: 100, child: Text(testo(p['data'])))),
+  DataCell(SizedBox(width: 80, child: Text(testo(p['prot'])))),
+  DataCell(
+    SizedBox(
+      width: 120,
+      child: TableStatusBadge(
+        status: statoPrenotazione(p),
+      ),
+    ),
+  ),
+  DataCell(
+    SizedBox(
+      width: 120,
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: 'Modifica',
+            onPressed: () => modificaPrenotazione(p),
+            icon: const Icon(
+              Icons.edit,
+              color: Color(0xFF2563EB),
+            ),
+          ),
+          IconButton(
+  tooltip: 'Elimina',
+  onPressed: () => eliminaPrenotazione(p),
+  icon: const Icon(
+    Icons.delete_outline,
+    color: Color(0xFFDC2626),
+  ),
+),
+],
+      ),
+    ),
+  ),
+],
+);
+}).toList(),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  ),
+),
+                      const SizedBox(height: 10),
+
+Container(
+  padding: const EdgeInsets.symmetric(
+    horizontal: 20,
+    vertical: 14,
+  ),
+  decoration: BoxDecoration(
+    color: Colors.white,
+    borderRadius: BorderRadius.circular(14),
+    border: Border.all(
+      color: Colors.grey.shade300,
+    ),
+  ),
+  child: Row(
+    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    children: [
+
+      Text(
+        'Totale record: ${prenotazioniVisibili.length}',
+        style: TextStyle(
+          color: Colors.grey.shade700,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+
+      Row(
+        children: [
+
+          IconButton(
+            onPressed: paginaCorrente > 0
+                ? () {
+                    setState(() {
+                      paginaCorrente--;
+                    });
+                  }
+                : null,
+            icon: const Icon(Icons.chevron_left),
+          ),
+
+          Container(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 8,
+            ),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF3F4F6),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              'Pagina ${paginaCorrente + 1}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+
+          IconButton(
+            onPressed:
+                (paginaCorrente + 1) * righePerPagina <
+                        prenotazioniVisibili.length
+                    ? () {
+                        setState(() {
+                          paginaCorrente++;
+                        });
+                      }
+                    : null,
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
+    ],
+  ),
+),
                     ],
                   ),
           ),

@@ -422,6 +422,23 @@ class DatabaseService {
     ''', [q, q, q, q, q, q]);
   }
 
+Future<void> aggiornaDaFatturareDiario({
+  required int id,
+  required bool valore,
+}) async {
+  final db = await _db;
+
+  await db.update(
+    'diario',
+    {
+      'da_fatturare': valore ? 1 : 0,
+      'updated_at': DateTime.now().toIso8601String(),
+    },
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
+
   // =========================
   // SCADENZE
   // =========================
@@ -552,47 +569,92 @@ class DatabaseService {
   }
 
   Future<void> rinnovaCorso({
-    required int idDiscente,
-    required int idImpresa,
-    required int idCorso,
-  }) async {
-    final db = await _db;
+  required int idDiscente,
+  required int idImpresa,
+  required int idCorso,
+}) async {
+  final db = await _db;
 
-    final corso = await db.query(
-      'corsi',
-      where: 'id = ?',
-      whereArgs: [idCorso],
-      limit: 1,
-    );
+  final oggi = DateTime.now();
+  final data = oggi.toIso8601String().substring(0, 10);
 
-    final validita = corso.isNotEmpty
-        ? corso.first['validita_anni'] as int? ?? 0
-        : 0;
+  final duplicato = await db.query(
+    'diario',
+    where: '''
+      discente_id = ?
+      AND impresa_id = ?
+      AND corso_id = ?
+      AND data = ?
+    ''',
+    whereArgs: [idDiscente, idImpresa, idCorso, data],
+    limit: 1,
+  );
 
-    final dataCorso = DateTime.now();
-    final data = dataCorso.toIso8601String().substring(0, 10);
-
-    final scadenza = validita > 0
-        ? DateTime(
-            dataCorso.year + validita,
-            dataCorso.month,
-            dataCorso.day,
-          ).toIso8601String().substring(0, 10)
-        : null;
-
-    await db.insert('diario', {
-      'discente_id': idDiscente,
-      'impresa_id': idImpresa,
-      'corso_id': idCorso,
-      'data': data,
-      'scadenza': scadenza,
-      'da_fatturare': 0,
-      'created_at': DateTime.now().toIso8601String(),
-      'updated_at': DateTime.now().toIso8601String(),
-    });
-
-    await aggiornaScadenzeDaDiario();
+  if (duplicato.isNotEmpty) {
+    return;
   }
+
+  final corso = await db.query(
+    'corsi',
+    where: 'id = ?',
+    whereArgs: [idCorso],
+    limit: 1,
+  );
+
+  final validita = corso.isNotEmpty
+      ? corso.first['validita_anni'] as int? ?? 0
+      : 0;
+
+  final scadenza = validita > 0
+      ? DateTime(
+          oggi.year + validita,
+          oggi.month,
+          oggi.day,
+        ).toIso8601String().substring(0, 10)
+      : null;
+
+  await db.insert('diario', {
+    'discente_id': idDiscente,
+    'impresa_id': idImpresa,
+    'corso_id': idCorso,
+    'data': data,
+    'scadenza': scadenza,
+    'da_fatturare': 0,
+    'created_at': DateTime.now().toIso8601String(),
+    'updated_at': DateTime.now().toIso8601String(),
+  });
+
+  await aggiornaScadenzeDaDiario();
+}
+
+// =========================
+// DASHBOARD KPI
+// =========================
+
+Future<Map<String, int>> caricaKpiDashboard() async {
+  final db = await _db;
+
+  await aggiornaScadenzeDaDiario();
+
+  Future<int> count(String sql) async {
+    final result = await db.rawQuery(sql);
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  return {
+    'prenotazioni': await count('SELECT COUNT(*) FROM prenotazioni'),
+    'diario': await count('SELECT COUNT(*) FROM diario'),
+    'scadenze': await count('SELECT COUNT(*) FROM scadenze'),
+    'scaduti': await count(
+      "SELECT COUNT(*) FROM scadenze WHERE stato = 'SCADUTO'",
+    ),
+    'discenti': await count('SELECT COUNT(*) FROM discenti'),
+    'imprese': await count('SELECT COUNT(*) FROM imprese'),
+    'da_fatturare': await count(
+      'SELECT COUNT(*) FROM diario WHERE da_fatturare = 1',
+    ),
+  };
+}
 
   // =========================
   // HELPERS

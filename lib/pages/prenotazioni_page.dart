@@ -9,20 +9,36 @@ import '../widgets/table_status_badge.dart';
 
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
+  final String filtro;
 
   const PrenotazioniPage({
     super.key,
-    this.globalSearch = '',
+    required this.globalSearch,
+    this.filtro = 'tutte',
   });
 
   @override
   State<PrenotazioniPage> createState() => _PrenotazioniPageState();
 }
-
+ 
 class _PrenotazioniPageState extends State<PrenotazioniPage> {
   List<Map<String, dynamic>> prenotazioni = [];
   List<Map<String, dynamic>> prenotazioniFiltrate = [];
+List<Map<String, dynamic>> get prenotazioniVisibili {
+  return prenotazioniFiltrate.where((p) {
+    final stato = statoPrenotazione(p);
 
+    if (widget.filtro == 'aperte') {
+      return stato == 'Aperto';
+    }
+
+    if (widget.filtro == 'chiuse') {
+      return stato == 'Chiuso';
+    }
+
+    return true;
+  }).toList();
+}
   bool loading = true;
 
   int? sortColumnIndex;
@@ -35,13 +51,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   @override
-  void didUpdateWidget(covariant PrenotazioniPage oldWidget) {
-    super.didUpdateWidget(oldWidget);
+void didUpdateWidget(
+  covariant PrenotazioniPage oldWidget,
+) {
+  super.didUpdateWidget(oldWidget);
 
-    if (oldWidget.globalSearch != widget.globalSearch) {
-      cercaPrenotazioni(widget.globalSearch);
-    }
+  if (oldWidget.globalSearch != widget.globalSearch ||
+      oldWidget.filtro != widget.filtro) {
+    cercaPrenotazioni(widget.globalSearch);
   }
+}
 
   String testo(dynamic value) {
     return (value ?? '').toString();
@@ -348,7 +367,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           ),
 
                           Text(
-                            '${prenotazioniFiltrate.length} record',
+                            '${prenotazioniVisibili.length} record',
                             style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontWeight: FontWeight.w600,
@@ -442,8 +461,27 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                     label: Text('Azioni'),
                                   ),
                                 ],
-                                rows: prenotazioniFiltrate.map((p) {
+                                rows: prenotazioniVisibili.map((p) {
                                   return DataRow(
+  color: WidgetStateProperty.resolveWith<Color?>(
+    (states) {
+      final stato = statoPrenotazione(p);
+
+      if (stato == 'Chiuso') {
+        return Colors.grey.shade100;
+      }
+
+      if (stato == 'Registro') {
+        return Colors.orange.shade50;
+      }
+
+      if (stato == 'Aperto') {
+        return Colors.green.shade50;
+      }
+
+      return null;
+    },
+  ),
                                     cells: [
                                       DataCell(
                                         Text(nomeDiscente(p)),

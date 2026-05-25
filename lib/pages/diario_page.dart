@@ -3,7 +3,12 @@ import 'package:flutter/material.dart';
 import '../database/database_service.dart';
 
 class DiarioPage extends StatefulWidget {
-  const DiarioPage({super.key});
+  final bool soloDaFatturare;
+
+  const DiarioPage({
+    super.key,
+    this.soloDaFatturare = false,
+  });
 
   @override
   State<DiarioPage> createState() => _DiarioPageState();
@@ -14,27 +19,55 @@ class _DiarioPageState extends State<DiarioPage> {
 
   List<Map<String, dynamic>> _diario = [];
   bool _caricamento = true;
+  bool _soloDaFatturare = false;
 
-  @override
-  void initState() {
-    super.initState();
-    caricaDiario();
-  }
+ int? _sortColumnIndex;
+  bool _sortAscending = true;
+  
+ @override
+void initState() {
+  super.initState();
+  _soloDaFatturare = widget.soloDaFatturare;
+  caricaDiario();
+}
 
   Future<void> caricaDiario() async {
-    setState(() => _caricamento = true);
+  setState(() => _caricamento = true);
 
-    final dati = await DatabaseService.instance.caricaDiario(
-      ricerca: _cercaController.text.trim(),
-    );
+  final dati = await DatabaseService.instance.caricaDiario(
+    ricerca: _cercaController.text.trim(),
+  );
 
-    setState(() {
-      _diario = dati;
-      _caricamento = false;
-    });
-  }
+  setState(() {
+  _diario = _soloDaFatturare
+      ? dati.where((riga) => riga['da_fatturare'] == 1).toList()
+      : dati;
 
-  String statoScadenza(String? dataScadenza) {
+  _caricamento = false;
+});
+}
+
+void ordina<T>(
+  Comparable<T> Function(Map<String, dynamic> riga) getField,
+  int columnIndex,
+  bool ascending,
+) {
+  _diario.sort((a, b) {
+    final aValue = getField(a);
+    final bValue = getField(b);
+
+    return ascending
+        ? Comparable.compare(aValue, bValue)
+        : Comparable.compare(bValue, aValue);
+  });
+
+  setState(() {
+    _sortColumnIndex = columnIndex;
+    _sortAscending = ascending;
+  });
+}
+
+String statoScadenza(String? dataScadenza) {
     if (dataScadenza == null || dataScadenza.isEmpty) {
       return 'N/D';
     }
@@ -128,8 +161,10 @@ String formattaData(dynamic valore) {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Padding(
+Widget build(BuildContext context) {
+  return Material(
+    color: Colors.transparent,
+    child: Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,22 +216,85 @@ String formattaData(dynamic valore) {
                       scrollDirection: Axis.horizontal,
                       child: SingleChildScrollView(
                         child: DataTable(
+                          sortColumnIndex: _sortColumnIndex,
+                          sortAscending: _sortAscending,
                           headingRowColor: WidgetStateProperty.all(
                             Colors.grey.shade100,
                           ),
-                          columns: const [
-                            DataColumn(label: Text('Discente')),
-                            DataColumn(label: Text('Impresa')),
-                            DataColumn(label: Text('Corso')),
-                            DataColumn(label: Text('Data corso')),
-                            DataColumn(label: Text('Scadenza')),
-                            DataColumn(label: Text('Stato')),
-                            DataColumn(label: Text('Prot.')),
-                            DataColumn(label: Text('Da fatturare')),
-                            DataColumn(label: Text('Fattura')),
-                            DataColumn(label: Text('PDF')),
-                            DataColumn(label: Text('Rinnovo')),
-                          ],
+                          columns: [
+  DataColumn(
+    label: const Text('Discente'),
+    onSort: (columnIndex, ascending) {
+      ordina<String>(
+        (riga) =>
+            '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+        columnIndex,
+        ascending,
+      );
+    },
+  ),
+
+  DataColumn(
+    label: const Text('Impresa'),
+    onSort: (columnIndex, ascending) {
+      ordina<String>(
+        (riga) => testo(riga['impresa']),
+        columnIndex,
+        ascending,
+      );
+    },
+  ),
+
+  DataColumn(
+    label: const Text('Corso'),
+    onSort: (columnIndex, ascending) {
+      ordina<String>(
+        (riga) => testo(riga['corso']),
+        columnIndex,
+        ascending,
+      );
+    },
+  ),
+
+  const DataColumn(
+    label: Text('Data corso'),
+  ),
+
+  DataColumn(
+    label: const Text('Scadenza'),
+    onSort: (columnIndex, ascending) {
+      ordina<String>(
+        (riga) => testo(riga['scadenza']),
+        columnIndex,
+        ascending,
+      );
+    },
+  ),
+
+  const DataColumn(
+    label: Text('Stato'),
+  ),
+
+  const DataColumn(
+    label: Text('Prot.'),
+  ),
+
+  const DataColumn(
+    label: Text('Da fatturare'),
+  ),
+
+  const DataColumn(
+    label: Text('Fattura'),
+  ),
+
+  const DataColumn(
+    label: Text('PDF'),
+  ),
+
+  const DataColumn(
+    label: Text('Rinnovo'),
+  ),
+],
                           rows: _diario.map((riga) {
                             final stato = statoScadenza(
                               riga['scadenza']?.toString(),
@@ -212,11 +310,18 @@ String formattaData(dynamic valore) {
                                 DataCell(badge(stato)),
                                 DataCell(Text(testo(riga['prot']))),
                                 DataCell(
-                                  Checkbox(
-                                    value: riga['da_fatturare'] == 1,
-                                    onChanged: null,
-                                  ),
+                                 Checkbox(
+                                  value: riga['da_fatturare'] == 1,
+                                  onChanged: (valore) async {
+                                    await DatabaseService.instance.aggiornaDaFatturareDiario(
+                                      id: riga['id'] as int,
+                                      valore: valore ?? false,
+                                    );
+
+                                    await caricaDiario();                                 
+                                  },
                                 ),
+                               ),
                                 DataCell(Text(testo(riga['fattura']))),
                                 DataCell(
                                   Icon(
@@ -250,6 +355,7 @@ String formattaData(dynamic valore) {
           ),
         ],
       ),
+    ),
     );
   }
-}
+  }

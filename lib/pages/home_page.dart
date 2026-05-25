@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/database_service.dart';
+
 import '../widgets/sidebar.dart';
 import '../widgets/kpi_card.dart';
 import '../widgets/app_topbar.dart';
@@ -22,12 +24,23 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
   String globalSearch = '';
-
+  String filtroScadenze = 'tutte';
+  String filtroPrenotazioni = 'tutte';
+int dashboardRefresh = 0;
   List<Widget> get pages => [
-        const DashboardPage(),
-        PrenotazioniPage(globalSearch: globalSearch),
-        const DiarioPage(),
-        const ScadenzePage(),
+        DashboardPage(
+  key: ValueKey(dashboardRefresh),
+),
+        PrenotazioniPage(
+  globalSearch: globalSearch,
+  filtro: filtroPrenotazioni,
+),
+        DiarioPage(
+          soloDaFatturare: false,
+        ),
+        ScadenzePage(
+  filtro: filtroScadenze,
+),
         DiscentiPage(globalSearch: globalSearch),
         const ImpresePage(),
         const CorsiPage(),
@@ -51,10 +64,29 @@ class _HomePageState extends State<HomePage> {
           Sidebar(
             selectedIndex: selectedIndex,
             onItemSelected: (index) {
-              setState(() {
-                selectedIndex = index;
-              });
-            },
+  setState(() {
+    selectedIndex = index;
+
+    if (index == 1) {
+      filtroPrenotazioni = 'tutte';
+    }
+
+    if (index == 3) {
+      filtroScadenze = 'tutte';
+    }
+  });
+
+  if (index == 0) {
+    Future.delayed(
+      const Duration(milliseconds: 100),
+      () {
+        setState(() {
+          dashboardRefresh++;
+        });
+      },
+    );
+  }
+},
           ),
           Expanded(
             child: Padding(
@@ -78,77 +110,187 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class DashboardPage extends StatelessWidget {
+class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
 
   @override
+  State<DashboardPage> createState() => _DashboardPageState();
+}
+
+class _DashboardPageState extends State<DashboardPage> {
+  bool caricamento = true;
+
+  Map<String, int> kpi = {
+    'prenotazioni': 0,
+    'diario': 0,
+    'scadenze': 0,
+    'scaduti': 0,
+    'discenti': 0,
+    'imprese': 0,
+    'da_fatturare': 0,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    caricaKpi();
+  }
+
+  Future<void> caricaKpi() async {
+    final dati = await DatabaseService.instance.caricaKpiDashboard();
+
+    if (!mounted) return;
+
+    setState(() {
+      kpi = dati;
+      caricamento = false;
+    });
+  }
+
+  void apriPagina(BuildContext context, int index) {
+    final homeState = context.findAncestorStateOfType<_HomePageState>();
+
+    homeState?.setState(() {
+      homeState.selectedIndex = index;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Dashboard',
-          style: TextStyle(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF111827),
+    if (caricamento) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: caricaKpi,
+      child: ListView(
+        children: [
+          const Text(
+            'Dashboard',
+            style: TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF111827),
+            ),
           ),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          'Panoramica generale del gestionale formazione sicurezza',
-          style: TextStyle(
-            fontSize: 15,
-            color: Color(0xFF6B7280),
+          const SizedBox(height: 6),
+          const Text(
+            'Panoramica generale del gestionale formazione sicurezza',
+            style: TextStyle(
+              fontSize: 15,
+              color: Color(0xFF6B7280),
+            ),
           ),
-        ),
-        const SizedBox(height: 28),
-        GridView.count(
-          crossAxisCount: 3,
-          shrinkWrap: true,
-          crossAxisSpacing: 18,
-          mainAxisSpacing: 18,
-          childAspectRatio: 2.4,
-          children: const [
-            KpiCard(
-              title: 'Prenotazioni',
-              value: '0',
-              icon: Icons.calendar_month,
-              color: Color(0xFF2563EB),
-            ),
-            KpiCard(
-              title: 'Diario corsi',
-              value: '0',
-              icon: Icons.menu_book,
-              color: Color(0xFF16A34A),
-            ),
-            KpiCard(
-              title: 'Scadenze',
-              value: '0',
-              icon: Icons.warning_amber,
-              color: Color(0xFFDC2626),
-            ),
-            KpiCard(
-              title: 'Discenti',
-              value: '0',
-              icon: Icons.people,
-              color: Color(0xFF7C3AED),
-            ),
-            KpiCard(
-              title: 'Imprese',
-              value: '0',
-              icon: Icons.business,
-              color: Color(0xFFF59E0B),
-            ),
-            KpiCard(
-              title: 'Da fatturare',
-              value: '0',
-              icon: Icons.euro,
-              color: Color(0xFF0891B2),
-            ),
-          ],
-        ),
-      ],
+          const SizedBox(height: 28),
+
+          GridView.count(
+            crossAxisCount: 3,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisSpacing: 18,
+            mainAxisSpacing: 18,
+            childAspectRatio: 2.4,
+            children: [
+              GestureDetector(
+  onTap: () {
+    final homeState =
+        context.findAncestorStateOfType<_HomePageState>();
+
+    homeState?.setState(() {
+      homeState.filtroPrenotazioni = 'aperte';
+      homeState.selectedIndex = 1;
+    });
+  },
+  child: KpiCard(
+    title: 'Prenotazioni aperte',
+    value: kpi['prenotazioni'].toString(),
+    icon: Icons.calendar_month,
+    color: const Color(0xFF2563EB),
+  ),
+),
+              GestureDetector(
+                onTap: () => apriPagina(context, 2),
+                child: KpiCard(
+                  title: 'Diario corsi',
+                  value: kpi['diario'].toString(),
+                  icon: Icons.menu_book,
+                  color: const Color(0xFF16A34A),
+                ),
+              ),
+              GestureDetector(
+  onTap: () {
+  final homeState =
+      context.findAncestorStateOfType<_HomePageState>();
+
+  homeState?.setState(() {
+    homeState.filtroScadenze = 'tutte';
+    homeState.selectedIndex = 3;
+  });
+},
+  child: KpiCard(
+    title: 'Scadenze',
+    value: kpi['scadenze'].toString(),
+    icon: Icons.warning_amber,
+    color: const Color(0xFFDC2626),
+  ),
+),
+GestureDetector(
+  onTap: () {
+  final homeState =
+      context.findAncestorStateOfType<_HomePageState>();
+
+  homeState?.setState(() {
+    homeState.filtroScadenze = 'scaduti';
+    homeState.selectedIndex = 3;
+  });
+},
+  child: KpiCard(
+    title: 'Scaduti',
+    value: kpi['scaduti'].toString(),
+    icon: Icons.gpp_bad,
+    color: const Color(0xFFB91C1C),
+  ),
+),
+              GestureDetector(
+                onTap: () => apriPagina(context, 4),
+                child: KpiCard(
+                  title: 'Discenti',
+                  value: kpi['discenti'].toString(),
+                  icon: Icons.people,
+                  color: const Color(0xFF7C3AED),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => apriPagina(context, 5),
+                child: KpiCard(
+                  title: 'Imprese',
+                  value: kpi['imprese'].toString(),
+                  icon: Icons.business,
+                  color: const Color(0xFFF59E0B),
+                ),
+              ),
+              GestureDetector(
+  onTap: () {
+  final homeState =
+      context.findAncestorStateOfType<_HomePageState>();
+
+  homeState?.setState(() {
+    homeState.selectedIndex = 2;
+  });
+},
+  child: KpiCard(
+    title: 'Da fatturare',
+    value: kpi['da_fatturare'].toString(),
+    icon: Icons.euro,
+    color: const Color(0xFF0891B2),
+  ),
+),
+            ],
+          ),
+        ],
+      ),
     );
   }
 }

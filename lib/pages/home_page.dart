@@ -122,12 +122,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Map<String, int> kpi = {
     'prenotazioni': 0,
-    'diario': 0,
-    'scadenze': 0,
-    'scaduti': 0,
-    'discenti': 0,
-    'imprese': 0,
-    'da_fatturare': 0,
+  'prenotazioni_aperte': 0,
+  'prenotazioni_chiuse': 0,
+  'diario': 0,
+  'scadenze': 0,
+  'scaduti': 0,
+  'discenti': 0,
+  'imprese': 0,
+  'da_fatturare': 0,
   };
 
   @override
@@ -137,15 +139,24 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> caricaKpi() async {
-    final dati = await DatabaseService.instance.caricaKpiDashboard();
+  final dati = await DatabaseService.instance.caricaKpiDashboard();
 
-    if (!mounted) return;
+  final aperte = await DatabaseService.instance.contaPrenotazioniAperte();
+  final chiuse = await DatabaseService.instance.contaPrenotazioniChiuse();
+  final totale = await DatabaseService.instance.contaPrenotazioniTotali();
 
-    setState(() {
-      kpi = dati;
-      caricamento = false;
-    });
-  }
+  if (!mounted) return;
+
+  setState(() {
+    kpi = {
+      ...dati,
+      'prenotazioni': totale,
+      'prenotazioni_aperte': aperte,
+      'prenotazioni_chiuse': chiuse,
+    };
+    caricamento = false;
+  });
+}
 
   void apriPagina(BuildContext context, int index) {
     final homeState = context.findAncestorStateOfType<_HomePageState>();
@@ -187,11 +198,12 @@ class _DashboardPageState extends State<DashboardPage> {
 
           GridView.count(
             crossAxisCount: 3,
+            mainAxisExtent: 145,
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisSpacing: 18,
             mainAxisSpacing: 18,
-            childAspectRatio: 2.4,
+            childAspectRatio: 2.1,
             children: [
               GestureDetector(
   onTap: () {
@@ -205,13 +217,31 @@ class _DashboardPageState extends State<DashboardPage> {
   },
   child: KpiCard(
     title: 'Prenotazioni aperte',
-    value: kpi['prenotazioni'].toString(),
+    value: kpi['prenotazioni_aperte'].toString(),
     icon: Icons.calendar_month,
     color: const Color(0xFF2563EB),
   ),
 ),
-              GestureDetector(
-                onTap: () => apriPagina(context, 2),
+GestureDetector(
+  onTap: () {
+    final homeState =
+        context.findAncestorStateOfType<_HomePageState>();
+
+    homeState?.setState(() {
+      homeState.filtroPrenotazioni = 'chiuse';
+      homeState.selectedIndex = 1;
+    });
+  },
+  child: KpiCard(
+    title: 'Prenotazioni chiuse',
+    value: kpi['prenotazioni_chiuse'].toString(),
+    icon: Icons.event_available,
+    color: const Color(0xFF64748B),
+  ),
+),
+
+GestureDetector(
+  onTap: () => apriPagina(context, 2),
                 child: KpiCard(
                   title: 'Diario corsi',
                   value: kpi['diario'].toString(),

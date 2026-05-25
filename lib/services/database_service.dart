@@ -710,4 +710,42 @@ Future<Map<String, int>> caricaKpiDashboard() async {
     if (giorni <= 90) return 'IN SCADENZA';
     return 'VALIDO';
   }
+ // =========================
+  // KPI PRENOTAZIONI
+  // =========================
+
+  Future<int> contaPrenotazioniAperte() async {
+    final db = await _db;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM prenotazioni
+      WHERE conferma = 0 OR conferma IS NULL
+    ''');
+
+    return result.first['totale'] as int? ?? 0;
+  }
+
+  Future<int> contaPrenotazioniChiuse() async {
+    final db = await _db;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM prenotazioni
+      WHERE conferma = 1
+    ''');
+
+    return result.first['totale'] as int? ?? 0;
+  }
+
+  Future<int> contaPrenotazioniTotali() async {
+    final db = await _db;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM prenotazioni
+    ''');
+
+    return result.first['totale'] as int? ?? 0;
+  }
 }

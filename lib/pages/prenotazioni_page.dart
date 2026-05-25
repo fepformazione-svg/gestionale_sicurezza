@@ -29,12 +29,12 @@ List<Map<String, dynamic>> get prenotazioniVisibili {
     final stato = statoPrenotazione(p);
 
     if (widget.filtro == 'aperte') {
-      return stato == 'Aperto';
-    }
+  return stato != 'Chiuso';
+}
 
-    if (widget.filtro == 'chiuse') {
-      return stato == 'Chiuso';
-    }
+if (widget.filtro == 'chiuse') {
+  return stato == 'Chiuso';
+}
 
     return true;
   }).toList();

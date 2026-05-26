@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../database/database_service_old.dart';
+import '../database/database_service.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/prenotazione_dialog.dart';
@@ -11,6 +11,9 @@ import 'dart:io';
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
@@ -28,13 +31,20 @@ class PrenotazioniPage extends StatefulWidget {
  
 class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
+final ScrollController _scrollController = ScrollController();
+
   List<Map<String, dynamic>> prenotazioni = [];
   List<Map<String, dynamic>> prenotazioniFiltrate = [];
+
+  final int righePerPaginaDb = 50;
+  int paginaDbCorrente = 0;
+  bool fineArchivioPrenotazioni = false;
+  bool caricamentoPaginaDb = false;
 
   int paginaCorrente = 0;
   final int righePerPagina = 10;
 
-String filtroLocale = '';
+  String filtroLocale = '';
 
   List<Map<String, dynamic>> get prenotazioniVisibili {
   final filtroAttivo = filtroLocale.isNotEmpty ? filtroLocale : widget.filtro;
@@ -60,20 +70,94 @@ List<Map<String, dynamic>> get prenotazioniPaginata {
   }
 
   return prenotazioniVisibili.sublist(
-    start,
-    end > prenotazioniVisibili.length ? prenotazioniVisibili.length : end,
-  );
+  start,
+  end > prenotazioniVisibili.length
+      ? prenotazioniVisibili.length
+      : end,
+);
 }
-  bool loading = true;
+
+Future<void> caricaPrenotazioniIniziali() async {
+  setState(() {
+    loading = true;
+    caricamentoPaginaDb = true;
+    paginaDbCorrente = 0;
+    fineArchivioPrenotazioni = false;
+
+    prenotazioni.clear();
+    prenotazioniFiltrate.clear();
+  });
+
+  try {
+    final dati = await DatabaseService.instance.getPrenotazioniPaged(
+      limit: righePerPaginaDb,
+      offset: 0,
+    );
+
+    setState(() {
+      prenotazioni = dati;
+      prenotazioniFiltrate = dati;
+
+      paginaDbCorrente = 1;
+
+      if (dati.length < righePerPaginaDb) {
+        fineArchivioPrenotazioni = true;
+      }
+    });
+  } catch (e) {
+    debugPrint('ERRORE caricaPrenotazioniIniziali: $e');
+  } finally {
+    setState(() {
+      loading = false;
+      caricamentoPaginaDb = false;
+    });
+  }
+}
+
+bool loading = true;
 
   int? sortColumnIndex;
   bool sortAscending = true;
 
   @override
-  void initState() {
-    super.initState();
-    caricaPrenotazioni();
-  }
+void initState() {
+  super.initState();
+
+  caricaPrenotazioniIniziali();
+
+  _scrollController.addListener(() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      caricaAltrePrenotazioni();
+    }
+  });
+}
+
+Future<void> caricaAltrePrenotazioni() async {
+  if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
+
+  setState(() {
+    caricamentoPaginaDb = true;
+  });
+
+  final dati = await DatabaseService.instance.getPrenotazioniPaged(
+    limit: righePerPaginaDb,
+    offset: paginaDbCorrente * righePerPaginaDb,
+  );
+
+  setState(() {
+    prenotazioni.addAll(dati);
+    prenotazioniFiltrate = prenotazioni;
+
+    paginaDbCorrente++;
+
+    caricamentoPaginaDb = false;
+
+    if (dati.length < righePerPaginaDb) {
+      fineArchivioPrenotazioni = true;
+    }
+  });
+}
 
   @override
 void didUpdateWidget(
@@ -125,18 +209,71 @@ void didUpdateWidget(
   }
 
   Future<void> caricaPrenotazioni() async {
-    final dati = await DatabaseService.instance.getPrenotazioni();
+  setState(() {
+    loading = true;
+    paginaDbCorrente = 0;
+    fineArchivioPrenotazioni = false;
+    prenotazioni = [];
+    prenotazioniFiltrate = [];
+  });
+
+  await caricaPaginaPrenotazioni(reset: true);
+}
+
+Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
+  if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
+
+  setState(() {
+    caricamentoPaginaDb = true;
+  });
+
+  try {
+    final offset = paginaDbCorrente * righePerPaginaDb;
+
+    final dati = await DatabaseService.instance.getPrenotazioniPaged(
+      limit: righePerPaginaDb,
+      offset: offset,
+    );
 
     setState(() {
-      prenotazioni = dati;
-      prenotazioniFiltrate = dati;
+      if (reset) {
+        prenotazioni.clear();
+      }
+
+      prenotazioni.addAll(dati);
+      prenotazioniFiltrate = List.from(prenotazioni);
+
+      paginaDbCorrente++;
+
+      if (dati.length < righePerPaginaDb) {
+        fineArchivioPrenotazioni = true;
+      }
+
+      caricamentoPaginaDb = false;
       loading = false;
     });
 
     if (widget.globalSearch.trim().isNotEmpty) {
       cercaPrenotazioni(widget.globalSearch);
     }
+  } catch (e) {
+    setState(() {
+      caricamentoPaginaDb = false;
+      loading = false;
+    });
+
+    debugPrint('Errore caricamento prenotazioni paged: $e');
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore caricamento prenotazioni: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
+}
 
   void cercaPrenotazioni(String valore) {
     final query = valore.toLowerCase().trim();
@@ -501,6 +638,60 @@ Future<void> exportPrenotazioniExcel() async {
 
   await OpenFile.open(file.path);
 }
+Future<void> esportaPdf() async {
+  final pdf = pw.Document();
+
+  pdf.addPage(
+    pw.MultiPage(
+      pageFormat: PdfPageFormat.a4.landscape,
+      build: (context) => [
+        pw.Text(
+          'PRENOTAZIONI',
+          style: pw.TextStyle(
+            fontSize: 22,
+            fontWeight: pw.FontWeight.bold,
+          ),
+        ),
+
+        pw.SizedBox(height: 20),
+
+        pw.Table.fromTextArray(
+          headers: [
+            'Discente',
+            'Impresa',
+            'Corso',
+            'Data',
+            'Prot.',
+            'Stato',
+          ],
+
+          data: prenotazioniVisibili.map((p) {
+            return [
+              nomeDiscente(p),
+              testo(p['impresa_nome']),
+              testo(p['corso_nome']),
+              testo(p['data']),
+              testo(p['prot']),
+              statoPrenotazione(p),
+            ];
+          }).toList(),
+        ),
+      ],
+    ),
+  );
+
+  final directory = await getApplicationDocumentsDirectory();
+
+  final file = File(
+    '${directory.path}/prenotazioni.pdf',
+  );
+
+  await file.writeAsBytes(
+    await pdf.save(),
+  );
+
+  await OpenFile.open(file.path);
+}
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
@@ -798,6 +989,7 @@ const SizedBox(height: 10),
 
               Expanded(
                 child: SingleChildScrollView(
+                  controller: _scrollController,
                   child: DataTable(
                     headingRowHeight: 0,
                     dataRowMinHeight: 64,

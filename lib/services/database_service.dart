@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 
+import 'package:flutter/foundation.dart';
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
@@ -172,7 +173,6 @@ class DatabaseService {
         p.ok,
         p.registro,
         p.seleziona,
-        p.note,
 
         d.nome AS discente_nome,
         d.cognome AS discente_cognome,
@@ -187,6 +187,51 @@ class DatabaseService {
     ''');
   }
 
+Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
+  required int limit,
+  required int offset,
+}) async {
+  final db = await _db;
+
+  final count = Sqflite.firstIntValue(
+    await db.rawQuery('SELECT COUNT(*) FROM prenotazioni'),
+  );
+
+  debugPrint('PRENOTAZIONI DB: $count');
+
+  return await db.rawQuery('''
+    SELECT
+      p.id,
+      p.discente_id,
+      p.impresa_id,
+      p.corso_id,
+      p.data,
+      p.prot,
+      p.aperto,
+      p.conferma,
+      p.ok,
+      p.registro,
+      p.seleziona,
+
+      d.nome AS discente_nome,
+      d.cognome AS discente_cognome,
+      i.intestazione AS impresa_nome,
+      c.denominazione AS corso_nome
+
+    FROM prenotazioni p
+    LEFT JOIN discenti d ON d.id = p.discente_id
+    LEFT JOIN imprese i ON i.id = p.impresa_id
+    LEFT JOIN corsi c ON c.id = p.corso_id
+
+    ORDER BY p.id DESC
+
+    LIMIT ? OFFSET ?
+  ''', [
+    limit,
+    offset,
+  ]);
+}
+
   Future<int> insertPrenotazione(Map<String, dynamic> dati) async {
     final db = await _db;
 
@@ -196,7 +241,6 @@ class DatabaseService {
       'corso_id': dati['corso_id'],
       'data': dati['data'],
       'prot': dati['prot'],
-      'note': dati['note'],
       'aperto': dati['aperto'] ?? 1,
       'conferma': dati['conferma'] ?? 0,
       'registro': dati['registro'] ?? 0,
@@ -224,7 +268,6 @@ class DatabaseService {
         'corso_id': dati['corso_id'],
         'data': dati['data'],
         'prot': dati['prot'],
-        'note': dati['note'],
         'aperto': dati['aperto'] ?? 1,
         'conferma': dati['conferma'] ?? 0,
         'registro': dati['registro'] ?? 0,

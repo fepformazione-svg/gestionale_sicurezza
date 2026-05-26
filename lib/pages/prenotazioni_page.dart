@@ -41,13 +41,10 @@ final ScrollController _scrollController = ScrollController();
   bool fineArchivioPrenotazioni = false;
   bool caricamentoPaginaDb = false;
 
-  int paginaCorrente = 0;
-  final int righePerPagina = 10;
-
-  String filtroLocale = '';
+  String filtroLocale = 'tutte';
 
   List<Map<String, dynamic>> get prenotazioniVisibili {
-  final filtroAttivo = filtroLocale.isNotEmpty ? filtroLocale : widget.filtro;
+  final filtroAttivo = filtroLocale;
 
   return prenotazioniFiltrate.where((p) {
     final stato = statoPrenotazione(p);
@@ -59,22 +56,6 @@ final ScrollController _scrollController = ScrollController();
 
     return true;
   }).toList();
-}
-
-List<Map<String, dynamic>> get prenotazioniPaginata {
-  final start = paginaCorrente * righePerPagina;
-  final end = start + righePerPagina;
-
-  if (start >= prenotazioniVisibili.length) {
-    return [];
-  }
-
-  return prenotazioniVisibili.sublist(
-  start,
-  end > prenotazioniVisibili.length
-      ? prenotazioniVisibili.length
-      : end,
-);
 }
 
 Future<void> caricaPrenotazioniIniziali() async {
@@ -477,8 +458,7 @@ Widget filtroChip({
     onTap: () {
   setState(() {
     filtroLocale = filtro;
-    paginaCorrente = 0;
-  });
+     });
 },
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -534,8 +514,7 @@ Widget compactKpiCard({
     onTap: () {
       setState(() {
         filtroLocale = filtro;
-        paginaCorrente = 0;
-      });
+             });
     },
     child: AnimatedContainer(
       duration: const Duration(milliseconds: 180),
@@ -805,7 +784,7 @@ ElevatedButton.icon(
       titolo: 'Totale',
       valore: prenotazioniFiltrate.length.toString(),
       colore: const Color(0xFF2563EB),
-      filtro: '',
+      filtro: 'tutte',
     ),
 
     compactKpiCard(
@@ -857,7 +836,7 @@ Wrap(
   children: [
     filtroChip(
       titolo: 'Tutte (${prenotazioniFiltrate.length})',
-      filtro: '',
+      filtro: 'tutte',
       colore: Colors.blue,
     ),
 
@@ -903,178 +882,37 @@ const SizedBox(height: 10),
                   : 1100,
           child: Column(
             children: [
-              DataTable(
-                sortColumnIndex: sortColumnIndex,
-                sortAscending: sortAscending,
-                headingRowColor: WidgetStateProperty.all(
-                  const Color(0xFFF3F4F6),
-                ),
-                dataRowMinHeight: 0,
-                dataRowMaxHeight: 0,
-                columnSpacing: ultraWide
-                    ? 42
-                    : desktop
-                        ? 32
-                        : tablet
-                            ? 18
-                            : 24,
-                horizontalMargin: tablet ? 12 : 20,
-                columns: [
-                  DataColumn(
-                    label: const Text('Discente'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        nomeDiscente,
-                      );
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text('Impresa'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        (p) => testo(p['impresa_nome']),
-                      );
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text('Corso'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        (p) => testo(p['corso_nome']),
-                      );
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text('Data'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        (p) => testo(p['data']),
-                      );
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text('Prot.'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        (p) => testo(p['prot']),
-                      );
-                    },
-                  ),
-                  DataColumn(
-                    label: const Text('Stato'),
-                    onSort: (columnIndex, ascending) {
-                      ordina<String>(
-                        columnIndex,
-                        ascending,
-                        statoPrenotazione,
-                      );
-                    },
-                  ),
-                  const DataColumn(
-                    label: Text('Azioni'),
-                  ),
-                ],
-                rows: const [],
-              ),
-
-              Expanded(
-                child: SingleChildScrollView(
-                  controller: _scrollController,
-                  child: DataTable(
-                    headingRowHeight: 0,
-                    dataRowMinHeight: 64,
-                    dataRowMaxHeight: 64,
-                    columnSpacing: ultraWide
-                        ? 42
-                        : desktop
-                            ? 32
-                            : tablet
-                                ? 18
-                                : 24,
-                    horizontalMargin: tablet ? 12 : 20,
-                    columns: const [
-                      DataColumn(label: SizedBox(width: 150, child: Text('Discente'))),
-                      DataColumn(label: SizedBox(width: 130, child: Text('Impresa'))),
-                      DataColumn(label: SizedBox(width: 180, child: Text('Corso'))),
-                      DataColumn(label: SizedBox(width: 100, child: Text('Data'))),
-                      DataColumn(label: SizedBox(width: 80, child: Text('Prot.'))),
-                      DataColumn(label: SizedBox(width: 120, child: Text('Stato'))),
-                      DataColumn(label: SizedBox(width: 120, child: Text('Azioni'))),
-                    ],
-                    rows: prenotazioniPaginata.map((p) {
-                      return DataRow(
-                        color: WidgetStateProperty.resolveWith<Color?>(
-                          (states) {
-                            final stato = statoPrenotazione(p);
-
-                            if (stato == 'Chiuso') {
-                              return Colors.grey.shade100;
-                            }
-
-                            if (stato == 'Registro') {
-                              return Colors.orange.shade50;
-                            }
-
-                            if (stato == 'Aperto') {
-                              return Colors.green.shade50;
-                            }
-
-                            return null;
-                          },
-                        ),
-                        cells: [
-  DataCell(SizedBox(width: 150, child: Text(nomeDiscente(p)))),
-  DataCell(SizedBox(width: 130, child: Text(testo(p['impresa_nome'])))),
-  DataCell(SizedBox(width: 180, child: Text(testo(p['corso_nome'])))),
-  DataCell(SizedBox(width: 100, child: Text(testo(p['data'])))),
-  DataCell(SizedBox(width: 80, child: Text(testo(p['prot'])))),
-  DataCell(
-    SizedBox(
-      width: 120,
-      child: TableStatusBadge(
-        status: statoPrenotazione(p),
-      ),
-    ),
-  ),
-  DataCell(
-    SizedBox(
-      width: 120,
-      child: Row(
-        children: [
-          IconButton(
-            tooltip: 'Modifica',
-            onPressed: () => modificaPrenotazione(p),
-            icon: const Icon(
-              Icons.edit,
-              color: Color(0xFF2563EB),
-            ),
-          ),
-          IconButton(
-  tooltip: 'Elimina',
-  onPressed: () => eliminaPrenotazione(p),
-  icon: const Icon(
-    Icons.delete_outline,
-    color: Color(0xFFDC2626),
-  ),
+              PrenotazioneHeaderRow(
+  tablet: tablet,
 ),
-],
-      ),
-    ),
-  ),
-],
-);
-}).toList(),
-                  ),
+              
+              Expanded(
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: prenotazioniVisibili.length +
+                    (caricamentoPaginaDb ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index >= prenotazioniVisibili.length) {
+                      return const Padding(
+                        padding: EdgeInsets.all(18),
+                        child: Center(
+                          child: CircularProgressIndicator(),
+                        ),
+                      );
+                    }
+
+                    final p = prenotazioniVisibili[index];
+
+                    return PrenotazioneRow(
+                      prenotazione: p,
+                      tablet: tablet,
+                      onModifica: () => modificaPrenotazione(p),
+                      onElimina: () => eliminaPrenotazione(p),
+                      statoPrenotazione: statoPrenotazione,
+                      nomeDiscente: nomeDiscente,
+                      testo: testo,
+                    );
+                  },
                 ),
               ),
             ],
@@ -1085,84 +923,163 @@ const SizedBox(height: 10),
   ),
 ),
                       const SizedBox(height: 10),
-
-Container(
-  padding: const EdgeInsets.symmetric(
-    horizontal: 20,
-    vertical: 14,
-  ),
-  decoration: BoxDecoration(
-    color: Colors.white,
-    borderRadius: BorderRadius.circular(14),
-    border: Border.all(
-      color: Colors.grey.shade300,
-    ),
-  ),
-  child: Row(
-    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-    children: [
-
-      Text(
-        'Totale record: ${prenotazioniVisibili.length}',
-        style: TextStyle(
-          color: Colors.grey.shade700,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-
-      Row(
-        children: [
-
-          IconButton(
-            onPressed: paginaCorrente > 0
-                ? () {
-                    setState(() {
-                      paginaCorrente--;
-                    });
-                  }
-                : null,
-            icon: const Icon(Icons.chevron_left),
-          ),
-
-          Container(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 14,
-              vertical: 8,
-            ),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF3F4F6),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              'Pagina ${paginaCorrente + 1}',
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-
-          IconButton(
-            onPressed:
-                (paginaCorrente + 1) * righePerPagina <
-                        prenotazioniVisibili.length
-                    ? () {
-                        setState(() {
-                          paginaCorrente++;
-                        });
-                      }
-                    : null,
-            icon: const Icon(Icons.chevron_right),
-          ),
-        ],
-      ),
-    ],
-  ),
-),
                     ],
                   ),
           ),
         ),
       ],
+    );
+  }
+}
+class PrenotazioneRow extends StatelessWidget {
+  final Map<String, dynamic> prenotazione;
+  final bool tablet;
+
+  final VoidCallback onModifica;
+  final VoidCallback onElimina;
+
+  final String Function(Map<String, dynamic>)
+      statoPrenotazione;
+
+  final String Function(Map<String, dynamic>)
+      nomeDiscente;
+
+  final String Function(dynamic)
+      testo;
+
+  const PrenotazioneRow({
+    super.key,
+    required this.prenotazione,
+    required this.tablet,
+    required this.onModifica,
+    required this.onElimina,
+    required this.statoPrenotazione,
+    required this.nomeDiscente,
+    required this.testo,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final stato = statoPrenotazione(prenotazione);
+
+    Color? rowColor;
+
+    if (stato == 'Chiuso') {
+      rowColor = Colors.grey.shade100;
+    } else if (stato == 'Registro') {
+      rowColor = Colors.orange.shade50;
+    } else if (stato == 'Aperto') {
+      rowColor = Colors.green.shade50;
+    }
+
+    return RepaintBoundary(
+      child: Container(
+        height: 64,
+        color: rowColor,
+        padding: EdgeInsets.symmetric(
+          horizontal: tablet ? 12 : 20,
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 180,
+              child: Text(
+                nomeDiscente(prenotazione),
+              ),
+            ),
+
+            SizedBox(
+              width: 150,
+              child: Text(
+                testo(prenotazione['impresa_nome']),
+              ),
+            ),
+
+            SizedBox(
+              width: 220,
+              child: Text(
+                testo(prenotazione['corso_nome']),
+              ),
+            ),
+
+            SizedBox(
+              width: 120,
+              child: Text(
+                testo(prenotazione['data']),
+              ),
+            ),
+
+            SizedBox(
+              width: 90,
+              child: Text(
+                testo(prenotazione['prot']),
+              ),
+            ),
+
+            SizedBox(
+              width: 130,
+              child: TableStatusBadge(
+                status: stato,
+              ),
+            ),
+
+            SizedBox(
+              width: 110,
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Modifica',
+                    onPressed: onModifica,
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Color(0xFF2563EB),
+                    ),
+                  ),
+
+                  IconButton(
+                    tooltip: 'Elimina',
+                    onPressed: onElimina,
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFDC2626),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+class PrenotazioneHeaderRow extends StatelessWidget {
+  final bool tablet;
+
+  const PrenotazioneHeaderRow({
+    super.key,
+    required this.tablet,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 46,
+      color: const Color(0xFFF3F4F6),
+      padding: EdgeInsets.symmetric(
+        horizontal: tablet ? 12 : 20,
+      ),
+      child: const Row(
+        children: [
+          SizedBox(width: 180, child: Text('Discente')),
+          SizedBox(width: 150, child: Text('Impresa')),
+          SizedBox(width: 220, child: Text('Corso')),
+          SizedBox(width: 120, child: Text('Data')),
+          SizedBox(width: 90, child: Text('Prot.')),
+          SizedBox(width: 130, child: Text('Stato')),
+          SizedBox(width: 110, child: Text('Azioni')),
+        ],
+      ),
     );
   }
 }

@@ -50,6 +50,7 @@ void notificaDatiModificati() {
   int paginaDbCorrente = 0;
   bool fineArchivioPrenotazioni = false;
   bool caricamentoPaginaDb = false;
+  bool headerShadowVisible = false;
 
   int? prenotazioneSelezionataId;
 
@@ -62,7 +63,7 @@ bool ordineCrescente = true;
   final filtroAttivo = filtroLocale;
   final query = ricercaController.text.toLowerCase().trim();
 
-  return prenotazioniFiltrate.where((p) {
+  return prenotazioni.where((p) {
     final stato = statoPrenotazione(p);
 
     if (filtroAttivo == 'aperte' && stato != 'Aperto') return false;
@@ -133,10 +134,20 @@ int? selectedRowIndex;
   bool sortAscending = true;
 
   @override
-void initState() {
-  super.initState();
+  void initState() {
+    super.initState();
 
-  ricercaFocusNode.onKeyEvent = (node, event) {
+    _scrollController.addListener(() {
+      final showShadow = _scrollController.offset > 0;
+
+      if (showShadow != headerShadowVisible) {
+        setState(() {
+          headerShadowVisible = showShadow;
+        });
+      }
+    });
+
+    ricercaFocusNode.onKeyEvent = (node, event) {
   if (event is KeyDownEvent &&
       event.logicalKey == LogicalKeyboardKey.escape) {
     ricercaController.text = '';
@@ -1039,6 +1050,17 @@ Widget headerOrdinabile(
 final ultraWide = width > 1800;
 final desktop = width > 1400;
 final tablet = width < 1100;
+
+final double tableWidth =
+    colDiscente +
+    colImpresa +
+    colCorso +
+    colData +
+    colProt +
+    colStato +
+    colAzioni +
+    (tablet ? 24 : 40);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1253,84 +1275,110 @@ Wrap(
 ),
 
 const SizedBox(height: 14),
-                      Expanded(
+
+Expanded(
   child: ClipRRect(
     borderRadius: BorderRadius.circular(16),
     child: Container(
-  decoration: BoxDecoration(
-    color: Colors.white,
-    border: Border.all(
-      color: const Color(0xFFE5E7EB),
-    ),
-  ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(
+          color: const Color(0xFFE5E7EB),
+        ),
+      ),
       child: SingleChildScrollView(
         controller: horizontalController,
         scrollDirection: Axis.horizontal,
         child: SizedBox(
-          width: ultraWide
-              ? MediaQuery.of(context).size.width - 320
-              : desktop
-                  ? MediaQuery.of(context).size.width - 280
-                  : 1100,
+          width: tableWidth,
           child: Column(
-  children: [
-    PrenotazioneHeaderRow(
-  tablet: tablet,
-  headerBuilder: headerOrdinabile,
-),
-
-    const Divider(height: 1),
-
-    Expanded(
-      child: RawKeyboardListener(
-        focusNode: tableFocusNode,
-        autofocus: true,
-        onKey: gestisciTasti,
-        child: Scrollbar(
-          controller: _scrollController,
-          thumbVisibility: true,
-          child: ListView.builder(
-            controller: _scrollController,
-        primary: false,
-        physics: const ClampingScrollPhysics(),
-        itemExtent: 64,
-        itemCount: prenotazioniVisibili.length +
-            (caricamentoPaginaDb ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= prenotazioniVisibili.length) {
-            return const Padding(
-              padding: EdgeInsets.all(18),
-              child: Center(
-                child: CircularProgressIndicator(),
+            children: [
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8FAFC),
+                  boxShadow: headerShadowVisible
+                      ? [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
+                        ]
+                      : [],
+                ),
+                child: SizedBox(
+                  width: tableWidth,
+                  child: PrenotazioneHeaderRow(
+                    tablet: tablet,
+                    headerBuilder: headerOrdinabile,
+                  ),
+                ),
               ),
-            );
-          }
 
-          final p = prenotazioniVisibili[index];
+              const Divider(height: 1),
 
-                    return PrenotazioneRow(
-                      prenotazione: p,
-                      tablet: tablet,
-                      selezionata: prenotazioneSelezionataId == p['id'],
-                      onSeleziona: () {
-                        setState(() {
-                          selectedRowIndex = index;
-                          prenotazioneSelezionataId = p['id'] as int?;
-                        });
+              SizedBox(
+                height: MediaQuery.of(context).size.height - 665,
+                child: RawKeyboardListener(
+                  focusNode: tableFocusNode,
+                  autofocus: true,
+                  onKey: gestisciTasti,
+                  child: Scrollbar(
+                    controller: _scrollController,
+                    thumbVisibility: true,
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(right: 8),
+                      controller: _scrollController,
+                      primary: false,
+                      physics: const ClampingScrollPhysics(),
+                      itemExtent: 64,
+                      itemCount: prenotazioniVisibili.length +
+                          (caricamentoPaginaDb ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index >= prenotazioniVisibili.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(18),
+                            child: Center(
+                              child: CircularProgressIndicator(),
+                            ),
+                          );
+                        }
 
-                        tableFocusNode.requestFocus();
+                        final p = prenotazioniVisibili[index];
+
+                        return SizedBox(
+                          width: tableWidth,
+                          child: PrenotazioneRow(
+                            prenotazione: p,
+                            tablet: tablet,
+                            selezionata:
+                                prenotazioneSelezionataId == p['id'],
+                            onSeleziona: () {
+                              setState(() {
+                                selectedRowIndex = index;
+                                prenotazioneSelezionataId =
+                                    p['id'] as int?;
+                              });
+
+                              tableFocusNode.requestFocus();
+                            },
+                            onDoppioClick: () {
+                              modificaPrenotazione(p);
+                            },
+                            onModifica: () => modificaPrenotazione(p),
+                            onElimina: () => eliminaPrenotazione(p),
+                            statoPrenotazione: statoPrenotazione,
+                            nomeDiscente: nomeDiscente,
+                            testo: testo,
+                          ),
+                        );
                       },
-                      onModifica: () => modificaPrenotazione(p),
-                      onElimina: () => eliminaPrenotazione(p),
-                      statoPrenotazione: statoPrenotazione,
-                      nomeDiscente: nomeDiscente,
-                      testo: testo,
-                    );
-                  },
+                    ),
+                  ),
                 ),
-                ),
-                ),
-                ),
+              ),
             ],
           ),
         ),
@@ -1338,7 +1386,8 @@ const SizedBox(height: 14),
     ),
   ),
 ),
-                      const SizedBox(height: 10),
+
+const SizedBox(height: 10),
                     ],
                   ),
           ),
@@ -1354,7 +1403,7 @@ const double colCorso = 260;
 const double colData = 120;
 const double colProt = 90;
 const double colStato = 130;
-const double colAzioni = 110;
+const double colAzioni = 150;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -1365,6 +1414,8 @@ class PrenotazioneRow extends StatefulWidget {
 
   final VoidCallback onModifica;
   final VoidCallback onElimina;
+
+  final VoidCallback onDoppioClick;
 
   final String Function(Map<String, dynamic>) statoPrenotazione;
   final String Function(Map<String, dynamic>) nomeDiscente;
@@ -1381,6 +1432,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.statoPrenotazione,
     required this.nomeDiscente,
     required this.testo,
+    required this.onDoppioClick,
   });
 
   @override
@@ -1420,6 +1472,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
         onExit: (_) => setState(() => hover = false),
         child: GestureDetector(
           onTap: widget.onSeleziona,
+          onDoubleTap: widget.onDoppioClick,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             height: 64,
@@ -1482,29 +1535,43 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
               ),
 
               SizedBox(
-                width: colAzioni,
-                child: Row(
-                  children: [
-                    IconButton(
-                      tooltip: 'Modifica',
-                      onPressed: widget.onModifica,
-                      icon: const Icon(
-                        Icons.edit,
-                        color: Color(0xFF2563EB),
-                      ),
-                    ),
+  width: colAzioni,
+child: Wrap(
+  spacing: 2,
+  alignment: WrapAlignment.center,
+  children: [
+      IconButton(
+        tooltip: 'Modifica',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 28,
+          minHeight: 28,
+        ),
+        onPressed: widget.onModifica,
+        icon: const Icon(
+          Icons.edit,
+          size: 18,
+          color: Color(0xFF2563EB),
+        ),
+      ),
 
-                    IconButton(
-                      tooltip: 'Elimina',
-                      onPressed: widget.onElimina,
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Color(0xFFDC2626),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+      IconButton(
+        tooltip: 'Elimina',
+        padding: EdgeInsets.zero,
+        constraints: const BoxConstraints(
+          minWidth: 36,
+          minHeight: 36,
+        ),
+        onPressed: widget.onElimina,
+        icon: const Icon(
+          Icons.delete_outline,
+          size: 20,
+          color: Color(0xFFDC2626),
+        ),
+      ),
+    ],
+  ),
+),
             ],
           ),
         ),

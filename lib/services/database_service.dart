@@ -791,4 +791,23 @@ Future<Map<String, int>> caricaKpiDashboard() async {
 
     return result.first['totale'] as int? ?? 0;
   }
+  Future<void> aggiornaStatoPrenotazione({
+  required int id,
+  required int aperto,
+  required int registro,
+  required int conferma,
+}) async {
+  final db = await _db;
+
+  await db.update(
+    'prenotazioni',
+    {
+      'aperto': aperto,
+      'registro': registro,
+      'conferma': conferma,
+    },
+    where: 'id = ?',
+    whereArgs: [id],
+  );
+}
 }

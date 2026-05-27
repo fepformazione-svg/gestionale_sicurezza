@@ -3,11 +3,17 @@ import 'package:flutter/material.dart';
 class AppSearchBar extends StatelessWidget {
   final String hintText;
   final ValueChanged<String>? onChanged;
+  final TextEditingController? controller;
+  final FocusNode? focusNode;
+  final VoidCallback? onArrowDown;
 
   const AppSearchBar({
     super.key,
     required this.hintText,
+    this.controller,
+    this.focusNode,
     this.onChanged,
+    this.onArrowDown,
   });
 
   @override
@@ -22,7 +28,12 @@ class AppSearchBar extends StatelessWidget {
         ),
       ),
       child: TextField(
+        controller: controller,
+        focusNode: focusNode,
         onChanged: onChanged,
+        onSubmitted: (_) {
+          onArrowDown?.call();
+        },
         style: const TextStyle(
           fontSize: 14,
           color: Color(0xFF111827),

@@ -34,6 +34,11 @@ int dashboardRefresh = 0;
         PrenotazioniPage(
   globalSearch: globalSearch,
   filtro: filtroPrenotazioni,
+  onDatiModificati: () {
+    setState(() {
+      dashboardRefresh++;
+    });
+  },
 ),
         DiarioPage(
           soloDaFatturare: false,

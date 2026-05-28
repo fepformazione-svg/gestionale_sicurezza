@@ -200,6 +200,7 @@ int? selectedRowIndex;
 void dispose() {
   tableFocusNode.dispose();
   _scrollController.dispose();
+  horizontalController.dispose();
   super.dispose();
 }
 void gestisciTasti(RawKeyEvent event) async {
@@ -1020,10 +1021,12 @@ Widget headerOrdinabile(
           Text(
             titolo,
             style: TextStyle(
-              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 0.2,
               color: attiva
                   ? const Color(0xFF2563EB)
-                  : Colors.black87,
+                  : const Color(0xFF374151),
             ),
           ),
 
@@ -1060,6 +1063,23 @@ final double tableWidth =
     colStato +
     colAzioni +
     (tablet ? 24 : 40);
+
+final double rowHeight = 64;
+final int numeroRighe = prenotazioniVisibili.length +
+    (caricamentoPaginaDb ? 1 : 0);
+
+final double altezzaRighe = numeroRighe * rowHeight;
+
+final double altezzaMassimaTabella =
+    (MediaQuery.of(context).size.height * 0.28).clamp(160.0, 280.0);
+
+final double altezzaMinimaTabella = rowHeight * 2;
+
+final double altezzaTabella = altezzaRighe < altezzaMinimaTabella
+    ? altezzaMinimaTabella
+    : altezzaRighe > altezzaMassimaTabella
+        ? altezzaMassimaTabella
+        : altezzaRighe;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1283,7 +1303,7 @@ Expanded(
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border.all(
-          color: const Color(0xFFE5E7EB),
+          color: const Color(0xFFF1F5F9),
         ),
       ),
       child: SingleChildScrollView(
@@ -1313,71 +1333,129 @@ Expanded(
                   child: PrenotazioneHeaderRow(
                     tablet: tablet,
                     headerBuilder: headerOrdinabile,
+                    horizontalController: horizontalController,
                   ),
                 ),
               ),
 
-              const Divider(height: 1),
+              const SizedBox(height: 0),
 
-              SizedBox(
-                height: MediaQuery.of(context).size.height - 665,
+              Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFE5E7EB), width: 1),
+                  ),
+                ),
+                child: SizedBox(
+                height: altezzaTabella < 64 ? 64 : altezzaTabella,
                 child: RawKeyboardListener(
                   focusNode: tableFocusNode,
                   autofocus: true,
                   onKey: gestisciTasti,
-                  child: Scrollbar(
-                    controller: _scrollController,
-                    thumbVisibility: true,
-                    child: ListView.builder(
-                      padding: const EdgeInsets.only(right: 8),
-                      controller: _scrollController,
-                      primary: false,
-                      physics: const ClampingScrollPhysics(),
-                      itemExtent: 64,
-                      itemCount: prenotazioniVisibili.length +
-                          (caricamentoPaginaDb ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= prenotazioniVisibili.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(18),
-                            child: Center(
-                              child: CircularProgressIndicator(),
-                            ),
-                          );
-                        }
+                  child: prenotazioniVisibili.isEmpty
+    ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.event_busy_outlined,
+              size: 54,
+              color: Colors.grey.shade400,
+            ),
 
-                        final p = prenotazioniVisibili[index];
+            const SizedBox(height: 18),
 
-                        return SizedBox(
-                          width: tableWidth,
-                          child: PrenotazioneRow(
-                            prenotazione: p,
-                            tablet: tablet,
-                            selezionata:
-                                prenotazioneSelezionataId == p['id'],
-                            onSeleziona: () {
-                              setState(() {
-                                selectedRowIndex = index;
-                                prenotazioneSelezionataId =
-                                    p['id'] as int?;
-                              });
+            const Text(
+              'Nessuna prenotazione trovata',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF374151),
+              ),
+            ),
 
-                              tableFocusNode.requestFocus();
-                            },
-                            onDoppioClick: () {
-                              modificaPrenotazione(p);
-                            },
-                            onModifica: () => modificaPrenotazione(p),
-                            onElimina: () => eliminaPrenotazione(p),
-                            statoPrenotazione: statoPrenotazione,
-                            nomeDiscente: nomeDiscente,
-                            testo: testo,
-                          ),
-                        );
-                      },
-                    ),
+            const SizedBox(height: 8),
+
+            Text(
+              'Prova a modificare i filtri o crea una nuova prenotazione.',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
+              ),
+            ),
+
+            const SizedBox(height: 22),
+
+            ElevatedButton.icon(
+              onPressed: apriDialogNuovaPrenotazione,
+              icon: const Icon(Icons.add),
+              label: const Text('Nuova prenotazione'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+              ),
+            ),
+          ],
+        ),
+      )
+    : Scrollbar(
+        controller: _scrollController,
+        thumbVisibility: true,
+        radius: const Radius.circular(10),
+        thickness: 7,
+        child: ListView.builder(
+          padding: EdgeInsets.zero,
+          controller: _scrollController,
+          primary: false,
+        physics: const ClampingScrollPhysics(),
+        itemExtent: 58,
+        itemCount: prenotazioniVisibili.length +
+            (caricamentoPaginaDb ? 1 : 0),
+        itemBuilder: (context, index) {
+          if (index >= prenotazioniVisibili.length) {
+            return const Padding(
+              padding: EdgeInsets.all(18),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+
+          final p = prenotazioniVisibili[index];
+
+          return SizedBox(
+            width: tableWidth,
+            child: PrenotazioneRow(
+              prenotazione: p,
+              tablet: tablet,
+              horizontalController: horizontalController,
+              selezionata:
+                  prenotazioneSelezionataId == p['id'],
+              onSeleziona: () {
+                setState(() {
+                  selectedRowIndex = index;
+                  prenotazioneSelezionataId =
+                      p['id'] as int?;
+                });
+
+                tableFocusNode.requestFocus();
+              },
+              onDoppioClick: () {
+                modificaPrenotazione(p);
+              },
+              onModifica: () => modificaPrenotazione(p),
+              onElimina: () => eliminaPrenotazione(p),
+              statoPrenotazione: statoPrenotazione,
+              nomeDiscente: nomeDiscente,
+              testo: testo,
+            ),
+          );
+        },
+      ),
                   ),
                 ),
+              ),
               ),
             ],
           ),
@@ -1397,24 +1475,24 @@ const SizedBox(height: 10),
   }
 }
 
-const double colDiscente = 180;
-const double colImpresa = 150;
-const double colCorso = 260;
-const double colData = 120;
+const double colDiscente = 240;
+const double colImpresa = 190;
+const double colCorso = 300;
+const double colData = 110;
 const double colProt = 90;
-const double colStato = 130;
-const double colAzioni = 150;
+const double colStato = 120;
+const double colAzioni = 110;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
   final bool tablet;
+  final ScrollController horizontalController;
 
   final bool selezionata;
   final VoidCallback onSeleziona;
 
   final VoidCallback onModifica;
   final VoidCallback onElimina;
-
   final VoidCallback onDoppioClick;
 
   final String Function(Map<String, dynamic>) statoPrenotazione;
@@ -1425,6 +1503,7 @@ class PrenotazioneRow extends StatefulWidget {
     super.key,
     required this.prenotazione,
     required this.tablet,
+    required this.horizontalController,
     required this.selezionata,
     required this.onSeleziona,
     required this.onModifica,
@@ -1463,7 +1542,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
     final effectiveColor = widget.selezionata
     ? const Color(0xFFDBEAFE)
     : hover
-        ? const Color(0xFFEFF6FF)
+        ? const Color(0xFFF8FBFF)
         : rowColor;
 
     return RepaintBoundary(
@@ -1475,113 +1554,187 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
           onDoubleTap: widget.onDoppioClick,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
-            height: 64,
+            height: 58,
             decoration: BoxDecoration(
               color: effectiveColor,
-              border: widget.selezionata
-                  ? const Border(
-                      left: BorderSide(
-                        color: Color(0xFF2563EB),
-                        width: 4,
-                      ),
-                    )
-                  : null,
+              border: const Border(
+                bottom: BorderSide(
+                  color: Color(0xFFF1F5F9),
+                  width: 1,
+                ),
+              ),
             ),
             padding: EdgeInsets.symmetric(
-              horizontal: widget.tablet ? 12 : 20,
+              horizontal: widget.tablet ? 10 : 16,
             ),
-          child: Row(
-            children: [
-              SizedBox(
-                width: colDiscente,
-                child: Text(
-                  widget.nomeDiscente(widget.prenotazione),
-                ),
-              ),
+            child: AnimatedBuilder(
+              animation: widget.horizontalController,
+              builder: (context, child) {
+                final offset = widget.horizontalController.hasClients
+                    ? widget.horizontalController.offset
+                    : 0.0;
 
-              SizedBox(
-                width: colImpresa,
-                child: Text(
-                  widget.testo(widget.prenotazione['impresa_nome']),
-                ),
-              ),
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Row(
+                      children: [
+                        const SizedBox(width: colDiscente),
 
-              SizedBox(
-                width: colCorso,
-                child: Text(
-                  widget.testo(widget.prenotazione['corso_nome']),
-                ),
-              ),
+                        SizedBox(
+                          width: colImpresa,
+                          child: Text(
+                            widget.testo(
+                              widget.prenotazione['impresa_nome'],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
 
-              SizedBox(
-                width: colData,
-                child: Text(
-                  widget.testo(widget.prenotazione['data']),
-                ),
-              ),
+                        SizedBox(
+                          width: colCorso,
+                          child: Text(
+                            widget.testo(
+                              widget.prenotazione['corso_nome'],
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
 
-              SizedBox(
-                width: colProt,
-                child: Text(
-                  widget.testo(widget.prenotazione['prot']),
-                ),
-              ),
+                        SizedBox(
+                          width: colData,
+                          child: Text(
+                            widget.testo(widget.prenotazione['data']),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
 
-              SizedBox(
-                width: colStato,
-                child: TableStatusBadge(
-                  status: stato,
-                ),
-              ),
+                        SizedBox(
+                          width: colProt,
+                          child: Text(
+                            widget.testo(widget.prenotazione['prot']),
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF111827),
+                            ),
+                          ),
+                        ),
 
-              SizedBox(
-  width: colAzioni,
-child: Wrap(
-  spacing: 2,
-  alignment: WrapAlignment.center,
-  children: [
-      IconButton(
-        tooltip: 'Modifica',
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(
-          minWidth: 28,
-          minHeight: 28,
-        ),
-        onPressed: widget.onModifica,
-        icon: const Icon(
-          Icons.edit,
-          size: 18,
-          color: Color(0xFF2563EB),
-        ),
-      ),
+                        SizedBox(
+                          width: colStato,
+                          child: TableStatusBadge(
+                            status: stato,
+                          ),
+                        ),
 
-      IconButton(
-        tooltip: 'Elimina',
-        padding: EdgeInsets.zero,
-        constraints: const BoxConstraints(
-          minWidth: 36,
-          minHeight: 36,
-        ),
-        onPressed: widget.onElimina,
-        icon: const Icon(
-          Icons.delete_outline,
-          size: 20,
-          color: Color(0xFFDC2626),
-        ),
-      ),
-    ],
-  ),
-),
-            ],
+                        SizedBox(
+                          width: colAzioni,
+                          child: Wrap(
+                            spacing: 0,
+                            alignment: WrapAlignment.center,
+                            children: [
+                              IconButton(
+                                tooltip: 'Modifica',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 24,
+                                  minHeight: 24,
+                                ),
+                                onPressed: widget.onModifica,
+                                icon: const Icon(
+                                  Icons.edit,
+                                  size: 18,
+                                  color: Color(0xFF2563EB),
+                                ),
+                              ),
+
+                              IconButton(
+                                tooltip: 'Elimina',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 36,
+                                  minHeight: 36,
+                                ),
+                                onPressed: widget.onElimina,
+                                icon: const Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Color(0xFFDC2626),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    Positioned(
+                      left: offset,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: colDiscente,
+                        color: effectiveColor ?? Colors.white,
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.only(
+                          left: 2,
+                          right: 14,
+                        ),
+                        child: Text(
+                          widget.nomeDiscente(widget.prenotazione),
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            height: 1.1,
+                            fontWeight: widget.selezionata
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                            color: const Color(0xFF111827),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    Positioned(
+                      left: offset + colDiscente - 1,
+                      top: 0,
+                      bottom: 0,
+                      child: Container(
+                        width: 1,
+                        color: const Color(0xFFF1F5F9),
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
+
 class PrenotazioneHeaderRow extends StatelessWidget {
   final bool tablet;
+  final ScrollController horizontalController;
 
   final Widget Function(
     String titolo,
@@ -1593,36 +1746,86 @@ class PrenotazioneHeaderRow extends StatelessWidget {
     super.key,
     required this.tablet,
     required this.headerBuilder,
+    required this.horizontalController,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 46,
-      color: const Color(0xFFF3F4F6),
-      padding: EdgeInsets.symmetric(
-        horizontal: tablet ? 12 : 20,
-      ),
-      child: Row(
-  children: [
-    headerBuilder('Discente', colDiscente, 'discente'),
-    headerBuilder('Impresa', colImpresa, 'impresa'),
-    headerBuilder('Corso', colCorso, 'corso'),
-    headerBuilder('Data', colData, 'data'),
-    headerBuilder('Prot.', colProt, 'prot'),
-    headerBuilder('Stato', colStato, 'stato'),
-
-    SizedBox(
-      width: colAzioni,
-      child: const Text(
-        'Azioni',
-        style: TextStyle(
-          fontWeight: FontWeight.w600,
+      height: 52,
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(
+          bottom: BorderSide(
+            color: Color(0xFFE5E7EB),
+            width: 1,
+          ),
         ),
       ),
-    ),
-  ],
-),
+      padding: EdgeInsets.symmetric(
+        horizontal: tablet ? 10 : 16,
+      ),
+      child: AnimatedBuilder(
+        animation: horizontalController,
+        builder: (context, child) {
+          final offset = horizontalController.hasClients
+              ? horizontalController.offset
+              : 0.0;
+
+          return Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Row(
+                children: [
+                  const SizedBox(width: colDiscente),
+                  headerBuilder('Impresa', colImpresa, 'impresa'),
+                  headerBuilder('Corso', colCorso, 'corso'),
+                  headerBuilder('Data', colData, 'data'),
+                  headerBuilder('Prot.', colProt, 'prot'),
+                  headerBuilder('Stato', colStato, 'stato'),
+
+                  SizedBox(
+                    width: colAzioni,
+                    child: const Text(
+                      'Azioni',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              Positioned(
+                left: offset,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: colDiscente,
+                  color: const Color(0xFFF3F4F6),
+                  alignment: Alignment.centerLeft,
+                  padding: const EdgeInsets.only(right: 12),
+                  child: headerBuilder(
+                    'Discente',
+                    colDiscente,
+                    'discente',
+                  ),
+                ),
+              ),
+
+              Positioned(
+                left: offset + colDiscente - 1,
+                top: 0,
+                bottom: 0,
+                child: Container(
+                  width: 1,
+                  color: const Color(0xFFD1D5DB),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }

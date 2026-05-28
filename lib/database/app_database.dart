@@ -1,6 +1,8 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class AppDatabase {
@@ -18,13 +20,23 @@ class AppDatabase {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 
-    final dbPath = await databaseFactory.getDatabasesPath();
+    final documentsDir =
+    await getApplicationDocumentsDirectory();
 
-    if (!Directory(dbPath).existsSync()) {
-      Directory(dbPath).createSync(recursive: true);
-    }
+final dbFolder = Directory(
+  join(documentsDir.path, 'database'),
+);
 
-    final path = join(dbPath, databaseName);
+if (!dbFolder.existsSync()) {
+  dbFolder.createSync(recursive: true);
+}
+
+final path = join(
+  dbFolder.path,
+  databaseName,
+);
+
+debugPrint('DATABASE PATH: $path');
 
     _database = await databaseFactory.openDatabase(
       path,

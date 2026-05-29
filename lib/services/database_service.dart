@@ -232,6 +232,40 @@ Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
   ]);
 }
 
+Future<int> chiudiPrenotazioniSelezionate(List<int> ids) async {
+  if (ids.isEmpty) return 0;
+
+  final db = await _db;
+
+  final placeholders = List.filled(ids.length, '?').join(',');
+
+  return await db.rawUpdate('''
+    UPDATE prenotazioni
+    SET
+      conferma = 1,
+      aperto = 0,
+      registro = 0
+    WHERE id IN ($placeholders)
+  ''', ids);
+}
+
+Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
+  if (ids.isEmpty) return 0;
+
+  final db = await _db;
+
+  final placeholders = List.filled(ids.length, '?').join(',');
+
+  return await db.rawUpdate('''
+    UPDATE prenotazioni
+    SET
+      conferma = 0,
+      aperto = 1,
+      registro = 0
+    WHERE id IN ($placeholders)
+  ''', ids);
+}
+
   Future<int> insertPrenotazione(Map<String, dynamic> dati) async {
     final db = await _db;
 

@@ -10,10 +10,7 @@ import '../widgets/section_card.dart';
 class DiscentiPage extends StatefulWidget {
   final String globalSearch;
 
-  const DiscentiPage({
-    super.key,
-    this.globalSearch = '',
-  });
+  const DiscentiPage({super.key, this.globalSearch = ''});
 
   @override
   State<DiscentiPage> createState() => _DiscentiPageState();
@@ -27,6 +24,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
   bool loading = true;
   int? sortColumnIndex;
   bool sortAscending = true;
+
+  int? discenteSelezionatoId;
 
   @override
   void initState() {
@@ -59,57 +58,65 @@ class _DiscentiPageState extends State<DiscentiPage> {
     }
   }
 
-void cercaDiscenti(String valore) {
-  final query = valore.toLowerCase().trim();
+  void cercaDiscenti(String valore) {
+    final query = valore.toLowerCase().trim();
 
-  setState(() {
-    if (query.isEmpty) {
-      discentiFiltrati = discenti;
-      return;
-    }
+    setState(() {
+      if (query.isEmpty) {
+        discentiFiltrati = discenti;
+        return;
+      }
 
-    discentiFiltrati = discenti.where((d) {
-      final nome = d.nome.toLowerCase();
-      final cognome = d.cognome.toLowerCase();
-      final nominativo = d.nominativoCompleto.toLowerCase();
-      final luogo = (d.luogoNascita ?? '').toLowerCase();
-      final data = (d.dataNascita ?? '').toLowerCase();
-      final codiceFiscale = (d.codiceFiscale ?? '').toLowerCase();
-      final impresa = (d.nomeImpresa ?? '').toLowerCase();
+      discentiFiltrati = discenti.where((d) {
+        final nome = d.nome.toLowerCase();
+        final cognome = d.cognome.toLowerCase();
+        final nominativo = d.nominativoCompleto.toLowerCase();
+        final luogo = (d.luogoNascita ?? '').toLowerCase();
+        final data = (d.dataNascita ?? '').toLowerCase();
+        final codiceFiscale = (d.codiceFiscale ?? '').toLowerCase();
+        final impresa = (d.nomeImpresa ?? '').toLowerCase();
 
-      return nome.contains(query) ||
-          cognome.contains(query) ||
-          nominativo.contains(query) ||
-          luogo.contains(query) ||
-          data.contains(query) ||
-          codiceFiscale.contains(query) ||
-          impresa.contains(query);
-    }).toList();
-  });
-}
+        return nome.contains(query) ||
+            cognome.contains(query) ||
+            nominativo.contains(query) ||
+            luogo.contains(query) ||
+            data.contains(query) ||
+            codiceFiscale.contains(query) ||
+            impresa.contains(query);
+      }).toList();
+    });
+  }
 
-void ordinaNominativo(int columnIndex, bool ascending) {
-  discentiFiltrati.sort((a, b) {
-    final nominativoA = a.nominativoCompleto.toLowerCase();
-    final nominativoB = b.nominativoCompleto.toLowerCase();
+  void ordinaNominativo(int columnIndex, bool ascending) {
+    discentiFiltrati.sort((a, b) {
+      final nominativoA = a.nominativoCompleto.toLowerCase();
+      final nominativoB = b.nominativoCompleto.toLowerCase();
 
-    final result = nominativoA.compareTo(nominativoB);
+      final result = nominativoA.compareTo(nominativoB);
 
-    return ascending ? result : -result;
-  });
+      return ascending ? result : -result;
+    });
 
-  setState(() {
-    sortColumnIndex = columnIndex;
-    sortAscending = ascending;
-  });
-}
+    setState(() {
+      sortColumnIndex = columnIndex;
+      sortAscending = ascending;
+    });
+  }
 
   Future<void> apriDialogDiscente({Discente? discente}) async {
     final nomeController = TextEditingController(text: discente?.nome ?? '');
-    final cognomeController = TextEditingController(text: discente?.cognome ?? '');
-    final luogoController = TextEditingController(text: discente?.luogoNascita ?? '');
-    final dataController = TextEditingController(text: discente?.dataNascita ?? '');
-    final cfController = TextEditingController(text: discente?.codiceFiscale ?? '');
+    final cognomeController = TextEditingController(
+      text: discente?.cognome ?? '',
+    );
+    final luogoController = TextEditingController(
+      text: discente?.luogoNascita ?? '',
+    );
+    final dataController = TextEditingController(
+      text: discente?.dataNascita ?? '',
+    );
+    final cfController = TextEditingController(
+      text: discente?.codiceFiscale ?? '',
+    );
 
     int? impresaId = discente?.impresaId;
 
@@ -133,8 +140,10 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        discente == null ? 'Nuovo discente' : 'Modifica discente',
-                        style: const TextStyle(
+                        discente == null
+                            ? 'Nuovo discente'
+                            : 'Modifica discente',
+                        style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF111827),
@@ -237,7 +246,9 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                               if (nome.isEmpty || cognome.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text('Nome e cognome sono obbligatori'),
+                                    content: Text(
+                                      'Nome e cognome sono obbligatori',
+                                    ),
                                   ),
                                 );
                                 return;
@@ -254,9 +265,13 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                               );
 
                               if (discente == null) {
-                                await DatabaseService.instance.insertDiscente(nuovoDiscente);
+                                await DatabaseService.instance.insertDiscente(
+                                  nuovoDiscente,
+                                );
                               } else {
-                                await DatabaseService.instance.updateDiscente(nuovoDiscente);
+                                await DatabaseService.instance.updateDiscente(
+                                  nuovoDiscente,
+                                );
                               }
 
                               if (!context.mounted) return;
@@ -306,9 +321,7 @@ void ordinaNominativo(int columnIndex, bool ascending) {
       builder: (context) {
         return AlertDialog(
           title: const Text('Elimina discente'),
-          content: Text(
-            'Vuoi eliminare ${discente.nominativoCompleto}?',
-          ),
+          content: Text('Vuoi eliminare ${discente.nominativoCompleto}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -336,9 +349,7 @@ void ordinaNominativo(int columnIndex, bool ascending) {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
     );
   }
 
@@ -396,7 +407,7 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                         children: [
                           const Expanded(
                             child: Text(
-                              'DataTable Discenti Enterprise',
+                              'Archivio Discenti',
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -447,14 +458,31 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                                           label: const Text('Discente'),
                                           onSort: ordinaNominativo,
                                         ),
-                                        const DataColumn(label: Text('Luogo nascita')),
-                                        const DataColumn(label: Text('Data nascita')),
-                                        const DataColumn(label: Text('Codice fiscale')),
-                                        const DataColumn(label: Text('Impresa')),
+                                        const DataColumn(
+                                          label: Text('Impresa'),
+                                        ),
+                                        const DataColumn(
+                                          label: Text('Codice fiscale'),
+                                        ),
+                                        const DataColumn(
+                                          label: Text('Data nascita'),
+                                        ),
                                         const DataColumn(label: Text('Azioni')),
                                       ],
                                       rows: discentiFiltrati.map((d) {
                                         return DataRow(
+                                          color:
+                                              WidgetStateProperty.resolveWith<
+                                                Color?
+                                              >((states) {
+                                                if (discenteSelezionatoId ==
+                                                    d.id) {
+                                                  return const Color(
+                                                    0xFFE0ECFF,
+                                                  );
+                                                }
+                                                return null;
+                                              }),
                                           cells: [
                                             const DataCell(
                                               Icon(
@@ -463,19 +491,42 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                                               ),
                                             ),
                                             DataCell(
-                                              Text(
-                                                d.nominativoCompleto,
-                                                style: const TextStyle(
-                                                  fontSize: 15,
-                                                  color: Color(0xFF111827),
-                                                  fontWeight: FontWeight.w600,
+                                              GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    discenteSelezionatoId =
+                                                        d.id;
+                                                  });
+                                                },
+                                                onDoubleTap: () =>
+                                                    apriDialogDiscente(
+                                                      discente: d,
+                                                    ),
+                                                child: Text(
+                                                  d.nominativoCompleto,
+                                                  style: TextStyle(
+                                                    fontSize: 15,
+                                                    color: const Color(
+                                                      0xFF111827,
+                                                    ),
+                                                    fontWeight:
+                                                        discenteSelezionatoId ==
+                                                            d.id
+                                                        ? FontWeight.w800
+                                                        : FontWeight.w600,
+                                                  ),
                                                 ),
                                               ),
                                             ),
-                                            DataCell(Text(testoVuoto(d.luogoNascita))),
-                                            DataCell(Text(testoVuoto(d.dataNascita))),
-                                            DataCell(Text(testoVuoto(d.codiceFiscale))),
-                                            DataCell(Text(testoVuoto(d.nomeImpresa))),
+                                            DataCell(
+                                              Text(testoVuoto(d.nomeImpresa)),
+                                            ),
+                                            DataCell(
+                                              Text(testoVuoto(d.codiceFiscale)),
+                                            ),
+                                            DataCell(
+                                              Text(testoVuoto(d.dataNascita)),
+                                            ),
                                             DataCell(
                                               Row(
                                                 children: [
@@ -485,9 +536,10 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                                                       Icons.edit_outlined,
                                                       color: Color(0xFF2563EB),
                                                     ),
-                                                    onPressed: () => apriDialogDiscente(
-                                                      discente: d,
-                                                    ),
+                                                    onPressed: () =>
+                                                        apriDialogDiscente(
+                                                          discente: d,
+                                                        ),
                                                   ),
                                                   IconButton(
                                                     tooltip: 'Elimina',
@@ -495,7 +547,8 @@ void ordinaNominativo(int columnIndex, bool ascending) {
                                                       Icons.delete_outline,
                                                       color: Color(0xFFDC2626),
                                                     ),
-                                                    onPressed: () => eliminaDiscente(d),
+                                                    onPressed: () =>
+                                                        eliminaDiscente(d),
                                                   ),
                                                 ],
                                               ),

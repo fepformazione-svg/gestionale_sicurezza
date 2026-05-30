@@ -89,7 +89,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     });
   }
 
-  String filtroLocale = 'tutte';
+  String filtroLocale = 'aperte';
 
   String colonnaOrdinata = '';
   bool ordineCrescente = true;
@@ -1463,6 +1463,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                               ),
                             ),
                           ),
+
                           if (prenotazioniSelezionateIds.isNotEmpty) ...[
                             ElevatedButton.icon(
                               onPressed: selezionaTutto,
@@ -1615,7 +1616,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                     primary: false,
                                                     physics:
                                                         const ClampingScrollPhysics(),
-                                                    itemExtent: 58,
+                                                    itemExtent: 48,
                                                     itemCount:
                                                         prenotazioniVisibili
                                                             .length +
@@ -1646,6 +1647,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                         child: PrenotazioneRow(
                                                           prenotazione: p,
                                                           tablet: tablet,
+
                                                           horizontalController:
                                                               horizontalController,
                                                           selezionata:
@@ -1857,12 +1859,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 }
 
 const double colDiscente = 240;
-const double colImpresa = 190;
-const double colCorso = 300;
+const double colImpresa = 180;
+const double colCorso = 320;
 const double colData = 110;
-const double colProt = 90;
-const double colStato = 120;
-const double colAzioni = 110;
+const double colProt = 80;
+const double colStato = 110;
+const double colAzioni = 90;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -1939,7 +1941,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
           onSecondaryTapDown: widget.onTastoDestro,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
-            height: 58,
+            height: 48,
             decoration: BoxDecoration(
               color: effectiveColor,
               border: const Border(

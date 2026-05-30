@@ -56,6 +56,39 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   Set<int> prenotazioniSelezionateIds = {};
   int? ultimoIndexSelezionato;
 
+  bool? get statoCheckboxHeader {
+    final idsVisibili = prenotazioniVisibili.map((p) => p['id'] as int).toSet();
+
+    if (idsVisibili.isEmpty) return false;
+
+    final selezionateVisibili = idsVisibili
+        .where((id) => prenotazioniSelezionateIds.contains(id))
+        .length;
+
+    if (selezionateVisibili == 0) return false;
+    if (selezionateVisibili == idsVisibili.length) return true;
+
+    return null;
+  }
+
+  void toggleSelezionaTutteVisibili() {
+    final idsVisibili = prenotazioniVisibili.map((p) => p['id'] as int).toSet();
+
+    if (idsVisibili.isEmpty) return;
+
+    setState(() {
+      final tutteGiaSelezionate = idsVisibili.every(
+        (id) => prenotazioniSelezionateIds.contains(id),
+      );
+
+      if (tutteGiaSelezionate) {
+        prenotazioniSelezionateIds.removeAll(idsVisibili);
+      } else {
+        prenotazioniSelezionateIds.addAll(idsVisibili);
+      }
+    });
+  }
+
   String filtroLocale = 'tutte';
 
   String colonnaOrdinata = '';
@@ -1492,6 +1525,9 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           headerBuilder: headerOrdinabile,
                                           horizontalController:
                                               horizontalController,
+                                          tutteSelezionate: statoCheckboxHeader,
+                                          onToggleSelezionaTutte:
+                                              toggleSelezionaTutteVisibili,
                                         ),
                                       ),
                                     ),
@@ -1912,6 +1948,9 @@ class PrenotazioneHeaderRow extends StatelessWidget {
   final bool tablet;
   final ScrollController horizontalController;
 
+  final bool? tutteSelezionate;
+  final VoidCallback onToggleSelezionaTutte;
+
   final Widget Function(String titolo, double larghezza, String colonna)
   headerBuilder;
 
@@ -1920,6 +1959,8 @@ class PrenotazioneHeaderRow extends StatelessWidget {
     required this.tablet,
     required this.headerBuilder,
     required this.horizontalController,
+    required this.tutteSelezionate,
+    required this.onToggleSelezionaTutte,
   });
 
   @override
@@ -1967,9 +2008,32 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                 child: Container(
                   width: colDiscente,
                   color: const Color(0xFFF3F4F6),
-                  alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(right: 12),
-                  child: headerBuilder('Discente', colDiscente, 'discente'),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 30,
+                        child: Transform.scale(
+                          scale: 0.90,
+                          child: Checkbox(
+                            value: tutteSelezionate,
+                            tristate: true,
+                            onChanged: (_) => onToggleSelezionaTutte(),
+                            materialTapTargetSize:
+                                MaterialTapTargetSize.shrinkWrap,
+                            visualDensity: VisualDensity.compact,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: headerBuilder(
+                          'Discente',
+                          colDiscente - 36,
+                          'discente',
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
 

@@ -31,17 +31,16 @@ class PrenotazioniPage extends StatefulWidget {
   @override
   State<PrenotazioniPage> createState() => _PrenotazioniPageState();
 }
- 
+
 class _PrenotazioniPageState extends State<PrenotazioniPage> {
+  final ScrollController _scrollController = ScrollController();
+  final ScrollController horizontalController = ScrollController();
+  final FocusNode ricercaFocusNode = FocusNode();
+  final TextEditingController ricercaController = TextEditingController();
 
-final ScrollController _scrollController = ScrollController();
-final ScrollController horizontalController = ScrollController();
-final FocusNode ricercaFocusNode = FocusNode();
-final TextEditingController ricercaController = TextEditingController();
-
-void notificaDatiModificati() {
-  widget.onDatiModificati?.call();
-}
+  void notificaDatiModificati() {
+    widget.onDatiModificati?.call();
+  }
 
   List<Map<String, dynamic>> prenotazioni = [];
   List<Map<String, dynamic>> prenotazioniFiltrate = [];
@@ -56,79 +55,79 @@ void notificaDatiModificati() {
 
   String filtroLocale = 'tutte';
 
-String colonnaOrdinata = '';
-bool ordineCrescente = true;
+  String colonnaOrdinata = '';
+  bool ordineCrescente = true;
 
   List<Map<String, dynamic>> get prenotazioniVisibili {
-  final filtroAttivo = filtroLocale;
-  final query = ricercaController.text.toLowerCase().trim();
+    final filtroAttivo = filtroLocale;
+    final query = ricercaController.text.toLowerCase().trim();
 
-  return prenotazioni.where((p) {
-    final stato = statoPrenotazione(p);
+    return prenotazioni.where((p) {
+      final stato = statoPrenotazione(p);
 
-    if (filtroAttivo == 'aperte' && stato != 'Aperto') return false;
-    if (filtroAttivo == 'registro' && stato != 'Registro') return false;
-    if (filtroAttivo == 'chiuse' && stato != 'Chiuso') return false;
-    if (filtroAttivo == 'da_fare' && stato != 'Da fare') return false;
+      if (filtroAttivo == 'aperte' && stato != 'Aperto') return false;
+      if (filtroAttivo == 'registro' && stato != 'Registro') return false;
+      if (filtroAttivo == 'chiuse' && stato != 'Chiuso') return false;
+      if (filtroAttivo == 'da_fare' && stato != 'Da fare') return false;
 
-    if (query.isEmpty) return true;
+      if (query.isEmpty) return true;
 
-    final discente = nomeDiscente(p).toLowerCase();
-    final impresa = testo(p['impresa_nome']).toLowerCase();
-    final corso = testo(p['corso_nome']).toLowerCase();
-    final data = testo(p['data']).toLowerCase();
-    final prot = testo(p['prot']).toLowerCase();
+      final discente = nomeDiscente(p).toLowerCase();
+      final impresa = testo(p['impresa_nome']).toLowerCase();
+      final corso = testo(p['corso_nome']).toLowerCase();
+      final data = testo(p['data']).toLowerCase();
+      final prot = testo(p['prot']).toLowerCase();
 
-    return discente.contains(query) ||
-        impresa.contains(query) ||
-        corso.contains(query) ||
-        data.contains(query) ||
-        prot.contains(query) ||
-        stato.toLowerCase().contains(query);
-  }).toList();
-}
-
-Future<void> caricaPrenotazioniIniziali() async {
-  setState(() {
-    loading = true;
-    caricamentoPaginaDb = true;
-    paginaDbCorrente = 0;
-    fineArchivioPrenotazioni = false;
-
-    prenotazioni.clear();
-    prenotazioniFiltrate.clear();
-  });
-
-  try {
-    final dati = await DatabaseService.instance.getPrenotazioniPaged(
-      limit: righePerPaginaDb,
-      offset: 0,
-    );
-
-    setState(() {
-      prenotazioni = dati;
-      prenotazioniFiltrate = dati;
-
-      paginaDbCorrente = 1;
-
-      if (dati.length < righePerPaginaDb) {
-        fineArchivioPrenotazioni = true;
-      }
-    });
-  } catch (e) {
-    debugPrint('ERRORE caricaPrenotazioniIniziali: $e');
-  } finally {
-    setState(() {
-      loading = false;
-      caricamentoPaginaDb = false;
-    });
+      return discente.contains(query) ||
+          impresa.contains(query) ||
+          corso.contains(query) ||
+          data.contains(query) ||
+          prot.contains(query) ||
+          stato.toLowerCase().contains(query);
+    }).toList();
   }
-}
 
-bool loading = true;
+  Future<void> caricaPrenotazioniIniziali() async {
+    setState(() {
+      loading = true;
+      caricamentoPaginaDb = true;
+      paginaDbCorrente = 0;
+      fineArchivioPrenotazioni = false;
 
-final FocusNode tableFocusNode = FocusNode();
-int? selectedRowIndex;
+      prenotazioni.clear();
+      prenotazioniFiltrate.clear();
+    });
+
+    try {
+      final dati = await DatabaseService.instance.getPrenotazioniPaged(
+        limit: righePerPaginaDb,
+        offset: 0,
+      );
+
+      setState(() {
+        prenotazioni = dati;
+        prenotazioniFiltrate = dati;
+
+        paginaDbCorrente = 1;
+
+        if (dati.length < righePerPaginaDb) {
+          fineArchivioPrenotazioni = true;
+        }
+      });
+    } catch (e) {
+      debugPrint('ERRORE caricaPrenotazioniIniziali: $e');
+    } finally {
+      setState(() {
+        loading = false;
+        caricamentoPaginaDb = false;
+      });
+    }
+  }
+
+  bool loading = true;
+
+  final FocusNode tableFocusNode = FocusNode();
+  int? selectedRowIndex;
 
   int? sortColumnIndex;
   bool sortAscending = true;
@@ -148,250 +147,244 @@ int? selectedRowIndex;
     });
 
     ricercaFocusNode.onKeyEvent = (node, event) {
-  if (event is KeyDownEvent &&
-      event.logicalKey == LogicalKeyboardKey.escape) {
-    ricercaController.text = '';
-    ricercaController.selection = const TextSelection.collapsed(offset: 0);
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.escape) {
+        ricercaController.text = '';
+        ricercaController.selection = const TextSelection.collapsed(offset: 0);
 
-    setState(() {
-      prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
-      selectedRowIndex = 0;
-      prenotazioneSelezionataId =
-          prenotazioniFiltrate.isNotEmpty
+        setState(() {
+          prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
+          selectedRowIndex = 0;
+          prenotazioneSelezionataId = prenotazioniFiltrate.isNotEmpty
               ? prenotazioniFiltrate.first['id'] as int?
               : null;
-    });
+        });
 
-    tableFocusNode.requestFocus();
-    scrollToSelectedRow();
+        tableFocusNode.requestFocus();
+        scrollToSelectedRow();
 
-    return KeyEventResult.handled;
-  }
+        return KeyEventResult.handled;
+      }
 
-  if (event is KeyDownEvent &&
-      event.logicalKey == LogicalKeyboardKey.arrowDown) {
-    setState(() {
-      selectedRowIndex = 0;
-      prenotazioneSelezionataId =
-          prenotazioniVisibili.isNotEmpty
+      if (event is KeyDownEvent &&
+          event.logicalKey == LogicalKeyboardKey.arrowDown) {
+        setState(() {
+          selectedRowIndex = 0;
+          prenotazioneSelezionataId = prenotazioniVisibili.isNotEmpty
               ? prenotazioniVisibili.first['id'] as int?
               : null;
+        });
+
+        tableFocusNode.requestFocus();
+        scrollToSelectedRow();
+
+        return KeyEventResult.handled;
+      }
+
+      return KeyEventResult.ignored;
+    };
+
+    caricaPrenotazioniIniziali();
+
+    _scrollController.addListener(() {
+      if (_scrollController.position.pixels >=
+          _scrollController.position.maxScrollExtent - 200) {
+        caricaAltrePrenotazioni();
+      }
     });
-
-    tableFocusNode.requestFocus();
-    scrollToSelectedRow();
-
-    return KeyEventResult.handled;
   }
-
-  return KeyEventResult.ignored;
-};
-
-  caricaPrenotazioniIniziali();
-
-  _scrollController.addListener(() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      caricaAltrePrenotazioni();
-    }
-  });
-}
-@override
-void dispose() {
-  tableFocusNode.dispose();
-  _scrollController.dispose();
-  horizontalController.dispose();
-  super.dispose();
-}
-void gestisciTasti(RawKeyEvent event) async {
-  if (event is! RawKeyDownEvent) return;
-
-  if (event.isControlPressed &&
-    event.logicalKey == LogicalKeyboardKey.keyF) {
-
-  ricercaFocusNode.requestFocus();
-
-  ricercaController.selection = TextSelection(
-    baseOffset: 0,
-    extentOffset: ricercaController.text.length,
-  );
-
-  return;
-}
-
-// CTRL + N
-if (event.isControlPressed &&
-    event.logicalKey == LogicalKeyboardKey.keyN) {
-  apriDialogNuovaPrenotazione();
-  return;
-}
-
-// CTRL + E
-if (event.isControlPressed &&
-    event.logicalKey == LogicalKeyboardKey.keyE) {
-  exportPrenotazioniExcel();
-  return;
-}
-  
-  if (event.logicalKey == LogicalKeyboardKey.escape) {
-  tableFocusNode.requestFocus();
-  return;
-  }
-
-  if (prenotazioniVisibili.isEmpty) return;
-
-  int nuovoIndex = selectedRowIndex ?? 0;
-
-  if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
-    if (nuovoIndex < prenotazioniVisibili.length - 1) {
-      nuovoIndex++;
-    }
-  }
-
-  if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
-    if (nuovoIndex > 0) {
-      nuovoIndex--;
-    }
-  }
-
-  final p = prenotazioniVisibili[nuovoIndex];
-
-if (event.logicalKey == LogicalKeyboardKey.enter ||
-    event.logicalKey == LogicalKeyboardKey.numpadEnter) {
-  modificaPrenotazione(p);
-  return;
-}
-
-// F2
-if (event.logicalKey == LogicalKeyboardKey.f2) {
-  modificaPrenotazione(p);
-  return;
-}
-
-// DEL
-if (event.logicalKey == LogicalKeyboardKey.delete) {
-  eliminaPrenotazione(p);
-  return;
-}
-
-// SPACE = cambia stato
-if (event.logicalKey == LogicalKeyboardKey.space) {
-  debugPrint('SPACE PREMUTO');
-  
-  final id = p['id'];
-  final stato = statoPrenotazione(p);
-
-  int nuovoAperto = 0;
-  int nuovoRegistro = 0;
-  int nuovoConferma = 0;
-
-  if (stato == 'Da fare') {
-    nuovoAperto = 1;
-  } else if (stato == 'Aperto') {
-    nuovoRegistro = 1;
-  } else if (stato == 'Registro') {
-    nuovoConferma = 1;
-  }
-
-  setState(() {
-  prenotazioni = prenotazioni.map((item) {
-    if (item['id'] == id) {
-      return {
-        ...item,
-        'aperto': nuovoAperto,
-        'registro': nuovoRegistro,
-        'conferma': nuovoConferma,
-      };
-    }
-    return item;
-  }).toList();
-
-  prenotazioniFiltrate = prenotazioniFiltrate.map((item) {
-    if (item['id'] == id) {
-      return {
-        ...item,
-        'aperto': nuovoAperto,
-        'registro': nuovoRegistro,
-        'conferma': nuovoConferma,
-      };
-    }
-    return item;
-  }).toList();
-});
-
-await DatabaseService.instance.aggiornaStatoPrenotazione(
-  id: id,
-  aperto: nuovoAperto,
-  registro: nuovoRegistro,
-  conferma: nuovoConferma,
-);
-
-notificaDatiModificati();
-
-  return;
-}
-
-  setState(() {
-    selectedRowIndex = nuovoIndex;
-    prenotazioneSelezionataId = p['id'] as int?;
-  });
-
-  Future.delayed(Duration.zero, () {
-  tableFocusNode.requestFocus();
-  scrollToSelectedRow();
-});
-}
-
-void scrollToSelectedRow() {
-  if (selectedRowIndex == null) return;
-  if (!_scrollController.hasClients) return;
-
-  final targetOffset = selectedRowIndex! * 64.0;
-
-  _scrollController.animateTo(
-    targetOffset,
-    duration: const Duration(milliseconds: 120),
-    curve: Curves.easeOut,
-  );
-}
-
-Future<void> caricaAltrePrenotazioni() async {
-  if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
-
-  setState(() {
-    caricamentoPaginaDb = true;
-  });
-
-  final dati = await DatabaseService.instance.getPrenotazioniPaged(
-    limit: righePerPaginaDb,
-    offset: paginaDbCorrente * righePerPaginaDb,
-  );
-
-  setState(() {
-    prenotazioni.addAll(dati);
-    prenotazioniFiltrate = prenotazioni;
-
-    paginaDbCorrente++;
-
-    caricamentoPaginaDb = false;
-
-    if (dati.length < righePerPaginaDb) {
-      fineArchivioPrenotazioni = true;
-    }
-  });
-}
 
   @override
-void didUpdateWidget(
-  covariant PrenotazioniPage oldWidget,
-) {
-  super.didUpdateWidget(oldWidget);
-
-  if (oldWidget.globalSearch != widget.globalSearch ||
-      oldWidget.filtro != widget.filtro) {
-    cercaPrenotazioni(widget.globalSearch);
+  void dispose() {
+    tableFocusNode.dispose();
+    _scrollController.dispose();
+    horizontalController.dispose();
+    super.dispose();
   }
-}
+
+  void gestisciTasti(RawKeyEvent event) async {
+    if (event is! RawKeyDownEvent) return;
+
+    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyF) {
+      ricercaFocusNode.requestFocus();
+
+      ricercaController.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: ricercaController.text.length,
+      );
+
+      return;
+    }
+
+    // CTRL + N
+    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyN) {
+      apriDialogNuovaPrenotazione();
+      return;
+    }
+
+    // CTRL + E
+    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyE) {
+      exportPrenotazioniExcel();
+      return;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.escape) {
+      tableFocusNode.requestFocus();
+      return;
+    }
+
+    if (prenotazioniVisibili.isEmpty) return;
+
+    int nuovoIndex = selectedRowIndex ?? 0;
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+      if (nuovoIndex < prenotazioniVisibili.length - 1) {
+        nuovoIndex++;
+      }
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+      if (nuovoIndex > 0) {
+        nuovoIndex--;
+      }
+    }
+
+    final p = prenotazioniVisibili[nuovoIndex];
+
+    if (event.logicalKey == LogicalKeyboardKey.enter ||
+        event.logicalKey == LogicalKeyboardKey.numpadEnter) {
+      modificaPrenotazione(p);
+      return;
+    }
+
+    // F2
+    if (event.logicalKey == LogicalKeyboardKey.f2) {
+      modificaPrenotazione(p);
+      return;
+    }
+
+    // DEL
+    if (event.logicalKey == LogicalKeyboardKey.delete) {
+      eliminaPrenotazione(p);
+      return;
+    }
+
+    // SPACE = cambia stato
+    if (event.logicalKey == LogicalKeyboardKey.space) {
+      debugPrint('SPACE PREMUTO');
+
+      final id = p['id'];
+      final stato = statoPrenotazione(p);
+
+      int nuovoAperto = 0;
+      int nuovoRegistro = 0;
+      int nuovoConferma = 0;
+
+      if (stato == 'Da fare') {
+        nuovoAperto = 1;
+      } else if (stato == 'Aperto') {
+        nuovoRegistro = 1;
+      } else if (stato == 'Registro') {
+        nuovoConferma = 1;
+      }
+
+      setState(() {
+        prenotazioni = prenotazioni.map((item) {
+          if (item['id'] == id) {
+            return {
+              ...item,
+              'aperto': nuovoAperto,
+              'registro': nuovoRegistro,
+              'conferma': nuovoConferma,
+            };
+          }
+          return item;
+        }).toList();
+
+        prenotazioniFiltrate = prenotazioniFiltrate.map((item) {
+          if (item['id'] == id) {
+            return {
+              ...item,
+              'aperto': nuovoAperto,
+              'registro': nuovoRegistro,
+              'conferma': nuovoConferma,
+            };
+          }
+          return item;
+        }).toList();
+      });
+
+      await DatabaseService.instance.aggiornaStatoPrenotazione(
+        id: id,
+        aperto: nuovoAperto,
+        registro: nuovoRegistro,
+        conferma: nuovoConferma,
+      );
+
+      notificaDatiModificati();
+
+      return;
+    }
+
+    setState(() {
+      selectedRowIndex = nuovoIndex;
+      prenotazioneSelezionataId = p['id'] as int?;
+    });
+
+    Future.delayed(Duration.zero, () {
+      tableFocusNode.requestFocus();
+      scrollToSelectedRow();
+    });
+  }
+
+  void scrollToSelectedRow() {
+    if (selectedRowIndex == null) return;
+    if (!_scrollController.hasClients) return;
+
+    final targetOffset = selectedRowIndex! * 64.0;
+
+    _scrollController.animateTo(
+      targetOffset,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeOut,
+    );
+  }
+
+  Future<void> caricaAltrePrenotazioni() async {
+    if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
+
+    setState(() {
+      caricamentoPaginaDb = true;
+    });
+
+    final dati = await DatabaseService.instance.getPrenotazioniPaged(
+      limit: righePerPaginaDb,
+      offset: paginaDbCorrente * righePerPaginaDb,
+    );
+
+    setState(() {
+      prenotazioni.addAll(dati);
+      prenotazioniFiltrate = prenotazioni;
+
+      paginaDbCorrente++;
+
+      caricamentoPaginaDb = false;
+
+      if (dati.length < righePerPaginaDb) {
+        fineArchivioPrenotazioni = true;
+      }
+    });
+  }
+
+  @override
+  void didUpdateWidget(covariant PrenotazioniPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.globalSearch != widget.globalSearch ||
+        oldWidget.filtro != widget.filtro) {
+      cercaPrenotazioni(widget.globalSearch);
+    }
+  }
 
   String testo(dynamic value) {
     return (value ?? '').toString();
@@ -415,178 +408,176 @@ void didUpdateWidget(
     return 'Da fare';
   }
 
-void ordinaPrenotazioni(String colonna) {
-  setState(() {
-    if (colonnaOrdinata == colonna) {
-      ordineCrescente = !ordineCrescente;
-    } else {
-      colonnaOrdinata = colonna;
-      ordineCrescente = true;
-    }
-
-    int confronta(Map<String, dynamic> a, Map<String, dynamic> b) {
-      int confronto = 0;
-
-      switch (colonna) {
-        case 'discente':
-          confronto = nomeDiscente(a)
-              .toLowerCase()
-              .compareTo(nomeDiscente(b).toLowerCase());
-          break;
-
-        case 'impresa':
-          confronto = testo(a['impresa_nome'])
-              .toLowerCase()
-              .compareTo(testo(b['impresa_nome']).toLowerCase());
-          break;
-
-        case 'corso':
-          confronto = testo(a['corso_nome'])
-              .toLowerCase()
-              .compareTo(testo(b['corso_nome']).toLowerCase());
-          break;
-
-        case 'data':
-          confronto = numeroData(a['data']).compareTo(numeroData(b['data']));
-          break;
-
-        case 'prot':
-          confronto = testo(a['prot']).compareTo(testo(b['prot']));
-          break;
-
-        case 'stato':
-          confronto = statoPrenotazione(a)
-              .toLowerCase()
-              .compareTo(statoPrenotazione(b).toLowerCase());
-          break;
-      }
-
-      return ordineCrescente ? confronto : -confronto;
-    }
-
-    prenotazioniFiltrate.sort(confronta);
-    prenotazioni.sort(confronta);
-
-    selectedRowIndex = null;
-    prenotazioneSelezionataId = null;
-  });
-}
-
-DateTime dataOrdinabile(dynamic valore) {
-  if (valore == null) {
-    return DateTime(1900);
-  }
-
-  final dataTesto = valore.toString().trim();
-
-  if (dataTesto.isEmpty) {
-    return DateTime(1900);
-  }
-
-  try {
-    return DateTime.parse(dataTesto);
-  } catch (_) {
-    return DateTime(1900);
-  }
-}
-
-int numeroData(dynamic valore) {
-  final testoData = valore.toString().trim();
-
-  final parti = testoData.split('/');
-
-  if (parti.length != 3) {
-    return 0;
-  }
-
-  final giorno = int.tryParse(parti[0]) ?? 0;
-  final mese = int.tryParse(parti[1]) ?? 0;
-  final anno = int.tryParse(parti[2]) ?? 0;
-
-  return anno * 10000 + mese * 100 + giorno;
-}
-  
-Map<String, dynamic> normalizzaPrenotazione(
-  Map<String, dynamic> dati,
-) {
-  return {
-    'discente_id': dati['discente_id'],
-    'impresa_id': dati['impresa_id'],
-    'corso_id': dati['corso_id'],
-    'data': testo(dati['data']).trim(),
-    'prot': testo(dati['prot']).trim(),
-    'aperto': dati['aperto'] == 1 ? 1 : 0,
-    'conferma': dati['conferma'] == 1 ? 1 : 0,
-    'registro': dati['registro'] == 1 ? 1 : 0,
-  };
-}
-
-Future<void> caricaPrenotazioni() async {
-  setState(() {
-    loading = true;
-    paginaDbCorrente = 0;
-    fineArchivioPrenotazioni = false;
-    prenotazioni = [];
-    prenotazioniFiltrate = [];
-  });
-
-  await caricaPaginaPrenotazioni(reset: true);
-}
-
-Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
-  if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
-
-  setState(() {
-    caricamentoPaginaDb = true;
-  });
-
-  try {
-    final offset = paginaDbCorrente * righePerPaginaDb;
-
-    final dati = await DatabaseService.instance.getPrenotazioniPaged(
-      limit: righePerPaginaDb,
-      offset: offset,
-    );
-
+  void ordinaPrenotazioni(String colonna) {
     setState(() {
-      if (reset) {
-        prenotazioni.clear();
+      if (colonnaOrdinata == colonna) {
+        ordineCrescente = !ordineCrescente;
+      } else {
+        colonnaOrdinata = colonna;
+        ordineCrescente = true;
       }
 
-      prenotazioni.addAll(dati);
-      prenotazioniFiltrate = List.from(prenotazioni);
+      int confronta(Map<String, dynamic> a, Map<String, dynamic> b) {
+        int confronto = 0;
 
-      paginaDbCorrente++;
+        switch (colonna) {
+          case 'discente':
+            confronto = nomeDiscente(
+              a,
+            ).toLowerCase().compareTo(nomeDiscente(b).toLowerCase());
+            break;
 
-      if (dati.length < righePerPaginaDb) {
-        fineArchivioPrenotazioni = true;
+          case 'impresa':
+            confronto = testo(
+              a['impresa_nome'],
+            ).toLowerCase().compareTo(testo(b['impresa_nome']).toLowerCase());
+            break;
+
+          case 'corso':
+            confronto = testo(
+              a['corso_nome'],
+            ).toLowerCase().compareTo(testo(b['corso_nome']).toLowerCase());
+            break;
+
+          case 'data':
+            confronto = numeroData(a['data']).compareTo(numeroData(b['data']));
+            break;
+
+          case 'prot':
+            confronto = testo(a['prot']).compareTo(testo(b['prot']));
+            break;
+
+          case 'stato':
+            confronto = statoPrenotazione(
+              a,
+            ).toLowerCase().compareTo(statoPrenotazione(b).toLowerCase());
+            break;
+        }
+
+        return ordineCrescente ? confronto : -confronto;
       }
 
-      caricamentoPaginaDb = false;
-      loading = false;
+      prenotazioniFiltrate.sort(confronta);
+      prenotazioni.sort(confronta);
+
+      selectedRowIndex = null;
+      prenotazioneSelezionataId = null;
+    });
+  }
+
+  DateTime dataOrdinabile(dynamic valore) {
+    if (valore == null) {
+      return DateTime(1900);
+    }
+
+    final dataTesto = valore.toString().trim();
+
+    if (dataTesto.isEmpty) {
+      return DateTime(1900);
+    }
+
+    try {
+      return DateTime.parse(dataTesto);
+    } catch (_) {
+      return DateTime(1900);
+    }
+  }
+
+  int numeroData(dynamic valore) {
+    final testoData = valore.toString().trim();
+
+    final parti = testoData.split('/');
+
+    if (parti.length != 3) {
+      return 0;
+    }
+
+    final giorno = int.tryParse(parti[0]) ?? 0;
+    final mese = int.tryParse(parti[1]) ?? 0;
+    final anno = int.tryParse(parti[2]) ?? 0;
+
+    return anno * 10000 + mese * 100 + giorno;
+  }
+
+  Map<String, dynamic> normalizzaPrenotazione(Map<String, dynamic> dati) {
+    return {
+      'discente_id': dati['discente_id'],
+      'impresa_id': dati['impresa_id'],
+      'corso_id': dati['corso_id'],
+      'data': testo(dati['data']).trim(),
+      'prot': testo(dati['prot']).trim(),
+      'aperto': dati['aperto'] == 1 ? 1 : 0,
+      'conferma': dati['conferma'] == 1 ? 1 : 0,
+      'registro': dati['registro'] == 1 ? 1 : 0,
+    };
+  }
+
+  Future<void> caricaPrenotazioni() async {
+    setState(() {
+      loading = true;
+      paginaDbCorrente = 0;
+      fineArchivioPrenotazioni = false;
+      prenotazioni = [];
+      prenotazioniFiltrate = [];
     });
 
-    if (widget.globalSearch.trim().isNotEmpty) {
-      cercaPrenotazioni(widget.globalSearch);
-    }
-  } catch (e) {
+    await caricaPaginaPrenotazioni(reset: true);
+  }
+
+  Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
+    if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
+
     setState(() {
-      caricamentoPaginaDb = false;
-      loading = false;
+      caricamentoPaginaDb = true;
     });
 
-    debugPrint('Errore caricamento prenotazioni paged: $e');
+    try {
+      final offset = paginaDbCorrente * righePerPaginaDb;
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Errore caricamento prenotazioni: $e'),
-          backgroundColor: Colors.red,
-        ),
+      final dati = await DatabaseService.instance.getPrenotazioniPaged(
+        limit: righePerPaginaDb,
+        offset: offset,
       );
+
+      setState(() {
+        if (reset) {
+          prenotazioni.clear();
+        }
+
+        prenotazioni.addAll(dati);
+        prenotazioniFiltrate = List.from(prenotazioni);
+
+        paginaDbCorrente++;
+
+        if (dati.length < righePerPaginaDb) {
+          fineArchivioPrenotazioni = true;
+        }
+
+        caricamentoPaginaDb = false;
+        loading = false;
+      });
+
+      if (widget.globalSearch.trim().isNotEmpty) {
+        cercaPrenotazioni(widget.globalSearch);
+      }
+    } catch (e) {
+      setState(() {
+        caricamentoPaginaDb = false;
+        loading = false;
+      });
+
+      debugPrint('Errore caricamento prenotazioni paged: $e');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Errore caricamento prenotazioni: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
-}
 
   void cercaPrenotazioni(String valore) {
     final query = valore.toLowerCase().trim();
@@ -652,24 +643,22 @@ Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
     try {
       final datiPuliti = normalizzaPrenotazione(nuovaPrenotazione);
 
-      final nuovoId =
-          await DatabaseService.instance.insertPrenotazione(datiPuliti);
+      final nuovoId = await DatabaseService.instance.insertPrenotazione(
+        datiPuliti,
+      );
 
-            if (datiPuliti['conferma'] == 1) {
-        await DatabaseService.instance
-            .confermaPrenotazioneWorkflow(nuovoId);
+      if (datiPuliti['conferma'] == 1) {
+        await DatabaseService.instance.confermaPrenotazioneWorkflow(nuovoId);
       }
 
       await caricaPrenotazioni();
       notificaDatiModificati();
-      
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Prenotazione salvata'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Prenotazione salvata')));
     } catch (e) {
       if (!mounted) return;
 
@@ -682,52 +671,42 @@ Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
     }
   }
 
-  Future<void> modificaPrenotazione(
-    Map<String, dynamic> prenotazione,
-  ) async {
-    final prenotazioneModificata =
-        await showDialog<Map<String, dynamic>>(
+  Future<void> modificaPrenotazione(Map<String, dynamic> prenotazione) async {
+    final prenotazioneModificata = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (context) {
-        return PrenotazioneDialog(
-          prenotazione: prenotazione,
-        );
+        return PrenotazioneDialog(prenotazione: prenotazione);
       },
     );
 
     if (prenotazioneModificata == null) return;
 
     try {
-      final datiPuliti =
-          normalizzaPrenotazione(prenotazioneModificata);
+      final datiPuliti = normalizzaPrenotazione(prenotazioneModificata);
 
       await DatabaseService.instance.updatePrenotazione(
         prenotazione['id'],
         datiPuliti,
       );
 
-            if (datiPuliti['conferma'] == 1) {
-        await DatabaseService.instance
-            .confermaPrenotazioneWorkflow(
+      if (datiPuliti['conferma'] == 1) {
+        await DatabaseService.instance.confermaPrenotazioneWorkflow(
           prenotazione['id'],
         );
       } else {
-        await DatabaseService.instance
-            .annullaConfermaPrenotazioneWorkflow(
+        await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(
           prenotazione['id'],
         );
       }
 
       await caricaPrenotazioni();
       notificaDatiModificati();
-      
+
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Prenotazione aggiornata'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Prenotazione aggiornata')));
     } catch (e) {
       if (!mounted) return;
 
@@ -740,17 +719,13 @@ Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
     }
   }
 
-  Future<void> eliminaPrenotazione(
-    Map<String, dynamic> prenotazione,
-  ) async {
+  Future<void> eliminaPrenotazione(Map<String, dynamic> prenotazione) async {
     final conferma = await showDialog<bool>(
       context: context,
       builder: (context) {
         return AlertDialog(
           title: const Text('Elimina prenotazione'),
-          content: Text(
-            'Eliminare ${nomeDiscente(prenotazione)}?',
-          ),
+          content: Text('Eliminare ${nomeDiscente(prenotazione)}?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -771,313 +746,279 @@ Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
 
     if (conferma != true) return;
 
-    await DatabaseService.instance.deletePrenotazione(
-      prenotazione['id'],
-    );
+    await DatabaseService.instance.deletePrenotazione(prenotazione['id']);
 
     await caricaPrenotazioni();
   }
-Widget filtroChip({
-  required String titolo,
-  required String filtro,
-  required Color colore,
-}) {
-  final attivo =
-    (filtroLocale.isNotEmpty
-        ? filtroLocale
-        : widget.filtro) == filtro;
 
-  return InkWell(
-    borderRadius: BorderRadius.circular(14),
-    onTap: () {
-  setState(() {
-    filtroLocale = filtro;
-     });
-},
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      padding: const EdgeInsets.symmetric(
-        horizontal: 18,
-        vertical: 12,
-      ),
-      decoration: BoxDecoration(
-        color: attivo ? colore.withOpacity(0.12) : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(
-          color: attivo ? colore : Colors.grey.shade300,
-          width: attivo ? 1.8 : 1,
+  Widget filtroChip({
+    required String titolo,
+    required String filtro,
+    required Color colore,
+  }) {
+    final attivo =
+        (filtroLocale.isNotEmpty ? filtroLocale : widget.filtro) == filtro;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        setState(() {
+          filtroLocale = filtro;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+        decoration: BoxDecoration(
+          color: attivo ? colore.withOpacity(0.12) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: attivo ? colore : Colors.grey.shade300,
+            width: attivo ? 1.8 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(color: colore, shape: BoxShape.circle),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              titolo,
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: attivo ? colore : Colors.grey.shade800,
+              ),
+            ),
+          ],
         ),
       ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 10,
-            height: 10,
-            decoration: BoxDecoration(
-              color: colore,
-              shape: BoxShape.circle,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            titolo,
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              color: attivo ? colore : Colors.grey.shade800,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-Widget compactKpiCard({
-  required String titolo,
-  required String valore,
-  required Color colore,
-  required String filtro,
-}) {
-  final attivo =
-      (filtroLocale.isNotEmpty
-          ? filtroLocale
-          : widget.filtro) == filtro;
-
-  return InkWell(
-    borderRadius: BorderRadius.circular(18),
-    onTap: () {
-      setState(() {
-        filtroLocale = filtro;
-             });
-    },
-    child: AnimatedContainer(
-      duration: const Duration(milliseconds: 180),
-      width: 150,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: attivo
-              ? colore
-              : Colors.grey.shade300,
-          width: attivo ? 1.8 : 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-
-          Container(
-            width: 12,
-            height: 12,
-            decoration: BoxDecoration(
-              color: colore,
-              shape: BoxShape.circle,
-            ),
-          ),
-
-          const SizedBox(height: 14),
-
-          Text(
-            valore,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: colore,
-            ),
-          ),
-
-          const SizedBox(height: 4),
-
-          Text(
-            titolo,
-            style: TextStyle(
-              color: Colors.grey.shade700,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
-}
-Future<void> exportPrenotazioniExcel() async {
-  final excel = Excel.createExcel();
-
-  final sheet = excel['Prenotazioni'];
-
-  // HEADER
-  sheet.appendRow([
-    TextCellValue('Discente'),
-    TextCellValue('Impresa'),
-    TextCellValue('Corso'),
-    TextCellValue('Data'),
-    TextCellValue('Protocollo'),
-    TextCellValue('Stato'),
-  ]);
-
-  // DATI
-  for (final p in prenotazioniVisibili) {
-    sheet.appendRow([
-      TextCellValue(nomeDiscente(p)),
-      TextCellValue(testo(p['impresa_nome'])),
-      TextCellValue(testo(p['corso_nome'])),
-      TextCellValue(testo(p['data'])),
-      TextCellValue(testo(p['prot'])),
-      TextCellValue(statoPrenotazione(p)),
-    ]);
+    );
   }
 
-  final directory = await getApplicationDocumentsDirectory();
+  Widget compactKpiCard({
+    required String titolo,
+    required String valore,
+    required Color colore,
+    required String filtro,
+  }) {
+    final attivo =
+        (filtroLocale.isNotEmpty ? filtroLocale : widget.filtro) == filtro;
 
-  final path =
-      '${directory.path}/prenotazioni_export.xlsx';
-
-  final fileBytes = excel.encode();
-
-  if (fileBytes == null) return;
-
-  final file = File(path)
-    ..createSync(recursive: true)
-    ..writeAsBytesSync(fileBytes);
-
-  await OpenFile.open(file.path);
-}
-Future<void> esportaPdf() async {
-  final pdf = pw.Document();
-
-  pdf.addPage(
-    pw.MultiPage(
-      pageFormat: PdfPageFormat.a4.landscape,
-      build: (context) => [
-        pw.Text(
-          'PRENOTAZIONI',
-          style: pw.TextStyle(
-            fontSize: 22,
-            fontWeight: pw.FontWeight.bold,
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: () {
+        setState(() {
+          filtroLocale = filtro;
+        });
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        width: 150,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: attivo ? colore : Colors.grey.shade300,
+            width: attivo ? 1.8 : 1,
           ),
-        ),
-
-        pw.SizedBox(height: 20),
-
-        pw.Table.fromTextArray(
-          headers: [
-            'Discente',
-            'Impresa',
-            'Corso',
-            'Data',
-            'Prot.',
-            'Stato',
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
           ],
-
-          data: prenotazioniVisibili.map((p) {
-            return [
-              nomeDiscente(p),
-              testo(p['impresa_nome']),
-              testo(p['corso_nome']),
-              testo(p['data']),
-              testo(p['prot']),
-              statoPrenotazione(p),
-            ];
-          }).toList(),
         ),
-      ],
-    ),
-  );
-
-  final directory = await getApplicationDocumentsDirectory();
-
-  final file = File(
-    '${directory.path}/prenotazioni.pdf',
-  );
-
-  await file.writeAsBytes(
-    await pdf.save(),
-  );
-
-  await OpenFile.open(file.path);
-}
-Widget headerOrdinabile(
-  String titolo,
-  double larghezza,
-  String colonna,
-) {
-  final attiva = colonnaOrdinata == colonna;
-
-  return SizedBox(
-    width: larghezza,
-    child: InkWell(
-      onTap: () => ordinaPrenotazioni(colonna),
-      child: Row(
-        children: [
-          Text(
-            titolo,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.2,
-              color: attiva
-                  ? const Color(0xFF2563EB)
-                  : const Color(0xFF374151),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 12,
+              height: 12,
+              decoration: BoxDecoration(color: colore, shape: BoxShape.circle),
             ),
+
+            const SizedBox(height: 14),
+
+            Text(
+              valore,
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: colore,
+              ),
+            ),
+
+            const SizedBox(height: 4),
+
+            Text(
+              titolo,
+              style: TextStyle(
+                color: Colors.grey.shade700,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> exportPrenotazioniExcel() async {
+    final excel = Excel.createExcel();
+
+    final sheet = excel['Prenotazioni'];
+
+    // HEADER
+    sheet.appendRow([
+      TextCellValue('Discente'),
+      TextCellValue('Impresa'),
+      TextCellValue('Corso'),
+      TextCellValue('Data'),
+      TextCellValue('Protocollo'),
+      TextCellValue('Stato'),
+    ]);
+
+    // DATI
+    for (final p in prenotazioniVisibili) {
+      sheet.appendRow([
+        TextCellValue(nomeDiscente(p)),
+        TextCellValue(testo(p['impresa_nome'])),
+        TextCellValue(testo(p['corso_nome'])),
+        TextCellValue(testo(p['data'])),
+        TextCellValue(testo(p['prot'])),
+        TextCellValue(statoPrenotazione(p)),
+      ]);
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final path = '${directory.path}/prenotazioni_export.xlsx';
+
+    final fileBytes = excel.encode();
+
+    if (fileBytes == null) return;
+
+    final file = File(path)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(fileBytes);
+
+    await OpenFile.open(file.path);
+  }
+
+  Future<void> esportaPdf() async {
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        build: (context) => [
+          pw.Text(
+            'PRENOTAZIONI',
+            style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
           ),
 
-          const SizedBox(width: 4),
+          pw.SizedBox(height: 20),
 
-          if (attiva)
-            Icon(
-              ordineCrescente
-                  ? Icons.arrow_drop_up
-                  : Icons.arrow_drop_down,
-              size: 18,
-              color: const Color(0xFF2563EB),
-            ),
+          pw.Table.fromTextArray(
+            headers: ['Discente', 'Impresa', 'Corso', 'Data', 'Prot.', 'Stato'],
+
+            data: prenotazioniVisibili.map((p) {
+              return [
+                nomeDiscente(p),
+                testo(p['impresa_nome']),
+                testo(p['corso_nome']),
+                testo(p['data']),
+                testo(p['prot']),
+                statoPrenotazione(p),
+              ];
+            }).toList(),
+          ),
         ],
       ),
-    ),
-  );
-}
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final file = File('${directory.path}/prenotazioni.pdf');
+
+    await file.writeAsBytes(await pdf.save());
+
+    await OpenFile.open(file.path);
+  }
+
+  Widget headerOrdinabile(String titolo, double larghezza, String colonna) {
+    final attiva = colonnaOrdinata == colonna;
+
+    return SizedBox(
+      width: larghezza,
+      child: InkWell(
+        onTap: () => ordinaPrenotazioni(colonna),
+        child: Row(
+          children: [
+            Text(
+              titolo,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.2,
+                color: attiva
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF374151),
+              ),
+            ),
+
+            const SizedBox(width: 4),
+
+            if (attiva)
+              Icon(
+                ordineCrescente ? Icons.arrow_drop_up : Icons.arrow_drop_down,
+                size: 18,
+                color: const Color(0xFF2563EB),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-final ultraWide = width > 1800;
-final desktop = width > 1400;
-final tablet = width < 1100;
+    final ultraWide = width > 1800;
+    final desktop = width > 1400;
+    final tablet = width < 1100;
 
-final double tableWidth =
-    colDiscente +
-    colImpresa +
-    colCorso +
-    colData +
-    colProt +
-    colStato +
-    colAzioni +
-    (tablet ? 24 : 40);
+    final double tableWidth =
+        colDiscente +
+        colImpresa +
+        colCorso +
+        colData +
+        colProt +
+        colStato +
+        colAzioni +
+        (tablet ? 24 : 40);
 
-final double rowHeight = 64;
-final int numeroRighe = prenotazioniVisibili.length +
-    (caricamentoPaginaDb ? 1 : 0);
+    final double rowHeight = 64;
+    final int numeroRighe =
+        prenotazioniVisibili.length + (caricamentoPaginaDb ? 1 : 0);
 
-final double altezzaRighe = numeroRighe * rowHeight;
+    final double altezzaRighe = numeroRighe * rowHeight;
 
-final double altezzaMassimaTabella =
-    (MediaQuery.of(context).size.height * 0.28).clamp(160.0, 280.0);
+    final double altezzaMassimaTabella =
+        (MediaQuery.of(context).size.height * 0.28).clamp(160.0, 280.0);
 
-final double altezzaMinimaTabella = rowHeight * 2;
+    final double altezzaMinimaTabella = rowHeight * 2;
 
-final double altezzaTabella = altezzaRighe < altezzaMinimaTabella
-    ? altezzaMinimaTabella
-    : altezzaRighe > altezzaMassimaTabella
+    final double altezzaTabella = altezzaRighe < altezzaMinimaTabella
+        ? altezzaMinimaTabella
+        : altezzaRighe > altezzaMassimaTabella
         ? altezzaMassimaTabella
         : altezzaRighe;
 
@@ -1127,46 +1068,44 @@ final double altezzaTabella = altezzaRighe < altezzaMinimaTabella
 
             const SizedBox(width: 16),
 
-ElevatedButton.icon(
-  onPressed: exportPrenotazioniExcel,
-  icon: const Icon(Icons.table_view_outlined),
-  label: const Text('Export Excel'),
-  style: ElevatedButton.styleFrom(
-    backgroundColor: Colors.white,
-    foregroundColor: const Color(0xFF2563EB),
-    padding: const EdgeInsets.symmetric(
-      horizontal: 20,
-      vertical: 18,
-    ),
-    shape: RoundedRectangleBorder(
-  borderRadius: BorderRadius.circular(14),
-  side: BorderSide(
-    color: Colors.grey.shade300,
-  ),
-),
-    elevation: 0,
-  ),
-),
+            ElevatedButton.icon(
+              onPressed: exportPrenotazioniExcel,
+              icon: const Icon(Icons.table_view_outlined),
+              label: const Text('Export Excel'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: const Color(0xFF2563EB),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  side: BorderSide(color: Colors.grey.shade300),
+                ),
+                elevation: 0,
+              ),
+            ),
 
-const SizedBox(width: 12),
+            const SizedBox(width: 12),
 
-ElevatedButton.icon(
-  onPressed: apriDialogNuovaPrenotazione,
-  icon: const Icon(Icons.add),
-  label: const Text('Nuova prenotazione'),
-  style: ElevatedButton.styleFrom(
-    backgroundColor: const Color(0xFF2563EB),
-    foregroundColor: Colors.white,
-    padding: const EdgeInsets.symmetric(
-      horizontal: 22,
-      vertical: 18,
-    ),
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(14),
-    ),
-    elevation: 0,
-  ),
-),
+            ElevatedButton.icon(
+              onPressed: apriDialogNuovaPrenotazione,
+              icon: const Icon(Icons.add),
+              label: const Text('Nuova prenotazione'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF2563EB),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 22,
+                  vertical: 18,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                elevation: 0,
+              ),
+            ),
           ],
         ),
 
@@ -1175,9 +1114,7 @@ ElevatedButton.icon(
         Expanded(
           child: SectionCard(
             child: loading
-                ? const Center(
-                    child: CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : Column(
                     children: [
                       Row(
@@ -1204,268 +1141,279 @@ ElevatedButton.icon(
 
                       const SizedBox(height: 18),
                       Wrap(
-  spacing: 14,
-  runSpacing: 10,
-  children: [
-
-    compactKpiCard(
-      titolo: 'Totale',
-      valore: prenotazioniFiltrate.length.toString(),
-      colore: const Color(0xFF2563EB),
-      filtro: 'tutte',
-    ),
-
-    compactKpiCard(
-      titolo: 'Aperte',
-      valore: prenotazioniFiltrate
-          .where((p) => statoPrenotazione(p) == 'Aperto')
-          .length
-          .toString(),
-      colore: Colors.green,
-      filtro: 'aperte',
-    ),
-
-    compactKpiCard(
-      titolo: 'Registro',
-      valore: prenotazioniFiltrate
-          .where((p) => statoPrenotazione(p) == 'Registro')
-          .length
-          .toString(),
-      colore: Colors.orange,
-      filtro: 'registro',
-    ),
-
-    compactKpiCard(
-      titolo: 'Chiuse',
-      valore: prenotazioniFiltrate
-          .where((p) => statoPrenotazione(p) == 'Chiuso')
-          .length
-          .toString(),
-      colore: Colors.grey,
-      filtro: 'chiuse',
-    ),
-
-    compactKpiCard(
-      titolo: 'Da fare',
-      valore: prenotazioniFiltrate
-          .where((p) => statoPrenotazione(p) == 'Da fare')
-          .length
-          .toString(),
-      colore: Colors.red,
-      filtro: 'da_fare',
-    ),
-  ],
-),
-
-const SizedBox(height: 12),
-Wrap(
-  spacing: 10,
-  runSpacing: 10,
-  children: [
-    filtroChip(
-      titolo: 'Tutte (${prenotazioniFiltrate.length})',
-      filtro: 'tutte',
-      colore: Colors.blue,
-    ),
-
-    filtroChip(
-      titolo: 'Aperte (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Aperto').length})',
-      filtro: 'aperte',
-      colore: Colors.green,
-    ),
-
-    filtroChip(
-      titolo: 'Registro (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Registro').length})',
-      filtro: 'registro',
-      colore: Colors.orange,
-    ),
-
-    filtroChip(
-      titolo: 'Chiuse (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Chiuso').length})',
-      filtro: 'chiuse',
-      colore: Colors.grey,
-    ),
-
-    filtroChip(
-      titolo: 'Da fare (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Da fare').length})',
-      filtro: 'da_fare',
-      colore: Colors.red,
-    ),
-  ],
-),
-
-const SizedBox(height: 14),
-
-Expanded(
-  child: ClipRRect(
-    borderRadius: BorderRadius.circular(16),
-    child: Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(
-          color: const Color(0xFFF1F5F9),
-        ),
-      ),
-      child: SingleChildScrollView(
-        controller: horizontalController,
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: tableWidth,
-          child: Column(
-            children: [
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  boxShadow: headerShadowVisible
-                      ? [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.06),
-                            blurRadius: 10,
-                            offset: const Offset(0, 3),
+                        spacing: 14,
+                        runSpacing: 10,
+                        children: [
+                          compactKpiCard(
+                            titolo: 'Totale',
+                            valore: prenotazioniFiltrate.length.toString(),
+                            colore: const Color(0xFF2563EB),
+                            filtro: 'tutte',
                           ),
-                        ]
-                      : [],
-                ),
-                child: SizedBox(
-                  width: tableWidth,
-                  child: PrenotazioneHeaderRow(
-                    tablet: tablet,
-                    headerBuilder: headerOrdinabile,
-                    horizontalController: horizontalController,
-                  ),
-                ),
-              ),
 
-              const SizedBox(height: 0),
+                          compactKpiCard(
+                            titolo: 'Aperte',
+                            valore: prenotazioniFiltrate
+                                .where((p) => statoPrenotazione(p) == 'Aperto')
+                                .length
+                                .toString(),
+                            colore: Colors.green,
+                            filtro: 'aperte',
+                          ),
 
-              Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  border: Border(
-                    top: BorderSide(color: Color(0xFFE5E7EB), width: 1),
-                  ),
-                ),
-                child: SizedBox(
-                height: altezzaTabella < 64 ? 64 : altezzaTabella,
-                child: RawKeyboardListener(
-                  focusNode: tableFocusNode,
-                  autofocus: true,
-                  onKey: gestisciTasti,
-                  child: prenotazioniVisibili.isEmpty
-    ? Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.event_busy_outlined,
-              size: 54,
-              color: Colors.grey.shade400,
-            ),
+                          compactKpiCard(
+                            titolo: 'Registro',
+                            valore: prenotazioniFiltrate
+                                .where(
+                                  (p) => statoPrenotazione(p) == 'Registro',
+                                )
+                                .length
+                                .toString(),
+                            colore: Colors.orange,
+                            filtro: 'registro',
+                          ),
 
-            const SizedBox(height: 18),
+                          compactKpiCard(
+                            titolo: 'Chiuse',
+                            valore: prenotazioniFiltrate
+                                .where((p) => statoPrenotazione(p) == 'Chiuso')
+                                .length
+                                .toString(),
+                            colore: Colors.grey,
+                            filtro: 'chiuse',
+                          ),
 
-            const Text(
-              'Nessuna prenotazione trovata',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-                color: Color(0xFF374151),
-              ),
-            ),
+                          compactKpiCard(
+                            titolo: 'Da fare',
+                            valore: prenotazioniFiltrate
+                                .where((p) => statoPrenotazione(p) == 'Da fare')
+                                .length
+                                .toString(),
+                            colore: Colors.red,
+                            filtro: 'da_fare',
+                          ),
+                        ],
+                      ),
 
-            const SizedBox(height: 8),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 10,
+                        children: [
+                          filtroChip(
+                            titolo: 'Tutte (${prenotazioniFiltrate.length})',
+                            filtro: 'tutte',
+                            colore: Colors.blue,
+                          ),
 
-            Text(
-              'Prova a modificare i filtri o crea una nuova prenotazione.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey.shade600,
-              ),
-            ),
+                          filtroChip(
+                            titolo:
+                                'Aperte (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Aperto').length})',
+                            filtro: 'aperte',
+                            colore: Colors.green,
+                          ),
 
-            const SizedBox(height: 22),
+                          filtroChip(
+                            titolo:
+                                'Registro (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Registro').length})',
+                            filtro: 'registro',
+                            colore: Colors.orange,
+                          ),
 
-            ElevatedButton.icon(
-              onPressed: apriDialogNuovaPrenotazione,
-              icon: const Icon(Icons.add),
-              label: const Text('Nuova prenotazione'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-              ),
-            ),
-          ],
-        ),
-      )
-    : Scrollbar(
-        controller: _scrollController,
-        thumbVisibility: true,
-        radius: const Radius.circular(10),
-        thickness: 7,
-        child: ListView.builder(
-          padding: EdgeInsets.zero,
-          controller: _scrollController,
-          primary: false,
-        physics: const ClampingScrollPhysics(),
-        itemExtent: 58,
-        itemCount: prenotazioniVisibili.length +
-            (caricamentoPaginaDb ? 1 : 0),
-        itemBuilder: (context, index) {
-          if (index >= prenotazioniVisibili.length) {
-            return const Padding(
-              padding: EdgeInsets.all(18),
-              child: Center(
-                child: CircularProgressIndicator(),
-              ),
-            );
-          }
+                          filtroChip(
+                            titolo:
+                                'Chiuse (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Chiuso').length})',
+                            filtro: 'chiuse',
+                            colore: Colors.grey,
+                          ),
 
-          final p = prenotazioniVisibili[index];
+                          filtroChip(
+                            titolo:
+                                'Da fare (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Da fare').length})',
+                            filtro: 'da_fare',
+                            colore: Colors.red,
+                          ),
+                        ],
+                      ),
 
-          return SizedBox(
-            width: tableWidth,
-            child: PrenotazioneRow(
-              prenotazione: p,
-              tablet: tablet,
-              horizontalController: horizontalController,
-              selezionata:
-                  prenotazioneSelezionataId == p['id'],
-              onSeleziona: () {
-                setState(() {
-                  selectedRowIndex = index;
-                  prenotazioneSelezionataId =
-                      p['id'] as int?;
-                });
+                      const SizedBox(height: 14),
 
-                tableFocusNode.requestFocus();
-              },
-              onDoppioClick: () {
-                modificaPrenotazione(p);
-              },
-              onModifica: () => modificaPrenotazione(p),
-              onElimina: () => eliminaPrenotazione(p),
-              statoPrenotazione: statoPrenotazione,
-              nomeDiscente: nomeDiscente,
-              testo: testo,
-            ),
-          );
-        },
-      ),
-                  ),
-                ),
-              ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  ),
-),
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              border: Border.all(
+                                color: const Color(0xFFF1F5F9),
+                              ),
+                            ),
+                            child: SingleChildScrollView(
+                              controller: horizontalController,
+                              scrollDirection: Axis.horizontal,
+                              child: SizedBox(
+                                width: tableWidth,
+                                child: Column(
+                                  children: [
+                                    AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 180,
+                                      ),
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFF8FAFC),
+                                        boxShadow: headerShadowVisible
+                                            ? [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(0.06),
+                                                  blurRadius: 10,
+                                                  offset: const Offset(0, 3),
+                                                ),
+                                              ]
+                                            : [],
+                                      ),
+                                      child: SizedBox(
+                                        width: tableWidth,
+                                        child: PrenotazioneHeaderRow(
+                                          tablet: tablet,
+                                          headerBuilder: headerOrdinabile,
+                                          horizontalController:
+                                              horizontalController,
+                                        ),
+                                      ),
+                                    ),
 
-const SizedBox(height: 10),
+                                    const SizedBox(height: 0),
+
+                                    Expanded(
+                                      child: Container(
+                                        decoration: const BoxDecoration(
+                                          color: Colors.white,
+                                          border: Border(
+                                            top: BorderSide(
+                                              color: Color(0xFFE5E7EB),
+                                              width: 1,
+                                            ),
+                                          ),
+                                        ),
+                                        child: RawKeyboardListener(
+                                          focusNode: tableFocusNode,
+                                          autofocus: true,
+                                          onKey: gestisciTasti,
+                                          child: prenotazioniVisibili.isEmpty
+                                              ? const SizedBox.expand(
+                                                  child: Center(
+                                                    child: Text(
+                                                      'Nessuna prenotazione trovata',
+                                                      style: TextStyle(
+                                                        fontSize: 15,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                        color: Color(
+                                                          0xFF374151,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                )
+                                              : Scrollbar(
+                                                  controller: _scrollController,
+                                                  thumbVisibility: true,
+                                                  radius: const Radius.circular(
+                                                    10,
+                                                  ),
+                                                  thickness: 7,
+                                                  child: ListView.builder(
+                                                    padding: EdgeInsets.zero,
+                                                    controller:
+                                                        _scrollController,
+                                                    primary: false,
+                                                    physics:
+                                                        const ClampingScrollPhysics(),
+                                                    itemExtent: 58,
+                                                    itemCount:
+                                                        prenotazioniVisibili
+                                                            .length +
+                                                        (caricamentoPaginaDb
+                                                            ? 1
+                                                            : 0),
+                                                    itemBuilder: (context, index) {
+                                                      if (index >=
+                                                          prenotazioniVisibili
+                                                              .length) {
+                                                        return const Padding(
+                                                          padding:
+                                                              EdgeInsets.all(
+                                                                18,
+                                                              ),
+                                                          child: Center(
+                                                            child:
+                                                                CircularProgressIndicator(),
+                                                          ),
+                                                        );
+                                                      }
+
+                                                      final p =
+                                                          prenotazioniVisibili[index];
+
+                                                      return SizedBox(
+                                                        width: tableWidth,
+                                                        child: PrenotazioneRow(
+                                                          prenotazione: p,
+                                                          tablet: tablet,
+                                                          horizontalController:
+                                                              horizontalController,
+                                                          selezionata:
+                                                              prenotazioneSelezionataId ==
+                                                              p['id'],
+                                                          onSeleziona: () {
+                                                            setState(() {
+                                                              selectedRowIndex =
+                                                                  index;
+                                                              prenotazioneSelezionataId =
+                                                                  p['id']
+                                                                      as int?;
+                                                            });
+
+                                                            tableFocusNode
+                                                                .requestFocus();
+                                                          },
+                                                          onDoppioClick: () {
+                                                            modificaPrenotazione(
+                                                              p,
+                                                            );
+                                                          },
+                                                          onModifica: () =>
+                                                              modificaPrenotazione(
+                                                                p,
+                                                              ),
+                                                          onElimina: () =>
+                                                              eliminaPrenotazione(
+                                                                p,
+                                                              ),
+                                                          statoPrenotazione:
+                                                              statoPrenotazione,
+                                                          nomeDiscente:
+                                                              nomeDiscente,
+                                                          testo: testo,
+                                                        ),
+                                                      );
+                                                    },
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 10),
                     ],
                   ),
           ),
@@ -1540,8 +1488,8 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
     }
 
     final effectiveColor = widget.selezionata
-    ? const Color(0xFFDBEAFE)
-    : hover
+        ? const Color(0xFFDBEAFE)
+        : hover
         ? const Color(0xFFF8FBFF)
         : rowColor;
 
@@ -1558,15 +1506,10 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
             decoration: BoxDecoration(
               color: effectiveColor,
               border: const Border(
-                bottom: BorderSide(
-                  color: Color(0xFFF1F5F9),
-                  width: 1,
-                ),
+                bottom: BorderSide(color: Color(0xFFF1F5F9), width: 1),
               ),
             ),
-            padding: EdgeInsets.symmetric(
-              horizontal: widget.tablet ? 10 : 16,
-            ),
+            padding: EdgeInsets.symmetric(horizontal: widget.tablet ? 10 : 16),
             child: AnimatedBuilder(
               animation: widget.horizontalController,
               builder: (context, child) {
@@ -1584,9 +1527,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         SizedBox(
                           width: colImpresa,
                           child: Text(
-                            widget.testo(
-                              widget.prenotazione['impresa_nome'],
-                            ),
+                            widget.testo(widget.prenotazione['impresa_nome']),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: const TextStyle(
@@ -1599,9 +1540,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         SizedBox(
                           width: colCorso,
                           child: Text(
-                            widget.testo(
-                              widget.prenotazione['corso_nome'],
-                            ),
+                            widget.testo(widget.prenotazione['corso_nome']),
                             overflow: TextOverflow.ellipsis,
                             maxLines: 1,
                             style: const TextStyle(
@@ -1639,9 +1578,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
 
                         SizedBox(
                           width: colStato,
-                          child: TableStatusBadge(
-                            status: stato,
-                          ),
+                          child: TableStatusBadge(status: stato),
                         ),
 
                         SizedBox(
@@ -1693,10 +1630,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         width: colDiscente,
                         color: effectiveColor ?? Colors.white,
                         alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.only(
-                          left: 2,
-                          right: 14,
-                        ),
+                        padding: const EdgeInsets.only(left: 2, right: 14),
                         child: Text(
                           widget.nomeDiscente(widget.prenotazione),
                           overflow: TextOverflow.ellipsis,
@@ -1736,11 +1670,8 @@ class PrenotazioneHeaderRow extends StatelessWidget {
   final bool tablet;
   final ScrollController horizontalController;
 
-  final Widget Function(
-    String titolo,
-    double larghezza,
-    String colonna,
-  ) headerBuilder;
+  final Widget Function(String titolo, double larghezza, String colonna)
+  headerBuilder;
 
   const PrenotazioneHeaderRow({
     super.key,
@@ -1752,19 +1683,12 @@ class PrenotazioneHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 52,
+      height: 48,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
-        border: Border(
-          bottom: BorderSide(
-            color: Color(0xFFE5E7EB),
-            width: 1,
-          ),
-        ),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
       ),
-      padding: EdgeInsets.symmetric(
-        horizontal: tablet ? 10 : 16,
-      ),
+      padding: EdgeInsets.symmetric(horizontal: tablet ? 10 : 16),
       child: AnimatedBuilder(
         animation: horizontalController,
         builder: (context, child) {
@@ -1788,9 +1712,7 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                     width: colAzioni,
                     child: const Text(
                       'Azioni',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -1805,11 +1727,7 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                   color: const Color(0xFFF3F4F6),
                   alignment: Alignment.centerLeft,
                   padding: const EdgeInsets.only(right: 12),
-                  child: headerBuilder(
-                    'Discente',
-                    colDiscente,
-                    'discente',
-                  ),
+                  child: headerBuilder('Discente', colDiscente, 'discente'),
                 ),
               ),
 
@@ -1817,10 +1735,7 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                 left: offset + colDiscente - 1,
                 top: 0,
                 bottom: 0,
-                child: Container(
-                  width: 1,
-                  color: const Color(0xFFD1D5DB),
-                ),
+                child: Container(width: 1, color: const Color(0xFFD1D5DB)),
               ),
             ],
           );

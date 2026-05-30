@@ -53,10 +53,68 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
   int? prenotazioneSelezionataId;
 
+  Set<int> prenotazioniSelezionateIds = {};
+  int? ultimoIndexSelezionato;
+
   String filtroLocale = 'tutte';
 
   String colonnaOrdinata = '';
   bool ordineCrescente = true;
+
+  Future<void> stampaSelezionate() async {
+    if (prenotazioniSelezionateIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Seleziona almeno una prenotazione da stampare'),
+        ),
+      );
+      return;
+    }
+
+    debugPrint('STAMPA SELEZIONATE IDS: $prenotazioniSelezionateIds');
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Stampa di ${prenotazioniSelezionateIds.length} prenotazioni selezionate',
+        ),
+      ),
+    );
+  }
+
+  void selezionaTutto() {
+    setState(() {
+      prenotazioniSelezionateIds = prenotazioniVisibili
+          .map((p) => p['id'] as int)
+          .toSet();
+    });
+
+    debugPrint('SELEZIONA TUTTO IDS: $prenotazioniSelezionateIds');
+  }
+
+  void deselezionaTutto() {
+    setState(() {
+      prenotazioniSelezionateIds.clear();
+      ultimoIndexSelezionato = null;
+    });
+
+    debugPrint('DESELEZIONA TUTTO');
+  }
+
+  Future<void> registroSelezionate() async {
+    if (prenotazioniSelezionateIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Seleziona almeno una prenotazione')),
+      );
+      return;
+    }
+
+    await aggiornaStatoPrenotazioniSelezionate(
+      aperto: 0,
+      registro: 1,
+      conferma: 0,
+    );
+  }
 
   List<Map<String, dynamic>> get prenotazioniVisibili {
     final filtroAttivo = filtroLocale;
@@ -85,6 +143,101 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           prot.contains(query) ||
           stato.toLowerCase().contains(query);
     }).toList();
+  }
+
+  void gestisciSelezioneMassiva({
+    required int index,
+    required Map<String, dynamic> prenotazione,
+    required bool ctrlPremuto,
+    required bool shiftPremuto,
+  }) {
+    final id = prenotazione['id'] as int;
+
+    setState(() {
+      if (shiftPremuto && ultimoIndexSelezionato != null) {
+        final start = ultimoIndexSelezionato! < index
+            ? ultimoIndexSelezionato!
+            : index;
+        final end = ultimoIndexSelezionato! > index
+            ? ultimoIndexSelezionato!
+            : index;
+
+        for (int i = start; i <= end; i++) {
+          final idRange = prenotazioniVisibili[i]['id'] as int;
+          prenotazioniSelezionateIds.add(idRange);
+        }
+      } else if (ctrlPremuto) {
+        if (prenotazioniSelezionateIds.contains(id)) {
+          prenotazioniSelezionateIds.remove(id);
+        } else {
+          prenotazioniSelezionateIds.add(id);
+        }
+
+        ultimoIndexSelezionato = index;
+      } else {
+        prenotazioniSelezionateIds
+          ..clear()
+          ..add(id);
+
+        ultimoIndexSelezionato = index;
+      }
+
+      prenotazioneSelezionataId = id;
+      selectedRowIndex = index;
+    });
+  }
+
+  Future<void> aggiornaStatoPrenotazioniSelezionate({
+    required int aperto,
+    required int registro,
+    required int conferma,
+  }) async {
+    final ids = prenotazioniSelezionateIds.toList();
+    debugPrint('AZIONE MASSIVA IDS: $ids');
+
+    if (ids.isEmpty) return;
+
+    for (final id in ids) {
+      await DatabaseService.instance.aggiornaStatoPrenotazione(
+        id: id,
+        aperto: aperto,
+        registro: registro,
+        conferma: conferma,
+      );
+    }
+
+    setState(() {
+      prenotazioni = prenotazioni.map((p) {
+        if (ids.contains(p['id'])) {
+          return {
+            ...p,
+            'aperto': aperto,
+            'registro': registro,
+            'conferma': conferma,
+          };
+        }
+        return p;
+      }).toList();
+
+      prenotazioniFiltrate = prenotazioniFiltrate.map((p) {
+        if (ids.contains(p['id'])) {
+          return {
+            ...p,
+            'aperto': aperto,
+            'registro': registro,
+            'conferma': conferma,
+          };
+        }
+        return p;
+      }).toList();
+
+      prenotazioniSelezionateIds.clear();
+      ultimoIndexSelezionato = null;
+      prenotazioneSelezionataId = null;
+      selectedRowIndex = null;
+    });
+
+    notificaDatiModificati();
   }
 
   Future<void> caricaPrenotazioniIniziali() async {
@@ -230,6 +383,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     if (event.logicalKey == LogicalKeyboardKey.escape) {
       tableFocusNode.requestFocus();
+      return;
+    }
+
+    if (event.logicalKey == LogicalKeyboardKey.shiftLeft ||
+        event.logicalKey == LogicalKeyboardKey.shiftRight ||
+        event.logicalKey == LogicalKeyboardKey.controlLeft ||
+        event.logicalKey == LogicalKeyboardKey.controlRight) {
       return;
     }
 
@@ -402,8 +562,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     final registro = p['registro'] == 1;
     final aperto = p['aperto'] == 1;
 
-    if (conferma) return 'Chiuso';
     if (registro) return 'Registro';
+    if (conferma) return 'Chiuso';
     if (aperto) return 'Aperto';
     return 'Da fare';
   }
@@ -1195,7 +1355,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 6),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -1233,10 +1393,62 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             filtro: 'da_fare',
                             colore: Colors.red,
                           ),
+
+                          if (prenotazioniSelezionateIds.isNotEmpty) ...[
+                            ElevatedButton.icon(
+                              onPressed: selezionaTutto,
+                              icon: const Icon(Icons.select_all, size: 18),
+                              label: const Text('Tutte'),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: deselezionaTutto,
+                              icon: const Icon(Icons.deselect, size: 18),
+                              label: const Text('Nessuna'),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                await aggiornaStatoPrenotazioniSelezionate(
+                                  aperto: 1,
+                                  registro: 0,
+                                  conferma: 0,
+                                );
+                              },
+                              icon: const Icon(Icons.lock_open, size: 18),
+                              label: Text(
+                                'Apri (${prenotazioniSelezionateIds.length})',
+                              ),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                await aggiornaStatoPrenotazioniSelezionate(
+                                  aperto: 0,
+                                  registro: 0,
+                                  conferma: 1,
+                                );
+                              },
+                              icon: const Icon(Icons.lock, size: 18),
+                              label: const Text('Chiudi'),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: registroSelezionate,
+                              icon: const Icon(Icons.fact_check, size: 18),
+                              label: const Text('Registro'),
+                            ),
+
+                            ElevatedButton.icon(
+                              onPressed: stampaSelezionate,
+                              icon: const Icon(Icons.print, size: 18),
+                              label: const Text('Stampa'),
+                            ),
+                          ],
                         ],
                       ),
 
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 6),
 
                       Expanded(
                         child: ClipRRect(
@@ -1259,7 +1471,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       duration: const Duration(
                                         milliseconds: 180,
                                       ),
-                                      height: 48,
+                                      height: 40,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
                                         boxShadow: headerShadowVisible
@@ -1365,16 +1577,46 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                           horizontalController:
                                                               horizontalController,
                                                           selezionata:
-                                                              prenotazioneSelezionataId ==
-                                                              p['id'],
+                                                              prenotazioniSelezionateIds
+                                                                  .contains(
+                                                                    p['id']
+                                                                        as int,
+                                                                  ),
                                                           onSeleziona: () {
-                                                            setState(() {
-                                                              selectedRowIndex =
-                                                                  index;
-                                                              prenotazioneSelezionataId =
-                                                                  p['id']
-                                                                      as int?;
-                                                            });
+                                                            gestisciSelezioneMassiva(
+                                                              index: index,
+                                                              prenotazione: p,
+                                                              ctrlPremuto:
+                                                                  HardwareKeyboard
+                                                                      .instance
+                                                                      .logicalKeysPressed
+                                                                      .contains(
+                                                                        LogicalKeyboardKey
+                                                                            .controlLeft,
+                                                                      ) ||
+                                                                  HardwareKeyboard
+                                                                      .instance
+                                                                      .logicalKeysPressed
+                                                                      .contains(
+                                                                        LogicalKeyboardKey
+                                                                            .controlRight,
+                                                                      ),
+                                                              shiftPremuto:
+                                                                  HardwareKeyboard
+                                                                      .instance
+                                                                      .logicalKeysPressed
+                                                                      .contains(
+                                                                        LogicalKeyboardKey
+                                                                            .shiftLeft,
+                                                                      ) ||
+                                                                  HardwareKeyboard
+                                                                      .instance
+                                                                      .logicalKeysPressed
+                                                                      .contains(
+                                                                        LogicalKeyboardKey
+                                                                            .shiftRight,
+                                                                      ),
+                                                            );
 
                                                             tableFocusNode
                                                                 .requestFocus();

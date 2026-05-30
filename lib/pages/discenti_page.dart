@@ -7,6 +7,25 @@ import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 
+const double colNome = 220;
+const double colCognome = 220;
+const double colLuogoNascita = 180;
+const double colDataNascita = 130;
+const double colCodiceFiscale = 170;
+const double colImpresa = 240;
+const double colAzioni = 110;
+
+const double discenteRowHeight = 48;
+
+const double discentiTableWidth =
+    colNome +
+    colCognome +
+    colLuogoNascita +
+    colDataNascita +
+    colCodiceFiscale +
+    colImpresa +
+    colAzioni;
+
 class DiscentiPage extends StatefulWidget {
   final String globalSearch;
 
@@ -25,6 +44,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
   int? sortColumnIndex;
   bool sortAscending = true;
 
+  final ScrollController _verticalController = ScrollController();
+  final ScrollController _horizontalController = ScrollController();
   int? discenteSelezionatoId;
 
   @override
@@ -346,6 +367,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
     await caricaDati();
   }
 
+  @override
+  void dispose() {
+    _verticalController.dispose();
+    _horizontalController.dispose();
+    super.dispose();
+  }
+
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
@@ -440,132 +468,225 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 borderRadius: BorderRadius.circular(16),
                                 child: Container(
                                   color: Colors.white,
-                                  child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    child: DataTable(
-                                      sortColumnIndex: sortColumnIndex,
-                                      sortAscending: sortAscending,
-                                      headingRowColor: WidgetStateProperty.all(
-                                        const Color(0xFFF3F4F6),
-                                      ),
-                                      dataRowMinHeight: 62,
-                                      dataRowMaxHeight: 62,
-                                      columnSpacing: 34,
-                                      horizontalMargin: 20,
-                                      columns: [
-                                        const DataColumn(label: Text('')),
-                                        DataColumn(
-                                          label: const Text('Discente'),
-                                          onSort: ordinaNominativo,
-                                        ),
-                                        const DataColumn(
-                                          label: Text('Impresa'),
-                                        ),
-                                        const DataColumn(
-                                          label: Text('Codice fiscale'),
-                                        ),
-                                        const DataColumn(
-                                          label: Text('Data nascita'),
-                                        ),
-                                        const DataColumn(label: Text('Azioni')),
-                                      ],
-                                      rows: discentiFiltrati.map((d) {
-                                        return DataRow(
-                                          color:
-                                              WidgetStateProperty.resolveWith<
-                                                Color?
-                                              >((states) {
-                                                if (discenteSelezionatoId ==
-                                                    d.id) {
-                                                  return const Color(
-                                                    0xFFE0ECFF,
-                                                  );
-                                                }
-                                                return null;
-                                              }),
-                                          cells: [
-                                            const DataCell(
-                                              Icon(
-                                                Icons.person_outline,
-                                                color: Color(0xFF2563EB),
-                                              ),
-                                            ),
-                                            DataCell(
-                                              GestureDetector(
-                                                onTap: () {
-                                                  setState(() {
-                                                    discenteSelezionatoId =
-                                                        d.id;
-                                                  });
-                                                },
-                                                onDoubleTap: () =>
-                                                    apriDialogDiscente(
+                                  child: Scrollbar(
+                                    controller: _horizontalController,
+                                    thumbVisibility: true,
+                                    radius: const Radius.circular(10),
+                                    thickness: 7,
+                                    child: SingleChildScrollView(
+                                      controller: _horizontalController,
+                                      scrollDirection: Axis.horizontal,
+                                      child: SizedBox(
+                                        width: discentiTableWidth,
+                                        child: Column(
+                                          children: [
+                                            const DiscentiHeader(),
+                                            Expanded(
+                                              child: Scrollbar(
+                                                controller: _verticalController,
+                                                thumbVisibility: true,
+                                                radius: const Radius.circular(10),
+                                                thickness: 7,
+                                                child: ListView.builder(
+                                                  controller: _verticalController,
+                                                  primary: false,
+                                                  physics: const ClampingScrollPhysics(),
+                                                  itemExtent: discenteRowHeight,
+                                                  itemCount: discentiFiltrati.length,
+                                                  itemBuilder: (context, index) {
+                                                    final d = discentiFiltrati[index];
+
+                                                    return DiscenteRow(
                                                       discente: d,
-                                                    ),
-                                                child: Text(
-                                                  d.nominativoCompleto,
-                                                  style: TextStyle(
-                                                    fontSize: 15,
-                                                    color: const Color(
-                                                      0xFF111827,
-                                                    ),
-                                                    fontWeight:
-                                                        discenteSelezionatoId ==
-                                                            d.id
-                                                        ? FontWeight.w800
-                                                        : FontWeight.w600,
-                                                  ),
+                                                      selezionata: discenteSelezionatoId == d.id,
+                                                      onSeleziona: () {
+                                                        setState(() {
+                                                          discenteSelezionatoId = d.id;
+                                                        });
+                                                      },
+                                                      onDoppioClick: () => apriDialogDiscente(
+                                                        discente: d,
+                                                      ),
+                                                      onModifica: () => apriDialogDiscente(
+                                                        discente: d,
+                                                      ),
+                                                      onElimina: () => eliminaDiscente(d),
+                                                    );
+                                                  },
                                                 ),
                                               ),
                                             ),
-                                            DataCell(
-                                              Text(testoVuoto(d.nomeImpresa)),
-                                            ),
-                                            DataCell(
-                                              Text(testoVuoto(d.codiceFiscale)),
-                                            ),
-                                            DataCell(
-                                              Text(testoVuoto(d.dataNascita)),
-                                            ),
-                                            DataCell(
-                                              Row(
-                                                children: [
-                                                  IconButton(
-                                                    tooltip: 'Modifica',
-                                                    icon: const Icon(
-                                                      Icons.edit_outlined,
-                                                      color: Color(0xFF2563EB),
-                                                    ),
-                                                    onPressed: () =>
-                                                        apriDialogDiscente(
-                                                          discente: d,
-                                                        ),
-                                                  ),
-                                                  IconButton(
-                                                    tooltip: 'Elimina',
-                                                    icon: const Icon(
-                                                      Icons.delete_outline,
-                                                      color: Color(0xFFDC2626),
-                                                    ),
-                                                    onPressed: () =>
-                                                        eliminaDiscente(d),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
                                           ],
-                                        );
-                                      }).toList(),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                      ),
-                    ],
-                  ),
+                                  ),
+                                  ),
+                                  ),
+                                  ],
+                                  ),
+                                  ),
+                                  ),
+                                  ],
+                                  );
+                                  }
+                                  }
+
+class DiscentiHeader extends StatelessWidget {
+  const DiscentiHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: discenteRowHeight,
+      color: const Color(0xFFF8FAFC),
+      child: Row(
+        children: const [
+          SizedBox(width: colNome, child: _HeaderCell('Nome')),
+          SizedBox(width: colCognome, child: _HeaderCell('Cognome')),
+          SizedBox(width: colLuogoNascita, child: _HeaderCell('Luogo nascita')),
+          SizedBox(width: colDataNascita, child: _HeaderCell('Data nascita')),
+          SizedBox(
+            width: colCodiceFiscale,
+            child: _HeaderCell('Codice fiscale'),
+          ),
+          SizedBox(width: colImpresa, child: _HeaderCell('Impresa')),
+          SizedBox(width: colAzioni, child: _HeaderCell('Azioni')),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String testo;
+
+  const _HeaderCell(this.testo);
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          testo,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
+            color: Color(0xFF475569),
           ),
         ),
-      ],
+      ),
+    );
+  }
+}
+
+class _DiscenteCell extends StatelessWidget {
+  final String? testo;
+
+  const _DiscenteCell(this.testo);
+
+  @override
+  Widget build(BuildContext context) {
+    final valore = testo == null || testo!.trim().isEmpty ? '-' : testo!.trim();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          valore,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF111827),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DiscenteRow extends StatelessWidget {
+  final Discente discente;
+
+  final bool selezionata;
+
+  final VoidCallback onSeleziona;
+  final VoidCallback onModifica;
+  final VoidCallback onElimina;
+  final VoidCallback onDoppioClick;
+
+  const DiscenteRow({
+    super.key,
+    required this.discente,
+    required this.selezionata,
+    required this.onSeleziona,
+    required this.onModifica,
+    required this.onElimina,
+    required this.onDoppioClick,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final coloreSfondo = selezionata ? const Color(0xFFE0ECFF) : Colors.white;
+
+    return InkWell(
+      onTap: onSeleziona,
+      onDoubleTap: onDoppioClick,
+      child: Container(
+        height: discenteRowHeight,
+        color: coloreSfondo,
+        child: Row(
+          children: [
+            SizedBox(width: colNome, child: _DiscenteCell(discente.nome)),
+            SizedBox(width: colCognome, child: _DiscenteCell(discente.cognome)),
+            SizedBox(
+              width: colLuogoNascita,
+              child: _DiscenteCell(discente.luogoNascita),
+            ),
+            SizedBox(
+              width: colDataNascita,
+              child: _DiscenteCell(discente.dataNascita),
+            ),
+            SizedBox(
+              width: colCodiceFiscale,
+              child: _DiscenteCell(discente.codiceFiscale),
+            ),
+            SizedBox(
+              width: colImpresa,
+              child: _DiscenteCell(discente.nomeImpresa),
+            ),
+            SizedBox(
+              width: colAzioni,
+              child: Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Modifica',
+                    icon: const Icon(
+                      Icons.edit_outlined,
+                      color: Color(0xFF2563EB),
+                    ),
+                    onPressed: onModifica,
+                  ),
+                  IconButton(
+                    tooltip: 'Elimina',
+                    icon: const Icon(
+                      Icons.delete_outline,
+                      color: Color(0xFFDC2626),
+                    ),
+                    onPressed: onElimina,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

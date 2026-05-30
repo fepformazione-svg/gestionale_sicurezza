@@ -402,6 +402,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       return;
     }
 
+    // CTRL + A
+    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyA) {
+      setState(() {
+        prenotazioniSelezionateIds = prenotazioniFiltrate
+            .map((p) => p['id'] as int)
+            .toSet();
+
+        ultimoIndexSelezionato = prenotazioniFiltrate.isNotEmpty
+            ? prenotazioniFiltrate.length - 1
+            : null;
+      });
+
+      return;
+    }
+
     // CTRL + N
     if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyN) {
       apriDialogNuovaPrenotazione();
@@ -1427,6 +1442,27 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             colore: Colors.red,
                           ),
 
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Text(
+                              '${prenotazioniSelezionateIds.length} selezionate',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Color(0xFF64748B),
+                              ),
+                            ),
+                          ),
                           if (prenotazioniSelezionateIds.isNotEmpty) ...[
                             ElevatedButton.icon(
                               onPressed: selezionaTutto,
@@ -1662,10 +1698,129 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                               p,
                                                             );
                                                           },
+                                                          onTastoDestro: (details) async {
+                                                            final result = await showMenu<String>(
+                                                              context: context,
+                                                              position: RelativeRect.fromLTRB(
+                                                                details
+                                                                    .globalPosition
+                                                                    .dx,
+                                                                details
+                                                                    .globalPosition
+                                                                    .dy,
+                                                                details
+                                                                    .globalPosition
+                                                                    .dx,
+                                                                details
+                                                                    .globalPosition
+                                                                    .dy,
+                                                              ),
+                                                              items: const [
+                                                                PopupMenuItem(
+                                                                  value:
+                                                                      'modifica',
+                                                                  child: Text(
+                                                                    'Modifica',
+                                                                  ),
+                                                                ),
+                                                                PopupMenuItem(
+                                                                  value: 'apri',
+                                                                  child: Text(
+                                                                    'Apri',
+                                                                  ),
+                                                                ),
+                                                                PopupMenuItem(
+                                                                  value:
+                                                                      'chiudi',
+                                                                  child: Text(
+                                                                    'Chiudi',
+                                                                  ),
+                                                                ),
+                                                                PopupMenuItem(
+                                                                  value:
+                                                                      'registro',
+                                                                  child: Text(
+                                                                    'Registro',
+                                                                  ),
+                                                                ),
+                                                                PopupMenuItem(
+                                                                  value:
+                                                                      'elimina',
+                                                                  child: Text(
+                                                                    'Elimina',
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            );
+
+                                                            if (result == null)
+                                                              return;
+
+                                                            debugPrint(
+                                                              'MENU RESULT: $result',
+                                                            );
+
+                                                            if (result ==
+                                                                'modifica') {
+                                                              modificaPrenotazione(
+                                                                p,
+                                                              );
+                                                            }
+
+                                                            if (result ==
+                                                                'apri') {
+                                                              prenotazioniSelezionateIds =
+                                                                  {
+                                                                    p['id']
+                                                                        as int,
+                                                                  };
+                                                              await aggiornaStatoPrenotazioniSelezionate(
+                                                                aperto: 1,
+                                                                registro: 0,
+                                                                conferma: 0,
+                                                              );
+                                                            }
+
+                                                            if (result ==
+                                                                'chiudi') {
+                                                              prenotazioniSelezionateIds =
+                                                                  {
+                                                                    p['id']
+                                                                        as int,
+                                                                  };
+                                                              await aggiornaStatoPrenotazioniSelezionate(
+                                                                aperto: 0,
+                                                                registro: 0,
+                                                                conferma: 1,
+                                                              );
+                                                            }
+
+                                                            if (result ==
+                                                                'registro') {
+                                                              prenotazioniSelezionateIds =
+                                                                  {
+                                                                    p['id']
+                                                                        as int,
+                                                                  };
+                                                              await aggiornaStatoPrenotazioniSelezionate(
+                                                                aperto: 0,
+                                                                registro: 1,
+                                                                conferma: 0,
+                                                              );
+                                                            }
+
+                                                            if (result ==
+                                                                'elimina') {
+                                                              eliminaPrenotazione(
+                                                                p,
+                                                              );
+                                                            }
+                                                          },
                                                           onModifica: () =>
                                                               modificaPrenotazione(
                                                                 p,
                                                               ),
+
                                                           onElimina: () =>
                                                               eliminaPrenotazione(
                                                                 p,
@@ -1720,6 +1875,7 @@ class PrenotazioneRow extends StatefulWidget {
   final VoidCallback onModifica;
   final VoidCallback onElimina;
   final VoidCallback onDoppioClick;
+  final void Function(TapDownDetails details) onTastoDestro;
 
   final String Function(Map<String, dynamic>) statoPrenotazione;
   final String Function(Map<String, dynamic>) nomeDiscente;
@@ -1738,6 +1894,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.nomeDiscente,
     required this.testo,
     required this.onDoppioClick,
+    required this.onTastoDestro,
   });
 
   @override
@@ -1776,8 +1933,10 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
         onEnter: (_) => setState(() => hover = true),
         onExit: (_) => setState(() => hover = false),
         child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: widget.onSeleziona,
           onDoubleTap: widget.onDoppioClick,
+          onSecondaryTapDown: widget.onTastoDestro,
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             height: 58,

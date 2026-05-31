@@ -6,18 +6,14 @@ import '../database/database_service.dart';
 class ScadenzePage extends StatefulWidget {
   final String filtro;
 
-  const ScadenzePage({
-    super.key,
-    this.filtro = 'tutte',
-  });
+  const ScadenzePage({super.key, this.filtro = 'tutte'});
 
   @override
   State<ScadenzePage> createState() => _ScadenzePageState();
 }
 
 class _ScadenzePageState extends State<ScadenzePage> {
-  final TextEditingController _cercaController =
-      TextEditingController();
+  final TextEditingController _cercaController = TextEditingController();
 
   List<Map<String, dynamic>> _scadenze = [];
   bool _caricamento = true;
@@ -29,248 +25,234 @@ class _ScadenzePageState extends State<ScadenzePage> {
   }
 
   Future<void> caricaScadenze() async {
-  setState(() {
-    _caricamento = true;
-  });
-
-  try {
-    final dati =
-        await DatabaseService.instance.caricaScadenze();
-
     setState(() {
-      _scadenze = dati;
-      _caricamento = false;
-    });
-  } catch (e) {
-    debugPrint(
-      'ERRORE CARICA SCADENZE: $e',
-    );
-
-    setState(() {
-      _scadenze = [];
-      _caricamento = false;
+      _caricamento = true;
     });
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Errore scadenze: $e',
-          ),
-        ),
-      );
+    try {
+      final dati = await DatabaseService.instance.caricaScadenze();
+
+      setState(() {
+        _scadenze = dati;
+        _caricamento = false;
+      });
+    } catch (e) {
+      debugPrint('ERRORE CARICA SCADENZE: $e');
+
+      setState(() {
+        _scadenze = [];
+        _caricamento = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Errore scadenze: $e')));
+      }
     }
   }
-}
 
   String formattaData(dynamic valore) {
-  if (valore == null || valore.toString().isEmpty) {
-    return '-';
-  }
-
-  try {
-    final testo = valore.toString();
-
-    DateTime data;
-
-    // SQLITE YYYY-MM-DD
-    if (testo.contains('-')) {
-      data = DateTime.parse(testo);
-    } else {
-      return testo;
+    if (valore == null || valore.toString().isEmpty) {
+      return '-';
     }
 
-    return
-        '${data.day.toString().padLeft(2, '0')}/'
-        '${data.month.toString().padLeft(2, '0')}/'
-        '${data.year}';
-  } catch (_) {
-    return valore.toString();
+    try {
+      final testo = valore.toString();
+
+      DateTime data;
+
+      // SQLITE YYYY-MM-DD
+      if (testo.contains('-')) {
+        data = DateTime.parse(testo);
+      } else {
+        return testo;
+      }
+
+      return '${data.day.toString().padLeft(2, '0')}/'
+          '${data.month.toString().padLeft(2, '0')}/'
+          '${data.year}';
+    } catch (_) {
+      return valore.toString();
+    }
   }
-}
 
   String calcolaStato(Map<String, dynamic> riga) {
-  final statoDb = riga['stato']?.toString().toUpperCase();
+    final statoDb = riga['stato']?.toString().toUpperCase();
 
-  if (statoDb == 'SCADUTO') {
-    return 'Scaduto';
-  }
+    if (statoDb == 'SCADUTO') {
+      return 'Scaduto';
+    }
 
-  if (statoDb == 'IN SCADENZA') {
-    return 'In scadenza';
-  }
+    if (statoDb == 'IN SCADENZA') {
+      return 'In scadenza';
+    }
 
-  if (statoDb == 'VALIDO') {
+    if (statoDb == 'VALIDO') {
+      return 'Valido';
+    }
+
+    final valore = riga['scadenza'];
+
+    if (valore == null || valore.toString().isEmpty) {
+      return 'Senza scadenza';
+    }
+
+    final scadenza = DateTime.tryParse(valore.toString());
+
+    if (scadenza == null) {
+      return 'Senza scadenza';
+    }
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+
+    final scadenzaPulita = DateTime(
+      scadenza.year,
+      scadenza.month,
+      scadenza.day,
+    );
+
+    final differenza = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (differenza < 0) {
+      return 'Scaduto';
+    }
+
+    if (differenza <= 60) {
+      return 'In scadenza';
+    }
+
     return 'Valido';
   }
 
-  final valore = riga['scadenza'];
-
-  if (valore == null || valore.toString().isEmpty) {
-    return 'N/D';
-  }
-
-  final scadenza = DateTime.tryParse(
-    valore.toString(),
-  );
-
-  if (scadenza == null) {
-    return 'N/D';
-  }
-
-  final oggi = DateTime.now();
-  final oggiPulito = DateTime(
-    oggi.year,
-    oggi.month,
-    oggi.day,
-  );
-
-  final scadenzaPulita = DateTime(
-    scadenza.year,
-    scadenza.month,
-    scadenza.day,
-  );
-
-  final differenza =
-      scadenzaPulita.difference(oggiPulito).inDays;
-
-  if (differenza < 0) {
-    return 'Scaduto';
-  }
-
-  if (differenza <= 90) {
-    return 'In scadenza';
-  }
-
-  return 'Valido';
-}
-
   Color coloreStato(String stato) {
     switch (stato) {
-      case 'Scaduto':
-        return Colors.red;
-
-      case 'In scadenza':
-        return Colors.orange;
-
       case 'Valido':
-        return Colors.green;
-
+        return const Color(0xFF16A34A);
+      case 'In scadenza':
+        return const Color(0xFFF59E0B);
+      case 'Scaduto':
+        return const Color(0xFFDC2626);
       default:
-        return Colors.grey;
+        return const Color(0xFF6B7280);
     }
   }
 
-  Future<void> rinnovaCorso(
-  Map<String, dynamic> riga,
-) async {
-  final conferma = await showDialog<bool>(
-    context: context,
-    builder: (_) {
-      return AlertDialog(
-        title: const Text('Rinnovo corso'),
-        content: Text(
-          'Vuoi creare un nuovo rinnovo per:\n\n'
-          '${riga['discente']}\n'
-          '${riga['corso']}?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context, false);
-            },
-            child: const Text('Annulla'),
+  Color sfondoStato(String stato) {
+    switch (stato) {
+      case 'Valido':
+        return const Color(0xFFEAF7EE);
+      case 'In scadenza':
+        return const Color(0xFFFFF7E6);
+      case 'Scaduto':
+        return const Color(0xFFFEE2E2);
+      default:
+        return const Color(0xFFF3F4F6);
+    }
+  }
+
+  Future<void> rinnovaCorso(Map<String, dynamic> riga) async {
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text('Rinnovo corso'),
+          content: Text(
+            'Vuoi creare un nuovo rinnovo per:\n\n'
+            '${riga['discente']}\n'
+            '${riga['corso']}?',
           ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context, true);
-            },
-            child: const Text('Rinnova'),
-          ),
-        ],
-      );
-    },
-  );
-
-  if (conferma != true) return;
-
-  await DatabaseService.instance.rinnovaCorso(
-    idDiscente: riga['id_discente'],
-    idImpresa: riga['id_impresa'],
-    idCorso: riga['id_corso'],
-  );
-
-  await caricaScadenze();
-
-  if (mounted) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text(
-          'Rinnovo creato correttamente',
-        ),
-      ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context, false);
+              },
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context, true);
+              },
+              child: const Text('Rinnova'),
+            ),
+          ],
+        );
+      },
     );
+
+    if (conferma != true) return;
+
+    await DatabaseService.instance.rinnovaCorso(
+      idDiscente: riga['id_discente'],
+      idImpresa: riga['id_impresa'],
+      idCorso: riga['id_corso'],
+    );
+
+    await caricaScadenze();
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Rinnovo creato correttamente')),
+      );
+    }
   }
-}
-List<Map<String, dynamic>> get scadenzeFiltrate {
-  final testoRicerca =
-      _cercaController.text.toLowerCase();
 
-  return _scadenze.where((riga) {
-    final stato = calcolaStato(riga);
+  List<Map<String, dynamic>> get scadenzeFiltrate {
+    final testoRicerca = _cercaController.text.toLowerCase();
 
-    if (widget.filtro == 'scaduti' &&
-        stato != 'Scaduto') {
-      return false;
-    }
+    return _scadenze.where((riga) {
+      final stato = calcolaStato(riga);
 
-    if (widget.filtro == 'in_scadenza' &&
-        stato != 'In scadenza') {
-      return false;
-    }
+      if (filtroStato == 'Scadute' && stato != 'Scaduto') {
+        return false;
+      }
 
-    final discente =
-        riga['discente']
-                ?.toString()
-                .toLowerCase() ??
-            '';
+      if (filtroStato == 'In scadenza' && stato != 'In scadenza') {
+        return false;
+      }
 
-    final impresa =
-        riga['impresa']
-                ?.toString()
-                .toLowerCase() ??
-            '';
+      if (filtroStato == 'Valide' && stato != 'Valido') {
+        return false;
+      }
 
-    final corso =
-        riga['corso']
-                ?.toString()
-                .toLowerCase() ??
-            '';
+      if (widget.filtro == 'scaduti' && stato != 'Scaduto') {
+        return false;
+      }
 
-    if (testoRicerca.isNotEmpty &&
-        !discente.contains(testoRicerca) &&
-        !impresa.contains(testoRicerca) &&
-        !corso.contains(testoRicerca)) {
-      return false;
-    }
+      if (widget.filtro == 'in_scadenza' && stato != 'In scadenza') {
+        return false;
+      }
 
-    return true;
-  }).toList();
-}
+      final discente = riga['discente']?.toString().toLowerCase() ?? '';
+
+      final impresa = riga['impresa']?.toString().toLowerCase() ?? '';
+
+      final corso = riga['corso']?.toString().toLowerCase() ?? '';
+
+      if (testoRicerca.isNotEmpty &&
+          !discente.contains(testoRicerca) &&
+          !impresa.contains(testoRicerca) &&
+          !corso.contains(testoRicerca)) {
+        return false;
+      }
+
+      return true;
+    }).toList();
+  }
+
+  String filtroStato = 'Tutte';
+
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
-        crossAxisAlignment:
-            CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'Scadenze',
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-            ),
+            style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
           ),
 
           const SizedBox(height: 20),
@@ -278,13 +260,10 @@ List<Map<String, dynamic>> get scadenzeFiltrate {
           TextField(
             controller: _cercaController,
             decoration: InputDecoration(
-              hintText:
-                  'Cerca discente, impresa o corso',
-              prefixIcon:
-                  const Icon(Icons.search),
+              hintText: 'Cerca discente, impresa o corso',
+              prefixIcon: const Icon(Icons.search),
               border: OutlineInputBorder(
-                borderRadius:
-                    BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(14),
               ),
               filled: true,
               fillColor: Colors.white,
@@ -294,41 +273,59 @@ List<Map<String, dynamic>> get scadenzeFiltrate {
             },
           ),
 
+          const SizedBox(height: 16),
+
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              _FiltroScadenzaChip(
+                label: 'Tutte',
+                attivo: filtroStato == 'Tutte',
+                onTap: () => setState(() => filtroStato = 'Tutte'),
+              ),
+              _FiltroScadenzaChip(
+                label: 'Scadute',
+                attivo: filtroStato == 'Scadute',
+                onTap: () => setState(() => filtroStato = 'Scadute'),
+              ),
+              _FiltroScadenzaChip(
+                label: 'In scadenza',
+                attivo: filtroStato == 'In scadenza',
+                onTap: () => setState(() => filtroStato = 'In scadenza'),
+              ),
+              _FiltroScadenzaChip(
+                label: 'Valide',
+                attivo: filtroStato == 'Valide',
+                onTap: () => setState(() => filtroStato = 'Valide'),
+              ),
+            ],
+          ),
+
           const SizedBox(height: 20),
 
           Expanded(
             child: _caricamento
-                ? const Center(
-                    child:
-                        CircularProgressIndicator(),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : Container(
                     decoration: BoxDecoration(
                       color: Colors.white,
-                      borderRadius:
-                          BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListView.builder(
                       itemCount: scadenzeFiltrate.length,
                       itemBuilder: (context, index) {
                         final riga = scadenzeFiltrate[index];
-                       
-                        final stato =
-                            calcolaStato(riga);
 
-                        final colore =
-                            coloreStato(stato);
+                        final stato = calcolaStato(riga);
+
+                        final colore = coloreStato(stato);
 
                         return Container(
-                          padding:
-                              const EdgeInsets.all(
-                                  18),
+                          padding: const EdgeInsets.all(18),
                           decoration: BoxDecoration(
                             border: Border(
-                              bottom: BorderSide(
-                                color: Colors
-                                    .grey.shade200,
-                              ),
+                              bottom: BorderSide(color: Colors.grey.shade200),
                             ),
                           ),
                           child: Row(
@@ -336,77 +333,44 @@ List<Map<String, dynamic>> get scadenzeFiltrate {
                               Expanded(
                                 flex: 2,
                                 child: Text(
-                                  riga['discente']
-                                          ?.toString() ??
-                                      '-',
+                                  riga['discente']?.toString() ?? '-',
                                 ),
                               ),
 
                               Expanded(
                                 flex: 2,
-                                child: Text(
-                                  riga['impresa']
-                                          ?.toString() ??
-                                      '-',
-                                ),
+                                child: Text(riga['impresa']?.toString() ?? '-'),
                               ),
 
                               Expanded(
                                 flex: 2,
-                                child: Text(
-                                  riga['corso']
-                                          ?.toString() ??
-                                      '-',
-                                ),
+                                child: Text(riga['corso']?.toString() ?? '-'),
                               ),
 
                               Expanded(
-                                child: Text(
-                                  formattaData(
-                                    riga[
-                                        'data_corso'],
-                                  ),
-                                ),
+                                child: Text(formattaData(riga['data_corso'])),
                               ),
 
                               Expanded(
-                                child: Text(
-                                  formattaData(
-                                    riga[
-                                        'scadenza'],
-                                  ),
-                                ),
+                                child: Text(formattaData(riga['scadenza'])),
                               ),
 
                               Expanded(
                                 child: Container(
-                                  padding:
-                                      const EdgeInsets
-                                          .symmetric(
+                                  padding: const EdgeInsets.symmetric(
                                     horizontal: 10,
                                     vertical: 6,
                                   ),
-                                  decoration:
-                                      BoxDecoration(
-                                    color: colore
-                                        .withOpacity(
-                                            0.12),
-                                    borderRadius:
-                                        BorderRadius
-                                            .circular(
-                                                999),
+                                  decoration: BoxDecoration(
+                                    color: colore.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(999),
                                   ),
                                   child: Text(
                                     stato,
-                                    textAlign:
-                                        TextAlign
-                                            .center,
-                                    style:
-                                        TextStyle(
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
                                       color: colore,
-                                      fontWeight:
-                                          FontWeight
-                                              .bold,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
@@ -414,12 +378,9 @@ List<Map<String, dynamic>> get scadenzeFiltrate {
 
                               IconButton(
                                 onPressed: () {
-                                  rinnovaCorso(
-                                      riga);
+                                  rinnovaCorso(riga);
                                 },
-                                icon: const Icon(
-                                  Icons.refresh,
-                                ),
+                                icon: const Icon(Icons.refresh),
                               ),
                             ],
                           ),
@@ -429,6 +390,39 @@ List<Map<String, dynamic>> get scadenzeFiltrate {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _FiltroScadenzaChip extends StatelessWidget {
+  final String label;
+  final bool attivo;
+  final VoidCallback onTap;
+
+  const _FiltroScadenzaChip({
+    required this.label,
+    required this.attivo,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: attivo,
+      onSelected: (_) => onTap(),
+      selectedColor: const Color(0xFF2563EB),
+      backgroundColor: Colors.white,
+      labelStyle: TextStyle(
+        color: attivo ? Colors.white : const Color(0xFF374151),
+        fontWeight: FontWeight.w700,
+      ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(999),
+        side: BorderSide(
+          color: attivo ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
+        ),
       ),
     );
   }

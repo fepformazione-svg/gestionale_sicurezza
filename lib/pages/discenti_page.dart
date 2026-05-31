@@ -480,37 +480,63 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                         width: discentiTableWidth,
                                         child: Column(
                                           children: [
-                                            const DiscentiHeader(),
+                                            Container(
+                                              decoration: BoxDecoration(
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(
+                                                          alpha: 0.04,
+                                                        ),
+                                                    blurRadius: 8,
+                                                    offset: const Offset(0, 3),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: const DiscentiHeader(),
+                                            ),
                                             Expanded(
                                               child: Scrollbar(
                                                 controller: _verticalController,
                                                 thumbVisibility: true,
-                                                radius: const Radius.circular(10),
+                                                radius: const Radius.circular(
+                                                  10,
+                                                ),
                                                 thickness: 7,
                                                 child: ListView.builder(
-                                                  controller: _verticalController,
+                                                  controller:
+                                                      _verticalController,
                                                   primary: false,
-                                                  physics: const ClampingScrollPhysics(),
+                                                  physics:
+                                                      const ClampingScrollPhysics(),
                                                   itemExtent: discenteRowHeight,
-                                                  itemCount: discentiFiltrati.length,
+                                                  itemCount:
+                                                      discentiFiltrati.length,
                                                   itemBuilder: (context, index) {
-                                                    final d = discentiFiltrati[index];
+                                                    final d =
+                                                        discentiFiltrati[index];
 
                                                     return DiscenteRow(
                                                       discente: d,
-                                                      selezionata: discenteSelezionatoId == d.id,
+                                                      selezionata:
+                                                          discenteSelezionatoId ==
+                                                          d.id,
                                                       onSeleziona: () {
                                                         setState(() {
-                                                          discenteSelezionatoId = d.id;
+                                                          discenteSelezionatoId =
+                                                              d.id;
                                                         });
                                                       },
-                                                      onDoppioClick: () => apriDialogDiscente(
-                                                        discente: d,
-                                                      ),
-                                                      onModifica: () => apriDialogDiscente(
-                                                        discente: d,
-                                                      ),
-                                                      onElimina: () => eliminaDiscente(d),
+                                                      onDoppioClick: () =>
+                                                          apriDialogDiscente(
+                                                            discente: d,
+                                                          ),
+                                                      onModifica: () =>
+                                                          apriDialogDiscente(
+                                                            discente: d,
+                                                          ),
+                                                      onElimina: () =>
+                                                          eliminaDiscente(d),
                                                     );
                                                   },
                                                 ),
@@ -521,17 +547,17 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                       ),
                                     ),
                                   ),
-                                  ),
-                                  ),
-                                  ),
-                                  ],
-                                  ),
-                                  ),
-                                  ),
-                                  ],
-                                  );
-                                  }
-                                  }
+                                ),
+                              ),
+                      ),
+                    ],
+                  ),
+          ),
+        ),
+      ],
+    );
+  }
+}
 
 class DiscentiHeader extends StatelessWidget {
   const DiscentiHeader({super.key});
@@ -540,7 +566,10 @@ class DiscentiHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: discenteRowHeight,
-      color: const Color(0xFFF8FAFC),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF8FAFC),
+        border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
+      ),
       child: Row(
         children: const [
           SizedBox(width: colNome, child: _HeaderCell('Nome')),
@@ -566,18 +595,17 @@ class _HeaderCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          testo,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: Color(0xFF475569),
-          ),
+    return Container(
+      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      child: Text(
+        testo.toUpperCase(),
+        overflow: TextOverflow.ellipsis,
+        style: const TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+          color: Color(0xFF64748B),
         ),
       ),
     );

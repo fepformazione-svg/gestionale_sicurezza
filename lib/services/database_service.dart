@@ -41,6 +41,36 @@ class DatabaseService {
     return rows.map((e) => Discente.fromMap(e)).toList();
   }
 
+  Future<Discente?> getDiscenteById(int id) async {
+    final db = await _db;
+
+    final rows = await db.rawQuery(
+      '''
+    SELECT
+      d.id,
+      d.nome,
+      d.cognome,
+      d.luogo_nascita,
+      d.data_nascita,
+      d.codice_fiscale,
+      d.impresa_id,
+      d.visita_medica_svolta,
+      d.data_visita_medica,
+      d.scadenza_visita_medica,
+      i.intestazione AS nome_impresa
+    FROM discenti d
+    LEFT JOIN imprese i ON i.id = d.impresa_id
+    WHERE d.id = ?
+    LIMIT 1
+    ''',
+      [id],
+    );
+
+    if (rows.isEmpty) return null;
+
+    return Discente.fromMap(rows.first);
+  }
+
   Future<void> insertDiscente(Discente discente) async {
     final db = await _db;
 

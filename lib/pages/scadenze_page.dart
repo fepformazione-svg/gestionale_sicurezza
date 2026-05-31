@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../database/database_service.dart';
+import 'discente_scheda_page.dart';
+import '../models/discente.dart';
 
 class ScadenzePage extends StatefulWidget {
   final String filtro;
@@ -198,6 +200,22 @@ class _ScadenzePageState extends State<ScadenzePage> {
     }
   }
 
+  Future<void> apriSchedaDiscente(Map<String, dynamic> riga) async {
+    final idDiscente = riga['id_discente'];
+
+    if (idDiscente == null) return;
+
+    final discente = await DatabaseService.instance.getDiscenteById(idDiscente);
+
+    if (discente == null) return;
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
+    );
+  }
+
   List<Map<String, dynamic>> get scadenzeFiltrate {
     final testoRicerca = _cercaController.text.toLowerCase();
 
@@ -383,68 +401,75 @@ class _ScadenzePageState extends State<ScadenzePage> {
 
                         final colore = coloreStato(stato);
 
-                        return Container(
-                          padding: const EdgeInsets.all(18),
-                          decoration: BoxDecoration(
-                            border: Border(
-                              bottom: BorderSide(color: Colors.grey.shade200),
+                        return InkWell(
+                          onDoubleTap: () {
+                            apriSchedaDiscente(riga);
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.all(18),
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Colors.grey.shade200),
+                              ),
                             ),
-                          ),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Text(
-                                  riga['discente']?.toString() ?? '-',
-                                ),
-                              ),
-
-                              Expanded(
-                                flex: 2,
-                                child: Text(riga['impresa']?.toString() ?? '-'),
-                              ),
-
-                              Expanded(
-                                flex: 2,
-                                child: Text(riga['corso']?.toString() ?? '-'),
-                              ),
-
-                              Expanded(
-                                child: Text(formattaData(riga['data_corso'])),
-                              ),
-
-                              Expanded(
-                                child: Text(formattaData(riga['scadenza'])),
-                              ),
-
-                              Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: colore.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 2,
                                   child: Text(
-                                    stato,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      color: colore,
-                                      fontWeight: FontWeight.bold,
+                                    riga['discente']?.toString() ?? '-',
+                                  ),
+                                ),
+
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    riga['impresa']?.toString() ?? '-',
+                                  ),
+                                ),
+
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(riga['corso']?.toString() ?? '-'),
+                                ),
+
+                                Expanded(
+                                  child: Text(formattaData(riga['data_corso'])),
+                                ),
+
+                                Expanded(
+                                  child: Text(formattaData(riga['scadenza'])),
+                                ),
+
+                                Expanded(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: colore.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    child: Text(
+                                      stato,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        color: colore,
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
                                 ),
-                              ),
 
-                              IconButton(
-                                onPressed: () {
-                                  rinnovaCorso(riga);
-                                },
-                                icon: const Icon(Icons.refresh),
-                              ),
-                            ],
+                                IconButton(
+                                  onPressed: () {
+                                    rinnovaCorso(riga);
+                                  },
+                                  icon: const Icon(Icons.refresh),
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },

@@ -122,6 +122,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _AnagraficaCard(discente: d),
+            const SizedBox(height: 18),
+            _SorveglianzaSanitariaCard(discente: d),
             const SizedBox(height: 24),
             const Text(
               'Storico formativo',
@@ -227,6 +229,47 @@ class _AnagraficaCard extends StatelessWidget {
             value: valore(discente.codiceFiscale),
           ),
           _InfoItem(label: 'Impresa', value: valore(discente.nomeImpresa)),
+        ],
+      ),
+    );
+  }
+}
+
+class _SorveglianzaSanitariaCard extends StatelessWidget {
+  final Discente discente;
+
+  const _SorveglianzaSanitariaCard({required this.discente});
+
+  String valore(String? v) {
+    final testo = v?.trim() ?? '';
+    return testo.isEmpty ? '-' : testo;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final visitaSvolta = discente.visitaMedicaSvolta == 1;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Wrap(
+        runSpacing: 18,
+        spacing: 36,
+        children: [
+          _InfoItem(label: 'Visita medica', value: visitaSvolta ? 'Sì' : 'No'),
+          _InfoItem(
+            label: 'Data visita',
+            value: valore(discente.dataVisitaMedica),
+          ),
+          _InfoItem(
+            label: 'Scadenza visita',
+            value: valore(discente.scadenzaVisitaMedica),
+          ),
         ],
       ),
     );

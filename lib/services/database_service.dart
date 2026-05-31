@@ -92,6 +92,39 @@ class DatabaseService {
     );
   }
 
+  Future<bool> discenteHaCollegamenti(int id) async {
+    final db = await _db;
+
+    final diario =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM diario WHERE discente_id = ?',
+            [id],
+          ),
+        ) ??
+        0;
+
+    final prenotazioni =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM prenotazioni WHERE discente_id = ?',
+            [id],
+          ),
+        ) ??
+        0;
+
+    final scadenze =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM scadenze WHERE discente_id = ?',
+            [id],
+          ),
+        ) ??
+        0;
+
+    return diario > 0 || prenotazioni > 0 || scadenze > 0;
+  }
+
   Future<void> deleteDiscente(int id) async {
     final db = await _db;
 
@@ -527,6 +560,16 @@ class DatabaseService {
 
   Future<void> aggiornaScadenzeDaDiario() async {
     final db = await _db;
+
+    await db.delete(
+      'scadenze',
+      where: '''
+    discente_id IS NULL
+    OR discente_id NOT IN (SELECT id FROM discenti)
+    OR diario_id IS NULL
+    OR diario_id NOT IN (SELECT id FROM diario)
+  ''',
+    );
 
     final diario = await db.rawQuery('''
       SELECT

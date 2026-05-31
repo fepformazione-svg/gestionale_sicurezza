@@ -5,10 +5,7 @@ import '../database/database_service.dart';
 class DiarioPage extends StatefulWidget {
   final bool soloDaFatturare;
 
-  const DiarioPage({
-    super.key,
-    this.soloDaFatturare = false,
-  });
+  const DiarioPage({super.key, this.soloDaFatturare = false});
 
   @override
   State<DiarioPage> createState() => _DiarioPageState();
@@ -21,53 +18,76 @@ class _DiarioPageState extends State<DiarioPage> {
   bool _caricamento = true;
   bool _soloDaFatturare = false;
 
- int? _sortColumnIndex;
+  int? _sortColumnIndex;
   bool _sortAscending = true;
-  
- @override
-void initState() {
-  super.initState();
-  _soloDaFatturare = widget.soloDaFatturare;
-  caricaDiario();
-}
+
+  @override
+  void initState() {
+    super.initState();
+    _soloDaFatturare = widget.soloDaFatturare;
+    caricaDiario();
+  }
 
   Future<void> caricaDiario() async {
-  setState(() => _caricamento = true);
+    setState(() => _caricamento = true);
 
-  final dati = await DatabaseService.instance.caricaDiario(
-    ricerca: _cercaController.text.trim(),
-  );
+    final dati = await DatabaseService.instance.caricaDiario(
+      ricerca: _cercaController.text.trim(),
+    );
 
-  setState(() {
-  _diario = _soloDaFatturare
-      ? dati.where((riga) => riga['da_fatturare'] == 1).toList()
-      : dati;
+    final ricerca = _cercaController.text.trim().toLowerCase();
 
-  _caricamento = false;
-});
-}
+    final datiFiltrati = ricerca.isEmpty
+        ? dati
+        : dati.where((riga) {
+            final discente = '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                .toLowerCase();
+            final impresa = testo(riga['impresa']).toLowerCase();
+            final corso = testo(riga['corso']).toLowerCase();
+            final prot = testo(riga['prot']).toLowerCase();
+            final data = testo(riga['data']).toLowerCase();
+            final scadenza = testo(riga['scadenza']).toLowerCase();
 
-void ordina<T>(
-  Comparable<T> Function(Map<String, dynamic> riga) getField,
-  int columnIndex,
-  bool ascending,
-) {
-  _diario.sort((a, b) {
-    final aValue = getField(a);
-    final bValue = getField(b);
+            return discente.contains(ricerca) ||
+                impresa.contains(ricerca) ||
+                corso.contains(ricerca) ||
+                prot.contains(ricerca) ||
+                data.contains(ricerca) ||
+                scadenza.contains(ricerca);
+          }).toList();
 
-    return ascending
-        ? Comparable.compare(aValue, bValue)
-        : Comparable.compare(bValue, aValue);
-  });
+    if (!mounted) return;
 
-  setState(() {
-    _sortColumnIndex = columnIndex;
-    _sortAscending = ascending;
-  });
-}
+    setState(() {
+      _diario = _soloDaFatturare
+          ? datiFiltrati.where((riga) => riga['da_fatturare'] == 1).toList()
+          : datiFiltrati;
 
-String statoScadenza(String? dataScadenza) {
+      _caricamento = false;
+    });
+  }
+
+  void ordina<T>(
+    Comparable<T> Function(Map<String, dynamic> riga) getField,
+    int columnIndex,
+    bool ascending,
+  ) {
+    _diario.sort((a, b) {
+      final aValue = getField(a);
+      final bValue = getField(b);
+
+      return ascending
+          ? Comparable.compare(aValue, bValue)
+          : Comparable.compare(bValue, aValue);
+    });
+
+    setState(() {
+      _sortColumnIndex = columnIndex;
+      _sortAscending = ascending;
+    });
+  }
+
+  String statoScadenza(String? dataScadenza) {
     if (dataScadenza == null || dataScadenza.isEmpty) {
       return 'N/D';
     }
@@ -122,38 +142,40 @@ String statoScadenza(String? dataScadenza) {
     if (valore == null) return '';
     return valore.toString();
   }
-String formattaData(dynamic valore) {
-  if (valore == null || valore.toString().trim().isEmpty) return '-';
 
-  final testoData = valore.toString().trim();
+  String formattaData(dynamic valore) {
+    if (valore == null || valore.toString().trim().isEmpty) return '-';
 
-  try {
-    DateTime? data;
+    final testoData = valore.toString().trim();
 
-    if (testoData.contains('/')) {
-      final parti = testoData.split('/');
-      if (parti.length == 3) {
-        data = DateTime(
-          int.parse(parti[2]),
-          int.parse(parti[1]),
-          int.parse(parti[0]),
-        );
+    try {
+      DateTime? data;
+
+      if (testoData.contains('/')) {
+        final parti = testoData.split('/');
+        if (parti.length == 3) {
+          data = DateTime(
+            int.parse(parti[2]),
+            int.parse(parti[1]),
+            int.parse(parti[0]),
+          );
+        }
+      } else {
+        data = DateTime.tryParse(testoData);
       }
-    } else {
-      data = DateTime.tryParse(testoData);
+
+      if (data == null) return testoData;
+
+      final giorno = data.day.toString().padLeft(2, '0');
+      final mese = data.month.toString().padLeft(2, '0');
+      final anno = data.year.toString();
+
+      return '$giorno/$mese/$anno';
+    } catch (_) {
+      return testoData;
     }
-
-    if (data == null) return testoData;
-
-    final giorno = data.day.toString().padLeft(2, '0');
-    final mese = data.month.toString().padLeft(2, '0');
-    final anno = data.year.toString();
-
-    return '$giorno/$mese/$anno';
-  } catch (_) {
-    return testoData;
   }
-}
+
   @override
   void dispose() {
     _cercaController.dispose();
@@ -161,201 +183,204 @@ String formattaData(dynamic valore) {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Material(
-    color: Colors.transparent,
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'DIARIO CORSI',
-            style: TextStyle(
-              fontSize: 26,
-              fontWeight: FontWeight.bold,
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'DIARIO CORSI',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-          ),
-
-          const SizedBox(height: 18),
-
-          TextField(
-            controller: _cercaController,
-            onChanged: (_) => caricaDiario(),
-            decoration: InputDecoration(
-              hintText: 'Cerca discente, impresa, corso, protocollo...',
-              prefixIcon: const Icon(Icons.search),
-              suffixIcon: _cercaController.text.isEmpty
-                  ? null
-                  : IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _cercaController.clear();
-                        caricaDiario();
-                      },
-                    ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(14),
+            const SizedBox(height: 18),
+            TextField(
+              controller: _cercaController,
+              onChanged: (_) => caricaDiario(),
+              decoration: InputDecoration(
+                hintText: 'Cerca discente, impresa, corso, protocollo...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _cercaController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _cercaController.clear();
+                          caricaDiario();
+                        },
+                      ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 20),
-
-          Expanded(
-            child: _caricamento
-                ? const Center(child: CircularProgressIndicator())
-                : Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
+            const SizedBox(height: 20),
+            Expanded(
+              child: _caricamento
+                  ? const Center(child: CircularProgressIndicator())
+                  : Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(color: Colors.grey.shade300),
+                      ),
                       child: SingleChildScrollView(
-                        child: DataTable(
-                          sortColumnIndex: _sortColumnIndex,
-                          sortAscending: _sortAscending,
-                          headingRowColor: WidgetStateProperty.all(
-                            Colors.grey.shade100,
+                        scrollDirection: Axis.horizontal,
+                        child: SingleChildScrollView(
+                          child: DataTable(
+                            sortColumnIndex: _sortColumnIndex,
+                            sortAscending: _sortAscending,
+                            headingRowColor: WidgetStateProperty.all(
+                              Colors.grey.shade100,
+                            ),
+                            columns: [
+                              DataColumn(
+                                label: const Text('Discente'),
+                                onSort: (columnIndex, ascending) {
+                                  ordina<String>(
+                                    (riga) =>
+                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+                                    columnIndex,
+                                    ascending,
+                                  );
+                                },
+                              ),
+                              DataColumn(
+                                label: const Text('Impresa'),
+                                onSort: (columnIndex, ascending) {
+                                  ordina<String>(
+                                    (riga) => testo(riga['impresa']),
+                                    columnIndex,
+                                    ascending,
+                                  );
+                                },
+                              ),
+                              DataColumn(
+                                label: const Text('Corso'),
+                                onSort: (columnIndex, ascending) {
+                                  ordina<String>(
+                                    (riga) => testo(riga['corso']),
+                                    columnIndex,
+                                    ascending,
+                                  );
+                                },
+                              ),
+                              const DataColumn(label: Text('Data corso')),
+                              DataColumn(
+                                label: const Text('Scadenza'),
+                                onSort: (columnIndex, ascending) {
+                                  ordina<String>(
+                                    (riga) => testo(riga['scadenza']),
+                                    columnIndex,
+                                    ascending,
+                                  );
+                                },
+                              ),
+                              const DataColumn(label: Text('Stato')),
+                              const DataColumn(label: Text('Prot.')),
+                              const DataColumn(label: Text('Da fatturare')),
+                              const DataColumn(label: Text('↻')),
+                            ],
+                            rows: _diario.map((riga) {
+                              final stato = statoScadenza(
+                                riga['scadenza']?.toString(),
+                              );
+
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    Text(
+                                      '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                          .trim(),
+                                    ),
+                                  ),
+                                  DataCell(Text(testo(riga['impresa']))),
+                                  DataCell(Text(testo(riga['corso']))),
+                                  DataCell(Text(formattaData(riga['data']))),
+                                  DataCell(
+                                    Text(formattaData(riga['scadenza'])),
+                                  ),
+                                  DataCell(badge(stato)),
+                                  DataCell(Text(testo(riga['prot']))),
+                                  DataCell(
+                                    Checkbox(
+                                      value: riga['da_fatturare'] == 1,
+                                      onChanged: (valore) async {
+                                        await DatabaseService.instance
+                                            .aggiornaDaFatturareDiario(
+                                              id: riga['id'] as int,
+                                              valore: valore ?? false,
+                                            );
+
+                                        await caricaDiario();
+                                      },
+                                    ),
+                                  ),
+
+                                  DataCell(
+                                    IconButton(
+                                      tooltip: 'Rinnova corso',
+                                      icon: const Icon(
+                                        Icons.refresh,
+                                        color: Colors.blueGrey,
+                                      ),
+                                      onPressed: () async {
+                                        final discenteId = riga['discente_id'];
+                                        final impresaId = riga['impresa_id'];
+                                        final corsoId = riga['corso_id'];
+
+                                        if (discenteId == null ||
+                                            impresaId == null ||
+                                            corsoId == null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Impossibile rinnovare: discente, impresa o corso mancanti.',
+                                              ),
+                                            ),
+                                          );
+                                          return;
+                                        }
+
+                                        await DatabaseService.instance
+                                            .rinnovaCorso(
+                                              idDiscente: discenteId as int,
+                                              idImpresa: impresaId as int,
+                                              idCorso: corsoId as int,
+                                            );
+
+                                        await caricaDiario();
+
+                                        if (!mounted) return;
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Rinnovo creato correttamente.',
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
                           ),
-                          columns: [
-  DataColumn(
-    label: const Text('Discente'),
-    onSort: (columnIndex, ascending) {
-      ordina<String>(
-        (riga) =>
-            '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-        columnIndex,
-        ascending,
-      );
-    },
-  ),
-
-  DataColumn(
-    label: const Text('Impresa'),
-    onSort: (columnIndex, ascending) {
-      ordina<String>(
-        (riga) => testo(riga['impresa']),
-        columnIndex,
-        ascending,
-      );
-    },
-  ),
-
-  DataColumn(
-    label: const Text('Corso'),
-    onSort: (columnIndex, ascending) {
-      ordina<String>(
-        (riga) => testo(riga['corso']),
-        columnIndex,
-        ascending,
-      );
-    },
-  ),
-
-  const DataColumn(
-    label: Text('Data corso'),
-  ),
-
-  DataColumn(
-    label: const Text('Scadenza'),
-    onSort: (columnIndex, ascending) {
-      ordina<String>(
-        (riga) => testo(riga['scadenza']),
-        columnIndex,
-        ascending,
-      );
-    },
-  ),
-
-  const DataColumn(
-    label: Text('Stato'),
-  ),
-
-  const DataColumn(
-    label: Text('Prot.'),
-  ),
-
-  const DataColumn(
-    label: Text('Da fatturare'),
-  ),
-
-  const DataColumn(
-    label: Text('Fattura'),
-  ),
-
-  const DataColumn(
-    label: Text('PDF'),
-  ),
-
-  const DataColumn(
-    label: Text('Rinnovo'),
-  ),
-],
-                          rows: _diario.map((riga) {
-                            final stato = statoScadenza(
-                              riga['scadenza']?.toString(),
-                            );
-
-                            return DataRow(
-                              cells: [
-                                DataCell(Text('${testo(riga['cognome'])} ${testo(riga['nome'])}'.trim())),
-                                DataCell(Text(testo(riga['impresa']))),
-                                DataCell(Text(testo(riga['corso']))),
-                                DataCell(Text(formattaData(riga['data']))),
-                                DataCell(Text(formattaData(riga['scadenza']))),
-                                DataCell(badge(stato)),
-                                DataCell(Text(testo(riga['prot']))),
-                                DataCell(
-                                 Checkbox(
-                                  value: riga['da_fatturare'] == 1,
-                                  onChanged: (valore) async {
-                                    await DatabaseService.instance.aggiornaDaFatturareDiario(
-                                      id: riga['id'] as int,
-                                      valore: valore ?? false,
-                                    );
-
-                                    await caricaDiario();                                 
-                                  },
-                                ),
-                               ),
-                                DataCell(Text(testo(riga['fattura']))),
-                                DataCell(
-                                  Icon(
-                                    riga['percorso_pdf'] != null &&
-                                            riga['percorso_pdf']
-                                                .toString()
-                                                .isNotEmpty
-                                        ? Icons.picture_as_pdf
-                                        : Icons.picture_as_pdf_outlined,
-                                    color: riga['percorso_pdf'] != null &&
-                                            riga['percorso_pdf']
-                                                .toString()
-                                                .isNotEmpty
-                                        ? Colors.red
-                                        : Colors.grey,
-                                  ),
-                                ),
-                                const DataCell(
-                                  Icon(
-                                    Icons.refresh,
-                                    color: Colors.blueGrey,
-                                  ),
-                                ),
-                              ],
-                            );
-                          }).toList(),
                         ),
                       ),
                     ),
-                  ),
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
-    ),
     );
   }
-  }
+}

@@ -67,6 +67,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     final id = widget.discente.id;
     if (id == null) return;
 
+    final haCollegamenti = await DatabaseService.instance
+        .discenteHaCollegamenti(id);
+
+    if (!mounted) return;
+
+    if (haCollegamenti) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Impossibile eliminare'),
+            content: const Text(
+              'Il discente non può essere eliminato perché sono presenti corsi, prenotazioni o scadenze collegate.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Ok'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
     final conferma = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -95,11 +122,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     if (conferma != true) return;
 
-    await DatabaseService.instance.deleteDiscente(id);
+    try {
+      await DatabaseService.instance.deleteDiscente(id);
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    Navigator.pop(context, true);
+      Navigator.pop(context, true);
+    } catch (e) {
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Errore eliminazione'),
+            content: Text(
+              'Non è stato possibile eliminare il discente.\n\nDettaglio: $e',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Ok'),
+              ),
+            ],
+          );
+        },
+      );
+    }
   }
 
   String valore(dynamic v) {

@@ -146,6 +146,16 @@ class _DiscentiPageState extends State<DiscentiPage> {
       text: discente?.codiceFiscale ?? '',
     );
 
+    final dataVisitaController = TextEditingController(
+      text: discente?.dataVisitaMedica ?? '',
+    );
+
+    final scadenzaVisitaController = TextEditingController(
+      text: discente?.scadenzaVisitaMedica ?? '',
+    );
+
+    bool visitaMedicaSvolta = (discente?.visitaMedicaSvolta ?? 0) == 1;
+
     int? impresaId = discente?.impresaId;
 
     final salvato = await showDialog<bool>(
@@ -256,6 +266,39 @@ class _DiscentiPageState extends State<DiscentiPage> {
                         },
                       ),
 
+                      const SizedBox(height: 16),
+
+                      CheckboxListTile(
+                        value: visitaMedicaSvolta,
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Visita medica svolta'),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            visitaMedicaSvolta = value ?? false;
+                          });
+                        },
+                      ),
+
+                      const SizedBox(height: 12),
+
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: dataVisitaController,
+                              decoration: _inputDecoration('Data visita'),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: TextField(
+                              controller: scadenzaVisitaController,
+                              decoration: _inputDecoration('Scadenza visita'),
+                            ),
+                          ),
+                        ],
+                      ),
+
                       const SizedBox(height: 28),
 
                       Row(
@@ -290,6 +333,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 dataNascita: dataController.text.trim(),
                                 codiceFiscale: cfController.text.trim(),
                                 impresaId: impresaId,
+
+                                visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,
+                                dataVisitaMedica: dataVisitaController.text
+                                    .trim(),
+                                scadenzaVisitaMedica: scadenzaVisitaController
+                                    .text
+                                    .trim(),
                               );
 
                               if (discente == null) {

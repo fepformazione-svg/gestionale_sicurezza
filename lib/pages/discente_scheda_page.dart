@@ -89,6 +89,64 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     return testo.isEmpty ? '-' : testo;
   }
 
+  DateTime? parseData(dynamic valore) {
+    final testo = valore?.toString().trim() ?? '';
+    if (testo.isEmpty) return null;
+
+    if (testo.contains('/')) {
+      final parti = testo.split('/');
+      if (parti.length == 3) {
+        return DateTime.tryParse(
+          '${parti[2]}-${parti[1].padLeft(2, '0')}-${parti[0].padLeft(2, '0')}',
+        );
+      }
+    }
+
+    return DateTime.tryParse(testo);
+  }
+
+  String statoScadenzaCorso(dynamic scadenza) {
+    final data = parseData(scadenza);
+
+    if (data == null) return 'SENZA SCADENZA';
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final scadenzaPulita = DateTime(data.year, data.month, data.day);
+
+    final giorni = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (giorni < 0) return 'SCADUTO';
+    if (giorni <= 60) return 'IN SCADENZA';
+    return 'VALIDO';
+  }
+
+  Color coloreStatoCorso(String stato) {
+    switch (stato) {
+      case 'VALIDO':
+        return const Color(0xFF16A34A);
+      case 'IN SCADENZA':
+        return const Color(0xFFF59E0B);
+      case 'SCADUTO':
+        return const Color(0xFFDC2626);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Color sfondoStatoCorso(String stato) {
+    switch (stato) {
+      case 'VALIDO':
+        return const Color(0xFFEAF7EE);
+      case 'IN SCADENZA':
+        return const Color(0xFFFFF7E6);
+      case 'SCADUTO':
+        return const Color(0xFFFEE2E2);
+      default:
+        return const Color(0xFFF3F4F6);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = widget.discente;
@@ -159,6 +217,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                             const Divider(height: 1, color: Color(0xFFE5E7EB)),
                         itemBuilder: (context, index) {
                           final r = storico[index];
+                          final stato = statoScadenzaCorso(r['scadenza']);
 
                           return ListTile(
                             leading: const Icon(
@@ -174,12 +233,38 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                             subtitle: Text(
                               'Data corso: ${valore(r['data'])}  •  Scadenza: ${valore(r['scadenza'])}',
                             ),
-                            trailing: Text(
-                              '${valore(r['durata_ore'])} h',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF374151),
-                              ),
+                            trailing: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: sfondoStatoCorso(stato),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    stato,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: coloreStatoCorso(stato),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${valore(r['durata_ore'])} h',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF374151),
+                                  ),
+                                ),
+                              ],
                             ),
                           );
                         },

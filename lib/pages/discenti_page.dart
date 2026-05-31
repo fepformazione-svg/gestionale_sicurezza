@@ -48,6 +48,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
   final ScrollController _horizontalController = ScrollController();
   int? discenteSelezionatoId;
 
+  String colonnaOrdinata = '';
+  bool ordineCrescente = true;
+
   @override
   void initState() {
     super.initState();
@@ -388,21 +391,24 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
   void ordinaDiscenti(String colonna) {
     setState(() {
-      if (colonna == 'nome') {
-        sortAscending = !sortAscending;
+      if (colonnaOrdinata == colonna) {
+        ordineCrescente = !ordineCrescente;
+      } else {
+        colonnaOrdinata = colonna;
+        ordineCrescente = true;
+      }
 
+      if (colonna == 'nome') {
         discentiFiltrati.sort((a, b) {
-          return sortAscending
+          return ordineCrescente
               ? a.nome.compareTo(b.nome)
               : b.nome.compareTo(a.nome);
         });
       }
 
       if (colonna == 'cognome') {
-        sortAscending = !sortAscending;
-
         discentiFiltrati.sort((a, b) {
-          return sortAscending
+          return ordineCrescente
               ? a.cognome.compareTo(b.cognome)
               : b.cognome.compareTo(a.cognome);
         });
@@ -519,6 +525,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                               ),
                                               child: DiscentiHeader(
                                                 onOrdina: ordinaDiscenti,
+                                                colonnaOrdinata:
+                                                    colonnaOrdinata,
+                                                ordineCrescente:
+                                                    ordineCrescente,
                                               ),
                                             ),
                                             Expanded(
@@ -588,7 +598,15 @@ class _DiscentiPageState extends State<DiscentiPage> {
 class DiscentiHeader extends StatelessWidget {
   final void Function(String colonna) onOrdina;
 
-  const DiscentiHeader({super.key, required this.onOrdina});
+  final String colonnaOrdinata;
+  final bool ordineCrescente;
+
+  const DiscentiHeader({
+    super.key,
+    required this.onOrdina,
+    required this.colonnaOrdinata,
+    required this.ordineCrescente,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -605,7 +623,11 @@ class DiscentiHeader extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => onOrdina('nome'),
-              child: const _HeaderCell('Nome'),
+              child: _HeaderCell(
+                'Nome',
+                ordinata: colonnaOrdinata == 'nome',
+                crescente: ordineCrescente,
+              ),
             ),
           ),
           SizedBox(
@@ -613,7 +635,11 @@ class DiscentiHeader extends StatelessWidget {
             child: GestureDetector(
               behavior: HitTestBehavior.opaque,
               onTap: () => onOrdina('cognome'),
-              child: const _HeaderCell('Cognome'),
+              child: _HeaderCell(
+                'Cognome',
+                ordinata: colonnaOrdinata == 'cognome',
+                crescente: ordineCrescente,
+              ),
             ),
           ),
           SizedBox(
@@ -638,23 +664,34 @@ class DiscentiHeader extends StatelessWidget {
 
 class _HeaderCell extends StatelessWidget {
   final String testo;
+  final bool ordinata;
+  final bool crescente;
 
-  const _HeaderCell(this.testo);
+  const _HeaderCell(this.testo, {this.ordinata = false, this.crescente = true});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.centerLeft,
+    return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12),
-      child: Text(
-        testo.toUpperCase(),
-        overflow: TextOverflow.ellipsis,
-        style: const TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
-          color: Color(0xFF64748B),
-        ),
+      child: Row(
+        children: [
+          Text(
+            testo,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF374151),
+            ),
+          ),
+          if (ordinata) ...[
+            const SizedBox(width: 6),
+            Icon(
+              crescente ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 14,
+              color: const Color(0xFF2563EB),
+            ),
+          ],
+        ],
       ),
     );
   }

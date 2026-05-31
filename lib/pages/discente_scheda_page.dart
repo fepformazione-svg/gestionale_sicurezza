@@ -16,6 +16,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   bool caricamento = true;
   List<Map<String, dynamic>> storico = [];
 
+  bool eliminato = false;
+
   @override
   void initState() {
     super.initState();
@@ -43,6 +45,45 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     });
   }
 
+  Future<void> eliminaDiscente() async {
+    final id = widget.discente.id;
+    if (id == null) return;
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Elimina discente'),
+          content: Text(
+            'Vuoi eliminare definitivamente ${widget.discente.nome} ${widget.discente.cognome}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await DatabaseService.instance.deleteDiscente(id);
+
+    if (!mounted) return;
+
+    Navigator.pop(context, true);
+  }
+
   String valore(dynamic v) {
     final testo = v?.toString().trim() ?? '';
     return testo.isEmpty ? '-' : testo;
@@ -59,6 +100,21 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF111827),
         elevation: 0.5,
+        actions: [
+          IconButton(
+            tooltip: 'Modifica',
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: () {
+              Navigator.pop(context, 'modifica');
+            },
+          ),
+          IconButton(
+            tooltip: 'Elimina',
+            icon: const Icon(Icons.delete_outline, color: Color(0xFFDC2626)),
+            onPressed: eliminaDiscente,
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(28),

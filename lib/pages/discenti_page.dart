@@ -585,17 +585,28 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                                               d.id;
                                                         });
                                                       },
-                                                      onDoppioClick: () {
-                                                        Navigator.of(
-                                                          context,
-                                                        ).push(
-                                                          MaterialPageRoute(
-                                                            builder: (_) =>
-                                                                DiscenteSchedaPage(
-                                                                  discente: d,
-                                                                ),
-                                                          ),
-                                                        );
+                                                      onDoppioClick: () async {
+                                                        final risultato =
+                                                            await Navigator.of(
+                                                              context,
+                                                            ).push(
+                                                              MaterialPageRoute(
+                                                                builder: (_) =>
+                                                                    DiscenteSchedaPage(
+                                                                      discente:
+                                                                          d,
+                                                                    ),
+                                                              ),
+                                                            );
+
+                                                        if (risultato ==
+                                                            'modifica') {
+                                                          await apriDialogDiscente(
+                                                            discente: d,
+                                                          );
+                                                        }
+
+                                                        await caricaDati();
                                                       },
                                                       onModifica: () =>
                                                           apriDialogDiscente(

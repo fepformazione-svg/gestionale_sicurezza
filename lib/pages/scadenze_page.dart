@@ -245,6 +245,16 @@ class _ScadenzePageState extends State<ScadenzePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scadute = _scadenze.where((s) => calcolaStato(s) == 'Scaduto').length;
+
+    final inScadenza = _scadenze
+        .where((s) => calcolaStato(s) == 'In scadenza')
+        .length;
+
+    final valide = _scadenze.where((s) => calcolaStato(s) == 'Valido').length;
+
+    final totale = _scadenze.length;
+
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -253,6 +263,35 @@ class _ScadenzePageState extends State<ScadenzePage> {
           const Text(
             'Scadenze',
             style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+
+          const SizedBox(height: 20),
+
+          Wrap(
+            spacing: 14,
+            runSpacing: 14,
+            children: [
+              _ScadenzaCounterCard(
+                titolo: 'Scadute',
+                valore: scadute,
+                colore: Color(0xFFDC2626),
+              ),
+              _ScadenzaCounterCard(
+                titolo: 'In scadenza',
+                valore: inScadenza,
+                colore: Color(0xFFF59E0B),
+              ),
+              _ScadenzaCounterCard(
+                titolo: 'Valide',
+                valore: valide,
+                colore: Color(0xFF16A34A),
+              ),
+              _ScadenzaCounterCard(
+                titolo: 'Totale',
+                valore: totale,
+                colore: Color(0xFF2563EB),
+              ),
+            ],
           ),
 
           const SizedBox(height: 20),
@@ -423,6 +462,56 @@ class _FiltroScadenzaChip extends StatelessWidget {
         side: BorderSide(
           color: attivo ? const Color(0xFF2563EB) : const Color(0xFFE5E7EB),
         ),
+      ),
+    );
+  }
+}
+
+class _ScadenzaCounterCard extends StatelessWidget {
+  final String titolo;
+  final int valore;
+  final Color colore;
+
+  const _ScadenzaCounterCard({
+    required this.titolo,
+    required this.valore,
+    required this.colore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Color(0xFFE5E7EB)),
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titolo,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          SizedBox(height: 10),
+          Text(
+            valore.toString(),
+            style: TextStyle(
+              fontSize: 30,
+              fontWeight: FontWeight.bold,
+              color: colore,
+            ),
+          ),
+        ],
       ),
     );
   }

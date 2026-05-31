@@ -245,9 +245,72 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
     return testo.isEmpty ? '-' : testo;
   }
 
+  String _statoVisitaMedica(bool visitaSvolta, String? scadenza) {
+    if (!visitaSvolta) return 'NON PRESENTE';
+
+    final testo = scadenza?.trim() ?? '';
+    if (testo.isEmpty) return 'SENZA SCADENZA';
+
+    DateTime? data;
+
+    if (testo.contains('/')) {
+      final parti = testo.split('/');
+      if (parti.length == 3) {
+        data = DateTime.tryParse(
+          '${parti[2]}-${parti[1].padLeft(2, '0')}-${parti[0].padLeft(2, '0')}',
+        );
+      }
+    } else {
+      data = DateTime.tryParse(testo);
+    }
+
+    if (data == null) return 'SENZA SCADENZA';
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final scadenzaPulita = DateTime(data.year, data.month, data.day);
+
+    final giorni = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (giorni < 0) return 'SCADUTA';
+    if (giorni <= 60) return 'IN SCADENZA';
+    return 'VALIDA';
+  }
+
+  Color _coloreStato(String stato) {
+    switch (stato) {
+      case 'VALIDA':
+        return const Color(0xFF16A34A);
+      case 'IN SCADENZA':
+        return const Color(0xFFF59E0B);
+      case 'SCADUTA':
+        return const Color(0xFFDC2626);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
+  Color _sfondoStato(String stato) {
+    switch (stato) {
+      case 'VALIDA':
+        return const Color(0xFFEAF7EE);
+      case 'IN SCADENZA':
+        return const Color(0xFFFFF7E6);
+      case 'SCADUTA':
+        return const Color(0xFFFEE2E2);
+      default:
+        return const Color(0xFFF3F4F6);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final visitaSvolta = discente.visitaMedicaSvolta == 1;
+
+    final statoVisita = _statoVisitaMedica(
+      visitaSvolta,
+      discente.scadenzaVisitaMedica,
+    );
 
     return Container(
       width: double.infinity,
@@ -269,6 +332,42 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
           _InfoItem(
             label: 'Scadenza visita',
             value: valore(discente.scadenzaVisitaMedica),
+          ),
+          SizedBox(
+            width: 220,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'STATO',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6B7280),
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _sfondoStato(statoVisita),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    statoVisita,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: _coloreStato(statoVisita),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),

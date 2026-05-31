@@ -19,13 +19,19 @@ class AppDatabase {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 
-    final dbPath = await databaseFactory.getDatabasesPath();
+    final documentsPath = Platform.environment['USERPROFILE'] != null
+        ? join(
+            Platform.environment['USERPROFILE']!,
+            'Documents',
+            'Gestionale Sicurezza',
+          )
+        : await databaseFactory.getDatabasesPath();
 
-    if (!Directory(dbPath).existsSync()) {
-      Directory(dbPath).createSync(recursive: true);
+    if (!Directory(documentsPath).existsSync()) {
+      Directory(documentsPath).createSync(recursive: true);
     }
 
-    final path = join(dbPath, databaseName);
+    final path = join(documentsPath, databaseName);
 
     debugPrint('DATABASE PATH: $path');
 
@@ -48,11 +54,7 @@ class AppDatabase {
     await _createIndexes(db);
   }
 
-  Future<void> _onUpgrade(
-    Database db,
-    int oldVersion,
-    int newVersion,
-  ) async {
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     await _createTables(db);
     await _ensureAllColumns(db);
     await _createIndexes(db);
@@ -365,12 +367,11 @@ class AppDatabase {
     );
   }
 
-  Future<Map<String, dynamic>?> getDiscenteConImpresa(
-    int idDiscente,
-  ) async {
+  Future<Map<String, dynamic>?> getDiscenteConImpresa(int idDiscente) async {
     final db = await database;
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT 
         d.id,
         d.nome,
@@ -388,18 +389,19 @@ class AppDatabase {
         ON i.id = d.impresa_id
       WHERE d.id = ?
       LIMIT 1
-    ''', [idDiscente]);
+    ''',
+      [idDiscente],
+    );
 
     if (result.isEmpty) return null;
     return result.first;
   }
 
-  Future<Map<String, dynamic>?> getCorsoDettaglio(
-    int idCorso,
-  ) async {
+  Future<Map<String, dynamic>?> getCorsoDettaglio(int idCorso) async {
     final db = await database;
 
-    final result = await db.rawQuery('''
+    final result = await db.rawQuery(
+      '''
       SELECT
         id,
         denominazione,
@@ -408,7 +410,9 @@ class AppDatabase {
       FROM corsi
       WHERE id = ?
       LIMIT 1
-    ''', [idCorso]);
+    ''',
+      [idCorso],
+    );
 
     if (result.isEmpty) return null;
     return result.first;

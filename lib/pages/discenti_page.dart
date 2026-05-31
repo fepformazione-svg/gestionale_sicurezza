@@ -6,6 +6,7 @@ import '../services/database_service.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
+import '../services/pdf_export_service.dart';
 
 const double colNome = 220;
 const double colCognome = 220;
@@ -435,6 +436,24 @@ class _DiscentiPageState extends State<DiscentiPage> {
               ),
             ),
             const SizedBox(width: 16),
+
+            OutlinedButton.icon(
+              onPressed: () async {
+                // test PDF
+                await PdfExportService.esportaTabella(
+                  titolo: 'Discenti',
+                  intestazioni: ['Nome', 'Cognome'],
+                  righe: discentiFiltrati.map((d) {
+                    return [d.nome, d.cognome];
+                  }).toList(),
+                );
+              },
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('Export PDF'),
+            ),
+
+            const SizedBox(width: 12),
+
             ElevatedButton.icon(
               onPressed: () => apriDialogDiscente(),
               icon: const Icon(Icons.add),

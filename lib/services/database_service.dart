@@ -62,11 +62,7 @@ class DatabaseService {
   Future<void> deleteDiscente(int id) async {
     final db = await _db;
 
-    await db.delete(
-      'discenti',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('discenti', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<Map<String, dynamic>>> getDiscentiLookup() async {
@@ -92,10 +88,7 @@ class DatabaseService {
   Future<List<Impresa>> getImprese() async {
     final db = await _db;
 
-    final rows = await db.query(
-      'imprese',
-      orderBy: 'intestazione ASC',
-    );
+    final rows = await db.query('imprese', orderBy: 'intestazione ASC');
 
     return rows.map((e) => Impresa.fromMap(e)).toList();
   }
@@ -113,10 +106,7 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getImpreseLookup() async {
     final db = await _db;
 
-    return await db.query(
-      'imprese',
-      orderBy: 'intestazione ASC',
-    );
+    return await db.query('imprese', orderBy: 'intestazione ASC');
   }
 
   // =========================
@@ -126,10 +116,7 @@ class DatabaseService {
   Future<List<Corso>> getCorsi() async {
     final db = await _db;
 
-    final rows = await db.query(
-      'corsi',
-      orderBy: 'denominazione ASC',
-    );
+    final rows = await db.query('corsi', orderBy: 'denominazione ASC');
 
     return rows.map((e) => Corso.fromMap(e)).toList();
   }
@@ -147,10 +134,7 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getCorsiLookup() async {
     final db = await _db;
 
-    return await db.query(
-      'corsi',
-      orderBy: 'denominazione ASC',
-    );
+    return await db.query('corsi', orderBy: 'denominazione ASC');
   }
 
   // =========================
@@ -187,19 +171,20 @@ class DatabaseService {
     ''');
   }
 
-Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
-  required int limit,
-  required int offset,
-}) async {
-  final db = await _db;
+  Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
+    required int limit,
+    required int offset,
+  }) async {
+    final db = await _db;
 
-  final count = Sqflite.firstIntValue(
-    await db.rawQuery('SELECT COUNT(*) FROM prenotazioni'),
-  );
+    final count = Sqflite.firstIntValue(
+      await db.rawQuery('SELECT COUNT(*) FROM prenotazioni'),
+    );
 
-  debugPrint('PRENOTAZIONI DB: $count');
+    debugPrint('PRENOTAZIONI DB: $count');
 
-  return await db.rawQuery('''
+    return await db.rawQuery(
+      '''
     SELECT
       p.id,
       p.discente_id,
@@ -226,20 +211,19 @@ Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
     ORDER BY p.id DESC
 
     LIMIT ? OFFSET ?
-  ''', [
-    limit,
-    offset,
-  ]);
-}
+  ''',
+      [limit, offset],
+    );
+  }
 
-Future<int> chiudiPrenotazioniSelezionate(List<int> ids) async {
-  if (ids.isEmpty) return 0;
+  Future<int> chiudiPrenotazioniSelezionate(List<int> ids) async {
+    if (ids.isEmpty) return 0;
 
-  final db = await _db;
+    final db = await _db;
 
-  final placeholders = List.filled(ids.length, '?').join(',');
+    final placeholders = List.filled(ids.length, '?').join(',');
 
-  return await db.rawUpdate('''
+    return await db.rawUpdate('''
     UPDATE prenotazioni
     SET
       conferma = 1,
@@ -247,16 +231,16 @@ Future<int> chiudiPrenotazioniSelezionate(List<int> ids) async {
       registro = 0
     WHERE id IN ($placeholders)
   ''', ids);
-}
+  }
 
-Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
-  if (ids.isEmpty) return 0;
+  Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
+    if (ids.isEmpty) return 0;
 
-  final db = await _db;
+    final db = await _db;
 
-  final placeholders = List.filled(ids.length, '?').join(',');
+    final placeholders = List.filled(ids.length, '?').join(',');
 
-  return await db.rawUpdate('''
+    return await db.rawUpdate('''
     UPDATE prenotazioni
     SET
       conferma = 0,
@@ -264,7 +248,7 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
       registro = 0
     WHERE id IN ($placeholders)
   ''', ids);
-}
+  }
 
   Future<int> insertPrenotazione(Map<String, dynamic> dati) async {
     final db = await _db;
@@ -288,10 +272,7 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
     return id;
   }
 
-  Future<void> updatePrenotazione(
-    int id,
-    Map<String, dynamic> dati,
-  ) async {
+  Future<void> updatePrenotazione(int id, Map<String, dynamic> dati) async {
     final db = await _db;
 
     await db.update(
@@ -321,17 +302,9 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
   Future<void> deletePrenotazione(int id) async {
     final db = await _db;
 
-    await db.delete(
-      'diario',
-      where: 'prenotazione_id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('diario', where: 'prenotazione_id = ?', whereArgs: [id]);
 
-    await db.delete(
-      'prenotazioni',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('prenotazioni', where: 'id = ?', whereArgs: [id]);
 
     await aggiornaScadenzeDaDiario();
   }
@@ -405,9 +378,7 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
     await aggiornaScadenzeDaDiario();
   }
 
-  Future<void> annullaConfermaPrenotazioneWorkflow(
-    int prenotazioneId,
-  ) async {
+  Future<void> annullaConfermaPrenotazioneWorkflow(int prenotazioneId) async {
     final db = await _db;
 
     await db.delete(
@@ -423,9 +394,7 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
   // DIARIO
   // =========================
 
-  Future<List<Map<String, dynamic>>> caricaDiario({
-    String ricerca = '',
-  }) async {
+  Future<List<Map<String, dynamic>>> caricaDiario({String ricerca = ''}) async {
     final db = await _db;
     final q = '%${ricerca.trim()}%';
 
@@ -460,7 +429,8 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
       ''');
     }
 
-    return await db.rawQuery('''
+    return await db.rawQuery(
+      '''
       SELECT
         d.id,
         d.prenotazione_id,
@@ -496,25 +466,27 @@ Future<int> apriPrenotazioniSelezionate(List<int> ids) async {
         OR d.data LIKE ?
 
       ORDER BY d.id DESC
-    ''', [q, q, q, q, q, q]);
+    ''',
+      [q, q, q, q, q, q],
+    );
   }
 
-Future<void> aggiornaDaFatturareDiario({
-  required int id,
-  required bool valore,
-}) async {
-  final db = await _db;
+  Future<void> aggiornaDaFatturareDiario({
+    required int id,
+    required bool valore,
+  }) async {
+    final db = await _db;
 
-  await db.update(
-    'diario',
-    {
-      'da_fatturare': valore ? 1 : 0,
-      'updated_at': DateTime.now().toIso8601String(),
-    },
-    where: 'id = ?',
-    whereArgs: [id],
-  );
-}
+    await db.update(
+      'diario',
+      {
+        'da_fatturare': valore ? 1 : 0,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 
   // =========================
   // SCADENZE
@@ -538,7 +510,7 @@ Future<void> aggiornaDaFatturareDiario({
     for (final riga in diario) {
       final dataCorso = riga['data']?.toString();
       final validitaAnni =
-    int.tryParse(riga['validita_anni']?.toString() ?? '0') ?? 0;
+          int.tryParse(riga['validita_anni']?.toString() ?? '0') ?? 0;
 
       final dataScadenza = _calcolaScadenza(dataCorso, validitaAnni);
       final stato = _statoScadenza(dataScadenza);
@@ -574,11 +546,11 @@ Future<void> aggiornaDaFatturareDiario({
   }
 
   Future<List<Map<String, dynamic>>> caricaScadenze() async {
-  final db = await _db;
+    final db = await _db;
 
-  await aggiornaScadenzeDaDiario();
+    await aggiornaScadenzeDaDiario();
 
-  return await db.rawQuery('''
+    return await db.rawQuery('''
     SELECT
       s.id,
       s.diario_id,
@@ -611,7 +583,8 @@ Future<void> aggiornaDaFatturareDiario({
       END,
       s.data_scadenza ASC
   ''');
-}
+  }
+
   Future<int> contaScaduti() async {
     final db = await _db;
     await aggiornaScadenzeDaDiario();
@@ -646,92 +619,122 @@ Future<void> aggiornaDaFatturareDiario({
   }
 
   Future<void> rinnovaCorso({
-  required int idDiscente,
-  required int idImpresa,
-  required int idCorso,
-}) async {
-  final db = await _db;
+    required int idDiscente,
+    required int idImpresa,
+    required int idCorso,
+  }) async {
+    final db = await _db;
 
-  final oggi = DateTime.now();
-  final data = oggi.toIso8601String().substring(0, 10);
+    final oggi = DateTime.now();
+    final data = oggi.toIso8601String().substring(0, 10);
 
-  final duplicato = await db.query(
-    'diario',
-    where: '''
+    final duplicato = await db.query(
+      'diario',
+      where: '''
       discente_id = ?
       AND impresa_id = ?
       AND corso_id = ?
       AND data = ?
     ''',
-    whereArgs: [idDiscente, idImpresa, idCorso, data],
-    limit: 1,
-  );
+      whereArgs: [idDiscente, idImpresa, idCorso, data],
+      limit: 1,
+    );
 
-  if (duplicato.isNotEmpty) {
-    return;
+    if (duplicato.isNotEmpty) {
+      return;
+    }
+
+    final corso = await db.query(
+      'corsi',
+      where: 'id = ?',
+      whereArgs: [idCorso],
+      limit: 1,
+    );
+
+    final validita = corso.isNotEmpty
+        ? corso.first['validita_anni'] as int? ?? 0
+        : 0;
+
+    final scadenza = validita > 0
+        ? DateTime(
+            oggi.year + validita,
+            oggi.month,
+            oggi.day,
+          ).toIso8601String().substring(0, 10)
+        : null;
+
+    await db.insert('diario', {
+      'discente_id': idDiscente,
+      'impresa_id': idImpresa,
+      'corso_id': idCorso,
+      'data': data,
+      'scadenza': scadenza,
+      'da_fatturare': 0,
+      'created_at': DateTime.now().toIso8601String(),
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+
+    await aggiornaScadenzeDaDiario();
   }
 
-  final corso = await db.query(
-    'corsi',
-    where: 'id = ?',
-    whereArgs: [idCorso],
-    limit: 1,
-  );
+  Future<List<Map<String, dynamic>>> getStoricoDiscente(int discenteId) async {
+    final db = await _db;
 
-  final validita = corso.isNotEmpty
-      ? corso.first['validita_anni'] as int? ?? 0
-      : 0;
+    return await db.rawQuery(
+      '''
+    SELECT
+      d.id,
+      d.data,
+      d.prot,
+      s.data_scadenza AS scadenza,
+      c.denominazione AS corso,
+      c.durata_ore,
+      c.validita_anni
 
-  final scadenza = validita > 0
-      ? DateTime(
-          oggi.year + validita,
-          oggi.month,
-          oggi.day,
-        ).toIso8601String().substring(0, 10)
-      : null;
+    FROM diario d
 
-  await db.insert('diario', {
-    'discente_id': idDiscente,
-    'impresa_id': idImpresa,
-    'corso_id': idCorso,
-    'data': data,
-    'scadenza': scadenza,
-    'da_fatturare': 0,
-    'created_at': DateTime.now().toIso8601String(),
-    'updated_at': DateTime.now().toIso8601String(),
-  });
+    LEFT JOIN corsi c
+      ON c.id = d.corso_id
 
-  await aggiornaScadenzeDaDiario();
-}
+    LEFT JOIN scadenze s
+      ON s.diario_id = d.id
 
-// =========================
-// DASHBOARD KPI
-// =========================
+    WHERE d.discente_id = ?
 
-Future<Map<String, int>> caricaKpiDashboard() async {
-  final db = await _db;
-
-  await aggiornaScadenzeDaDiario();
-
-  Future<int> count(String sql) async {
-    final result = await db.rawQuery(sql);
-    return Sqflite.firstIntValue(result) ?? 0;
+    ORDER BY d.data DESC
+  ''',
+      [discenteId],
+    );
   }
 
-  return {
-    'prenotazioni': await count('SELECT COUNT(*) FROM prenotazioni'),
-    'diario': await count('SELECT COUNT(*) FROM diario'),
-    'scadenze': await count('SELECT COUNT(*) FROM scadenze'),
-    'scaduti': await count(
-      "SELECT COUNT(*) FROM scadenze WHERE stato = 'SCADUTO'",
-    ),
-    'discenti': await count('SELECT COUNT(*) FROM discenti'),
-    'imprese': await count('SELECT COUNT(*) FROM imprese'),
-    'da_fatturare': await count(
-      'SELECT COUNT(*) FROM diario WHERE da_fatturare = 1',
-    ),
-  };
-}
+  // =========================
+  // DASHBOARD KPI
+  // =========================
+
+  Future<Map<String, int>> caricaKpiDashboard() async {
+    final db = await _db;
+
+    await aggiornaScadenzeDaDiario();
+
+    Future<int> count(String sql) async {
+      final result = await db.rawQuery(sql);
+      return Sqflite.firstIntValue(result) ?? 0;
+    }
+
+    return {
+      'prenotazioni': await count('SELECT COUNT(*) FROM prenotazioni'),
+      'diario': await count('SELECT COUNT(*) FROM diario'),
+      'scadenze': await count('SELECT COUNT(*) FROM scadenze'),
+      'scaduti': await count(
+        "SELECT COUNT(*) FROM scadenze WHERE stato = 'SCADUTO'",
+      ),
+      'discenti': await count('SELECT COUNT(*) FROM discenti'),
+      'imprese': await count('SELECT COUNT(*) FROM imprese'),
+      'da_fatturare': await count(
+        'SELECT COUNT(*) FROM diario WHERE da_fatturare = 1',
+      ),
+    };
+  }
 
   // =========================
   // HELPERS
@@ -758,11 +761,7 @@ Future<Map<String, int>> caricaKpiDashboard() async {
 
     if (data == null) return null;
 
-    final scadenza = DateTime(
-      data.year + validitaAnni,
-      data.month,
-      data.day,
-    );
+    final scadenza = DateTime(data.year + validitaAnni, data.month, data.day);
 
     return scadenza.toIso8601String().substring(0, 10);
   }
@@ -787,7 +786,7 @@ Future<Map<String, int>> caricaKpiDashboard() async {
     if (giorni <= 90) return 'IN SCADENZA';
     return 'VALIDO';
   }
- // =========================
+  // =========================
   // KPI PRENOTAZIONI
   // =========================
 
@@ -825,23 +824,20 @@ Future<Map<String, int>> caricaKpiDashboard() async {
 
     return result.first['totale'] as int? ?? 0;
   }
-  Future<void> aggiornaStatoPrenotazione({
-  required int id,
-  required int aperto,
-  required int registro,
-  required int conferma,
-}) async {
-  final db = await _db;
 
-  await db.update(
-    'prenotazioni',
-    {
-      'aperto': aperto,
-      'registro': registro,
-      'conferma': conferma,
-    },
-    where: 'id = ?',
-    whereArgs: [id],
-  );
-}
+  Future<void> aggiornaStatoPrenotazione({
+    required int id,
+    required int aperto,
+    required int registro,
+    required int conferma,
+  }) async {
+    final db = await _db;
+
+    await db.update(
+      'prenotazioni',
+      {'aperto': aperto, 'registro': registro, 'conferma': conferma},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }

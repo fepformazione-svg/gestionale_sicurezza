@@ -169,13 +169,37 @@ class _DashboardPageState extends State<DashboardPage> {
       onRefresh: caricaKpi,
       child: ListView(
         children: [
-          const Text(
-            'Dashboard',
-            style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF111827),
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Dashboard',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF111827),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () async {
+                  final file = await BackupService.eseguiBackupManuale();
+
+                  if (!context.mounted) return;
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        file != null
+                            ? 'Backup completato con successo'
+                            : 'Errore durante il backup',
+                      ),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.backup),
+                label: const Text('Backup Database'),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           const Text(
@@ -306,31 +330,6 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ),
             ],
-          ),
-
-          const SizedBox(height: 24),
-
-          SizedBox(
-            height: 56,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                final file = await BackupService.eseguiBackupManuale();
-
-                if (!context.mounted) return;
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      file != null
-                          ? 'Backup completato con successo'
-                          : 'Errore durante il backup',
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.backup),
-              label: const Text('Backup Database'),
-            ),
           ),
         ],
       ),

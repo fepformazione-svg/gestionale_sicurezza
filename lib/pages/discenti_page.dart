@@ -4,6 +4,9 @@ import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
 import '../widgets/app_search_bar.dart';
+
+import 'discente_scheda_page.dart';
+
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 import '../services/pdf_export_service.dart';
@@ -582,10 +585,18 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                                               d.id;
                                                         });
                                                       },
-                                                      onDoppioClick: () =>
-                                                          apriDialogDiscente(
-                                                            discente: d,
+                                                      onDoppioClick: () {
+                                                        Navigator.of(
+                                                          context,
+                                                        ).push(
+                                                          MaterialPageRoute(
+                                                            builder: (_) =>
+                                                                DiscenteSchedaPage(
+                                                                  discente: d,
+                                                                ),
                                                           ),
+                                                        );
+                                                      },
                                                       onModifica: () =>
                                                           apriDialogDiscente(
                                                             discente: d,

@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'pages/home_page.dart';
+import 'services/backup_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   sqfliteFfiInit();
 
   databaseFactory = databaseFactoryFfi;
+
+  await BackupService.eseguiBackupAvvio();
 
   runApp(const MyApp());
 }

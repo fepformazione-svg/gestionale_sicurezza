@@ -275,21 +275,44 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 titolo: 'Scadute',
                 valore: scadute,
                 colore: Color(0xFFDC2626),
+                onTap: () {
+                  setState(() {
+                    filtroStato = 'Scadute';
+                  });
+                },
               ),
+
               _ScadenzaCounterCard(
                 titolo: 'In scadenza',
                 valore: inScadenza,
                 colore: Color(0xFFF59E0B),
+                onTap: () {
+                  setState(() {
+                    filtroStato = 'In scadenza';
+                  });
+                },
               ),
+
               _ScadenzaCounterCard(
                 titolo: 'Valide',
                 valore: valide,
                 colore: Color(0xFF16A34A),
+                onTap: () {
+                  setState(() {
+                    filtroStato = 'Valide';
+                  });
+                },
               ),
+
               _ScadenzaCounterCard(
                 titolo: 'Totale',
                 valore: totale,
                 colore: Color(0xFF2563EB),
+                onTap: () {
+                  setState(() {
+                    filtroStato = 'Tutte';
+                  });
+                },
               ),
             ],
           ),
@@ -471,47 +494,57 @@ class _ScadenzaCounterCard extends StatelessWidget {
   final String titolo;
   final int valore;
   final Color colore;
+  final VoidCallback onTap;
 
   const _ScadenzaCounterCard({
     required this.titolo,
     required this.valore,
     required this.colore,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 170,
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Color(0xFFE5E7EB)),
-        boxShadow: [
-          BoxShadow(color: Colors.black26, blurRadius: 8, offset: Offset(0, 4)),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            titolo,
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF6B7280),
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: Container(
+        width: 170,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: Color(0xFFE5E7EB)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black26,
+              blurRadius: 8,
+              offset: Offset(0, 4),
             ),
-          ),
-          SizedBox(height: 10),
-          Text(
-            valore.toString(),
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.bold,
-              color: colore,
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titolo,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF6B7280),
+              ),
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Text(
+              valore.toString(),
+              style: TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: colore,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

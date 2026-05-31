@@ -6,18 +6,31 @@ import 'package:path/path.dart';
 class BackupService {
   BackupService._();
 
-  static Future<void> eseguiBackupAvvio() async {
-    try {
-      final userProfile = Platform.environment['USERPROFILE'];
-      if (userProfile == null || userProfile.isEmpty) return;
+  static String? _basePath() {
+    final userProfile = Platform.environment['USERPROFILE'];
+    if (userProfile == null || userProfile.isEmpty) return null;
 
-      final basePath = join(userProfile, 'Documents', 'Gestionale Sicurezza');
+    return join(userProfile, 'Documents', 'Gestionale Sicurezza');
+  }
+
+  static Future<String?> eseguiBackupAvvio() async {
+    return _eseguiBackup(silenzioso: true);
+  }
+
+  static Future<String?> eseguiBackupManuale() async {
+    return _eseguiBackup(silenzioso: false);
+  }
+
+  static Future<String?> _eseguiBackup({required bool silenzioso}) async {
+    try {
+      final basePath = _basePath();
+      if (basePath == null) return null;
 
       final dbPath = join(basePath, 'gestionale_sicurezza.db');
       final backupPath = join(basePath, 'Backup');
 
       final dbFile = File(dbPath);
-      if (!dbFile.existsSync()) return;
+      if (!dbFile.existsSync()) return null;
 
       final backupDir = Directory(backupPath);
       if (!backupDir.existsSync()) {
@@ -40,8 +53,10 @@ class BackupService {
       await dbFile.copy(backupFile);
 
       debugPrint('BACKUP CREATO: $backupFile');
+      return backupFile;
     } catch (e) {
       debugPrint('ERRORE BACKUP: $e');
+      return null;
     }
   }
 }

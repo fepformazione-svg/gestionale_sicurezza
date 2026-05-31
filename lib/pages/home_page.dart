@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
+import '../services/backup_service.dart';
 
 import '../widgets/sidebar.dart';
 import '../widgets/kpi_card.dart';
@@ -26,31 +27,25 @@ class _HomePageState extends State<HomePage> {
   String globalSearch = '';
   String filtroScadenze = 'tutte';
   String filtroPrenotazioni = 'tutte';
-int dashboardRefresh = 0;
+  int dashboardRefresh = 0;
   List<Widget> get pages => [
-        DashboardPage(
-  key: ValueKey(dashboardRefresh),
-),
-        PrenotazioniPage(
-  globalSearch: globalSearch,
-  filtro: filtroPrenotazioni,
-  onDatiModificati: () {
-    setState(() {
-      dashboardRefresh++;
-    });
-  },
-),
-        DiarioPage(
-          soloDaFatturare: false,
-        ),
-        ScadenzePage(
-  filtro: filtroScadenze,
-),
-        DiscentiPage(globalSearch: globalSearch),
-        const ImpresePage(),
-        const CorsiPage(),
-        const PrezzarioPage(),
-      ];
+    DashboardPage(key: ValueKey(dashboardRefresh)),
+    PrenotazioniPage(
+      globalSearch: globalSearch,
+      filtro: filtroPrenotazioni,
+      onDatiModificati: () {
+        setState(() {
+          dashboardRefresh++;
+        });
+      },
+    ),
+    DiarioPage(soloDaFatturare: false),
+    ScadenzePage(filtro: filtroScadenze),
+    DiscentiPage(globalSearch: globalSearch),
+    const ImpresePage(),
+    const CorsiPage(),
+    const PrezzarioPage(),
+  ];
 
   void aggiornaRicercaGlobale(String value) {
     setState(() {
@@ -69,42 +64,35 @@ int dashboardRefresh = 0;
           Sidebar(
             selectedIndex: selectedIndex,
             onItemSelected: (index) {
-  setState(() {
-    selectedIndex = index;
+              setState(() {
+                selectedIndex = index;
 
-    if (index == 1) {
-      filtroPrenotazioni = 'tutte';
-    }
+                if (index == 1) {
+                  filtroPrenotazioni = 'tutte';
+                }
 
-    if (index == 3) {
-      filtroScadenze = 'tutte';
-    }
-  });
+                if (index == 3) {
+                  filtroScadenze = 'tutte';
+                }
+              });
 
-  if (index == 0) {
-    Future.delayed(
-      const Duration(milliseconds: 100),
-      () {
-        setState(() {
-          dashboardRefresh++;
-        });
-      },
-    );
-  }
-},
+              if (index == 0) {
+                Future.delayed(const Duration(milliseconds: 100), () {
+                  setState(() {
+                    dashboardRefresh++;
+                  });
+                });
+              }
+            },
           ),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.all(28),
               child: Column(
                 children: [
-                  AppTopbar(
-                    onSearchChanged: aggiornaRicercaGlobale,
-                  ),
+                  AppTopbar(onSearchChanged: aggiornaRicercaGlobale),
                   const SizedBox(height: 24),
-                  Expanded(
-                    child: pages[selectedIndex],
-                  ),
+                  Expanded(child: pages[selectedIndex]),
                 ],
               ),
             ),
@@ -127,14 +115,14 @@ class _DashboardPageState extends State<DashboardPage> {
 
   Map<String, int> kpi = {
     'prenotazioni': 0,
-  'prenotazioni_aperte': 0,
-  'prenotazioni_chiuse': 0,
-  'diario': 0,
-  'scadenze': 0,
-  'scaduti': 0,
-  'discenti': 0,
-  'imprese': 0,
-  'da_fatturare': 0,
+    'prenotazioni_aperte': 0,
+    'prenotazioni_chiuse': 0,
+    'diario': 0,
+    'scadenze': 0,
+    'scaduti': 0,
+    'discenti': 0,
+    'imprese': 0,
+    'da_fatturare': 0,
   };
 
   @override
@@ -144,24 +132,24 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Future<void> caricaKpi() async {
-  final dati = await DatabaseService.instance.caricaKpiDashboard();
+    final dati = await DatabaseService.instance.caricaKpiDashboard();
 
-  final aperte = await DatabaseService.instance.contaPrenotazioniAperte();
-  final chiuse = await DatabaseService.instance.contaPrenotazioniChiuse();
-  final totale = await DatabaseService.instance.contaPrenotazioniTotali();
+    final aperte = await DatabaseService.instance.contaPrenotazioniAperte();
+    final chiuse = await DatabaseService.instance.contaPrenotazioniChiuse();
+    final totale = await DatabaseService.instance.contaPrenotazioniTotali();
 
-  if (!mounted) return;
+    if (!mounted) return;
 
-  setState(() {
-    kpi = {
-      ...dati,
-      'prenotazioni': totale,
-      'prenotazioni_aperte': aperte,
-      'prenotazioni_chiuse': chiuse,
-    };
-    caricamento = false;
-  });
-}
+    setState(() {
+      kpi = {
+        ...dati,
+        'prenotazioni': totale,
+        'prenotazioni_aperte': aperte,
+        'prenotazioni_chiuse': chiuse,
+      };
+      caricamento = false;
+    });
+  }
 
   void apriPagina(BuildContext context, int index) {
     final homeState = context.findAncestorStateOfType<_HomePageState>();
@@ -174,9 +162,7 @@ class _DashboardPageState extends State<DashboardPage> {
   @override
   Widget build(BuildContext context) {
     if (caricamento) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     return RefreshIndicator(
@@ -194,10 +180,7 @@ class _DashboardPageState extends State<DashboardPage> {
           const SizedBox(height: 6),
           const Text(
             'Panoramica generale del gestionale formazione sicurezza',
-            style: TextStyle(
-              fontSize: 15,
-              color: Color(0xFF6B7280),
-            ),
+            style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
           ),
           const SizedBox(height: 28),
 
@@ -211,42 +194,42 @@ class _DashboardPageState extends State<DashboardPage> {
             childAspectRatio: 2.1,
             children: [
               GestureDetector(
-  onTap: () {
-    final homeState =
-        context.findAncestorStateOfType<_HomePageState>();
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
 
-    homeState?.setState(() {
-      homeState.filtroPrenotazioni = 'aperte';
-      homeState.selectedIndex = 1;
-    });
-  },
-  child: KpiCard(
-    title: 'Prenotazioni aperte',
-    value: kpi['prenotazioni_aperte'].toString(),
-    icon: Icons.calendar_month,
-    color: const Color(0xFF2563EB),
-  ),
-),
-GestureDetector(
-  onTap: () {
-    final homeState =
-        context.findAncestorStateOfType<_HomePageState>();
+                  homeState?.setState(() {
+                    homeState.filtroPrenotazioni = 'aperte';
+                    homeState.selectedIndex = 1;
+                  });
+                },
+                child: KpiCard(
+                  title: 'Prenotazioni aperte',
+                  value: kpi['prenotazioni_aperte'].toString(),
+                  icon: Icons.calendar_month,
+                  color: const Color(0xFF2563EB),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
 
-    homeState?.setState(() {
-      homeState.filtroPrenotazioni = 'chiuse';
-      homeState.selectedIndex = 1;
-    });
-  },
-  child: KpiCard(
-    title: 'Prenotazioni chiuse',
-    value: kpi['prenotazioni_chiuse'].toString(),
-    icon: Icons.event_available,
-    color: const Color(0xFF64748B),
-  ),
-),
+                  homeState?.setState(() {
+                    homeState.filtroPrenotazioni = 'chiuse';
+                    homeState.selectedIndex = 1;
+                  });
+                },
+                child: KpiCard(
+                  title: 'Prenotazioni chiuse',
+                  value: kpi['prenotazioni_chiuse'].toString(),
+                  icon: Icons.event_available,
+                  color: const Color(0xFF64748B),
+                ),
+              ),
 
-GestureDetector(
-  onTap: () => apriPagina(context, 2),
+              GestureDetector(
+                onTap: () => apriPagina(context, 2),
                 child: KpiCard(
                   title: 'Diario corsi',
                   value: kpi['diario'].toString(),
@@ -255,39 +238,39 @@ GestureDetector(
                 ),
               ),
               GestureDetector(
-  onTap: () {
-  final homeState =
-      context.findAncestorStateOfType<_HomePageState>();
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
 
-  homeState?.setState(() {
-    homeState.filtroScadenze = 'tutte';
-    homeState.selectedIndex = 3;
-  });
-},
-  child: KpiCard(
-    title: 'Scadenze',
-    value: kpi['scadenze'].toString(),
-    icon: Icons.warning_amber,
-    color: const Color(0xFFDC2626),
-  ),
-),
-GestureDetector(
-  onTap: () {
-  final homeState =
-      context.findAncestorStateOfType<_HomePageState>();
+                  homeState?.setState(() {
+                    homeState.filtroScadenze = 'tutte';
+                    homeState.selectedIndex = 3;
+                  });
+                },
+                child: KpiCard(
+                  title: 'Scadenze',
+                  value: kpi['scadenze'].toString(),
+                  icon: Icons.warning_amber,
+                  color: const Color(0xFFDC2626),
+                ),
+              ),
+              GestureDetector(
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
 
-  homeState?.setState(() {
-    homeState.filtroScadenze = 'scaduti';
-    homeState.selectedIndex = 3;
-  });
-},
-  child: KpiCard(
-    title: 'Scaduti',
-    value: kpi['scaduti'].toString(),
-    icon: Icons.gpp_bad,
-    color: const Color(0xFFB91C1C),
-  ),
-),
+                  homeState?.setState(() {
+                    homeState.filtroScadenze = 'scaduti';
+                    homeState.selectedIndex = 3;
+                  });
+                },
+                child: KpiCard(
+                  title: 'Scaduti',
+                  value: kpi['scaduti'].toString(),
+                  icon: Icons.gpp_bad,
+                  color: const Color(0xFFB91C1C),
+                ),
+              ),
               GestureDetector(
                 onTap: () => apriPagina(context, 4),
                 child: KpiCard(
@@ -307,22 +290,47 @@ GestureDetector(
                 ),
               ),
               GestureDetector(
-  onTap: () {
-  final homeState =
-      context.findAncestorStateOfType<_HomePageState>();
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
 
-  homeState?.setState(() {
-    homeState.selectedIndex = 2;
-  });
-},
-  child: KpiCard(
-    title: 'Da fatturare',
-    value: kpi['da_fatturare'].toString(),
-    icon: Icons.euro,
-    color: const Color(0xFF0891B2),
-  ),
-),
+                  homeState?.setState(() {
+                    homeState.selectedIndex = 2;
+                  });
+                },
+                child: KpiCard(
+                  title: 'Da fatturare',
+                  value: kpi['da_fatturare'].toString(),
+                  icon: Icons.euro,
+                  color: const Color(0xFF0891B2),
+                ),
+              ),
             ],
+          ),
+
+          const SizedBox(height: 24),
+
+          SizedBox(
+            height: 56,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final file = await BackupService.eseguiBackupManuale();
+
+                if (!context.mounted) return;
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      file != null
+                          ? 'Backup completato con successo'
+                          : 'Errore durante il backup',
+                    ),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.backup),
+              label: const Text('Backup Database'),
+            ),
           ),
         ],
       ),

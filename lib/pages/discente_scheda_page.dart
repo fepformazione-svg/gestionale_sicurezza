@@ -15,6 +15,9 @@ class DiscenteSchedaPage extends StatefulWidget {
 class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   bool caricamento = true;
   List<Map<String, dynamic>> storico = [];
+  List<Map<String, dynamic>> storicoFiltrato = [];
+
+  final TextEditingController _cercaStoricoController = TextEditingController();
 
   @override
   void initState() {
@@ -28,6 +31,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     if (id == null) {
       setState(() {
         storico = [];
+        storicoFiltrato = [];
         caricamento = false;
       });
       return;
@@ -39,7 +43,23 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     setState(() {
       storico = dati;
+      storicoFiltrato = List.from(dati);
       caricamento = false;
+    });
+  }
+
+  void filtraStorico(String testo) {
+    final ricerca = testo.toLowerCase().trim();
+
+    setState(() {
+      if (ricerca.isEmpty) {
+        storicoFiltrato = List.from(storico);
+      } else {
+        storicoFiltrato = storico.where((r) {
+          final corso = (r['corso'] ?? '').toString().toLowerCase();
+          return corso.contains(ricerca);
+        }).toList();
+      }
     });
   }
 
@@ -227,7 +247,27 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 ),
               ],
             ),
+
             const SizedBox(height: 18),
+
+            SizedBox(
+              width: 400,
+              child: TextField(
+                controller: _cercaStoricoController,
+                onChanged: filtraStorico,
+                decoration: InputDecoration(
+                  hintText: 'Cerca corso...',
+                  prefixIcon: const Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  filled: true,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 18),
+
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -288,13 +328,13 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           ),
                           Expanded(
                             child: ListView.separated(
-                              itemCount: storico.length,
+                              itemCount: storicoFiltrato.length,
                               separatorBuilder: (_, __) => const Divider(
                                 height: 1,
                                 color: Color(0xFFE5E7EB),
                               ),
                               itemBuilder: (context, index) {
-                                final r = storico[index];
+                                final r = storicoFiltrato[index];
                                 final stato = statoScadenzaCorso(r['scadenza']);
 
                                 return Container(

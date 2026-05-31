@@ -151,6 +151,17 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   Widget build(BuildContext context) {
     final d = widget.discente;
 
+    final totaleCorsi = storico.length;
+    final corsiValidi = storico
+        .where((r) => statoScadenzaCorso(r['scadenza']) == 'VALIDO')
+        .length;
+    final corsiInScadenza = storico
+        .where((r) => statoScadenzaCorso(r['scadenza']) == 'IN SCADENZA')
+        .length;
+    final corsiScaduti = storico
+        .where((r) => statoScadenzaCorso(r['scadenza']) == 'SCADUTO')
+        .length;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -192,6 +203,36 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ),
             ),
             const SizedBox(height: 14),
+
+            Wrap(
+              spacing: 14,
+              runSpacing: 14,
+              children: [
+                _StoricoKpiCard(
+                  titolo: 'Totale corsi',
+                  valore: totaleCorsi.toString(),
+                  colore: const Color(0xFF2563EB),
+                ),
+                _StoricoKpiCard(
+                  titolo: 'Validi',
+                  valore: corsiValidi.toString(),
+                  colore: const Color(0xFF16A34A),
+                ),
+                _StoricoKpiCard(
+                  titolo: 'In scadenza',
+                  valore: corsiInScadenza.toString(),
+                  colore: const Color(0xFFF59E0B),
+                ),
+                _StoricoKpiCard(
+                  titolo: 'Scaduti',
+                  valore: corsiScaduti.toString(),
+                  colore: const Color(0xFFDC2626),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 18),
+
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -489,6 +530,54 @@ class _InfoItem extends StatelessWidget {
               fontSize: 16,
               fontWeight: FontWeight.w700,
               color: Color(0xFF111827),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StoricoKpiCard extends StatelessWidget {
+  final String titolo;
+  final String valore;
+  final Color colore;
+
+  const _StoricoKpiCard({
+    required this.titolo,
+    required this.valore,
+    required this.colore,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 170,
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titolo.toUpperCase(),
+            style: const TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF6B7280),
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            valore,
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              color: colore,
             ),
           ),
         ],

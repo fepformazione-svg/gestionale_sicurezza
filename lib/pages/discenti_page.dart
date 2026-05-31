@@ -42,7 +42,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
   bool loading = true;
   int? sortColumnIndex;
-  bool sortAscending = true;
+  bool sortAscending = false;
 
   final ScrollController _verticalController = ScrollController();
   final ScrollController _horizontalController = ScrollController();
@@ -386,6 +386,30 @@ class _DiscentiPageState extends State<DiscentiPage> {
     return valore.trim();
   }
 
+  void ordinaDiscenti(String colonna) {
+    setState(() {
+      if (colonna == 'nome') {
+        sortAscending = !sortAscending;
+
+        discentiFiltrati.sort((a, b) {
+          return sortAscending
+              ? a.nome.compareTo(b.nome)
+              : b.nome.compareTo(a.nome);
+        });
+      }
+
+      if (colonna == 'cognome') {
+        sortAscending = !sortAscending;
+
+        discentiFiltrati.sort((a, b) {
+          return sortAscending
+              ? a.cognome.compareTo(b.cognome)
+              : b.cognome.compareTo(a.cognome);
+        });
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -444,7 +468,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
                             ),
                           ),
                           Text(
-                            '${discentiFiltrati.length} record',
+                            '${discentiFiltrati.length} ${discentiFiltrati.length == 1 ? 'record' : 'record'}',
                             style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontWeight: FontWeight.w600,
@@ -493,7 +517,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                                   ),
                                                 ],
                                               ),
-                                              child: const DiscentiHeader(),
+                                              child: DiscentiHeader(
+                                                onOrdina: ordinaDiscenti,
+                                              ),
                                             ),
                                             Expanded(
                                               child: Scrollbar(
@@ -560,7 +586,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
 }
 
 class DiscentiHeader extends StatelessWidget {
-  const DiscentiHeader({super.key});
+  final void Function(String colonna) onOrdina;
+
+  const DiscentiHeader({super.key, required this.onOrdina});
 
   @override
   Widget build(BuildContext context) {
@@ -571,17 +599,37 @@ class DiscentiHeader extends StatelessWidget {
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
       ),
       child: Row(
-        children: const [
-          SizedBox(width: colNome, child: _HeaderCell('Nome')),
-          SizedBox(width: colCognome, child: _HeaderCell('Cognome')),
-          SizedBox(width: colLuogoNascita, child: _HeaderCell('Luogo nascita')),
-          SizedBox(width: colDataNascita, child: _HeaderCell('Data nascita')),
+        children: [
+          SizedBox(
+            width: colNome,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onOrdina('nome'),
+              child: const _HeaderCell('Nome'),
+            ),
+          ),
+          SizedBox(
+            width: colCognome,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () => onOrdina('cognome'),
+              child: const _HeaderCell('Cognome'),
+            ),
+          ),
+          SizedBox(
+            width: colLuogoNascita,
+            child: const _HeaderCell('Luogo nascita'),
+          ),
+          SizedBox(
+            width: colDataNascita,
+            child: const _HeaderCell('Data nascita'),
+          ),
           SizedBox(
             width: colCodiceFiscale,
-            child: _HeaderCell('Codice fiscale'),
+            child: const _HeaderCell('Codice fiscale'),
           ),
-          SizedBox(width: colImpresa, child: _HeaderCell('Impresa')),
-          SizedBox(width: colAzioni, child: _HeaderCell('Azioni')),
+          SizedBox(width: colImpresa, child: const _HeaderCell('Impresa')),
+          const SizedBox(width: colAzioni, child: _HeaderCell('Azioni')),
         ],
       ),
     );
@@ -661,58 +709,76 @@ class DiscenteRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final coloreSfondo = selezionata ? const Color(0xFFE0ECFF) : Colors.white;
+    final coloreSfondo = selezionata ? const Color(0xFFDCEBFF) : Colors.white;
 
-    return InkWell(
-      onTap: onSeleziona,
-      onDoubleTap: onDoppioClick,
-      child: Container(
-        height: discenteRowHeight,
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      child: Material(
         color: coloreSfondo,
-        child: Row(
-          children: [
-            SizedBox(width: colNome, child: _DiscenteCell(discente.nome)),
-            SizedBox(width: colCognome, child: _DiscenteCell(discente.cognome)),
-            SizedBox(
-              width: colLuogoNascita,
-              child: _DiscenteCell(discente.luogoNascita),
-            ),
-            SizedBox(
-              width: colDataNascita,
-              child: _DiscenteCell(discente.dataNascita),
-            ),
-            SizedBox(
-              width: colCodiceFiscale,
-              child: _DiscenteCell(discente.codiceFiscale),
-            ),
-            SizedBox(
-              width: colImpresa,
-              child: _DiscenteCell(discente.nomeImpresa),
-            ),
-            SizedBox(
-              width: colAzioni,
-              child: Row(
-                children: [
-                  IconButton(
-                    tooltip: 'Modifica',
-                    icon: const Icon(
-                      Icons.edit_outlined,
-                      color: Color(0xFF2563EB),
-                    ),
-                    onPressed: onModifica,
+        child: InkWell(
+          onTap: onSeleziona,
+          onDoubleTap: onDoppioClick,
+          hoverColor: const Color(0xFFF1F5F9),
+          child: SizedBox(
+            height: discenteRowHeight,
+            child: Row(
+              children: [
+                Container(
+                  width: 4,
+                  color: selezionata
+                      ? const Color(0xFF2563EB)
+                      : Colors.transparent,
+                ),
+                SizedBox(
+                  width: colNome - 4,
+                  child: _DiscenteCell(discente.nome),
+                ),
+                SizedBox(
+                  width: colCognome,
+                  child: _DiscenteCell(discente.cognome),
+                ),
+                SizedBox(
+                  width: colLuogoNascita,
+                  child: _DiscenteCell(discente.luogoNascita),
+                ),
+                SizedBox(
+                  width: colDataNascita,
+                  child: _DiscenteCell(discente.dataNascita),
+                ),
+                SizedBox(
+                  width: colCodiceFiscale,
+                  child: _DiscenteCell(discente.codiceFiscale),
+                ),
+                SizedBox(
+                  width: colImpresa,
+                  child: _DiscenteCell(discente.nomeImpresa),
+                ),
+                SizedBox(
+                  width: colAzioni,
+                  child: Row(
+                    children: [
+                      IconButton(
+                        tooltip: 'Modifica',
+                        icon: const Icon(
+                          Icons.edit_outlined,
+                          color: Color(0xFF2563EB),
+                        ),
+                        onPressed: onModifica,
+                      ),
+                      IconButton(
+                        tooltip: 'Elimina',
+                        icon: const Icon(
+                          Icons.delete_outline,
+                          color: Color(0xFFDC2626),
+                        ),
+                        onPressed: onElimina,
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'Elimina',
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Color(0xFFDC2626),
-                    ),
-                    onPressed: onElimina,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -16,8 +16,6 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   bool caricamento = true;
   List<Map<String, dynamic>> storico = [];
 
-  bool eliminato = false;
-
   @override
   void initState() {
     super.initState();
@@ -203,7 +201,6 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ),
             ),
             const SizedBox(height: 14),
-
             Wrap(
               spacing: 14,
               runSpacing: 14,
@@ -230,9 +227,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 ),
               ],
             ),
-
             const SizedBox(height: 18),
-
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -252,63 +247,134 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           ),
                         ),
                       )
-                    : ListView.separated(
-                        itemCount: storico.length,
-                        separatorBuilder: (_, __) =>
-                            const Divider(height: 1, color: Color(0xFFE5E7EB)),
-                        itemBuilder: (context, index) {
-                          final r = storico[index];
-                          final stato = statoScadenzaCorso(r['scadenza']);
-
-                          return ListTile(
-                            leading: const Icon(
-                              Icons.school_outlined,
-                              color: Color(0xFF2563EB),
-                            ),
-                            title: Text(
-                              valore(r['corso']),
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                    : Column(
+                        children: [
+                          Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 22),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(18),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: Color(0xFFE5E7EB)),
                               ),
                             ),
-                            subtitle: Text(
-                              'Data corso: ${valore(r['data'])}  •  Scadenza: ${valore(r['scadenza'])}',
-                            ),
-                            trailing: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.end,
+                            child: const Row(
                               children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: sfondoStatoCorso(stato),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    stato,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: coloreStatoCorso(stato),
-                                    ),
-                                  ),
+                                Expanded(
+                                  flex: 5,
+                                  child: _StoricoHeaderCell('Corso'),
                                 ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '${valore(r['durata_ore'])} h',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF374151),
-                                  ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _StoricoHeaderCell('Data corso'),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _StoricoHeaderCell('Scadenza'),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: _StoricoHeaderCell('Ore'),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _StoricoHeaderCell('Stato'),
                                 ),
                               ],
                             ),
-                          );
-                        },
+                          ),
+                          Expanded(
+                            child: ListView.separated(
+                              itemCount: storico.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                height: 1,
+                                color: Color(0xFFE5E7EB),
+                              ),
+                              itemBuilder: (context, index) {
+                                final r = storico[index];
+                                final stato = statoScadenzaCorso(r['scadenza']);
+
+                                return Container(
+                                  height: 58,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 22,
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        flex: 5,
+                                        child: Text(
+                                          valore(r['corso']),
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF111827),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          valore(r['data']),
+                                          style: const TextStyle(
+                                            color: Color(0xFF374151),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Text(
+                                          valore(r['scadenza']),
+                                          style: const TextStyle(
+                                            color: Color(0xFF374151),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 1,
+                                        child: Text(
+                                          '${valore(r['durata_ore'])} h',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF374151),
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        flex: 2,
+                                        child: Align(
+                                          alignment: Alignment.centerLeft,
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 10,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: sfondoStatoCorso(stato),
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                            ),
+                                            child: Text(
+                                              stato,
+                                              style: TextStyle(
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w800,
+                                                color: coloreStatoCorso(stato),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
                       ),
               ),
             ),
@@ -581,6 +647,25 @@ class _StoricoKpiCard extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _StoricoHeaderCell extends StatelessWidget {
+  final String testo;
+
+  const _StoricoHeaderCell(this.testo);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      testo.toUpperCase(),
+      style: const TextStyle(
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        color: Color(0xFF6B7280),
+        letterSpacing: 0.6,
       ),
     );
   }

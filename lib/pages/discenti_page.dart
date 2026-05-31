@@ -663,11 +663,11 @@ class DiscentiHeader extends StatelessWidget {
 }
 
 class _HeaderCell extends StatelessWidget {
-  final String testo;
+  final String text;
   final bool ordinata;
   final bool crescente;
 
-  const _HeaderCell(this.testo, {this.ordinata = false, this.crescente = true});
+  const _HeaderCell(this.text, {this.ordinata = false, this.crescente = true});
 
   @override
   Widget build(BuildContext context) {
@@ -676,7 +676,7 @@ class _HeaderCell extends StatelessWidget {
       child: Row(
         children: [
           Text(
-            testo,
+            text,
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w700,
@@ -684,7 +684,7 @@ class _HeaderCell extends StatelessWidget {
             ),
           ),
           if (ordinata) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: 4),
             Icon(
               crescente ? Icons.arrow_upward : Icons.arrow_downward,
               size: 14,

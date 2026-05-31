@@ -1169,26 +1169,28 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         onTap: () => ordinaPrenotazioni(colonna),
         child: Row(
           children: [
-            Text(
-              titolo,
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.2,
-                color: attiva
-                    ? const Color(0xFF2563EB)
-                    : const Color(0xFF374151),
+            Flexible(
+              child: Text(
+                titolo,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.2,
+                  color: attiva
+                      ? const Color(0xFF2563EB)
+                      : const Color(0xFF374151),
+                ),
               ),
             ),
-
-            const SizedBox(width: 4),
-
-            if (attiva)
+            if (attiva) ...[
+              const SizedBox(width: 4),
               Icon(
-                ordineCrescente ? Icons.arrow_drop_up : Icons.arrow_drop_down,
-                size: 18,
+                ordineCrescente ? Icons.arrow_upward : Icons.arrow_downward,
+                size: 14,
                 color: const Color(0xFF2563EB),
               ),
+            ],
           ],
         ),
       ),

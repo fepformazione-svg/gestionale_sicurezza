@@ -12,24 +12,32 @@ InputDecoration _inputDecoration(String label) {
   );
 }
 
-Future<bool> apriDialogModificaDiscente({
+Future<bool> apriDialogDiscente({
   required BuildContext context,
-  required Discente discente,
+  Discente? discente,
+  int? impresaIdPreselezionata,
 }) async {
   final imprese = await DatabaseService.instance.getImprese();
 
-  final nomeController = TextEditingController(text: discente.nome);
-  final cognomeController = TextEditingController(text: discente.cognome);
-  final luogoController = TextEditingController(text: discente.luogoNascita ?? '');
-  final dataController = TextEditingController(text: discente.dataNascita ?? '');
-  final cfController = TextEditingController(text: discente.codiceFiscale ?? '');
-  final dataVisitaController =
-      TextEditingController(text: discente.dataVisitaMedica ?? '');
-  final scadenzaVisitaController =
-      TextEditingController(text: discente.scadenzaVisitaMedica ?? '');
+  final bool modifica = discente != null;
 
-  bool visitaMedicaSvolta = discente.visitaMedicaSvolta == 1;
-  int? impresaId = discente.impresaId;
+  final nomeController = TextEditingController(text: discente?.nome ?? '');
+  final cognomeController = TextEditingController(text: discente?.cognome ?? '');
+  final luogoController =
+      TextEditingController(text: discente?.luogoNascita ?? '');
+  final dataController =
+      TextEditingController(text: discente?.dataNascita ?? '');
+  final cfController =
+      TextEditingController(text: discente?.codiceFiscale ?? '');
+
+  final dataVisitaController =
+      TextEditingController(text: discente?.dataVisitaMedica ?? '');
+  final scadenzaVisitaController =
+      TextEditingController(text: discente?.scadenzaVisitaMedica ?? '');
+
+  bool visitaMedicaSvolta = discente?.visitaMedicaSvolta == 1;
+
+  int? impresaId = discente?.impresaId ?? impresaIdPreselezionata;
 
   final salvato = await showDialog<bool>(
     context: context,
@@ -37,7 +45,7 @@ Future<bool> apriDialogModificaDiscente({
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return AlertDialog(
-            title: const Text('Modifica discente'),
+            title: Text(modifica ? 'Modifica discente' : 'Nuovo discente'),
             content: SizedBox(
               width: 650,
               child: SingleChildScrollView(
@@ -159,8 +167,8 @@ Future<bool> apriDialogModificaDiscente({
                     return;
                   }
 
-                  final aggiornato = Discente(
-                    id: discente.id,
+                  final nuovoDiscente = Discente(
+                    id: discente?.id,
                     nome: nome,
                     cognome: cognome,
                     luogoNascita: luogoController.text.trim(),
@@ -169,10 +177,15 @@ Future<bool> apriDialogModificaDiscente({
                     impresaId: impresaId,
                     visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,
                     dataVisitaMedica: dataVisitaController.text.trim(),
-                    scadenzaVisitaMedica: scadenzaVisitaController.text.trim(),
+                    scadenzaVisitaMedica:
+                        scadenzaVisitaController.text.trim(),
                   );
 
-                  await DatabaseService.instance.updateDiscente(aggiornato);
+                  if (modifica) {
+                    await DatabaseService.instance.updateDiscente(nuovoDiscente);
+                  } else {
+                    await DatabaseService.instance.insertDiscente(nuovoDiscente);
+                  }
 
                   if (!context.mounted) return;
                   Navigator.pop(context, true);

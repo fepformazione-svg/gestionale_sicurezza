@@ -222,7 +222,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
     );
 
     if (risultato == 'modifica') {
-      final salvato = await apriDialogModificaDiscente(
+      final salvato = await apriDialogDiscente(
         context: context,
         discente: discente,
       );

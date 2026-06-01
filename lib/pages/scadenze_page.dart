@@ -210,9 +210,11 @@ class _ScadenzePageState extends State<ScadenzePage> {
     if (discente == null) return;
     if (!mounted) return;
 
-    Navigator.push(
+    await Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
+      MaterialPageRoute(
+        builder: (_) => DiscenteSchedaPage(discente: discente),
+      ),
     );
   }
 

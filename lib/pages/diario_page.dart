@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../database/database_service.dart';
+import 'discente_scheda_page.dart';
 
 class DiarioPage extends StatefulWidget {
   final bool soloDaFatturare;
@@ -182,6 +183,30 @@ class _DiarioPageState extends State<DiarioPage> {
     super.dispose();
   }
 
+  Future<void> apriSchedaDiscente(
+    Map<String, dynamic> riga,
+  ) async {
+    final idDiscente = riga['discente_id'];
+
+    if (idDiscente == null) return;
+
+    final discente =
+        await DatabaseService.instance.getDiscenteById(
+          idDiscente,
+        );
+
+    if (discente == null) return;
+    if (!mounted) return;
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            DiscenteSchedaPage(discente: discente),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -290,11 +315,23 @@ class _DiarioPageState extends State<DiarioPage> {
                               );
 
                               return DataRow(
+                                onSelectChanged: (_) {
+                                  apriSchedaDiscente(riga);
+                                },
                                 cells: [
                                   DataCell(
-                                    Text(
-                                      '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                                          .trim(),
+                                    InkWell(
+                                      onTap: () {
+                                        apriSchedaDiscente(riga);
+                                      },
+                                      child: Text(
+                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                            .trim(),
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w600,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                      ),
                                     ),
                                   ),
                                   DataCell(Text(testo(riga['impresa']))),

@@ -50,28 +50,46 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   }
 
   Future<void> apriSchedaDiscente(Discente discente) async {
-    await Navigator.push(
+    final risultato = await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DiscenteSchedaPage(discente: discente),
       ),
     );
+
+    if (risultato == 'modifica') {
+      await apriDialogDiscente(discente: discente);
+    }
+
+    await caricaDiscentiAssociati();
   }
 
-  Future<void> nuovoDiscente() async {
-    final nomeController = TextEditingController();
-    final cognomeController = TextEditingController();
+  Future<void> apriDialogDiscente({Discente? discente}) async {
+    final nomeController = TextEditingController(text: discente?.nome ?? '');
+    final cognomeController = TextEditingController(
+      text: discente?.cognome ?? '',
+    );
 
-    final luogoController = TextEditingController();
-    final dataController = TextEditingController();
-    final cfController = TextEditingController();
+    final luogoController = TextEditingController(
+      text: discente?.luogoNascita ?? '',
+    );
+    final dataController = TextEditingController(
+      text: discente?.dataNascita ?? '',
+    );
+    final cfController = TextEditingController(
+      text: discente?.codiceFiscale ?? '',
+    );
 
-    final dataVisitaController = TextEditingController();
-    final scadenzaVisitaController = TextEditingController();
+    final dataVisitaController = TextEditingController(
+      text: discente?.dataVisitaMedica ?? '',
+    );
+    final scadenzaVisitaController = TextEditingController(
+      text: discente?.scadenzaVisitaMedica ?? '',
+    );
 
-    bool visitaMedicaSvolta = false;
+    bool visitaMedicaSvolta = (discente?.visitaMedicaSvolta ?? 0) == 1;
 
-    int? impresaId = widget.impresa.id;
+    int? impresaId = discente?.impresaId ?? widget.impresa.id;
 
     final salvato = await showDialog<bool>(
       context: context,
@@ -171,24 +189,24 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                           return;
                         }
 
-                        final discente = Discente(
+                        final datiDiscente = Discente(
+                          id: discente?.id,
                           nome: nome,
                           cognome: cognome,
                           luogoNascita: luogoController.text.trim(),
                           dataNascita: dataController.text.trim(),
                           codiceFiscale: cfController.text.trim(),
                           impresaId: impresaId,
-                          visitaMedicaSvolta:
-                              visitaMedicaSvolta ? 1 : 0,
-                          dataVisitaMedica:
-                              dataVisitaController.text.trim(),
-                          scadenzaVisitaMedica:
-                              scadenzaVisitaController.text.trim(),
+                          visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,
+                          dataVisitaMedica: dataVisitaController.text.trim(),
+                          scadenzaVisitaMedica: scadenzaVisitaController.text.trim(),
                         );
 
-                        await DatabaseService.instance.insertDiscente(
-                          discente,
-                        );
+                        if (discente == null) {
+                          await DatabaseService.instance.insertDiscente(datiDiscente);
+                        } else {
+                          await DatabaseService.instance.updateDiscente(datiDiscente);
+                        }
 
                         if (!context.mounted) return;
 
@@ -318,7 +336,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                   const Spacer(),
 
                   ElevatedButton.icon(
-                    onPressed: nuovoDiscente,
+                    onPressed: () => apriDialogDiscente(),
                     icon: const Icon(Icons.add),
                     label: const Text('Nuovo discente'),
                     style: ElevatedButton.styleFrom(

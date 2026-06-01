@@ -5,6 +5,8 @@ import '../database/database_service.dart';
 import 'discente_scheda_page.dart';
 import '../models/discente.dart';
 
+import '../dialogs/discente_dialog.dart';
+
 class ScadenzePage extends StatefulWidget {
   final String filtro;
 
@@ -210,12 +212,35 @@ class _ScadenzePageState extends State<ScadenzePage> {
     if (discente == null) return;
     if (!mounted) return;
 
-    await Navigator.push(
+    final risultato = await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => DiscenteSchedaPage(discente: discente),
+        builder: (_) => DiscenteSchedaPage(
+          discente: discente,
+        ),
       ),
     );
+
+    if (risultato == 'modifica') {
+      final salvato = await apriDialogModificaDiscente(
+        context: context,
+        discente: discente,
+      );
+
+      if (salvato) {
+        await caricaScadenze();
+      }
+
+      return;
+    }
+
+    if (risultato == true) {
+      await caricaScadenze();
+    }
+
+    if (risultato == true || risultato == 'modifica') {
+      await caricaScadenze();
+    }
   }
 
   List<Map<String, dynamic>> get scadenzeFiltrate {

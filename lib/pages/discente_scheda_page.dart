@@ -239,7 +239,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         actions: [
           IconButton(
             tooltip: 'Modifica',
-            icon: const Icon(Icons.edit_outlined),
+            icon: const Icon(
+              Icons.edit_outlined,
+              color: Color(0xFF2563EB),
+            ),
             onPressed: () {
               Navigator.pop(context, 'modifica');
             },

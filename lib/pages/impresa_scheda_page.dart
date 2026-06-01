@@ -1,14 +1,44 @@
 import 'package:flutter/material.dart';
 
+import '../models/discente.dart';
 import '../models/impresa.dart';
+import '../services/database_service.dart';
+import 'discente_scheda_page.dart';
 
-class ImpresaSchedaPage extends StatelessWidget {
+class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
 
   const ImpresaSchedaPage({
     super.key,
     required this.impresa,
   });
+
+  @override
+  State<ImpresaSchedaPage> createState() => _ImpresaSchedaPageState();
+}
+
+class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
+  List<Discente> discentiAssociati = [];
+
+  @override
+  void initState() {
+    super.initState();
+    caricaDiscentiAssociati();
+  }
+
+  Future<void> caricaDiscentiAssociati() async {
+    final idImpresa = widget.impresa.id;
+    if (idImpresa == null) return;
+
+    final risultato =
+        await DatabaseService.instance.getDiscentiByImpresaId(idImpresa);
+
+    if (!mounted) return;
+
+    setState(() {
+      discentiAssociati = risultato;
+    });
+  }
 
   String valore(String? testo) {
     final v = testo?.trim() ?? '';
@@ -19,8 +49,169 @@ class ImpresaSchedaPage extends StatelessWidget {
     Navigator.pop(context, 'modifica');
   }
 
+  Future<void> apriSchedaDiscente(Discente discente) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DiscenteSchedaPage(discente: discente),
+      ),
+    );
+  }
+
+  Future<void> nuovoDiscente() async {
+    final nomeController = TextEditingController();
+    final cognomeController = TextEditingController();
+
+    final luogoController = TextEditingController();
+    final dataController = TextEditingController();
+    final cfController = TextEditingController();
+
+    final dataVisitaController = TextEditingController();
+    final scadenzaVisitaController = TextEditingController();
+
+    bool visitaMedicaSvolta = false;
+
+    int? impresaId = widget.impresa.id;
+
+    final salvato = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Dialog(
+              child: Container(
+                width: 700,
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: cognomeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Cognome *',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: nomeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nome *',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: luogoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Luogo nascita',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: dataController,
+                      decoration: const InputDecoration(
+                        labelText: 'Data nascita',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: cfController,
+                      decoration: const InputDecoration(
+                        labelText: 'Codice fiscale',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    CheckboxListTile(
+                      value: visitaMedicaSvolta,
+                      title: const Text('Visita medica svolta'),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          visitaMedicaSvolta = value ?? false;
+                        });
+                      },
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: dataVisitaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Data visita',
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextField(
+                      controller: scadenzaVisitaController,
+                      decoration: const InputDecoration(
+                        labelText: 'Scadenza visita',
+                      ),
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    ElevatedButton.icon(
+                      icon: const Icon(Icons.save),
+                      label: const Text('Salva'),
+                      onPressed: () async {
+                        final nome = nomeController.text.trim();
+                        final cognome = cognomeController.text.trim();
+
+                        if (nome.isEmpty || cognome.isEmpty) {
+                          return;
+                        }
+
+                        final discente = Discente(
+                          nome: nome,
+                          cognome: cognome,
+                          luogoNascita: luogoController.text.trim(),
+                          dataNascita: dataController.text.trim(),
+                          codiceFiscale: cfController.text.trim(),
+                          impresaId: impresaId,
+                          visitaMedicaSvolta:
+                              visitaMedicaSvolta ? 1 : 0,
+                          dataVisitaMedica:
+                              dataVisitaController.text.trim(),
+                          scadenzaVisitaMedica:
+                              scadenzaVisitaController.text.trim(),
+                        );
+
+                        await DatabaseService.instance.insertDiscente(
+                          discente,
+                        );
+
+                        if (!context.mounted) return;
+
+                        Navigator.pop(context, true);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+
+    if (salvato == true) {
+      await caricaDiscentiAssociati();
+    }
+  }
   @override
   Widget build(BuildContext context) {
+    final impresa = widget.impresa;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -69,7 +260,6 @@ class ImpresaSchedaPage extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 28),
-
               _InfoRiga(
                 label: 'Partita IVA',
                 value: valore(impresa.partitaIva),
@@ -89,6 +279,111 @@ class ImpresaSchedaPage extends StatelessWidget {
               _InfoRiga(
                 label: 'Indirizzo',
                 value: valore(impresa.indirizzo),
+              ),
+              const SizedBox(height: 28),
+              const Divider(),
+              const SizedBox(height: 18),
+              Row(
+                children: [
+                  const Text(
+                    'Discenti associati',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF111827),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      discentiAssociati.length.toString(),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF2563EB),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+
+                  const Spacer(),
+
+                  ElevatedButton.icon(
+                    onPressed: nuovoDiscente,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Nuovo discente'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF2563EB),
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 14),
+              Expanded(
+                child: discentiAssociati.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Nessun discente associato a questa impresa.',
+                          style: TextStyle(
+                            fontSize: 15,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+                      )
+                    : ListView.separated(
+                        itemCount: discentiAssociati.length,
+                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        itemBuilder: (context, index) {
+                          final discente = discentiAssociati[index];
+
+                          return InkWell(
+                            onDoubleTap: () => apriSchedaDiscente(discente),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 12,
+                                horizontal: 4,
+                              ),
+                              child: Row(
+                                children: [
+                                  const Icon(
+                                    Icons.person_outline,
+                                    color: Color(0xFF2563EB),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Text(
+                                      discente.nomeCompleto,
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Doppio click per aprire',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF6B7280),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
               ),
             ],
           ),

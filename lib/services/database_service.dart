@@ -92,6 +92,19 @@ class DatabaseService {
     );
   }
 
+  Future<List<Discente>> getDiscentiByImpresaId(int impresaId) async {
+    final db = await _db;
+
+    final rows = await db.query(
+      'discenti',
+      where: 'impresa_id = ?',
+      whereArgs: [impresaId],
+      orderBy: 'cognome ASC, nome ASC',
+    );
+
+    return rows.map((e) => Discente.fromMap(e)).toList();
+  }
+
   Future<bool> discenteHaCollegamenti(int id) async {
     final db = await _db;
 

@@ -256,6 +256,7 @@ class _DiarioPageState extends State<DiarioPage> {
                         scrollDirection: Axis.horizontal,
                         child: SingleChildScrollView(
                           child: DataTable(
+                            showCheckboxColumn: false,
                             sortColumnIndex: _sortColumnIndex,
                             sortAscending: _sortAscending,
                             headingRowColor: WidgetStateProperty.all(
@@ -306,7 +307,6 @@ class _DiarioPageState extends State<DiarioPage> {
                               ),
                               const DataColumn(label: Text('Stato')),
                               const DataColumn(label: Text('Prot.')),
-                              const DataColumn(label: Text('Da fatturare')),
                               const DataColumn(label: Text('↻')),
                             ],
                             rows: _diario.map((riga) {
@@ -325,8 +325,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                         apriSchedaDiscente(riga);
                                       },
                                       child: Text(
-                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                                            .trim(),
+                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'.trim(),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           color: Color(0xFF2563EB),
@@ -337,26 +336,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                   DataCell(Text(testo(riga['impresa']))),
                                   DataCell(Text(testo(riga['corso']))),
                                   DataCell(Text(formattaData(riga['data']))),
-                                  DataCell(
-                                    Text(formattaData(riga['scadenza'])),
-                                  ),
+                                  DataCell(Text(formattaData(riga['scadenza']))),
                                   DataCell(badge(stato)),
                                   DataCell(Text(testo(riga['prot']))),
-                                  DataCell(
-                                    Checkbox(
-                                      value: riga['da_fatturare'] == 1,
-                                      onChanged: (valore) async {
-                                        await DatabaseService.instance
-                                            .aggiornaDaFatturareDiario(
-                                              id: riga['id'] as int,
-                                              valore: valore ?? false,
-                                            );
-
-                                        await caricaDiario();
-                                      },
-                                    ),
-                                  ),
-
                                   DataCell(
                                     IconButton(
                                       tooltip: 'Rinnova corso',
@@ -369,12 +351,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                         final impresaId = riga['impresa_id'];
                                         final corsoId = riga['corso_id'];
 
-                                        if (discenteId == null ||
-                                            impresaId == null ||
-                                            corsoId == null) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
+                                        if (discenteId == null || impresaId == null || corsoId == null) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                 'Impossibile rinnovare: discente, impresa o corso mancanti.',
@@ -384,24 +362,19 @@ class _DiarioPageState extends State<DiarioPage> {
                                           return;
                                         }
 
-                                        await DatabaseService.instance
-                                            .rinnovaCorso(
-                                              idDiscente: discenteId as int,
-                                              idImpresa: impresaId as int,
-                                              idCorso: corsoId as int,
-                                            );
+                                        await DatabaseService.instance.rinnovaCorso(
+                                          idDiscente: discenteId as int,
+                                          idImpresa: impresaId as int,
+                                          idCorso: corsoId as int,
+                                        );
 
                                         await caricaDiario();
 
                                         if (!mounted) return;
 
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
+                                        ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
-                                            content: Text(
-                                              'Rinnovo creato correttamente.',
-                                            ),
+                                            content: Text('Rinnovo creato correttamente.'),
                                           ),
                                         );
                                       },

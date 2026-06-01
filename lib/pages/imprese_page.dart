@@ -407,8 +407,13 @@ class _ImpresePageState extends State<ImpresePage> {
                                               ),
                                             );
 
+                                            if (risultato == 'eliminata') {
+                                              await caricaImprese();
+                                            }
+
                                             if (risultato == 'modifica') {
-                                              apriDialogModificaImpresa(item);
+                                              await apriDialogModificaImpresa(item);
+                                              await caricaImprese();
                                             }
                                           },
                                           child: Container(

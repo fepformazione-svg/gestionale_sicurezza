@@ -72,6 +72,9 @@ class AppDatabase {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         intestazione TEXT NOT NULL,
         partita_iva TEXT,
+        codice_fiscale TEXT,
+        indirizzo TEXT,
+        telefono TEXT,
         referente TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT
@@ -189,6 +192,9 @@ class AppDatabase {
   Future<void> _ensureAllColumns(Database db) async {
     await _ensureColumns(db, 'imprese', {
       'partita_iva': 'TEXT',
+      'codice_fiscale': 'TEXT',
+      'indirizzo': 'TEXT',
+      'telefono': 'TEXT',
       'referente': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',

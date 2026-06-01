@@ -169,6 +169,17 @@ class DatabaseService {
     );
   }
 
+  Future<void> updateImpresa(Impresa impresa) async {
+    final db = await _db;
+
+    await db.update(
+      'imprese',
+      impresa.toMap(),
+      where: 'id = ?',
+      whereArgs: [impresa.id],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getImpreseLookup() async {
     final db = await _db;
 

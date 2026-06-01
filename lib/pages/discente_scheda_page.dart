@@ -122,6 +122,32 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     if (conferma != true) return;
 
+    final haStorico = await DatabaseService.instance.discenteHaStorico(id);
+
+    if (haStorico) {
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Eliminazione bloccata'),
+            content: const Text(
+              'Non è possibile eliminare questo discente perché sono presenti corsi o dati storici associati.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Ok'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
     try {
       await DatabaseService.instance.deleteDiscente(id);
 

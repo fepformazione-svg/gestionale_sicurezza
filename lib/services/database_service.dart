@@ -5,6 +5,7 @@ import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
 import 'app_database.dart';
+import '../services/database_service.dart';
 
 class DatabaseService {
   DatabaseService._();
@@ -138,6 +139,23 @@ class DatabaseService {
     return diario > 0 || prenotazioni > 0 || scadenze > 0;
   }
 
+  Future<bool> discenteHaStorico(int id) async {
+    final db = await _db;
+
+    final diario = Sqflite.firstIntValue(
+      await db.rawQuery(
+        '''
+        SELECT COUNT(*)
+        FROM diario
+        WHERE discente_id = ?
+        ''',
+        [id],
+      ),
+    );
+
+    return (diario ?? 0) > 0;
+  }
+
   Future<void> deleteDiscente(int id) async {
     final db = await _db;
 
@@ -197,6 +215,46 @@ class DatabaseService {
     final db = await _db;
 
     return await db.query('imprese', orderBy: 'intestazione ASC');
+  }
+
+  Future<bool> impresaHaCollegamenti(int idImpresa) async {
+    final db = await _db;
+
+    final discenti = Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM discenti WHERE impresa_id = ?',
+            [idImpresa],
+          ),
+        ) ??
+        0;
+
+    final prenotazioni = Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM prenotazioni WHERE impresa_id = ?',
+            [idImpresa],
+          ),
+        ) ??
+        0;
+
+    final diario = Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM diario WHERE impresa_id = ?',
+            [idImpresa],
+          ),
+        ) ??
+        0;
+
+    return discenti > 0 || prenotazioni > 0 || diario > 0;
+  }
+
+  Future<void> deleteImpresa(int id) async {
+    final db = await _db;
+
+    await db.delete(
+      'imprese',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   // =========================

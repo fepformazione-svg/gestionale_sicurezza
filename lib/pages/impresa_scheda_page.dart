@@ -50,6 +50,73 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
     Navigator.pop(context, 'modifica');
   }
 
+  Future<void> eliminaImpresa(BuildContext context) async {
+    final idImpresa = widget.impresa.id;
+
+    if (idImpresa == null) return;
+
+    final haCollegamenti =
+        await DatabaseService.instance.impresaHaCollegamenti(idImpresa);
+
+    if (!context.mounted) return;
+
+    if (haCollegamenti) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Eliminazione non consentita'),
+            content: const Text(
+              'Questa impresa non può essere eliminata perché è collegata a discenti, prenotazioni o storico diario.',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('OK'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Elimina impresa'),
+          content: Text(
+            'Vuoi eliminare definitivamente ${widget.impresa.intestazione}?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await DatabaseService.instance.deleteImpresa(idImpresa);
+
+    if (!context.mounted) return;
+
+    Navigator.pop(context, 'eliminata');
+  }
+
   Future<void> apriSchedaDiscente(Discente discente) async {
     final risultato = await Navigator.push(
       context,
@@ -92,12 +159,17 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
           IconButton(
             tooltip: 'Modifica impresa',
             onPressed: () => modificaImpresa(context),
+            icon: const Icon(Icons.edit_outlined),
+          ),
+
+          IconButton(
+            tooltip: 'Elimina impresa',
+            onPressed: () => eliminaImpresa(context),
             icon: const Icon(
-              Icons.edit_outlined,
-              color: Color(0xFF2563EB),
+              Icons.delete_outline,
+              color: Color(0xFFDC2626),
             ),
           ),
-          const SizedBox(width: 12),
         ],
       ),
       body: Padding(

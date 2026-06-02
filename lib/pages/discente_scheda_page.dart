@@ -343,8 +343,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
             const SizedBox(height: 18),
 
-            SizedBox(
-              height: 300,
+            Expanded(
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

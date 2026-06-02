@@ -44,6 +44,71 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
     return v.isEmpty ? '-' : v;
   }
 
+  DateTime? parseData(String? data) {
+    if (data == null || data.trim().isEmpty) return null;
+
+    try {
+      final parti = data.split('/');
+      if (parti.length == 3) {
+        return DateTime(
+          int.parse(parti[2]),
+          int.parse(parti[1]),
+          int.parse(parti[0]),
+        );
+      }
+
+      return DateTime.tryParse(data);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String statoVisitaMedica(Discente discente) {
+    if (discente.visitaMedicaSvolta != 1) {
+      return 'Non svolta';
+    }
+
+    final scadenza = parseData(discente.scadenzaVisitaMedica);
+
+    if (scadenza == null) {
+      return 'Senza scadenza';
+    }
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final scadenzaPulita = DateTime(
+      scadenza.year,
+      scadenza.month,
+      scadenza.day,
+    );
+
+    if (scadenzaPulita.isBefore(oggiPulito)) {
+      return 'Scaduta';
+    }
+
+    final giorniMancanti = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (giorniMancanti <= 60) {
+      return 'In scadenza';
+    }
+
+    return 'Valida';
+  }
+
+  Color coloreStatoVisita(String stato) {
+    switch (stato) {
+      case 'Valida':
+        return const Color(0xFF16A34A);
+      case 'In scadenza':
+        return const Color(0xFFF59E0B);
+      case 'Scaduta':
+      case 'Non svolta':
+        return const Color(0xFFDC2626);
+      default:
+        return const Color(0xFF6B7280);
+    }
+  }
+
   void modificaImpresa(BuildContext context) {
     Navigator.pop(context, 'modifica');
   }
@@ -266,16 +331,25 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                       )
                     : ListView.separated(
                         itemCount: discentiAssociati.length,
-                        separatorBuilder: (_, __) => const Divider(height: 1),
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final discente = discentiAssociati[index];
+                          final statoVisita = statoVisitaMedica(discente);
+                          final coloreVisita = coloreStatoVisita(statoVisita);
 
                           return InkWell(
                             onDoubleTap: () => apriSchedaDiscente(discente),
-                            child: Padding(
+                            child: Container(
                               padding: const EdgeInsets.symmetric(
-                                vertical: 12,
-                                horizontal: 4,
+                                vertical: 14,
+                                horizontal: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF9FAFB),
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(
+                                  color: const Color(0xFFE5E7EB),
+                                ),
                               ),
                               child: Row(
                                 children: [
@@ -285,13 +359,55 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
-                                    child: Text(
-                                      discente.nomeCompleto,
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w600,
-                                        color: Color(0xFF111827),
-                                      ),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          discente.nomeCompleto,
+                                          style: const TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF111827),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                'Visita: ${valore(discente.dataVisitaMedica)}   •   Scadenza: ${valore(discente.scadenzaVisitaMedica)}',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                  color: Color(0xFF6B7280),
+                                                ),
+                                              ),
+                                            ),
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 3,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: coloreVisita.withValues(
+                                                  alpha: 0.12,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                              ),
+                                              child: Text(
+                                                statoVisita,
+                                                style: TextStyle(
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: coloreVisita,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                   Row(

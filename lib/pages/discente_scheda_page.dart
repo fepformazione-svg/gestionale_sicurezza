@@ -265,10 +265,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         actions: [
           IconButton(
             tooltip: 'Modifica',
-            icon: const Icon(
-              Icons.edit_outlined,
-              color: Color(0xFF2563EB),
-            ),
+            icon: const Icon(Icons.edit_outlined, color: Color(0xFF2563EB)),
             onPressed: () {
               Navigator.pop(context, 'modifica');
             },
@@ -346,7 +343,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
             const SizedBox(height: 18),
 
-            Expanded(
+            SizedBox(
+              height: 300,
               child: Container(
                 decoration: BoxDecoration(
                   color: Colors.white,

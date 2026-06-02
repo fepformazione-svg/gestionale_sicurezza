@@ -96,11 +96,26 @@ class DatabaseService {
   Future<List<Discente>> getDiscentiByImpresaId(int impresaId) async {
     final db = await _db;
 
-    final rows = await db.query(
-      'discenti',
-      where: 'impresa_id = ?',
-      whereArgs: [impresaId],
-      orderBy: 'cognome ASC, nome ASC',
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        d.id,
+        d.nome,
+        d.cognome,
+        d.luogo_nascita,
+        d.data_nascita,
+        d.codice_fiscale,
+        d.impresa_id,
+        d.visita_medica_svolta,
+        d.data_visita_medica,
+        d.scadenza_visita_medica,
+        i.intestazione AS nome_impresa
+      FROM discenti d
+      LEFT JOIN imprese i ON i.id = d.impresa_id
+      WHERE d.impresa_id = ?
+      ORDER BY d.cognome ASC, d.nome ASC
+    ''',
+      [impresaId],
     );
 
     return rows.map((e) => Discente.fromMap(e)).toList();
@@ -220,7 +235,8 @@ class DatabaseService {
   Future<bool> impresaHaCollegamenti(int idImpresa) async {
     final db = await _db;
 
-    final discenti = Sqflite.firstIntValue(
+    final discenti =
+        Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM discenti WHERE impresa_id = ?',
             [idImpresa],
@@ -228,7 +244,8 @@ class DatabaseService {
         ) ??
         0;
 
-    final prenotazioni = Sqflite.firstIntValue(
+    final prenotazioni =
+        Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM prenotazioni WHERE impresa_id = ?',
             [idImpresa],
@@ -236,7 +253,8 @@ class DatabaseService {
         ) ??
         0;
 
-    final diario = Sqflite.firstIntValue(
+    final diario =
+        Sqflite.firstIntValue(
           await db.rawQuery(
             'SELECT COUNT(*) FROM diario WHERE impresa_id = ?',
             [idImpresa],
@@ -250,11 +268,7 @@ class DatabaseService {
   Future<void> deleteImpresa(int id) async {
     final db = await _db;
 
-    await db.delete(
-      'imprese',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('imprese', where: 'id = ?', whereArgs: [id]);
   }
 
   // =========================

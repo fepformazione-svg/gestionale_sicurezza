@@ -9,10 +9,7 @@ import '../dialogs/discente_dialog.dart' as dialogDiscente;
 class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
 
-  const ImpresaSchedaPage({
-    super.key,
-    required this.impresa,
-  });
+  const ImpresaSchedaPage({super.key, required this.impresa});
 
   @override
   State<ImpresaSchedaPage> createState() => _ImpresaSchedaPageState();
@@ -31,8 +28,9 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
     final idImpresa = widget.impresa.id;
     if (idImpresa == null) return;
 
-    final risultato =
-        await DatabaseService.instance.getDiscentiByImpresaId(idImpresa);
+    final risultato = await DatabaseService.instance.getDiscentiByImpresaId(
+      idImpresa,
+    );
 
     if (!mounted) return;
 
@@ -55,8 +53,9 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
 
     if (idImpresa == null) return;
 
-    final haCollegamenti =
-        await DatabaseService.instance.impresaHaCollegamenti(idImpresa);
+    final haCollegamenti = await DatabaseService.instance.impresaHaCollegamenti(
+      idImpresa,
+    );
 
     if (!context.mounted) return;
 
@@ -120,9 +119,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   Future<void> apriSchedaDiscente(Discente discente) async {
     final risultato = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DiscenteSchedaPage(discente: discente),
-      ),
+      MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
     );
 
     if (risultato == 'modifica') {
@@ -165,10 +162,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
           IconButton(
             tooltip: 'Elimina impresa',
             onPressed: () => eliminaImpresa(context),
-            icon: const Icon(
-              Icons.delete_outline,
-              color: Color(0xFFDC2626),
-            ),
+            icon: const Icon(Icons.delete_outline, color: Color(0xFFDC2626)),
           ),
         ],
       ),
@@ -195,10 +189,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               const SizedBox(height: 8),
               const Text(
                 'Anagrafica aziendale',
-                style: TextStyle(
-                  fontSize: 15,
-                  color: Color(0xFF6B7280),
-                ),
+                style: TextStyle(fontSize: 15, color: Color(0xFF6B7280)),
               ),
               const SizedBox(height: 28),
               _InfoRiga(
@@ -209,18 +200,9 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                 label: 'Codice fiscale',
                 value: valore(impresa.codiceFiscale),
               ),
-              _InfoRiga(
-                label: 'Referente',
-                value: valore(impresa.referente),
-              ),
-              _InfoRiga(
-                label: 'Telefono',
-                value: valore(impresa.telefono),
-              ),
-              _InfoRiga(
-                label: 'Indirizzo',
-                value: valore(impresa.indirizzo),
-              ),
+              _InfoRiga(label: 'Referente', value: valore(impresa.referente)),
+              _InfoRiga(label: 'Telefono', value: valore(impresa.telefono)),
+              _InfoRiga(label: 'Indirizzo', value: valore(impresa.indirizzo)),
               const SizedBox(height: 28),
               const Divider(),
               const SizedBox(height: 18),
@@ -312,12 +294,86 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                                       ),
                                     ),
                                   ),
-                                  const Text(
-                                    'Doppio click per aprire',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF6B7280),
-                                    ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Modifica discente',
+                                        icon: const Icon(
+                                          Icons.edit_outlined,
+                                          size: 20,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        onPressed: () async {
+                                          await apriDialogDiscenteDaSchedaImpresa(
+                                            discente: discente,
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Elimina discente',
+                                        icon: const Icon(
+                                          Icons.delete_outline,
+                                          size: 20,
+                                          color: Color(0xFFDC2626),
+                                        ),
+                                        onPressed: () async {
+                                          final conferma = await showDialog<bool>(
+                                            context: context,
+                                            builder: (context) {
+                                              return AlertDialog(
+                                                title: const Text(
+                                                  'Elimina discente',
+                                                ),
+                                                content: Text(
+                                                  'Vuoi eliminare definitivamente ${discente.nomeCompleto}?',
+                                                ),
+                                                actions: [
+                                                  TextButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          context,
+                                                          false,
+                                                        ),
+                                                    child: const Text(
+                                                      'Annulla',
+                                                    ),
+                                                  ),
+                                                  ElevatedButton(
+                                                    onPressed: () =>
+                                                        Navigator.pop(
+                                                          context,
+                                                          true,
+                                                        ),
+                                                    style:
+                                                        ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFFDC2626,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                        ),
+                                                    child: const Text(
+                                                      'Elimina',
+                                                    ),
+                                                  ),
+                                                ],
+                                              );
+                                            },
+                                          );
+
+                                          if (conferma != true) return;
+
+                                          if (discente.id != null) {
+                                            await DatabaseService.instance
+                                                .deleteDiscente(discente.id!);
+
+                                            await caricaDiscentiAssociati();
+                                          }
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),
@@ -338,10 +394,7 @@ class _InfoRiga extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRiga({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRiga({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {

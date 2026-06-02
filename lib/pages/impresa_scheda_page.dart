@@ -353,9 +353,13 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                               ),
                               child: Row(
                                 children: [
-                                  const Icon(
-                                    Icons.person_outline,
-                                    color: Color(0xFF2563EB),
+                                  CircleAvatar(
+                                    radius: 22,
+                                    backgroundColor: const Color(0xFFEFF6FF),
+                                    child: const Icon(
+                                      Icons.person,
+                                      color: Color(0xFF2563EB),
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -375,12 +379,26 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                                         Row(
                                           children: [
                                             Expanded(
-                                              child: Text(
-                                                'Visita: ${valore(discente.dataVisitaMedica)}   •   Scadenza: ${valore(discente.scadenzaVisitaMedica)}',
-                                                style: const TextStyle(
-                                                  fontSize: 13,
-                                                  color: Color(0xFF6B7280),
-                                                ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    'Data visita: ${valore(discente.dataVisitaMedica)}',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF6B7280),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 2),
+                                                  Text(
+                                                    'Scadenza visita: ${valore(discente.scadenzaVisitaMedica)}',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF6B7280),
+                                                    ),
+                                                  ),
+                                                ],
                                               ),
                                             ),
                                             Container(

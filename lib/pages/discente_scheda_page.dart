@@ -198,6 +198,18 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     return DateTime.tryParse(testo);
   }
 
+  String formattaData(dynamic valore) {
+    final data = parseData(valore);
+
+    if (data == null) return '-';
+
+    final giorno = data.day.toString().padLeft(2, '0');
+    final mese = data.month.toString().padLeft(2, '0');
+    final anno = data.year.toString();
+
+    return '$giorno/$mese/$anno';
+  }
+
   String statoScadenzaCorso(dynamic scadenza) {
     final data = parseData(scadenza);
 
@@ -258,7 +270,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
-        title: Text('${d.nome} ${d.cognome}'),
+        title: Text(
+          '${d.nome} ${d.cognome}',
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700),
+        ),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF111827),
         elevation: 0.5,
@@ -442,7 +457,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                       Expanded(
                                         flex: 2,
                                         child: Text(
-                                          valore(r['scadenza']),
+                                          formattaData(r['scadenza']),
                                           style: const TextStyle(
                                             color: Color(0xFF374151),
                                           ),

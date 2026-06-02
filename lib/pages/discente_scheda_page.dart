@@ -17,6 +17,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   List<Map<String, dynamic>> storico = [];
   List<Map<String, dynamic>> storicoFiltrato = [];
 
+  String filtroStorico = 'tutti';
+
   final TextEditingController _cercaStoricoController = TextEditingController();
 
   @override
@@ -315,25 +317,68 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               spacing: 14,
               runSpacing: 14,
               children: [
-                _StoricoKpiCard(
-                  titolo: 'Totale corsi',
-                  valore: totaleCorsi.toString(),
-                  colore: const Color(0xFF2563EB),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      filtroStorico = 'tutti';
+                      storicoFiltrato = List.from(storico);
+                    });
+                  },
+                  child: _StoricoKpiCard(
+                    titolo: 'Totale corsi',
+                    valore: totaleCorsi.toString(),
+                    colore: const Color(0xFF2563EB),
+                  ),
                 ),
-                _StoricoKpiCard(
-                  titolo: 'Validi',
-                  valore: corsiValidi.toString(),
-                  colore: const Color(0xFF16A34A),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      filtroStorico = 'validi';
+
+                      storicoFiltrato = storico.where((riga) {
+                        return statoScadenzaCorso(riga['scadenza']) == 'VALIDO';
+                      }).toList();
+                    });
+                  },
+                  child: _StoricoKpiCard(
+                    titolo: 'Validi',
+                    valore: corsiValidi.toString(),
+                    colore: const Color(0xFF16A34A),
+                  ),
                 ),
-                _StoricoKpiCard(
-                  titolo: 'In scadenza',
-                  valore: corsiInScadenza.toString(),
-                  colore: const Color(0xFFF59E0B),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      filtroStorico = 'in_scadenza';
+
+                      storicoFiltrato = storico.where((riga) {
+                        return statoScadenzaCorso(riga['scadenza']) ==
+                            'IN SCADENZA';
+                      }).toList();
+                    });
+                  },
+                  child: _StoricoKpiCard(
+                    titolo: 'In scadenza',
+                    valore: corsiInScadenza.toString(),
+                    colore: const Color(0xFFF59E0B),
+                  ),
                 ),
-                _StoricoKpiCard(
-                  titolo: 'Scaduti',
-                  valore: corsiScaduti.toString(),
-                  colore: const Color(0xFFDC2626),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      filtroStorico = 'scaduti';
+
+                      storicoFiltrato = storico.where((riga) {
+                        return statoScadenzaCorso(riga['scadenza']) ==
+                            'SCADUTO';
+                      }).toList();
+                    });
+                  },
+                  child: _StoricoKpiCard(
+                    titolo: 'Scaduti',
+                    valore: corsiScaduti.toString(),
+                    colore: const Color(0xFFDC2626),
+                  ),
                 ),
               ],
             ),

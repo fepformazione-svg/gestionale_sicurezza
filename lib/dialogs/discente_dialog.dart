@@ -6,9 +6,7 @@ import '../models/discente.dart';
 InputDecoration _inputDecoration(String label) {
   return InputDecoration(
     labelText: label,
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
-    ),
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
   );
 }
 
@@ -22,18 +20,25 @@ Future<bool> apriDialogDiscente({
   final bool modifica = discente != null;
 
   final nomeController = TextEditingController(text: discente?.nome ?? '');
-  final cognomeController = TextEditingController(text: discente?.cognome ?? '');
-  final luogoController =
-      TextEditingController(text: discente?.luogoNascita ?? '');
-  final dataController =
-      TextEditingController(text: discente?.dataNascita ?? '');
-  final cfController =
-      TextEditingController(text: discente?.codiceFiscale ?? '');
+  final cognomeController = TextEditingController(
+    text: discente?.cognome ?? '',
+  );
+  final luogoController = TextEditingController(
+    text: discente?.luogoNascita ?? '',
+  );
+  final dataController = TextEditingController(
+    text: discente?.dataNascita ?? '',
+  );
+  final cfController = TextEditingController(
+    text: discente?.codiceFiscale ?? '',
+  );
 
-  final dataVisitaController =
-      TextEditingController(text: discente?.dataVisitaMedica ?? '');
-  final scadenzaVisitaController =
-      TextEditingController(text: discente?.scadenzaVisitaMedica ?? '');
+  final dataVisitaController = TextEditingController(
+    text: discente?.dataVisitaMedica ?? '',
+  );
+  final scadenzaVisitaController = TextEditingController(
+    text: discente?.scadenzaVisitaMedica ?? '',
+  );
 
   bool visitaMedicaSvolta = discente?.visitaMedicaSvolta == 1;
 
@@ -177,14 +182,17 @@ Future<bool> apriDialogDiscente({
                     impresaId: impresaId,
                     visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,
                     dataVisitaMedica: dataVisitaController.text.trim(),
-                    scadenzaVisitaMedica:
-                        scadenzaVisitaController.text.trim(),
+                    scadenzaVisitaMedica: scadenzaVisitaController.text.trim(),
                   );
 
                   if (modifica) {
-                    await DatabaseService.instance.updateDiscente(nuovoDiscente);
+                    await DatabaseService.instance.updateDiscente(
+                      nuovoDiscente,
+                    );
                   } else {
-                    await DatabaseService.instance.insertDiscente(nuovoDiscente);
+                    await DatabaseService.instance.insertDiscente(
+                      nuovoDiscente,
+                    );
                   }
 
                   if (!context.mounted) return;
@@ -197,14 +205,6 @@ Future<bool> apriDialogDiscente({
       );
     },
   );
-
-  nomeController.dispose();
-  cognomeController.dispose();
-  luogoController.dispose();
-  dataController.dispose();
-  cfController.dispose();
-  dataVisitaController.dispose();
-  scadenzaVisitaController.dispose();
 
   return salvato == true;
 }

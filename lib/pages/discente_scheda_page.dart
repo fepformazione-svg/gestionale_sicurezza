@@ -19,6 +19,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
   String filtroStorico = 'tutti';
 
+  String colonnaOrdinamentoStorico = 'data';
+  bool ordinamentoStoricoAscendente = false;
+
   final TextEditingController _cercaStoricoController = TextEditingController();
 
   @override
@@ -62,6 +65,73 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           return corso.contains(ricerca);
         }).toList();
       }
+    });
+  }
+
+  void ordinaStorico(String colonna) {
+    DateTime leggiData(dynamic valore) {
+      final testo = valore?.toString().trim() ?? '';
+
+      final parti = testo.split('/');
+      if (parti.length == 3) {
+        final giorno = int.tryParse(parti[0]);
+        final mese = int.tryParse(parti[1]);
+        final anno = int.tryParse(parti[2]);
+
+        if (giorno != null && mese != null && anno != null) {
+          return DateTime(anno, mese, giorno);
+        }
+      }
+
+      return DateTime.tryParse(testo) ?? DateTime(1900);
+    }
+
+    setState(() {
+      if (colonnaOrdinamentoStorico == colonna) {
+        ordinamentoStoricoAscendente = !ordinamentoStoricoAscendente;
+      } else {
+        colonnaOrdinamentoStorico = colonna;
+        ordinamentoStoricoAscendente = true;
+      }
+
+      storicoFiltrato.sort((a, b) {
+        int risultato = 0;
+
+        switch (colonna) {
+          case 'corso':
+            risultato = valore(
+              a['corso'],
+            ).toLowerCase().compareTo(valore(b['corso']).toLowerCase());
+
+            if (risultato == 0) {
+              risultato = leggiData(a['data']).compareTo(leggiData(b['data']));
+            }
+
+            break;
+            break;
+
+          case 'data':
+            risultato = leggiData(a['data']).compareTo(leggiData(b['data']));
+            break;
+
+          case 'scadenza':
+            risultato = leggiData(
+              a['scadenza'],
+            ).compareTo(leggiData(b['scadenza']));
+            break;
+
+          case 'ore':
+            final oreA =
+                num.tryParse(valore(a['durata_ore']).replaceAll(',', '.')) ?? 0;
+            final oreB =
+                num.tryParse(valore(b['durata_ore']).replaceAll(',', '.')) ?? 0;
+
+            risultato = oreA.compareTo(oreB);
+            break;
+        }
+
+        return ordinamentoStoricoAscendente ? risultato : -risultato;
+      });
     });
   }
 
@@ -407,6 +477,32 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
             const SizedBox(height: 18),
 
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Visualizzati ${storicoFiltrato.length} corsi',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+
+                if (filtroStorico != 'tutti')
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        filtroStorico = 'tutti';
+                        storicoFiltrato = List.from(storico);
+                      });
+                    },
+                    icon: const Icon(Icons.clear, size: 18),
+                    label: const Text('Azzera filtri'),
+                  ),
+              ],
+            ),
+
             Expanded(
               child: Container(
                 decoration: BoxDecoration(
@@ -440,23 +536,35 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                 bottom: BorderSide(color: Color(0xFFE5E7EB)),
                               ),
                             ),
-                            child: const Row(
+                            child: Row(
                               children: [
                                 Expanded(
                                   flex: 5,
-                                  child: _StoricoHeaderCell('Corso'),
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('corso'),
+                                    child: _StoricoHeaderCell('Corso'),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 2,
-                                  child: _StoricoHeaderCell('Data corso'),
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('data'),
+                                    child: _StoricoHeaderCell('Data corso'),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 2,
-                                  child: _StoricoHeaderCell('Scadenza'),
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('scadenza'),
+                                    child: _StoricoHeaderCell('Scadenza'),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 1,
-                                  child: _StoricoHeaderCell('Ore'),
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('ore'),
+                                    child: _StoricoHeaderCell('Ore'),
+                                  ),
                                 ),
                                 Expanded(
                                   flex: 2,

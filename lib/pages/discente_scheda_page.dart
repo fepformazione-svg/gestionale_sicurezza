@@ -328,6 +328,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     titolo: 'Totale corsi',
                     valore: totaleCorsi.toString(),
                     colore: const Color(0xFF2563EB),
+                    attivo: filtroStorico == 'tutti',
                   ),
                 ),
                 InkWell(
@@ -344,6 +345,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     titolo: 'Validi',
                     valore: corsiValidi.toString(),
                     colore: const Color(0xFF16A34A),
+                    attivo: filtroStorico == 'validi',
                   ),
                 ),
                 InkWell(
@@ -361,6 +363,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     titolo: 'In scadenza',
                     valore: corsiInScadenza.toString(),
                     colore: const Color(0xFFF59E0B),
+                    attivo: filtroStorico == 'in_scadenza',
                   ),
                 ),
                 InkWell(
@@ -378,6 +381,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     titolo: 'Scaduti',
                     valore: corsiScaduti.toString(),
                     colore: const Color(0xFFDC2626),
+                    attivo: filtroStorico == 'scaduti',
                   ),
                 ),
               ],
@@ -783,28 +787,37 @@ class _StoricoKpiCard extends StatelessWidget {
   final String titolo;
   final String valore;
   final Color colore;
+  final bool attivo;
 
   const _StoricoKpiCard({
     required this.titolo,
     required this.valore,
     required this.colore,
+    this.attivo = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: 170,
+      height: 120,
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: attivo ? colore.withValues(alpha: 0.06) : Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(
+          color: attivo ? colore : const Color(0xFFE5E7EB),
+          width: attivo ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
             titolo.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w800,
@@ -812,7 +825,7 @@ class _StoricoKpiCard extends StatelessWidget {
               letterSpacing: 0.6,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           Text(
             valore,
             style: TextStyle(

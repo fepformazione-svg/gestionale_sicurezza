@@ -18,15 +18,24 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   List<Map<String, dynamic>> storicoFiltrato = [];
 
   String filtroStorico = 'tutti';
-  
-  String colonnaOrdinamentoStorico = 'data';
-  bool ordinamentoStoricoAscendente = false;
+
+  static String ultimaColonnaOrdinamentoStorico = 'data';
+  static bool ultimoOrdinamentoStoricoAscendente = false;
+
+  late String colonnaOrdinamentoStorico;
+  late bool ordinamentoStoricoAscendente;
+
+  int? storicoSelezionato;
+  int? indiceHoverStorico;
 
   final TextEditingController _cercaStoricoController = TextEditingController();
-
   @override
   void initState() {
     super.initState();
+
+    colonnaOrdinamentoStorico = ultimaColonnaOrdinamentoStorico;
+    ordinamentoStoricoAscendente = ultimoOrdinamentoStoricoAscendente;
+
     caricaStorico();
   }
 
@@ -82,8 +91,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             break;
 
           case 'in_scadenza':
-            passaFiltro =
-                statoScadenzaCorso(riga['scadenza']) == 'IN SCADENZA';
+            passaFiltro = statoScadenzaCorso(riga['scadenza']) == 'IN SCADENZA';
             break;
 
           case 'scaduti':
@@ -99,25 +107,27 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
         switch (colonnaOrdinamentoStorico) {
           case 'corso':
-            confronto = (a['corso'] ?? '')
-                .toString()
-                .toLowerCase()
-                .compareTo((b['corso'] ?? '').toString().toLowerCase());
+            confronto = (a['corso'] ?? '').toString().toLowerCase().compareTo(
+              (b['corso'] ?? '').toString().toLowerCase(),
+            );
             break;
 
           case 'data':
-            confronto = leggiDataStorico(a['data'])
-                .compareTo(leggiDataStorico(b['data']));
+            confronto = leggiDataStorico(
+              a['data'],
+            ).compareTo(leggiDataStorico(b['data']));
             break;
 
           case 'scadenza':
-            confronto = leggiDataStorico(a['scadenza'])
-                .compareTo(leggiDataStorico(b['scadenza']));
+            confronto = leggiDataStorico(
+              a['scadenza'],
+            ).compareTo(leggiDataStorico(b['scadenza']));
             break;
 
           case 'ore':
-            confronto = ((a['ore'] ?? 0) as num)
-                .compareTo((b['ore'] ?? 0) as num);
+            confronto = ((a['ore'] ?? 0) as num).compareTo(
+              (b['ore'] ?? 0) as num,
+            );
             break;
         }
 
@@ -177,43 +187,46 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         ordinamentoStoricoAscendente = true;
       }
 
+      ultimaColonnaOrdinamentoStorico = colonnaOrdinamentoStorico;
+      ultimoOrdinamentoStoricoAscendente = ordinamentoStoricoAscendente;
+
       storicoFiltrato.sort((a, b) {
         int risultato = 0;
 
         switch (colonna) {
           case 'corso':
-            risultato = valore(a['corso']).toLowerCase().compareTo(
-                  valore(b['corso']).toLowerCase(),
-                );
+            risultato = valore(
+              a['corso'],
+            ).toLowerCase().compareTo(valore(b['corso']).toLowerCase());
 
             if (risultato == 0) {
-              risultato = leggiDataStorico(a['data']).compareTo(
-                leggiDataStorico(b['data']),
-              );
+              risultato = leggiDataStorico(
+                a['data'],
+              ).compareTo(leggiDataStorico(b['data']));
             }
             break;
 
           case 'data':
-            risultato = leggiDataStorico(a['data']).compareTo(
-              leggiDataStorico(b['data']),
-            );
+            risultato = leggiDataStorico(
+              a['data'],
+            ).compareTo(leggiDataStorico(b['data']));
 
             if (risultato == 0) {
-              risultato = valore(a['corso']).toLowerCase().compareTo(
-                    valore(b['corso']).toLowerCase(),
-                  );
+              risultato = valore(
+                a['corso'],
+              ).toLowerCase().compareTo(valore(b['corso']).toLowerCase());
             }
             break;
 
           case 'scadenza':
-            risultato = leggiDataStorico(a['scadenza']).compareTo(
-              leggiDataStorico(b['scadenza']),
-            );
+            risultato = leggiDataStorico(
+              a['scadenza'],
+            ).compareTo(leggiDataStorico(b['scadenza']));
 
             if (risultato == 0) {
-              risultato = valore(a['corso']).toLowerCase().compareTo(
-                    valore(b['corso']).toLowerCase(),
-                  );
+              risultato = valore(
+                a['corso'],
+              ).toLowerCase().compareTo(valore(b['corso']).toLowerCase());
             }
             break;
 
@@ -227,9 +240,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             risultato = oreA.compareTo(oreB);
 
             if (risultato == 0) {
-              risultato = valore(a['corso']).toLowerCase().compareTo(
-                    valore(b['corso']).toLowerCase(),
-                  );
+              risultato = valore(
+                a['corso'],
+              ).toLowerCase().compareTo(valore(b['corso']).toLowerCase());
             }
             break;
         }
@@ -336,10 +349,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           crescente: ordinamentoStoricoAscendente,
                         ),
                       ),
-                      Expanded(
-                        flex: 2,
-                        child: _StoricoHeaderCell('Stato'),
-                      ),
+                      Expanded(flex: 2, child: _StoricoHeaderCell('Stato')),
                     ],
                   ),
                 ),
@@ -347,83 +357,115 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 Expanded(
                   child: ListView.separated(
                     itemCount: storico.length,
-                    separatorBuilder: (_, __) => const Divider(
-                      height: 1,
-                      color: Color(0xFFE5E7EB),
-                    ),
+                    separatorBuilder: (_, __) =>
+                        const Divider(height: 1, color: Color(0xFFE5E7EB)),
                     itemBuilder: (context, index) {
                       final r = storico[index];
                       final stato = statoScadenzaCorso(r['scadenza']);
 
-                      return Container(
-                        height: 56,
-                        padding: const EdgeInsets.symmetric(horizontal: 18),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              flex: 5,
-                              child: Text(
-                                valore(r['corso']),
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF111827),
-                                ),
-                              ),
+                      return GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            storicoSelezionato = index;
+                          });
+                        },
+                        onDoubleTap: () {
+                          showDialog(
+                            context: context,
+                            builder: (_) => const AlertDialog(
+                              title: Text('TEST'),
+                              content: Text('Doppio click rilevato'),
                             ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                formattaData(r['data']),
-                                style: const TextStyle(
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Text(
-                                formattaData(r['scadenza']),
-                                style: const TextStyle(
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 1,
-                              child: Text(
-                                '${valore(r['durata_ore'])} h',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF374151),
-                                ),
-                              ),
-                            ),
-                            Expanded(
-                              flex: 2,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 6,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: sfondoStatoCorso(stato),
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
+                          );
+                        },
+                        child: MouseRegion(
+                          onEnter: (_) {
+                            setState(() {
+                              indiceHoverStorico = index;
+                            });
+                          },
+                          onExit: (_) {
+                            setState(() {
+                              indiceHoverStorico = null;
+                            });
+                          },
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 120),
+                            height: 58,
+                            padding: const EdgeInsets.symmetric(horizontal: 22),
+                            color: indiceHoverStorico == index
+                                ? const Color(0xFFF5F9FF)
+                                : Colors.transparent,
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 5,
                                   child: Text(
-                                    stato,
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w800,
-                                      color: coloreStatoCorso(stato),
+                                    valore(r['corso']),
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF111827),
                                     ),
                                   ),
                                 ),
-                              ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    formattaData(r['data']),
+                                    style: const TextStyle(
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Text(
+                                    formattaData(r['scadenza']),
+                                    style: const TextStyle(
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: Text(
+                                    '${valore(r['durata_ore'])} h',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF374151),
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 6,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: sfondoStatoCorso(stato),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        stato,
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: coloreStatoCorso(stato),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
+                          ),
                         ),
                       );
                     },
@@ -778,21 +820,14 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
                 OutlinedButton.icon(
                   onPressed: azzeraFiltroStorico,
-                  icon: const Icon(
-                    Icons.close_rounded,
-                    size: 18,
-                  ),
+                  icon: const Icon(Icons.close_rounded, size: 18),
                   label: const Text(
                     'Azzera filtro',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: const Color(0xFF374151),
-                    side: const BorderSide(
-                      color: Color(0xFFD1D5DB),
-                    ),
+                    side: const BorderSide(color: Color(0xFFD1D5DB)),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 18,
                       vertical: 18,
@@ -839,8 +874,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                             color: filtroStorico == 'validi'
                                 ? const Color(0xFFEAF7EE)
                                 : filtroStorico == 'in_scadenza'
-                                    ? const Color(0xFFFFF7E6)
-                                    : const Color(0xFFFEE2E2),
+                                ? const Color(0xFFFFF7E6)
+                                : const Color(0xFFFEE2E2),
                             borderRadius: BorderRadius.circular(999),
                           ),
                           child: Row(
@@ -850,16 +885,16 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                 filtroStorico == 'validi'
                                     ? 'VALIDI'
                                     : filtroStorico == 'in_scadenza'
-                                        ? 'IN SCADENZA'
-                                        : 'SCADUTI',
+                                    ? 'IN SCADENZA'
+                                    : 'SCADUTI',
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w700,
                                   color: filtroStorico == 'validi'
                                       ? const Color(0xFF16A34A)
                                       : filtroStorico == 'in_scadenza'
-                                          ? const Color(0xFFF59E0B)
-                                          : const Color(0xFFDC2626),
+                                      ? const Color(0xFFF59E0B)
+                                      : const Color(0xFFDC2626),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -869,8 +904,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                 color: filtroStorico == 'validi'
                                     ? const Color(0xFF16A34A)
                                     : filtroStorico == 'in_scadenza'
-                                        ? const Color(0xFFF59E0B)
-                                        : const Color(0xFFDC2626),
+                                    ? const Color(0xFFF59E0B)
+                                    : const Color(0xFFDC2626),
                               ),
                             ],
                           ),
@@ -891,105 +926,133 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
             const SizedBox(height: 10),
 
-              Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                  ),
-                  child: caricamento
-                      ? const Center(child: CircularProgressIndicator())
-                      : storico.isEmpty
-                      ? const Center(
-                          child: Text(
-                            'Nessun corso presente nello storico',
-                            style: TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontSize: 15,
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: caricamento
+                    ? const Center(child: CircularProgressIndicator())
+                    : storico.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'Nessun corso presente nello storico',
+                          style: TextStyle(
+                            color: Color(0xFF6B7280),
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: [
+                          Container(
+                            height: 48,
+                            padding: const EdgeInsets.symmetric(horizontal: 22),
+                            decoration: const BoxDecoration(
+                              color: Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(18),
+                              ),
+                              border: Border(
+                                bottom: BorderSide(color: Color(0xFFE5E7EB)),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  flex: 5,
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('corso'),
+                                    child: _StoricoHeaderCell(
+                                      'Corso',
+                                      attiva:
+                                          colonnaOrdinamentoStorico == 'corso',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('data'),
+                                    child: _StoricoHeaderCell(
+                                      'Data corso',
+                                      attiva:
+                                          colonnaOrdinamentoStorico == 'data',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('scadenza'),
+                                    child: _StoricoHeaderCell(
+                                      'Scadenza',
+                                      attiva:
+                                          colonnaOrdinamentoStorico ==
+                                          'scadenza',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 1,
+                                  child: InkWell(
+                                    onTap: () => ordinaStorico('ore'),
+                                    child: _StoricoHeaderCell(
+                                      'Ore',
+                                      attiva:
+                                          colonnaOrdinamentoStorico == 'ore',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
+                                  ),
+                                ),
+                                Expanded(
+                                  flex: 2,
+                                  child: _StoricoHeaderCell('Stato'),
+                                ),
+                              ],
                             ),
                           ),
-                        )
-                      : Column(
-                          children: [
-                            Container(
-                              height: 48,
-                              padding: const EdgeInsets.symmetric(horizontal: 22),
-                              decoration: const BoxDecoration(
-                                color: Color(0xFFF8FAFC),
-                                borderRadius: BorderRadius.vertical(
-                                  top: Radius.circular(18),
-                                ),
-                                border: Border(
-                                  bottom: BorderSide(color: Color(0xFFE5E7EB)),
-                                ),
+                          Expanded(
+                            child: ListView.separated(
+                              itemCount: storicoFiltrato.length,
+                              separatorBuilder: (_, __) => const Divider(
+                                height: 1,
+                                color: Color(0xFFE5E7EB),
                               ),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    flex: 5,
-                                    child: InkWell(
-                                      onTap: () => ordinaStorico('corso'),
-                                      child: _StoricoHeaderCell(
-                                        'Corso',
-                                        attiva: colonnaOrdinamentoStorico == 'corso',
-                                        crescente: ordinamentoStoricoAscendente,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: InkWell(
-                                      onTap: () => ordinaStorico('data'),
-                                      child: _StoricoHeaderCell(
-                                        'Data corso',
-                                        attiva: colonnaOrdinamentoStorico == 'data',
-                                        crescente: ordinamentoStoricoAscendente,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: InkWell(
-                                      onTap: () => ordinaStorico('scadenza'),
-                                      child: _StoricoHeaderCell(
-                                        'Scadenza',
-                                        attiva: colonnaOrdinamentoStorico == 'scadenza',
-                                        crescente: ordinamentoStoricoAscendente,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 1,
-                                    child: InkWell(
-                                      onTap: () => ordinaStorico('ore'),
-                                      child: _StoricoHeaderCell(
-                                        'Ore',
-                                        attiva: colonnaOrdinamentoStorico == 'ore',
-                                        crescente: ordinamentoStoricoAscendente,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    flex: 2,
-                                    child: _StoricoHeaderCell('Stato'),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Expanded(
-                              child: ListView.separated(
-                                itemCount: storicoFiltrato.length,
-                                separatorBuilder: (_, __) => const Divider(
-                                  height: 1,
-                                  color: Color(0xFFE5E7EB),
-                                ),
-                                itemBuilder: (context, index) {
-                                  final r = storicoFiltrato[index];
-                                  final stato = statoScadenzaCorso(r['scadenza']);
+                              itemBuilder: (context, index) {
+                                final r = storicoFiltrato[index];
+                                final stato = statoScadenzaCorso(r['scadenza']);
 
-                                  return Container(
+                                return GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () {
+                                    setState(() {
+                                      storicoSelezionato = index;
+                                    });
+
+                                    debugPrint('CLICK CORSO: ${r['corso']}');
+                                  },
+                                  onDoubleTap: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (_) => AlertDialog(
+                                        title: Text(valore(r['corso'])),
+                                        content: Text(
+                                          'Data corso: ${formattaData(r['data'])}',
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  child: Container(
                                     height: 58,
+                                    color: storicoSelezionato == index
+                                        ? const Color(0xFFEAF2FF)
+                                        : Colors.transparent,
                                     padding: const EdgeInsets.symmetric(
                                       horizontal: 22,
                                     ),
@@ -1039,10 +1102,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                           child: Align(
                                             alignment: Alignment.centerLeft,
                                             child: Container(
-                                              padding: const EdgeInsets.symmetric(
-                                                horizontal: 10,
-                                                vertical: 6,
-                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 10,
+                                                    vertical: 6,
+                                                  ),
                                               decoration: BoxDecoration(
                                                 color: sfondoStatoCorso(stato),
                                                 borderRadius:
@@ -1053,7 +1117,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                                 style: TextStyle(
                                                   fontSize: 11,
                                                   fontWeight: FontWeight.w800,
-                                                  color: coloreStatoCorso(stato),
+                                                  color: coloreStatoCorso(
+                                                    stato,
+                                                  ),
                                                 ),
                                               ),
                                             ),
@@ -1061,20 +1127,21 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                         ),
                                       ],
                                     ),
-                                  );
-                                },
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                          ],
-                        ),
-                ),
+                          ),
+                        ],
+                      ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-      );
-    }
+      ),
+    );
   }
+}
 
 class _AnagraficaCard extends StatelessWidget {
   final Discente discente;
@@ -1364,42 +1431,37 @@ class _StoricoHeaderCell extends StatelessWidget {
   });
 
   @override
-Widget build(BuildContext context) {
-  return Container(
-    padding: const EdgeInsets.symmetric(
-      horizontal: 8,
-      vertical: 4,
-    ),
-    decoration: attiva
-        ? BoxDecoration(
-            color: const Color(0xFFEAF2FF),
-            borderRadius: BorderRadius.circular(6),
-          )
-        : null,
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          testo.toUpperCase(),
-          style: TextStyle(
-            fontSize: 11,
-            fontWeight: FontWeight.w800,
-            color: attiva
-                ? const Color(0xFF2563EB)
-                : const Color(0xFF6B7280),
-            letterSpacing: 0.6,
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: attiva
+          ? BoxDecoration(
+              color: const Color(0xFFEAF2FF),
+              borderRadius: BorderRadius.circular(6),
+            )
+          : null,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            testo.toUpperCase(),
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+              color: attiva ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+              letterSpacing: 0.6,
+            ),
           ),
-        ),
-        if (attiva) ...[
-          const SizedBox(width: 4),
-          Icon(
-            crescente ? Icons.arrow_upward : Icons.arrow_downward,
-            size: 13,
-            color: const Color(0xFF2563EB),
-          ),
+          if (attiva) ...[
+            const SizedBox(width: 4),
+            Icon(
+              crescente ? Icons.arrow_upward : Icons.arrow_downward,
+              size: 13,
+              color: const Color(0xFF2563EB),
+            ),
+          ],
         ],
-      ],
-    ),
-  );
-}
+      ),
+    );
+  }
 }

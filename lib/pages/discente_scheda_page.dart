@@ -1117,6 +1117,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                   },
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
+
                                     onTap: () {
                                       setState(() {
                                         storicoSelezionato = index;
@@ -1129,9 +1130,31 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                         context: context,
                                         builder: (_) => AlertDialog(
                                           title: Text(valore(r['corso'])),
-                                          content: Text(
-                                            'Data corso: ${formattaData(r['data'])}',
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Data corso: ${formattaData(r['data'])}',
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Scadenza: ${formattaData(r['scadenza'])}',
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                'Ore: ${valore(r['durata_ore'])}',
+                                              ),
+                                            ],
                                           ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.pop(context),
+                                              child: const Text('Chiudi'),
+                                            ),
+                                          ],
                                         ),
                                       );
                                     },

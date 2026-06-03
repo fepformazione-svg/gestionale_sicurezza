@@ -1104,104 +1104,123 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                 final r = storicoFiltrato[index];
                                 final stato = statoScadenzaCorso(r['scadenza']);
 
-                                return GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () {
+                                return MouseRegion(
+                                  onEnter: (_) {
                                     setState(() {
-                                      storicoSelezionato = index;
+                                      indiceHoverStorico = index;
                                     });
+                                  },
+                                  onExit: (_) {
+                                    setState(() {
+                                      indiceHoverStorico = null;
+                                    });
+                                  },
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.opaque,
+                                    onTap: () {
+                                      setState(() {
+                                        storicoSelezionato = index;
+                                      });
 
-                                    debugPrint('CLICK CORSO: ${r['corso']}');
-                                  },
-                                  onDoubleTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        title: Text(valore(r['corso'])),
-                                        content: Text(
-                                          'Data corso: ${formattaData(r['data'])}',
+                                      debugPrint('CLICK CORSO: ${r['corso']}');
+                                    },
+                                    onDoubleTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (_) => AlertDialog(
+                                          title: Text(valore(r['corso'])),
+                                          content: Text(
+                                            'Data corso: ${formattaData(r['data'])}',
+                                          ),
                                         ),
+                                      );
+                                    },
+                                    child: Container(
+                                      height: 58,
+                                      color: storicoSelezionato == index
+                                          ? const Color(0xFFEAF2FF)
+                                          : indiceHoverStorico == index
+                                          ? const Color(0xFFF7FAFF)
+                                          : Colors.transparent,
+
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 22,
                                       ),
-                                    );
-                                  },
-                                  child: Container(
-                                    height: 58,
-                                    color: storicoSelezionato == index
-                                        ? const Color(0xFFEAF2FF)
-                                        : Colors.transparent,
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 22,
-                                    ),
-                                    child: Row(
-                                      children: [
-                                        Expanded(
-                                          flex: 5,
-                                          child: Text(
-                                            valore(r['corso']),
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF111827),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            formattaData(r['data']),
-                                            style: const TextStyle(
-                                              color: Color(0xFF374151),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Text(
-                                            formattaData(r['scadenza']),
-                                            style: const TextStyle(
-                                              color: Color(0xFF374151),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 1,
-                                          child: Text(
-                                            '${valore(r['durata_ore'])} h',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w700,
-                                              color: Color(0xFF374151),
-                                            ),
-                                          ),
-                                        ),
-                                        Expanded(
-                                          flex: 2,
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 10,
-                                                    vertical: 6,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: sfondoStatoCorso(stato),
-                                                borderRadius:
-                                                    BorderRadius.circular(999),
+                                      child: Row(
+                                        children: [
+                                          Expanded(
+                                            flex: 5,
+                                            child: Text(
+                                              valore(r['corso']),
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF111827),
                                               ),
-                                              child: Text(
-                                                stato,
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.w800,
-                                                  color: coloreStatoCorso(
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              formattaData(r['data']),
+                                              style: const TextStyle(
+                                                color: Color(0xFF374151),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Text(
+                                              formattaData(r['scadenza']),
+                                              style: const TextStyle(
+                                                color: Color(0xFF374151),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 1,
+                                            child: Text(
+                                              '${valore(r['durata_ore'])} h',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF374151),
+                                              ),
+                                            ),
+                                          ),
+                                          Expanded(
+                                            flex: 2,
+                                            child: Align(
+                                              alignment: Alignment.centerLeft,
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 6,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: sfondoStatoCorso(
                                                     stato,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(
+                                                        999,
+                                                      ),
+                                                ),
+                                                child: Text(
+                                                  stato,
+                                                  style: TextStyle(
+                                                    fontSize: 11,
+                                                    fontWeight: FontWeight.w800,
+                                                    color: coloreStatoCorso(
+                                                      stato,
+                                                    ),
                                                   ),
                                                 ),
                                               ),
                                             ),
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 );

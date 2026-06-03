@@ -29,6 +29,81 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   int? indiceHoverStorico;
 
   final TextEditingController _cercaStoricoController = TextEditingController();
+
+  void apriDettaglioStorico(Map<String, dynamic> r) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        final stato = statoScadenzaCorso(r['scadenza']);
+
+        return AlertDialog(
+          title: const Text(
+            'Dettaglio corso',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: SizedBox(
+            width: 460,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  valore(r['corso']),
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                _rigaDettaglioStorico('Data corso', formattaData(r['data'])),
+                _rigaDettaglioStorico('Scadenza', formattaData(r['scadenza'])),
+                _rigaDettaglioStorico('Ore', valore(r['durata_ore'])),
+                _rigaDettaglioStorico('Stato', stato),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _rigaDettaglioStorico(String etichetta, String valore) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              etichetta,
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF6B7280),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              valore,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF111827),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -370,11 +445,12 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           });
                         },
                         onDoubleTap: () {
-                          showDialog(
-                            context: context,
-                            builder: (_) => const AlertDialog(
-                              title: Text('TEST'),
-                              content: Text('Doppio click rilevato'),
+                          final corso = valore(r['corso']);
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Corso selezionato: $corso'),
+                              duration: const Duration(seconds: 2),
                             ),
                           );
                         },

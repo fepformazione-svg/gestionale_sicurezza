@@ -18,7 +18,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   List<Map<String, dynamic>> storicoFiltrato = [];
 
   String filtroStorico = 'tutti';
-
+  
   String colonnaOrdinamentoStorico = 'data';
   bool ordinamentoStoricoAscendente = false;
 
@@ -108,8 +108,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             }
 
             break;
-            break;
-
+            
           case 'data':
             risultato = leggiData(a['data']).compareTo(leggiData(b['data']));
             break;
@@ -133,6 +132,204 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         return ordinamentoStoricoAscendente ? risultato : -risultato;
       });
     });
+  }
+
+  void mostraTuttiICorsi() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(28),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(22),
+          ),
+          child: Container(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.82,
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.school_outlined,
+                      color: Color(0xFF2563EB),
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Storico formativo completo',
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Chiudi',
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  storico.length == 1
+                      ? 'Visualizzato 1 corso'
+                      : 'Visualizzati ${storico.length} corsi',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+                const SizedBox(height: 18),
+
+                Container(
+                  height: 46,
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  decoration: const BoxDecoration(
+                    color: Color(0xFFF8FAFC),
+                    border: Border(
+                      bottom: BorderSide(color: Color(0xFFE5E7EB)),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 5,
+                        child: _StoricoHeaderCell(
+                          'Corso',
+                          attiva: colonnaOrdinamentoStorico == 'corso',
+                          crescente: ordinamentoStoricoAscendente,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: _StoricoHeaderCell(
+                          'Data corso',
+                          attiva: colonnaOrdinamentoStorico == 'data',
+                          crescente: ordinamentoStoricoAscendente,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: _StoricoHeaderCell(
+                          'Scadenza',
+                          attiva: colonnaOrdinamentoStorico == 'scadenza',
+                          crescente: ordinamentoStoricoAscendente,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 1,
+                        child: _StoricoHeaderCell(
+                          'Ore',
+                          attiva: colonnaOrdinamentoStorico == 'ore',
+                          crescente: ordinamentoStoricoAscendente,
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: _StoricoHeaderCell('Stato'),
+                      ),
+                    ],
+                  ),
+                ),
+
+                Expanded(
+                  child: ListView.separated(
+                    itemCount: storico.length,
+                    separatorBuilder: (_, __) => const Divider(
+                      height: 1,
+                      color: Color(0xFFE5E7EB),
+                    ),
+                    itemBuilder: (context, index) {
+                      final r = storico[index];
+                      final stato = statoScadenzaCorso(r['scadenza']);
+
+                      return Container(
+                        height: 56,
+                        padding: const EdgeInsets.symmetric(horizontal: 18),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              flex: 5,
+                              child: Text(
+                                valore(r['corso']),
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF111827),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                valore(r['data']),
+                                style: const TextStyle(
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Text(
+                                formattaData(r['scadenza']),
+                                style: const TextStyle(
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 1,
+                              child: Text(
+                                '${valore(r['durata_ore'])} h',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: Color(0xFF374151),
+                                ),
+                              ),
+                            ),
+                            Expanded(
+                              flex: 2,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: sfondoStatoCorso(stato),
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  child: Text(
+                                    stato,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: coloreStatoCorso(stato),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> eliminaDiscente() async {
@@ -393,6 +590,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                       filtroStorico = 'tutti';
                       storicoFiltrato = List.from(storico);
                     });
+
+                    mostraTuttiICorsi();
                   },
                   child: _StoricoKpiCard(
                     titolo: 'Totale corsi',
@@ -481,7 +680,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Visualizzati ${storicoFiltrato.length} corsi',
+                  storicoFiltrato.length == 1
+                      ? 'Visualizzato 1 corso'
+                      : 'Visualizzati ${storicoFiltrato.length} corsi',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
@@ -492,6 +693,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 if (filtroStorico != 'tutti')
                   TextButton.icon(
                     onPressed: () {
+                      _cercaStoricoController.clear();
+
                       setState(() {
                         filtroStorico = 'tutti';
                         storicoFiltrato = List.from(storico);
@@ -542,28 +745,44 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                   flex: 5,
                                   child: InkWell(
                                     onTap: () => ordinaStorico('corso'),
-                                    child: _StoricoHeaderCell('Corso'),
+                                    child: _StoricoHeaderCell(
+                                      'Corso',
+                                      attiva: colonnaOrdinamentoStorico == 'corso',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 2,
                                   child: InkWell(
                                     onTap: () => ordinaStorico('data'),
-                                    child: _StoricoHeaderCell('Data corso'),
+                                    child: _StoricoHeaderCell(
+                                      'Data corso',
+                                      attiva: colonnaOrdinamentoStorico == 'data',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 2,
                                   child: InkWell(
                                     onTap: () => ordinaStorico('scadenza'),
-                                    child: _StoricoHeaderCell('Scadenza'),
+                                    child: _StoricoHeaderCell(
+                                      'Scadenza',
+                                      attiva: colonnaOrdinamentoStorico == 'scadenza',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
                                   flex: 1,
                                   child: InkWell(
                                     onTap: () => ordinaStorico('ore'),
-                                    child: _StoricoHeaderCell('Ore'),
+                                    child: _StoricoHeaderCell(
+                                      'Ore',
+                                      attiva: colonnaOrdinamentoStorico == 'ore',
+                                      crescente: ordinamentoStoricoAscendente,
+                                    ),
                                   ),
                                 ),
                                 Expanded(
@@ -950,19 +1169,37 @@ class _StoricoKpiCard extends StatelessWidget {
 
 class _StoricoHeaderCell extends StatelessWidget {
   final String testo;
+  final bool attiva;
+  final bool crescente;
 
-  const _StoricoHeaderCell(this.testo);
+  const _StoricoHeaderCell(
+    this.testo, {
+    this.attiva = false,
+    this.crescente = true,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      testo.toUpperCase(),
-      style: const TextStyle(
-        fontSize: 11,
-        fontWeight: FontWeight.w800,
-        color: Color(0xFF6B7280),
-        letterSpacing: 0.6,
-      ),
+    return Row(
+      children: [
+        Text(
+          testo.toUpperCase(),
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: attiva ? const Color(0xFF2563EB) : const Color(0xFF6B7280),
+            letterSpacing: 0.6,
+          ),
+        ),
+        if (attiva) ...[
+          const SizedBox(width: 4),
+          Icon(
+            crescente ? Icons.arrow_upward : Icons.arrow_downward,
+            size: 13,
+            color: const Color(0xFF2563EB),
+          ),
+        ],
+      ],
     );
   }
 }

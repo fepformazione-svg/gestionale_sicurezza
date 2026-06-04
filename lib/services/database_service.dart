@@ -177,6 +177,26 @@ class DatabaseService {
     await db.delete('discenti', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<void> deleteStoriciByIds(List<int> ids) async {
+    final db = await _db;
+
+    await db.transaction((txn) async {
+      for (final id in ids) {
+        await txn.delete(
+          'scadenze',
+          where: 'diario_id = ?',
+          whereArgs: [id],
+        );
+
+        await txn.delete(
+          'diario',
+          where: 'id = ?',
+          whereArgs: [id],
+        );
+      }
+    });
+  }
+
   Future<List<Map<String, dynamic>>> getDiscentiLookup() async {
     final db = await _db;
 

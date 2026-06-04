@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../models/discente.dart';
 import '../services/database_service.dart';
 
+import 'package:flutter/services.dart';
+
 class DiscenteSchedaPage extends StatefulWidget {
   final Discente discente;
 
@@ -27,6 +29,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
   int? storicoSelezionato;
   int? indiceHoverStorico;
+
+  final Set<int> storiciSelezionati = {};
+  int? ultimoStoricoSelezionato;
 
   final TextEditingController _cercaStoricoController = TextEditingController();
 
@@ -1119,8 +1124,51 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                     behavior: HitTestBehavior.opaque,
 
                                     onTap: () {
+                                      final ctrlPremuto =
+                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
+                                            LogicalKeyboardKey.controlLeft,
+                                          ) ||
+                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
+                                            LogicalKeyboardKey.controlRight,
+                                          );
+
+                                      final shiftPremuto =
+                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
+                                            LogicalKeyboardKey.shiftLeft,
+                                          ) ||
+                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
+                                            LogicalKeyboardKey.shiftRight,
+                                          );
+
                                       setState(() {
                                         storicoSelezionato = index;
+
+                                        if (shiftPremuto && ultimoStoricoSelezionato != null) {
+                                          final inizio = ultimoStoricoSelezionato! < index
+                                              ? ultimoStoricoSelezionato!
+                                              : index;
+                                          final fine = ultimoStoricoSelezionato! > index
+                                              ? ultimoStoricoSelezionato!
+                                              : index;
+
+                                          storiciSelezionati.clear();
+
+                                          for (int i = inizio; i <= fine; i++) {
+                                            storiciSelezionati.add(i);
+                                          }
+                                        } else if (ctrlPremuto) {
+                                          if (storiciSelezionati.contains(index)) {
+                                            storiciSelezionati.remove(index);
+                                          } else {
+                                            storiciSelezionati.add(index);
+                                          }
+
+                                          ultimoStoricoSelezionato = index;
+                                        } else {
+                                          storiciSelezionati.clear();
+                                          storiciSelezionati.add(index);
+                                          ultimoStoricoSelezionato = index;
+                                        }
                                       });
 
                                       debugPrint('CLICK CORSO: ${r['corso']}');
@@ -1162,7 +1210,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                     },
                                     child: Container(
                                       height: 58,
-                                      color: storicoSelezionato == index
+                                      color: storiciSelezionati.contains(index)
                                           ? const Color(0xFFEAF2FF)
                                           : indiceHoverStorico == index
                                           ? const Color(0xFFF7FAFF)

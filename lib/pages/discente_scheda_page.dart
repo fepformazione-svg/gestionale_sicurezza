@@ -1126,32 +1126,34 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                       debugPrint('CLICK CORSO: ${r['corso']}');
                                     },
                                     onDoubleTap: () {
+                                      final statoDialog = statoScadenzaCorso(r['scadenza']);
+
                                       showDialog(
                                         context: context,
                                         builder: (_) => AlertDialog(
                                           title: Text(valore(r['corso'])),
                                           content: Column(
                                             mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
+                                            crossAxisAlignment: CrossAxisAlignment.start,
                                             children: [
-                                              Text(
-                                                'Data corso: ${formattaData(r['data'])}',
-                                              ),
+                                              Text('Data corso: ${formattaData(r['data'])}'),
+                                              const SizedBox(height: 8),
+                                              Text('Scadenza: ${formattaData(r['scadenza'])}'),
+                                              const SizedBox(height: 8),
+                                              Text('Ore: ${valore(r['durata_ore'])}'),
                                               const SizedBox(height: 8),
                                               Text(
-                                                'Scadenza: ${formattaData(r['scadenza'])}',
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Ore: ${valore(r['durata_ore'])}',
+                                                'Stato: $statoDialog',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  color: coloreStatoCorso(statoDialog),
+                                                ),
                                               ),
                                             ],
                                           ),
                                           actions: [
                                             TextButton(
-                                              onPressed: () =>
-                                                  Navigator.pop(context),
+                                              onPressed: () => Navigator.pop(context),
                                               child: const Text('Chiudi'),
                                             ),
                                           ],

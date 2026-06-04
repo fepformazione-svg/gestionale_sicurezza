@@ -929,15 +929,35 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      storicoFiltrato.length == 1
-                          ? 'Visualizzato 1 corso'
-                          : 'Visualizzati ${storicoFiltrato.length} corsi',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF6B7280),
-                      ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          storicoFiltrato.length == 1
+                              ? 'Visualizzato 1 corso'
+                              : 'Visualizzati ${storicoFiltrato.length} corsi',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF6B7280),
+                          ),
+                        ),
+
+                        if (storiciSelezionati.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              storiciSelezionati.length == 1
+                                  ? '1 corso selezionato'
+                                  : '${storiciSelezionati.length} corsi selezionati',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF2563EB),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
 
                     if (filtroStorico != 'tutti') ...[

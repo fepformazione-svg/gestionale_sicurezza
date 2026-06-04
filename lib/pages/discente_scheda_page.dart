@@ -1,9 +1,13 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:excel/excel.dart' as excel;
+import 'package:path_provider/path_provider.dart';
+import 'package:open_file/open_file.dart';
 
 import '../models/discente.dart';
 import '../services/database_service.dart';
-
-import 'package:flutter/services.dart';
 
 class DiscenteSchedaPage extends StatefulWidget {
   final Discente discente;
@@ -389,8 +393,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 Container(
                   height: 46,
                   padding: const EdgeInsets.symmetric(horizontal: 18),
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFF8FAFC),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
                     border: Border(
                       bottom: BorderSide(color: Color(0xFFE5E7EB)),
                     ),
@@ -758,6 +762,48 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     }
   }
 
+  Future<void> esportaCorsiSelezionatiExcel() async {
+    final corsiDaEsportare = storiciSelezionati
+        .map((index) => storicoFiltrato[index])
+        .toList();
+
+    if (corsiDaEsportare.isEmpty) return;
+
+    final fileExcel = excel.Excel.createExcel();
+    final sheet = fileExcel['Corsi selezionati'];
+
+    sheet.appendRow([
+      excel.TextCellValue('Corso'),
+      excel.TextCellValue('Data corso'),
+      excel.TextCellValue('Scadenza'),
+      excel.TextCellValue('Ore'),
+      excel.TextCellValue('Stato'),
+    ]);
+
+    for (final corso in corsiDaEsportare) {
+      final stato = statoScadenzaCorso(corso['scadenza']);
+
+      sheet.appendRow([
+        excel.TextCellValue(valore(corso['corso'])),
+        excel.TextCellValue(formattaData(corso['data'])),
+        excel.TextCellValue(formattaData(corso['scadenza'])),
+        excel.TextCellValue('${valore(corso['durata_ore'])} h'),
+        excel.TextCellValue(stato),
+      ]);
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final path = '${directory.path}/corsi_selezionati.xlsx';
+
+    final bytes = fileExcel.encode();
+    if (bytes == null) return;
+
+    final file = File(path);
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(path);
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = widget.discente;
@@ -1013,8 +1059,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           label: const Text('Deseleziona'),
                         ),
                         TextButton.icon(
-                          onPressed: () {},
-                          icon: const Icon(Icons.download_outlined, size: 18),
+                          onPressed: storiciSelezionati.isEmpty
+                              ? null
+                              : esportaCorsiSelezionatiExcel,
+                          icon: const Icon(Icons.file_download_outlined, size: 18),
                           label: const Text('Export'),
                         ),
                         TextButton.icon(

@@ -447,6 +447,13 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         onTap: () {
                           setState(() {
                             storicoSelezionato = index;
+                            ultimoStoricoSelezionato = index;
+
+                            if (storiciSelezionati.contains(index)) {
+                              storiciSelezionati.remove(index);
+                            } else {
+                              storiciSelezionati.add(index);
+                            }
                           });
                         },
                         onDoubleTap: () {
@@ -474,9 +481,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                             duration: const Duration(milliseconds: 120),
                             height: 58,
                             padding: const EdgeInsets.symmetric(horizontal: 22),
-                            color: indiceHoverStorico == index
-                                ? const Color(0xFFF5F9FF)
-                                : Colors.transparent,
+                            color: storiciSelezionati.contains(index)
+                                ? const Color(0xFFEAF2FF)
+                                : indiceHoverStorico == index
+                                    ? const Color(0xFFF5F9FF)
+                                    : Colors.transparent,
                             child: Row(
                               children: [
                                 Expanded(
@@ -923,105 +932,146 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
             const SizedBox(height: 18),
 
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                Row(
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          storicoFiltrato.length == 1
-                              ? 'Visualizzato 1 corso'
-                              : 'Visualizzati ${storicoFiltrato.length} corsi',
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF6B7280),
-                          ),
-                        ),
-
-                        if (storiciSelezionati.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text(
-                              storiciSelezionati.length == 1
-                                  ? '1 corso selezionato'
-                                  : '${storiciSelezionati.length} corsi selezionati',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF2563EB),
-                              ),
-                            ),
-                          ),
-                      ],
-                    ),
-
-                    if (filtroStorico != 'tutti') ...[
-                      const SizedBox(height: 8),
-
-                      InkWell(
-                        onTap: azzeraFiltroStorico,
-                        borderRadius: BorderRadius.circular(999),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: filtroStorico == 'validi'
-                                ? const Color(0xFFEAF7EE)
-                                : filtroStorico == 'in_scadenza'
-                                ? const Color(0xFFFFF7E6)
-                                : const Color(0xFFFEE2E2),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                filtroStorico == 'validi'
-                                    ? 'VALIDI'
-                                    : filtroStorico == 'in_scadenza'
-                                    ? 'IN SCADENZA'
-                                    : 'SCADUTI',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: filtroStorico == 'validi'
-                                      ? const Color(0xFF16A34A)
-                                      : filtroStorico == 'in_scadenza'
-                                      ? const Color(0xFFF59E0B)
-                                      : const Color(0xFFDC2626),
-                                ),
-                              ),
-                              const SizedBox(width: 6),
-                              Icon(
-                                Icons.close,
-                                size: 14,
-                                color: filtroStorico == 'validi'
-                                    ? const Color(0xFF16A34A)
-                                    : filtroStorico == 'in_scadenza'
-                                    ? const Color(0xFFF59E0B)
-                                    : const Color(0xFFDC2626),
-                              ),
-                            ],
-                          ),
-                        ),
+                    Text(
+                      storicoFiltrato.length == 1
+                          ? 'Visualizzato 1 corso'
+                          : 'Visualizzati ${storicoFiltrato.length} corsi',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF6B7280),
                       ),
-                    ],
+                    ),
+                    const SizedBox(width: 16),
+                    TextButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          storiciSelezionati.clear();
+                          storiciSelezionati.addAll(
+                            List.generate(storicoFiltrato.length, (i) => i),
+                          );
+                          storicoSelezionato = storicoFiltrato.isNotEmpty ? 0 : null;
+                          ultimoStoricoSelezionato =
+                              storicoFiltrato.isNotEmpty ? storicoFiltrato.length - 1 : null;
+                        });
+                      },
+                      icon: const Icon(Icons.select_all, size: 18),
+                      label: const Text('Seleziona tutto'),
+                    ),
+                    if (storiciSelezionati.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () {
+                          setState(() {
+                            storiciSelezionati.clear();
+                            storicoSelezionato = null;
+                            ultimoStoricoSelezionato = null;
+                          });
+                        },
+                        icon: const Icon(Icons.clear_all, size: 18),
+                        label: const Text('Deseleziona tutto'),
+                      ),
                   ],
                 ),
 
-                if (filtroStorico != 'tutti')
+                if (storiciSelezionati.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          storiciSelezionati.length == 1
+                              ? '1 corso selezionato'
+                              : '${storiciSelezionati.length} corsi selezionati',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        const Spacer(),
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              storiciSelezionati.clear();
+                              storicoSelezionato = null;
+                              ultimoStoricoSelezionato = null;
+                            });
+                          },
+                          icon: const Icon(Icons.clear_all, size: 18),
+                          label: const Text('Deseleziona'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () {},
+                          icon: const Icon(Icons.download_outlined, size: 18),
+                          label: const Text('Export'),
+                        ),
+                        TextButton.icon(
+                          onPressed: () async {
+                            final conferma = await showDialog<bool>(
+                              context: context,
+                              builder: (_) => AlertDialog(
+                                title: const Text('Conferma eliminazione'),
+                                content: Text(
+                                  storiciSelezionati.length == 1
+                                      ? 'Eliminare il corso selezionato?'
+                                      : 'Eliminare ${storiciSelezionati.length} corsi selezionati?',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Annulla'),
+                                  ),
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: const Text('Elimina'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (conferma != true) return;
+
+                            for (final index in storiciSelezionati) {
+                              final r = storicoFiltrato[index];
+                              await DatabaseService.instance.deleteDiario(r['id']);
+                            }
+
+                            setState(() {
+                              storiciSelezionati.clear();
+                              storicoSelezionato = null;
+                              ultimoStoricoSelezionato = null;
+                            });
+
+                            await caricaStorico();
+                          },
+                          icon: const Icon(Icons.delete_outline, size: 18),
+                          label: const Text('Elimina'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
+                if (filtroStorico != 'tutti') ...[
+                  const SizedBox(height: 8),
                   TextButton.icon(
                     onPressed: azzeraFiltroStorico,
                     icon: const Icon(Icons.clear, size: 18),
                     label: const Text('Azzera filtri'),
                   ),
+                ],
               ],
             ),
 
@@ -1185,9 +1235,15 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
                                           ultimoStoricoSelezionato = index;
                                         } else {
-                                          storiciSelezionati.clear();
-                                          storiciSelezionati.add(index);
-                                          ultimoStoricoSelezionato = index;
+                                          if (storiciSelezionati.contains(index)) {
+                                            storiciSelezionati.remove(index);
+                                            storicoSelezionato = null;
+                                            ultimoStoricoSelezionato = null;
+                                          } else {
+                                            storiciSelezionati.clear();
+                                            storiciSelezionati.add(index);
+                                            ultimoStoricoSelezionato = index;
+                                          }
                                         }
                                       });
 

@@ -471,6 +471,24 @@ class DatabaseService {
     await aggiornaScadenzeDaDiario();
   }
 
+  Future<void> deleteDiario(int id) async {
+    final db = await _db;
+
+    await db.delete(
+      'scadenze',
+      where: 'diario_id = ?',
+      whereArgs: [id],
+    );
+
+    await db.delete(
+      'diario',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+
+    await aggiornaScadenzeDaDiario();
+  }
+
   Future<void> confermaPrenotazioneWorkflow(int prenotazioneId) async {
     final db = await _db;
 

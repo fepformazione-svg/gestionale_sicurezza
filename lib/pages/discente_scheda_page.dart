@@ -768,16 +768,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           },
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 120),
+                            curve: Curves.easeOut,
                             height: 58,
                             padding: const EdgeInsets.symmetric(horizontal: 22),
-                            color: storiciSelezionati.contains(index)
-                                ? eliminazioneCorsiInCorso
-                                      ? const Color(0xFFFFF7ED)
-                                      : const Color(0xFFEAF2FF)
-                                : indiceHoverStorico == index &&
-                                      !eliminazioneCorsiInCorso
-                                ? const Color(0xFFF5F9FF)
-                                : Colors.transparent,
+                            decoration: BoxDecoration(
+                              color: storiciSelezionati.contains(index)
+                                  ? eliminazioneCorsiInCorso
+                                        ? const Color(0xFFFFF7ED)
+                                        : const Color(0xFFEAF2FF)
+                                  : indiceHoverStorico == index &&
+                                        !eliminazioneCorsiInCorso
+                                  ? const Color(0xFFF5F9FF)
+                                  : Colors.transparent,
+                              border: Border(
+                                left: BorderSide(
+                                  color: storiciSelezionati.contains(index)
+                                      ? eliminazioneCorsiInCorso
+                                            ? const Color(0xFFF97316)
+                                            : const Color(0xFF2563EB)
+                                      : indiceHoverStorico == index &&
+                                            !eliminazioneCorsiInCorso
+                                      ? const Color(0xFF2563EB)
+                                      : Colors.transparent,
+                                  width: 3,
+                                ),
+                              ),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
                             child: Row(
                               children: [
                                 Expanded(
@@ -2006,94 +2023,111 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                         : () {
                                             apriDettaglioStorico(r);
                                           },
-                                    child: Container(
-                                      height: 58,
-                                      color: storiciSelezionati.contains(index)
-                                          ? eliminazioneCorsiInCorso
-                                                ? const Color(0xFFFFF7ED)
-                                                : const Color(0xFFEAF2FF)
-                                          : indiceHoverStorico == index &&
-                                                !eliminazioneCorsiInCorso
-                                          ? const Color(0xFFF7FAFF)
-                                          : Colors.transparent,
-
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 22,
+                                    child: Tooltip(
+                                      message: eliminazioneCorsiInCorso
+                                          ? 'Seleziona i corsi da eliminare'
+                                          : 'Doppio click per vedere il dettaglio corso',
+                                      waitDuration: const Duration(
+                                        milliseconds: 600,
                                       ),
-                                      child: Row(
-                                        children: [
-                                          Expanded(
-                                            flex: 5,
-                                            child: Text(
-                                              valore(r['corso']),
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF111827),
-                                              ),
-                                            ),
+                                      child: MouseRegion(
+                                        cursor: eliminazioneCorsiInCorso
+                                            ? SystemMouseCursors.basic
+                                            : SystemMouseCursors.click,
+                                        child: Container(
+                                          height: 58,
+                                          color:
+                                              storiciSelezionati.contains(index)
+                                              ? eliminazioneCorsiInCorso
+                                                    ? const Color(0xFFFFF7ED)
+                                                    : const Color(0xFFEAF2FF)
+                                              : indiceHoverStorico == index &&
+                                                    !eliminazioneCorsiInCorso
+                                              ? const Color(0xFFF7FAFF)
+                                              : Colors.transparent,
+
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 22,
                                           ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              formattaData(r['data']),
-                                              style: const TextStyle(
-                                                color: Color(0xFF374151),
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Text(
-                                              formattaData(r['scadenza']),
-                                              style: const TextStyle(
-                                                color: Color(0xFF374151),
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 1,
-                                            child: Text(
-                                              '${valore(r['durata_ore'])} h',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w700,
-                                                color: Color(0xFF374151),
-                                              ),
-                                            ),
-                                          ),
-                                          Expanded(
-                                            flex: 2,
-                                            child: Align(
-                                              alignment: Alignment.centerLeft,
-                                              child: Container(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 10,
-                                                      vertical: 6,
-                                                    ),
-                                                decoration: BoxDecoration(
-                                                  color: sfondoStatoCorso(
-                                                    stato,
-                                                  ),
-                                                  borderRadius:
-                                                      BorderRadius.circular(
-                                                        999,
-                                                      ),
-                                                ),
+                                          child: Row(
+                                            children: [
+                                              Expanded(
+                                                flex: 5,
                                                 child: Text(
-                                                  stato,
-                                                  style: TextStyle(
-                                                    fontSize: 11,
-                                                    fontWeight: FontWeight.w800,
-                                                    color: coloreStatoCorso(
+                                                  valore(r['corso']),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Color(0xFF111827),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  formattaData(r['data']),
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF374151),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Text(
+                                                  formattaData(r['scadenza']),
+                                                  style: const TextStyle(
+                                                    color: Color(0xFF374151),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 1,
+                                                child: Text(
+                                                  '${valore(r['durata_ore'])} h',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w700,
+                                                    color: Color(0xFF374151),
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                flex: 2,
+                                                child: Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 10,
+                                                          vertical: 6,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: sfondoStatoCorso(
+                                                        stato,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            999,
+                                                          ),
+                                                    ),
+                                                    child: Text(
                                                       stato,
+                                                      style: TextStyle(
+                                                        fontSize: 11,
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        color: coloreStatoCorso(
+                                                          stato,
+                                                        ),
+                                                      ),
                                                     ),
                                                   ),
                                                 ),
                                               ),
-                                            ),
+                                            ],
                                           ),
-                                        ],
+                                        ),
                                       ),
                                     ),
                                   ),

@@ -54,9 +54,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         duration: const Duration(seconds: 3),
         backgroundColor: const Color(0xFF16A34A),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
@@ -66,11 +64,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.error_outline,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -86,13 +80,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         duration: const Duration(seconds: 3),
         backgroundColor: const Color(0xFFDC2626),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
-   
+
   static String ultimaColonnaOrdinamentoStorico = 'data';
   static bool ultimoOrdinamentoStoricoAscendente = false;
 
@@ -105,6 +97,14 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   final Set<int> storiciSelezionati = {};
   int? ultimoStoricoSelezionato;
 
+  bool selezioneStoricoValida() {
+    if (storiciSelezionati.isEmpty) return false;
+
+    return storiciSelezionati.every(
+      (index) => index >= 0 && index < storicoFiltrato.length,
+    );
+  }
+
   final TextEditingController _cercaStoricoController = TextEditingController();
 
   void apriDettaglioStorico(Map<String, dynamic> r) {
@@ -114,36 +114,117 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         final stato = statoScadenzaCorso(r['scadenza']);
 
         return AlertDialog(
-          title: const Text(
-            'Dettaglio corso',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
           ),
+          titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 6, 24, 20),
+
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.school_outlined,
+                  color: Color(0xFF2563EB),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  'Dettaglio corso',
+                  style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+
           content: SizedBox(
-            width: 460,
+            width: 500,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  valore(r['corso']),
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    valore(r['corso']),
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF0F172A),
+                    ),
                   ),
                 ),
+
                 const SizedBox(height: 18),
 
                 _rigaDettaglioStorico('Data corso', formattaData(r['data'])),
-                _rigaDettaglioStorico('Scadenza', formattaData(r['scadenza'])),
-                _rigaDettaglioStorico('Ore', valore(r['durata_ore'])),
-                _rigaDettaglioStorico('Stato', stato),
+                _rigaDettaglioStorico(
+                  'Scadenza',
+                  formattaData(r['scadenza']),
+                  stato: stato,
+                ),
+                _rigaDettaglioStorico('Ore', '${valore(r['durata_ore'])} h'),
+                _rigaStatoDettaglioStorico(stato),
               ],
             ),
           ),
+
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Chiudi'),
+            Align(
+              alignment: Alignment.centerRight,
+              child: ElevatedButton.icon(
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close, size: 18),
+                label: const Text('Chiudi'),
+                style: ButtonStyle(
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                    states,
+                  ) {
+                    if (states.contains(WidgetState.hovered)) {
+                      return const Color(0xFF1D4ED8);
+                    }
+                    return const Color(0xFF2563EB);
+                  }),
+                  foregroundColor: WidgetStateProperty.all(Colors.white),
+                  elevation: WidgetStateProperty.all(0),
+                  padding: WidgetStateProperty.all(
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 13),
+                  ),
+                  shape: WidgetStateProperty.all(
+                    RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  textStyle: WidgetStateProperty.all(
+                    const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
             ),
           ],
         );
@@ -151,28 +232,144 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     );
   }
 
-  Widget _rigaDettaglioStorico(String etichetta, String valore) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+  Widget _rigaDettaglioStorico(
+    String etichetta,
+    String valore, {
+    String? stato,
+  }) {
+    final bool evidenziaScadenza = etichetta == 'Scadenza';
+
+    Color coloreSfondo = const Color(0xFFFFFFFF);
+    Color coloreBordo = const Color(0xFFE2E8F0);
+
+    if (evidenziaScadenza) {
+      if (stato == 'SCADUTO') {
+        coloreSfondo = const Color(0xFFFEF2F2);
+        coloreBordo = const Color(0xFFFECACA);
+      } else if (stato == 'IN SCADENZA') {
+        coloreSfondo = const Color(0xFFFFF7ED);
+        coloreBordo = const Color(0xFFFED7AA);
+      } else {
+        coloreSfondo = const Color(0xFFF0FDF4);
+        coloreBordo = const Color(0xFFBBF7D0);
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      decoration: BoxDecoration(
+        color: coloreSfondo,
+        borderRadius: BorderRadius.circular(11),
+        border: Border.all(color: coloreBordo),
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 120,
+            width: 125,
             child: Text(
               etichetta,
               style: const TextStyle(
+                fontSize: 13,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF6B7280),
+                color: Color(0xFF64748B),
               ),
             ),
           ),
           Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                valore,
+                textAlign: TextAlign.right,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF111827),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _rigaStatoDettaglioStorico(String stato) {
+    Color coloreSfondo;
+    Color coloreTesto;
+    IconData icona;
+
+    if (stato == 'SCADUTO') {
+      coloreSfondo = const Color(0xFFFEE2E2);
+      coloreTesto = const Color(0xFFB91C1C);
+      icona = Icons.error_outline;
+    } else if (stato == 'IN SCADENZA') {
+      coloreSfondo = const Color(0xFFFFF7ED);
+      coloreTesto = const Color(0xFFC2410C);
+      icona = Icons.warning_amber_rounded;
+    } else {
+      coloreSfondo = const Color(0xFFDCFCE7);
+      coloreTesto = const Color(0xFF15803D);
+      icona = Icons.check_circle_outline;
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const SizedBox(
+            width: 125,
             child: Text(
-              valore,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF111827),
+              'Stato',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: coloreSfondo,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(icona, size: 15, color: coloreTesto),
+                    const SizedBox(width: 6),
+                    Text(
+                      stato,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        color: coloreTesto,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -223,6 +420,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       filtroStorico = 'tutti';
       _cercaStoricoController.clear();
       storicoFiltrato = List.from(storico);
+
+      storiciSelezionati.clear();
+      storicoSelezionato = null;
+      ultimoStoricoSelezionato = null;
+      indiceHoverStorico = null;
     });
   }
 
@@ -285,6 +487,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
         return ordinamentoStoricoAscendente ? confronto : -confronto;
       });
+
+      storiciSelezionati.clear();
+      storicoSelezionato = null;
+      ultimoStoricoSelezionato = null;
+      indiceHoverStorico = null;
     });
   }
 
@@ -401,6 +608,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
         return ordinamentoStoricoAscendente ? risultato : -risultato;
       });
+      storiciSelezionati.clear();
+      storicoSelezionato = null;
+      ultimoStoricoSelezionato = null;
+      indiceHoverStorico = null;
     });
   }
 
@@ -542,11 +753,15 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         },
                         child: MouseRegion(
                           onEnter: (_) {
+                            if (eliminazioneCorsiInCorso) return;
+
                             setState(() {
                               indiceHoverStorico = index;
                             });
                           },
                           onExit: (_) {
+                            if (eliminazioneCorsiInCorso) return;
+
                             setState(() {
                               indiceHoverStorico = null;
                             });
@@ -557,11 +772,12 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 22),
                             color: storiciSelezionati.contains(index)
                                 ? eliminazioneCorsiInCorso
-                                    ? const Color(0xFFFFF7ED)
-                                    : const Color(0xFFEAF2FF)
-                                : indiceHoverStorico == index && !eliminazioneCorsiInCorso
-                                    ? const Color(0xFFF5F9FF)
-                                    : Colors.transparent,
+                                      ? const Color(0xFFFFF7ED)
+                                      : const Color(0xFFEAF2FF)
+                                : indiceHoverStorico == index &&
+                                      !eliminazioneCorsiInCorso
+                                ? const Color(0xFFF5F9FF)
+                                : Colors.transparent,
                             child: Row(
                               children: [
                                 Expanded(
@@ -842,6 +1058,13 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   }
 
   Future<void> esportaCorsiSelezionatiExcel() async {
+    if (!selezioneStoricoValida()) {
+      mostraSnackBarErrore(
+        'Nessun corso valido da esportare. Aggiorna la selezione e riprova.',
+      );
+      return;
+    }
+
     final corsiDaEsportare = storiciSelezionati
         .map((index) => storicoFiltrato[index])
         .toList();
@@ -861,238 +1084,228 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           '${oggi.month.toString().padLeft(2, '0')}-'
           '${oggi.day.toString().padLeft(2, '0')}';
 
-
-    final fileExcel = excel.Excel.createExcel();
-    final sheet = fileExcel['Storico Formativo'];
-    sheet.appendRow([
-      excel.TextCellValue('Corso'),
-      excel.TextCellValue('Data corso'),
-      excel.TextCellValue('Scadenza'),
-      excel.TextCellValue('Ore'),
-      excel.TextCellValue('Stato'),
-    ]);
-
-    final headerStyle = excel.CellStyle(
-      bold: true,
-      fontColorHex: excel.ExcelColor.white,
-      backgroundColorHex: excel.ExcelColor.blue,
-      horizontalAlign: excel.HorizontalAlign.Center,
-    );
-
-    for (int col = 0; col < 5; col++) {
-      sheet
-          .cell(excel.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0))
-          .cellStyle = headerStyle;
-    }
-
-    sheet.setColumnWidth(0, 32); // Corso
-    sheet.setColumnWidth(1, 14); // Data corso
-    sheet.setColumnWidth(2, 14); // Scadenza
-    sheet.setColumnWidth(3, 10); // Ore
-    sheet.setColumnWidth(4, 14); // Stato
-
-    for (final corso in corsiDaEsportare) {
-      final stato = statoScadenzaCorso(corso['scadenza']);
-
+      final fileExcel = excel.Excel.createExcel();
+      final sheet = fileExcel['Storico Formativo'];
       sheet.appendRow([
-        excel.TextCellValue(valore(corso['corso'])),
-        excel.TextCellValue(formattaData(corso['data'])),
-        excel.TextCellValue(formattaData(corso['scadenza'])),
-        excel.TextCellValue('${valore(corso['durata_ore'])} h'),
-        excel.TextCellValue(stato),
+        excel.TextCellValue('Corso'),
+        excel.TextCellValue('Data corso'),
+        excel.TextCellValue('Scadenza'),
+        excel.TextCellValue('Ore'),
+        excel.TextCellValue('Stato'),
       ]);
+
+      final headerStyle = excel.CellStyle(
+        bold: true,
+        fontColorHex: excel.ExcelColor.white,
+        backgroundColorHex: excel.ExcelColor.blue,
+        horizontalAlign: excel.HorizontalAlign.Center,
+      );
+
+      for (int col = 0; col < 5; col++) {
+        sheet
+                .cell(
+                  excel.CellIndex.indexByColumnRow(
+                    columnIndex: col,
+                    rowIndex: 0,
+                  ),
+                )
+                .cellStyle =
+            headerStyle;
+      }
+
+      sheet.setColumnWidth(0, 32); // Corso
+      sheet.setColumnWidth(1, 14); // Data corso
+      sheet.setColumnWidth(2, 14); // Scadenza
+      sheet.setColumnWidth(3, 10); // Ore
+      sheet.setColumnWidth(4, 14); // Stato
+
+      for (final corso in corsiDaEsportare) {
+        final stato = statoScadenzaCorso(corso['scadenza']);
+
+        sheet.appendRow([
+          excel.TextCellValue(valore(corso['corso'])),
+          excel.TextCellValue(formattaData(corso['data'])),
+          excel.TextCellValue(formattaData(corso['scadenza'])),
+          excel.TextCellValue('${valore(corso['durata_ore'])} h'),
+          excel.TextCellValue(stato),
+        ]);
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+      final path = '${directory.path}/$nomeFile.xlsx';
+
+      final bytes = fileExcel.encode();
+      if (bytes == null) return;
+
+      final file = File(path);
+      await file.writeAsBytes(bytes, flush: true);
+
+      if (!mounted) return;
+
+      mostraSnackBarSuccesso('Excel esportato correttamente');
+
+      await Future.delayed(const Duration(milliseconds: 400));
+      await OpenFile.open(path);
+    } catch (e) {
+      mostraSnackBarErrore('Errore durante l’esportazione Excel. Riprova.');
+    }
+  }
+
+  Future<void> esportaCorsiSelezionatiPdf() async {
+    if (!selezioneStoricoValida()) {
+      mostraSnackBarErrore(
+        'Nessun corso valido da esportare. Aggiorna la selezione e riprova.',
+      );
+      return;
     }
 
-    final directory = await getApplicationDocumentsDirectory();
-    final path = '${directory.path}/$nomeFile.xlsx';
+    final corsiDaEsportare = storiciSelezionati
+        .map((index) => storicoFiltrato[index])
+        .toList();
 
-    final bytes = fileExcel.encode();
-    if (bytes == null) return;
+    if (corsiDaEsportare.isEmpty) return;
 
-    final file = File(path);
-    await file.writeAsBytes(bytes, flush: true);
+    try {
+      final pdf = pw.Document();
 
-    if (!mounted) return;
+      final dataEsportazione =
+          '${DateTime.now().day.toString().padLeft(2, '0')}/'
+          '${DateTime.now().month.toString().padLeft(2, '0')}/'
+          '${DateTime.now().year}';
 
-    mostraSnackBarSuccesso(
-      'Excel esportato correttamente',
-    );
+      final totaleCorsi = corsiDaEsportare.length;
 
-    await Future.delayed(const Duration(milliseconds: 400));
-    await OpenFile.open(path);
-            } catch (e) {
-              mostraSnackBarErrore(
-                'Errore durante l’esportazione Excel. Riprova.',
-              );
-            }
-        }
-
-          Future<void> esportaCorsiSelezionatiPdf() async {
-            final corsiDaEsportare = storiciSelezionati
-                .map((index) => storicoFiltrato[index])
-                .toList();
-
-            if (corsiDaEsportare.isEmpty) return;
-
-            try {
-              final pdf = pw.Document();
-
-              final dataEsportazione =
-                  '${DateTime.now().day.toString().padLeft(2, '0')}/'
-                  '${DateTime.now().month.toString().padLeft(2, '0')}/'
-                  '${DateTime.now().year}';
-
-              final totaleCorsi = corsiDaEsportare.length;
-
-              pdf.addPage(
-                pw.MultiPage(
-                  pageFormat: PdfPageFormat.a4.landscape,
-                  margin: const pw.EdgeInsets.all(28),
-                  header: (context) => pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            'F&P Formazione e Prevenzione',
-                            style: pw.TextStyle(
-                              fontSize: 18,
-                              fontWeight: pw.FontWeight.bold,
-                            ),
-                          ),
-                          pw.Text(
-                            'Export storico formativo',
-                            style: const pw.TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                      pw.SizedBox(height: 8),
-                      pw.Divider(),
-                      pw.SizedBox(height: 8),
-                    ],
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4.landscape,
+          margin: const pw.EdgeInsets.all(28),
+          header: (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'F&P Formazione e Prevenzione',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
                   ),
-                  footer: (context) => pw.Column(
-                    children: [
-                      pw.Divider(),
-                      pw.Row(
-                        mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                        children: [
-                          pw.Text(
-                            'Documento generato dal gestionale F&P',
-                            style: const pw.TextStyle(fontSize: 9),
-                          ),
-                          pw.Text(
-                            'Pagina ${context.pageNumber} di ${context.pagesCount}',
-                            style: const pw.TextStyle(fontSize: 9),
-                          ),
-                        ],
-                      ),
-                    ],
+                  pw.Text(
+                    'Export storico formativo',
+                    style: const pw.TextStyle(fontSize: 12),
                   ),
-                  build: (context) => [
-                    pw.Text(
-                      '${widget.discente.cognome} ${widget.discente.nome}',
-                      style: pw.TextStyle(
-                        fontSize: 22,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
-                    ),
-                    pw.SizedBox(height: 6),
-                    pw.Text(
-                      'Data esportazione: $dataEsportazione',
-                      style: const pw.TextStyle(fontSize: 11),
-                    ),
-                    pw.Text(
-                      totaleCorsi == 1
-                          ? 'Totale corsi esportati: 1'
-                          : 'Totale corsi esportati: $totaleCorsi',
-                      style: const pw.TextStyle(fontSize: 11),
-                    ),
-                    pw.SizedBox(height: 18),
-                    pw.Table.fromTextArray(
-                      headers: [
-                        'Corso',
-                        'Data corso',
-                        'Scadenza',
-                        'Ore',
-                        'Stato',
-                      ],
-                      data: corsiDaEsportare.map((corso) {
-                        final stato = statoScadenzaCorso(corso['scadenza']);
+                ],
+              ),
+              pw.SizedBox(height: 8),
+              pw.Divider(),
+              pw.SizedBox(height: 8),
+            ],
+          ),
+          footer: (context) => pw.Column(
+            children: [
+              pw.Divider(),
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                children: [
+                  pw.Text(
+                    'Documento generato dal gestionale F&P',
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                  pw.Text(
+                    'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                    style: const pw.TextStyle(fontSize: 9),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          build: (context) => [
+            pw.Text(
+              '${widget.discente.cognome} ${widget.discente.nome}',
+              style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Data esportazione: $dataEsportazione',
+              style: const pw.TextStyle(fontSize: 11),
+            ),
+            pw.Text(
+              totaleCorsi == 1
+                  ? 'Totale corsi esportati: 1'
+                  : 'Totale corsi esportati: $totaleCorsi',
+              style: const pw.TextStyle(fontSize: 11),
+            ),
+            pw.SizedBox(height: 18),
+            pw.Table.fromTextArray(
+              headers: ['Corso', 'Data corso', 'Scadenza', 'Ore', 'Stato'],
+              data: corsiDaEsportare.map((corso) {
+                final stato = statoScadenzaCorso(corso['scadenza']);
 
-                        return [
-                          valore(corso['corso']),
-                          formattaData(corso['data']),
-                          formattaData(corso['scadenza']),
-                          valore(corso['durata_ore']),
-                          stato,
-                        ];
-                      }).toList(),
-                      headerStyle: pw.TextStyle(
-                        fontWeight: pw.FontWeight.bold,
-                        color: PdfColors.white,
-                      ),
-                      headerDecoration: const pw.BoxDecoration(
-                        color: PdfColors.blueGrey800,
-                      ),
-                      cellStyle: const pw.TextStyle(fontSize: 10),
-                      cellAlignment: pw.Alignment.centerLeft,
-                      headerAlignment: pw.Alignment.centerLeft,
-                      rowDecoration: const pw.BoxDecoration(
-                        border: pw.Border(
-                          bottom: pw.BorderSide(
-                            color: PdfColors.grey300,
-                            width: 0.5,
-                          ),
-                        ),
-                      ),
-                      columnWidths: {
-                        0: const pw.FlexColumnWidth(4),
-                        1: const pw.FlexColumnWidth(1.4),
-                        2: const pw.FlexColumnWidth(1.4),
-                        3: const pw.FlexColumnWidth(0.8),
-                        4: const pw.FlexColumnWidth(1.3),
-                      },
-                    ),
-                  ],
+                return [
+                  valore(corso['corso']),
+                  formattaData(corso['data']),
+                  formattaData(corso['scadenza']),
+                  valore(corso['durata_ore']),
+                  stato,
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey800,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 10),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              rowDecoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(color: PdfColors.grey300, width: 0.5),
                 ),
-              );
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(4),
+                1: const pw.FlexColumnWidth(1.4),
+                2: const pw.FlexColumnWidth(1.4),
+                3: const pw.FlexColumnWidth(0.8),
+                4: const pw.FlexColumnWidth(1.3),
+              },
+            ),
+          ],
+        ),
+      );
 
-              final tipoCorsi = corsiDaEsportare.length == 1 ? 'corso' : 'corsi';
+      final cognomeFile = pulisciNomeFile(widget.discente.cognome);
+      final nomeFileDiscente = pulisciNomeFile(widget.discente.nome);
+      final oggi = DateTime.now();
 
-              final cognomeFile = pulisciNomeFile(widget.discente.cognome);
-              final nomeFileDiscente = pulisciNomeFile(widget.discente.nome);
-              final oggi = DateTime.now();
+      final nomeFilePdf =
+          '${cognomeFile}_${nomeFileDiscente}_'
+          '${corsiDaEsportare.length}_'
+          '${corsiDaEsportare.length == 1 ? 'corso' : 'corsi'}_'
+          '${oggi.year}-'
+          '${oggi.month.toString().padLeft(2, '0')}-'
+          '${oggi.day.toString().padLeft(2, '0')}_pdf';
 
-              final nomeFilePdf =
-                  '${cognomeFile}_${nomeFileDiscente}_'
-                  '${corsiDaEsportare.length}_'
-                  '${corsiDaEsportare.length == 1 ? 'corso' : 'corsi'}_'
-                  '${oggi.year}-'
-                  '${oggi.month.toString().padLeft(2, '0')}-'
-                  '${oggi.day.toString().padLeft(2, '0')}_pdf';
+      final directory = await getApplicationDocumentsDirectory();
+      final path = '${directory.path}/$nomeFilePdf.pdf';
 
-              final directory = await getApplicationDocumentsDirectory();
-              final path = '${directory.path}/$nomeFilePdf.pdf';
+      final file = File(path);
+      await file.writeAsBytes(await pdf.save(), flush: true);
 
-              final file = File(path);
-              await file.writeAsBytes(await pdf.save(), flush: true);
+      if (!mounted) return;
 
-              if (!mounted) return;
+      mostraSnackBarSuccesso('PDF esportato correttamente');
 
-              mostraSnackBarSuccesso(
-                'PDF esportato correttamente',
-              );
-
-              await Future.delayed(const Duration(milliseconds: 400));
-              await OpenFile.open(path);
-            } catch (e) {
-              mostraSnackBarErrore(
-                'Errore durante l’esportazione PDF. Riprova.',
-              );
-            }
-          }
+      await Future.delayed(const Duration(milliseconds: 400));
+      await OpenFile.open(path);
+    } catch (e) {
+      mostraSnackBarErrore('Errore durante l’esportazione PDF. Riprova.');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -1136,14 +1349,14 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(28),
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _AnagraficaCard(discente: d),
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
             _SorveglianzaSanitariaCard(discente: d),
-            const SizedBox(height: 24),
+            const SizedBox(height: 14),
             const Text(
               'Storico formativo',
               style: TextStyle(
@@ -1152,7 +1365,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 color: Color(0xFF111827),
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             Wrap(
               spacing: 14,
               runSpacing: 14,
@@ -1210,7 +1423,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ],
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
 
             Row(
               children: [
@@ -1266,7 +1479,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ],
             ),
 
-            const SizedBox(height: 18),
+            const SizedBox(height: 12),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1285,19 +1498,27 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     ),
                     const SizedBox(width: 16),
                     TextButton.icon(
-                      onPressed: eliminazioneCorsiInCorso
+                      onPressed:
+                          eliminazioneCorsiInCorso || storicoFiltrato.isEmpty
                           ? null
                           : () {
-                        setState(() {
-                          storiciSelezionati.clear();
-                          storiciSelezionati.addAll(
-                            List.generate(storicoFiltrato.length, (i) => i),
-                          );
-                          storicoSelezionato = storicoFiltrato.isNotEmpty ? 0 : null;
-                          ultimoStoricoSelezionato =
-                              storicoFiltrato.isNotEmpty ? storicoFiltrato.length - 1 : null;
-                        });
-                      },
+                              setState(() {
+                                storiciSelezionati.clear();
+                                storiciSelezionati.addAll(
+                                  List.generate(
+                                    storicoFiltrato.length,
+                                    (i) => i,
+                                  ),
+                                );
+                                storicoSelezionato = storicoFiltrato.isNotEmpty
+                                    ? 0
+                                    : null;
+                                ultimoStoricoSelezionato =
+                                    storicoFiltrato.isNotEmpty
+                                    ? storicoFiltrato.length - 1
+                                    : null;
+                              });
+                            },
                       icon: const Icon(Icons.select_all, size: 18),
                       label: const Text('Seleziona tutto'),
                     ),
@@ -1306,12 +1527,13 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         onPressed: eliminazioneCorsiInCorso
                             ? null
                             : () {
-                          setState(() {
-                            storiciSelezionati.clear();
-                            storicoSelezionato = null;
-                            ultimoStoricoSelezionato = null;
-                          });
-                        },
+                                setState(() {
+                                  storiciSelezionati.clear();
+                                  storicoSelezionato = null;
+                                  ultimoStoricoSelezionato = null;
+                                  indiceHoverStorico = null;
+                                });
+                              },
                         icon: const Icon(Icons.clear_all, size: 18),
                         label: const Text('Deseleziona tutto'),
                       ),
@@ -1322,7 +1544,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                   const SizedBox(height: 8),
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: eliminazioneCorsiInCorso
                           ? const Color(0xFFFFF7ED)
@@ -1359,11 +1584,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           child: Text(
                             eliminazioneCorsiInCorso
                                 ? storiciSelezionati.length == 1
-                                    ? 'Eliminazione di 1 corso in corso...'
-                                    : 'Eliminazione di ${storiciSelezionati.length} corsi in corso...'
+                                      ? 'Eliminazione di 1 corso in corso...'
+                                      : 'Eliminazione di ${storiciSelezionati.length} corsi in corso...'
                                 : storiciSelezionati.length == 1
-                                    ? '1 corso selezionato'
-                                    : '${storiciSelezionati.length} corsi selezionati',
+                                ? '1 corso selezionato'
+                                : '${storiciSelezionati.length} corsi selezionati',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
@@ -1377,141 +1602,177 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                        tooltip: 'Deseleziona corsi',
-                        onPressed: eliminazioneCorsiInCorso
-                            ? null
-                            : () {
-                                setState(() {
-                                  storiciSelezionati.clear();
-                                  storicoSelezionato = null;
-                                  ultimoStoricoSelezionato = null;
-                                });
-                              },
-                        icon: const Icon(Icons.clear_all, size: 20),
-                      ),
+                          tooltip: 'Deseleziona corsi',
+                          onPressed: eliminazioneCorsiInCorso
+                              ? null
+                              : () {
+                                  setState(() {
+                                    storiciSelezionati.clear();
+                                    storicoSelezionato = null;
+                                    ultimoStoricoSelezionato = null;
+                                    indiceHoverStorico = null;
+                                  });
+                                },
+                          icon: const Icon(Icons.clear_all, size: 20),
+                        ),
                         IconButton(
                           tooltip: 'Esporta Excel',
-                          onPressed: storiciSelezionati.isEmpty || eliminazioneCorsiInCorso
+                          onPressed:
+                              !selezioneStoricoValida() ||
+                                  eliminazioneCorsiInCorso
                               ? null
                               : esportaCorsiSelezionatiExcel,
-                          icon: const Icon(Icons.table_chart_outlined, size: 20),
+                          icon: const Icon(
+                            Icons.table_chart_outlined,
+                            size: 20,
+                          ),
                         ),
                         IconButton(
                           tooltip: 'Esporta PDF',
-                          onPressed: storiciSelezionati.isEmpty || eliminazioneCorsiInCorso
+                          onPressed:
+                              !selezioneStoricoValida() ||
+                                  eliminazioneCorsiInCorso
                               ? null
                               : esportaCorsiSelezionatiPdf,
-                          icon: const Icon(Icons.picture_as_pdf_outlined, size: 20),
+                          icon: const Icon(
+                            Icons.picture_as_pdf_outlined,
+                            size: 20,
+                          ),
                         ),
                         TextButton.icon(
-                          onPressed: storiciSelezionati.isEmpty || eliminazioneCorsiInCorso
+                          onPressed:
+                              !selezioneStoricoValida() ||
+                                  eliminazioneCorsiInCorso
                               ? null
                               : () async {
-            final corsiSelezionatiValidi = storiciSelezionati
-                .where((index) => index >= 0 && index < storicoFiltrato.length)
-                .map((index) => storicoFiltrato[index])
-                .toList();
+                                  if (!selezioneStoricoValida()) {
+                                    mostraSnackBarErrore(
+                                      'Nessun corso valido da eliminare. Aggiorna la selezione e riprova.',
+                                    );
+                                    return;
+                                  }
 
-            if (corsiSelezionatiValidi.isEmpty) {
-              mostraSnackBarErrore(
-                'Nessun corso valido da eliminare. Aggiorna la selezione e riprova.',
-              );
-              return;
-            }
+                                  final corsiSelezionatiValidi =
+                                      storiciSelezionati
+                                          .map(
+                                            (index) => storicoFiltrato[index],
+                                          )
+                                          .toList();
 
-            final conferma = await showDialog<bool>(
-              context: context,
-              builder: (_) => AlertDialog(
-                title: const Text('Conferma eliminazione'),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      corsiSelezionatiValidi.length == 1
-                          ? 'Eliminare il corso selezionato?'
-                          : 'Eliminare ${corsiSelezionatiValidi.length} corsi selezionati?',
-                    ),
-                    const SizedBox(height: 12),
-                    ...corsiSelezionatiValidi.map((r) {
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: Text(
-                          '• ${valore(r['corso'])}',
-                          style: const TextStyle(fontSize: 13),
+                                  final conferma = await showDialog<bool>(
+                                    context: context,
+                                    builder: (_) => AlertDialog(
+                                      title: const Text(
+                                        'Conferma eliminazione',
+                                      ),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            corsiSelezionatiValidi.length == 1
+                                                ? 'Eliminare il corso selezionato?'
+                                                : 'Eliminare ${corsiSelezionatiValidi.length} corsi selezionati?',
+                                          ),
+                                          const SizedBox(height: 12),
+                                          ...corsiSelezionatiValidi.map((r) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 4,
+                                              ),
+                                              child: Text(
+                                                '• ${valore(r['corso'])}',
+                                                style: const TextStyle(
+                                                  fontSize: 13,
+                                                ),
+                                              ),
+                                            );
+                                          }),
+                                        ],
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Annulla'),
+                                        ),
+                                        ElevatedButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Elimina'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+
+                                  if (conferma != true) return;
+
+                                  setState(() {
+                                    eliminazioneCorsiInCorso = true;
+                                  });
+
+                                  try {
+                                    final idsDaEliminare =
+                                        corsiSelezionatiValidi
+                                            .map((r) => r['id'] as int)
+                                            .toList();
+
+                                    await DatabaseService.instance
+                                        .deleteStoriciByIds(idsDaEliminare);
+
+                                    final numeroEliminati =
+                                        idsDaEliminare.length;
+
+                                    setState(() {
+                                      storiciSelezionati.clear();
+                                      storicoSelezionato = null;
+                                      ultimoStoricoSelezionato = null;
+                                      indiceHoverStorico = null;
+                                    });
+
+                                    await caricaStorico();
+
+                                    mostraSnackBarSuccesso(
+                                      numeroEliminati == 1
+                                          ? '1 corso eliminato'
+                                          : '$numeroEliminati corsi eliminati',
+                                    );
+                                  } catch (e) {
+                                    mostraSnackBarErrore(
+                                      'Errore durante l’eliminazione dei corsi selezionati. Riprova.',
+                                    );
+                                  } finally {
+                                    if (mounted) {
+                                      setState(() {
+                                        eliminazioneCorsiInCorso = false;
+                                      });
+                                    }
+                                  }
+                                },
+                          icon: eliminazioneCorsiInCorso
+                              ? const SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.delete_outline,
+                                  size: 18,
+                                  color:
+                                      storiciSelezionati.isEmpty ||
+                                          eliminazioneCorsiInCorso
+                                      ? null
+                                      : const Color(0xFFDC2626),
+                                ),
+                          label: Text(
+                            eliminazioneCorsiInCorso
+                                ? 'Eliminazione in corso...'
+                                : 'Elimina',
+                          ),
                         ),
-                      );
-                    }),
-                  ],
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Annulla'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text('Elimina'),
-                  ),
-                ],
-              ),
-            );
-
-            if (conferma != true) return;
-
-            setState(() {
-              eliminazioneCorsiInCorso = true;
-            });
-
-            try {
-              final idsDaEliminare = corsiSelezionatiValidi
-                  .map((r) => r['id'] as int)
-                  .toList();
-
-              await DatabaseService.instance.deleteStoriciByIds(idsDaEliminare);
-
-              final numeroEliminati = idsDaEliminare.length;
-
-              setState(() {
-                storiciSelezionati.clear();
-                storicoSelezionato = null;
-                ultimoStoricoSelezionato = null;
-              });
-
-              await caricaStorico();
-
-              mostraSnackBarSuccesso(
-                numeroEliminati == 1
-                    ? '1 corso eliminato'
-                    : '$numeroEliminati corsi eliminati',
-              );
-            } catch (e) {
-              mostraSnackBarErrore(
-                'Errore durante l’eliminazione dei corsi selezionati. Riprova.',
-              );
-            } finally {
-              if (mounted) {
-                setState(() {
-                  eliminazioneCorsiInCorso = false;
-                });
-              }
-            }
-          },
-    icon: eliminazioneCorsiInCorso
-        ? const SizedBox(
-            width: 16,
-            height: 16,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-            ),
-          )
-        : const Icon(Icons.delete_outline, size: 18),
-    label: Text(
-      eliminazioneCorsiInCorso
-          ? 'Eliminazione in corso...'
-          : 'Elimina',
-    ),
-  ),
                       ],
                     ),
                   ),
@@ -1646,102 +1907,113 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                   child: GestureDetector(
                                     behavior: HitTestBehavior.opaque,
 
-                                    onTap: () {
-                                      final ctrlPremuto =
-                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
-                                            LogicalKeyboardKey.controlLeft,
-                                          ) ||
-                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
-                                            LogicalKeyboardKey.controlRight,
-                                          );
+                                    onTap: eliminazioneCorsiInCorso
+                                        ? null
+                                        : () {
+                                            final ctrlPremuto =
+                                                HardwareKeyboard
+                                                    .instance
+                                                    .logicalKeysPressed
+                                                    .contains(
+                                                      LogicalKeyboardKey
+                                                          .controlLeft,
+                                                    ) ||
+                                                HardwareKeyboard
+                                                    .instance
+                                                    .logicalKeysPressed
+                                                    .contains(
+                                                      LogicalKeyboardKey
+                                                          .controlRight,
+                                                    );
 
-                                      final shiftPremuto =
-                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
-                                            LogicalKeyboardKey.shiftLeft,
-                                          ) ||
-                                          HardwareKeyboard.instance.logicalKeysPressed.contains(
-                                            LogicalKeyboardKey.shiftRight,
-                                          );
+                                            final shiftPremuto =
+                                                HardwareKeyboard
+                                                    .instance
+                                                    .logicalKeysPressed
+                                                    .contains(
+                                                      LogicalKeyboardKey
+                                                          .shiftLeft,
+                                                    ) ||
+                                                HardwareKeyboard
+                                                    .instance
+                                                    .logicalKeysPressed
+                                                    .contains(
+                                                      LogicalKeyboardKey
+                                                          .shiftRight,
+                                                    );
 
-                                      setState(() {
-                                        storicoSelezionato = index;
+                                            setState(() {
+                                              storicoSelezionato = index;
 
-                                        if (shiftPremuto && ultimoStoricoSelezionato != null) {
-                                          final inizio = ultimoStoricoSelezionato! < index
-                                              ? ultimoStoricoSelezionato!
-                                              : index;
-                                          final fine = ultimoStoricoSelezionato! > index
-                                              ? ultimoStoricoSelezionato!
-                                              : index;
+                                              if (shiftPremuto &&
+                                                  ultimoStoricoSelezionato !=
+                                                      null) {
+                                                final inizio =
+                                                    ultimoStoricoSelezionato! <
+                                                        index
+                                                    ? ultimoStoricoSelezionato!
+                                                    : index;
+                                                final fine =
+                                                    ultimoStoricoSelezionato! >
+                                                        index
+                                                    ? ultimoStoricoSelezionato!
+                                                    : index;
 
-                                          storiciSelezionati.clear();
+                                                storiciSelezionati.clear();
 
-                                          for (int i = inizio; i <= fine; i++) {
-                                            storiciSelezionati.add(i);
-                                          }
-                                        } else if (ctrlPremuto) {
-                                          if (storiciSelezionati.contains(index)) {
-                                            storiciSelezionati.remove(index);
-                                          } else {
-                                            storiciSelezionati.add(index);
-                                          }
+                                                for (
+                                                  int i = inizio;
+                                                  i <= fine;
+                                                  i++
+                                                ) {
+                                                  storiciSelezionati.add(i);
+                                                }
+                                              } else if (ctrlPremuto) {
+                                                if (storiciSelezionati.contains(
+                                                  index,
+                                                )) {
+                                                  storiciSelezionati.remove(
+                                                    index,
+                                                  );
+                                                } else {
+                                                  storiciSelezionati.add(index);
+                                                }
 
-                                          ultimoStoricoSelezionato = index;
-                                        } else {
-                                          if (storiciSelezionati.contains(index)) {
-                                            storiciSelezionati.remove(index);
-                                            storicoSelezionato = null;
-                                            ultimoStoricoSelezionato = null;
-                                          } else {
-                                            storiciSelezionati.clear();
-                                            storiciSelezionati.add(index);
-                                            ultimoStoricoSelezionato = index;
-                                          }
-                                        }
-                                      });
-
-                                      debugPrint('CLICK CORSO: ${r['corso']}');
-                                    },
-                                    onDoubleTap: () {
-                                      final statoDialog = statoScadenzaCorso(r['scadenza']);
-
-                                      showDialog(
-                                        context: context,
-                                        builder: (_) => AlertDialog(
-                                          title: Text(valore(r['corso'])),
-                                          content: Column(
-                                            mainAxisSize: MainAxisSize.min,
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text('Data corso: ${formattaData(r['data'])}'),
-                                              const SizedBox(height: 8),
-                                              Text('Scadenza: ${formattaData(r['scadenza'])}'),
-                                              const SizedBox(height: 8),
-                                              Text('Ore: ${valore(r['durata_ore'])}'),
-                                              const SizedBox(height: 8),
-                                              Text(
-                                                'Stato: $statoDialog',
-                                                style: TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                  color: coloreStatoCorso(statoDialog),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          actions: [
-                                            TextButton(
-                                              onPressed: () => Navigator.pop(context),
-                                              child: const Text('Chiudi'),
-                                            ),
-                                          ],
-                                        ),
-                                      );
-                                    },
+                                                ultimoStoricoSelezionato =
+                                                    index;
+                                              } else {
+                                                if (storiciSelezionati.contains(
+                                                  index,
+                                                )) {
+                                                  storiciSelezionati.remove(
+                                                    index,
+                                                  );
+                                                  storicoSelezionato = null;
+                                                  ultimoStoricoSelezionato =
+                                                      null;
+                                                  indiceHoverStorico = null;
+                                                } else {
+                                                  storiciSelezionati.clear();
+                                                  storiciSelezionati.add(index);
+                                                  ultimoStoricoSelezionato =
+                                                      index;
+                                                }
+                                              }
+                                            });
+                                          },
+                                    onDoubleTap: eliminazioneCorsiInCorso
+                                        ? null
+                                        : () {
+                                            apriDettaglioStorico(r);
+                                          },
                                     child: Container(
                                       height: 58,
                                       color: storiciSelezionati.contains(index)
-                                          ? const Color(0xFFEAF2FF)
-                                          : indiceHoverStorico == index
+                                          ? eliminazioneCorsiInCorso
+                                                ? const Color(0xFFFFF7ED)
+                                                : const Color(0xFFEAF2FF)
+                                          : indiceHoverStorico == index &&
+                                                !eliminazioneCorsiInCorso
                                           ? const Color(0xFFF7FAFF)
                                           : Colors.transparent,
 
@@ -1854,15 +2126,15 @@ class _AnagraficaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Wrap(
-        runSpacing: 18,
-        spacing: 36,
+        runSpacing: 14,
+        spacing: 28,
         children: [
           _InfoItem(label: 'Nome', value: valore(discente.nome)),
           _InfoItem(label: 'Cognome', value: valore(discente.cognome)),
@@ -1961,15 +2233,15 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(22),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Wrap(
-        runSpacing: 18,
-        spacing: 36,
+        runSpacing: 14,
+        spacing: 28,
         children: [
           _InfoItem(label: 'Visita medica', value: visitaSvolta ? 'Sì' : 'No'),
           _InfoItem(

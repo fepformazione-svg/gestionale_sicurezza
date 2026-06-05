@@ -1326,6 +1326,114 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     }
   }
 
+  Future<void> eliminaCorsiSelezionati() async {
+    if (eliminazioneCorsiInCorso) return;
+
+    if (!selezioneStoricoValida()) {
+      mostraSnackBarErrore(
+        'Nessun corso valido da eliminare. Aggiorna la selezione e riprova.',
+      );
+      return;
+    }
+
+    final corsiSelezionatiValidi = storiciSelezionati
+        .map((index) => storicoFiltrato[index])
+        .toList();
+
+    if (corsiSelezionatiValidi.isEmpty) return;
+
+    final numeroCorsi = corsiSelezionatiValidi.length;
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: const Text(
+            'Conferma eliminazione',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          content: Text(
+            numeroCorsi == 1
+                ? 'Vuoi eliminare definitivamente il corso selezionato dallo storico formativo?'
+                : 'Vuoi eliminare definitivamente $numeroCorsi corsi selezionati dallo storico formativo?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_outline, size: 18),
+              label: const Text('Elimina'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 12,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    setState(() {
+      eliminazioneCorsiInCorso = true;
+    });
+
+    await Future.delayed(const Duration(milliseconds: 650));
+
+    if (!mounted) return;
+
+    try {
+      final idsDaEliminare = corsiSelezionatiValidi
+          .map((r) => r['id'] as int)
+          .toList();
+
+      await DatabaseService.instance.deleteStoriciByIds(idsDaEliminare);
+
+      await caricaStorico();
+
+      if (!mounted) return;
+
+      setState(() {
+        storiciSelezionati.clear();
+        storicoSelezionato = null;
+        ultimoStoricoSelezionato = null;
+        indiceHoverStorico = null;
+        eliminazioneCorsiInCorso = false;
+      });
+
+      mostraSnackBarSuccesso(
+        numeroCorsi == 1
+            ? '1 corso eliminato correttamente'
+            : '$numeroCorsi corsi eliminati correttamente',
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        eliminazioneCorsiInCorso = false;
+      });
+
+      mostraSnackBarErrore(
+        'Errore durante l’eliminazione dei corsi selezionati. Riprova.',
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final d = widget.discente;
@@ -1556,6 +1664,43 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         icon: const Icon(Icons.clear_all, size: 18),
                         label: const Text('Deseleziona tutto'),
                       ),
+                    if (storiciSelezionati.isNotEmpty)
+                      TextButton.icon(
+                        onPressed:
+                            !selezioneStoricoValida() ||
+                                eliminazioneCorsiInCorso
+                            ? null
+                            : eliminaCorsiSelezionati,
+                        icon: eliminazioneCorsiInCorso
+                            ? const SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2.2,
+                                  color: Color(0xFF9A3412),
+                                ),
+                              )
+                            : Icon(
+                                Icons.delete_outline,
+                                size: 20,
+                                color: !selezioneStoricoValida()
+                                    ? null
+                                    : const Color(0xFFDC2626),
+                              ),
+                        label: Text(
+                          eliminazioneCorsiInCorso
+                              ? 'Eliminazione...'
+                              : 'Elimina',
+                          style: TextStyle(
+                            color:
+                                !selezioneStoricoValida() ||
+                                    eliminazioneCorsiInCorso
+                                ? null
+                                : const Color(0xFFDC2626),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 
@@ -1564,276 +1709,99 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
+                      horizontal: 16,
+                      vertical: 12,
                     ),
                     decoration: BoxDecoration(
                       color: eliminazioneCorsiInCorso
                           ? const Color(0xFFFFF7ED)
                           : const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
                       border: Border.all(
                         color: eliminazioneCorsiInCorso
                             ? const Color(0xFFF97316)
                             : const Color(0xFFBFDBFE),
+                        width: 1.2,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: eliminazioneCorsiInCorso
+                              ? const Color(0xFFF97316).withOpacity(0.10)
+                              : const Color(0xFF2563EB).withOpacity(0.08),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
                     child: Row(
                       children: [
-                        if (eliminazioneCorsiInCorso) ...[
-                          const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Color(0xFFC2410C),
-                            ),
+                        Container(
+                          width: 34,
+                          height: 34,
+                          decoration: BoxDecoration(
+                            color: eliminazioneCorsiInCorso
+                                ? const Color(0xFFFFEDD5)
+                                : const Color(0xFFDBEAFE),
+                            borderRadius: BorderRadius.circular(10),
                           ),
-                          const SizedBox(width: 10),
-                        ] else ...[
-                          const Icon(
-                            Icons.check_circle_outline,
-                            size: 18,
-                            color: Color(0xFF2563EB),
+                          child: Center(
+                            child: eliminazioneCorsiInCorso
+                                ? const SizedBox(
+                                    width: 17,
+                                    height: 17,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2.2,
+                                      color: Color(0xFFC2410C),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.check_circle_outline,
+                                    size: 20,
+                                    color: Color(0xFF2563EB),
+                                  ),
                           ),
-                          const SizedBox(width: 8),
-                        ],
-
+                        ),
+                        const SizedBox(width: 12),
                         Expanded(
                           child: Text(
                             eliminazioneCorsiInCorso
                                 ? storiciSelezionati.length == 1
-                                      ? 'Eliminazione di 1 corso in corso...'
-                                      : 'Eliminazione di ${storiciSelezionati.length} corsi in corso...'
+                                      ? 'Eliminazione in corso di 1 corso selezionato...'
+                                      : 'Eliminazione in corso di ${storiciSelezionati.length} corsi selezionati...'
                                 : storiciSelezionati.length == 1
                                 ? '1 corso selezionato'
                                 : '${storiciSelezionati.length} corsi selezionati',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
                             style: TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w800,
                               color: eliminazioneCorsiInCorso
-                                  ? const Color(0xFFC2410C)
-                                  : const Color(0xFF2563EB),
+                                  ? const Color(0xFF9A3412)
+                                  : const Color(0xFF1E3A8A),
+                              fontWeight: FontWeight.w800,
+                              fontSize: 14,
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        IconButton(
-                          tooltip: 'Deseleziona corsi',
-                          onPressed: eliminazioneCorsiInCorso
-                              ? null
-                              : () {
-                                  setState(() {
-                                    storiciSelezionati.clear();
-                                    storicoSelezionato = null;
-                                    ultimoStoricoSelezionato = null;
-                                    indiceHoverStorico = null;
-                                  });
-                                },
-                          icon: const Icon(Icons.clear_all, size: 20),
-                        ),
-                        IconButton(
-                          tooltip: 'Esporta Excel',
-                          onPressed:
-                              !selezioneStoricoValida() ||
-                                  eliminazioneCorsiInCorso
-                              ? null
-                              : esportaCorsiSelezionatiExcel,
-                          icon: const Icon(
-                            Icons.table_chart_outlined,
-                            size: 20,
-                          ),
-                        ),
-                        IconButton(
-                          tooltip: 'Esporta PDF',
-                          onPressed:
-                              !selezioneStoricoValida() ||
-                                  eliminazioneCorsiInCorso
-                              ? null
-                              : esportaCorsiSelezionatiPdf,
-                          icon: const Icon(
-                            Icons.picture_as_pdf_outlined,
-                            size: 20,
-                          ),
-                        ),
-                        Tooltip(
-                          message: eliminazioneCorsiInCorso
-                              ? 'Eliminazione corsi in corso'
-                              : 'Elimina corsi selezionati',
-                          waitDuration: const Duration(milliseconds: 600),
-                          child: TextButton.icon(
-                            onPressed:
-                                !selezioneStoricoValida() ||
-                                    eliminazioneCorsiInCorso
-                                ? null
-                                : () async {
-                                    if (!selezioneStoricoValida()) {
-                                      mostraSnackBarErrore(
-                                        'Nessun corso valido da eliminare. Aggiorna la selezione e riprova.',
-                                      );
-                                      return;
-                                    }
-
-                                    final corsiSelezionatiValidi =
-                                        storiciSelezionati
-                                            .map(
-                                              (index) => storicoFiltrato[index],
-                                            )
-                                            .toList();
-
-                                    final conferma = await showDialog<bool>(
-                                      context: context,
-                                      builder: (_) => AlertDialog(
-                                        title: const Text(
-                                          'Conferma eliminazione',
-                                        ),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              corsiSelezionatiValidi.length == 1
-                                                  ? 'Eliminare il corso selezionato?'
-                                                  : 'Eliminare ${corsiSelezionatiValidi.length} corsi selezionati?',
-                                            ),
-                                            const SizedBox(height: 12),
-                                            ...corsiSelezionatiValidi.map((r) {
-                                              return Padding(
-                                                padding: const EdgeInsets.only(
-                                                  bottom: 4,
-                                                ),
-                                                child: Text(
-                                                  '• ${valore(r['corso'])}',
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                  ),
-                                                ),
-                                              );
-                                            }),
-                                          ],
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: const Text('Annulla'),
-                                          ),
-                                          ElevatedButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: const Text('Elimina'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-
-                                    if (conferma != true) return;
-
-                                    setState(() {
-                                      eliminazioneCorsiInCorso = true;
-                                    });
-
-                                    try {
-                                      final idsDaEliminare =
-                                          corsiSelezionatiValidi
-                                              .map((r) => r['id'] as int)
-                                              .toList();
-
-                                      await DatabaseService.instance
-                                          .deleteStoriciByIds(idsDaEliminare);
-
-                                      final numeroEliminati =
-                                          idsDaEliminare.length;
-
-                                      setState(() {
-                                        storiciSelezionati.clear();
-                                        storicoSelezionato = null;
-                                        ultimoStoricoSelezionato = null;
-                                        indiceHoverStorico = null;
-                                      });
-
-                                      await caricaStorico();
-
-                                      mostraSnackBarSuccesso(
-                                        numeroEliminati == 1
-                                            ? '1 corso eliminato'
-                                            : '$numeroEliminati corsi eliminati',
-                                      );
-                                    } catch (e) {
-                                      mostraSnackBarErrore(
-                                        'Errore durante l’eliminazione dei corsi selezionati. Riprova.',
-                                      );
-                                    } finally {
-                                      if (mounted) {
-                                        setState(() {
-                                          eliminazioneCorsiInCorso = false;
-                                        });
-                                      }
-                                    }
-                                  },
-                            icon: eliminazioneCorsiInCorso
-                                ? const SizedBox(
-                                    width: 16,
-                                    height: 16,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.delete_outline,
-                                    size: 18,
-                                    color:
-                                        storiciSelezionati.isEmpty ||
-                                            eliminazioneCorsiInCorso
-                                        ? null
-                                        : const Color(0xFFDC2626),
-                                  ),
-                            label: Text(
-                              eliminazioneCorsiInCorso
-                                  ? 'Eliminazione in corso...'
-                                  : 'Elimina',
-                              style: TextStyle(
-                                color:
-                                    !selezioneStoricoValida() ||
-                                        eliminazioneCorsiInCorso
-                                    ? null
-                                    : const Color(0xFFDC2626),
+                        if (!eliminazioneCorsiInCorso)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFFFFFF),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFFBFDBFE),
+                              ),
+                            ),
+                            child: Text(
+                              'Azioni disponibili',
+                              style: const TextStyle(
+                                color: Color(0xFF2563EB),
                                 fontWeight: FontWeight.w700,
+                                fontSize: 12,
                               ),
-                            ),
-                            style: ButtonStyle(
-                              foregroundColor: WidgetStateProperty.all(
-                                const Color(0xFFDC2626),
-                              ),
-                              padding: WidgetStateProperty.all(
-                                const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 10,
-                                ),
-                              ),
-                              shape: WidgetStateProperty.all(
-                                RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              overlayColor:
-                                  WidgetStateProperty.resolveWith<Color?>((
-                                    states,
-                                  ) {
-                                    if (states.contains(WidgetState.hovered)) {
-                                      return const Color(0xFFFEE2E2);
-                                    }
-                                    if (states.contains(WidgetState.pressed)) {
-                                      return const Color(0xFFFECACA);
-                                    }
-                                    return null;
-                                  }),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),

@@ -790,7 +790,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                             !eliminazioneCorsiInCorso
                                       ? const Color(0xFF2563EB)
                                       : Colors.transparent,
-                                  width: 3,
+                                  width: storiciSelezionati.contains(index)
+                                      ? 4
+                                      : 3,
                                 ),
                               ),
                               borderRadius: BorderRadius.circular(8),

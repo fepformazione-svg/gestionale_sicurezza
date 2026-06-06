@@ -1337,8 +1337,26 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     }
 
     final corsiSelezionatiValidi = storiciSelezionati
+        .where((index) => index >= 0 && index < storicoFiltrato.length)
         .map((index) => storicoFiltrato[index])
         .toList();
+
+    if (corsiSelezionatiValidi.isEmpty) {
+      if (!mounted) return;
+
+      setState(() {
+        storiciSelezionati.clear();
+        storicoSelezionato = null;
+        ultimoStoricoSelezionato = null;
+        indiceHoverStorico = null;
+      });
+
+      mostraSnackBarErrore(
+        'Nessun corso selezionato valido. Aggiorna lo storico e riprova.',
+      );
+
+      return;
+    }
 
     if (corsiSelezionatiValidi.isEmpty) return;
 
@@ -1348,8 +1366,6 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        final int numeroCorsi = corsiSelezionatiValidi.length;
-
         return AlertDialog(
           backgroundColor: Colors.white,
           elevation: 18,
@@ -1533,6 +1549,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       },
     );
 
+    if (!mounted) return;
+
     if (conferma != true) return;
 
     setState(() {
@@ -1545,8 +1563,27 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     try {
       final idsDaEliminare = corsiSelezionatiValidi
+          .where((r) => r['id'] != null)
           .map((r) => r['id'] as int)
           .toList();
+
+      if (idsDaEliminare.isEmpty) {
+        if (!mounted) return;
+
+        setState(() {
+          storiciSelezionati.clear();
+          storicoSelezionato = null;
+          ultimoStoricoSelezionato = null;
+          indiceHoverStorico = null;
+          eliminazioneCorsiInCorso = false;
+        });
+
+        mostraSnackBarErrore(
+          'Impossibile eliminare i corsi selezionati. Aggiorna lo storico e riprova.',
+        );
+
+        return;
+      }
 
       await DatabaseService.instance.deleteStoriciByIds(idsDaEliminare);
 

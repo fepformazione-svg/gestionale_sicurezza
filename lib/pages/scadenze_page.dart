@@ -214,11 +214,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
 
     final risultato = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DiscenteSchedaPage(
-          discente: discente,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
     );
 
     if (risultato == 'modifica') {
@@ -235,10 +231,6 @@ class _ScadenzePageState extends State<ScadenzePage> {
     }
 
     if (risultato == true) {
-      await caricaScadenze();
-    }
-
-    if (risultato == true || risultato == 'modifica') {
       await caricaScadenze();
     }
   }

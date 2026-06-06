@@ -928,24 +928,157 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> eliminaPrenotazione(Map<String, dynamic> prenotazione) async {
+    final bool prenotazioneConfermata =
+        prenotazione['conferma'] == 1 || prenotazione['conferma'] == true;
+
+    final corsoPrenotazione =
+        (prenotazione['corso'] ??
+                prenotazione['corso_nome'] ??
+                prenotazione['denominazione_corso'] ??
+                prenotazione['corso_denominazione'] ??
+                prenotazione['nome_corso'] ??
+                prenotazione['denominazione'] ??
+                '')
+            .toString()
+            .trim();
+
+    if (prenotazioneConfermata) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.lock_rounded,
+                    color: Color(0xFFF97316),
+                    size: 24,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Impossibile eliminare',
+                    style: TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: 520,
+              child: Text(
+                'La prenotazione di ${nomeDiscente(prenotazione)} non può essere eliminata perché è già stata confermata.\n\n'
+                'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
+                'Per mantenere coerenti Diario, Scadenze e Storico formativo, le prenotazioni confermate non vanno cancellate direttamente.',
+                style: const TextStyle(
+                  height: 1.45,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+            actions: [
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1D4ED8),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Ok',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
     final conferma = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Elimina prenotazione'),
-          content: Text('Eliminare ${nomeDiscente(prenotazione)}?'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(
+                  Icons.delete_forever_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Elimina prenotazione',
+                  style: TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          content: Text(
+            'Vuoi eliminare la prenotazione di ${nomeDiscente(prenotazione)}?\n\n'
+            'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
+            'Questa operazione non può essere annullata.',
+            style: const TextStyle(height: 1.45, fontWeight: FontWeight.w500),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annulla'),
+              child: const Text(
+                'Annulla',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ),
-            ElevatedButton(
+            ElevatedButton.icon(
               onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_rounded, size: 18),
+              label: const Text(
+                'Elimina prenotazione',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 18,
+                  vertical: 14,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text('Elimina'),
             ),
           ],
         );
@@ -957,6 +1090,18 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     await DatabaseService.instance.deletePrenotazione(prenotazione['id']);
 
     await caricaPrenotazioni();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Prenotazione di ${nomeDiscente(prenotazione)} eliminata correttamente.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget filtroChip({
@@ -1281,7 +1426,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             ElevatedButton.icon(
               onPressed: exportPrenotazioniExcel,
               icon: const Icon(Icons.table_view_outlined),
-              label: const Text('Export Excel'),
+              label: const Text('Esporta elenco Excel'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: const Color(0xFF2563EB),
@@ -1470,13 +1615,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             ElevatedButton.icon(
                               onPressed: selezionaTutto,
                               icon: const Icon(Icons.select_all, size: 18),
-                              label: const Text('Tutte'),
+                              label: const Text('Seleziona tutte'),
                             ),
 
                             ElevatedButton.icon(
                               onPressed: deselezionaTutto,
                               icon: const Icon(Icons.deselect, size: 18),
-                              label: const Text('Nessuna'),
+                              label: const Text('Deseleziona'),
                             ),
 
                             ElevatedButton.icon(
@@ -1489,7 +1634,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                               },
                               icon: const Icon(Icons.lock_open, size: 18),
                               label: Text(
-                                'Apri (${prenotazioniSelezionateIds.length})',
+                                'Apri selezionate (${prenotazioniSelezionateIds.length})',
                               ),
                             ),
 
@@ -1502,19 +1647,19 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 );
                               },
                               icon: const Icon(Icons.lock, size: 18),
-                              label: const Text('Chiudi'),
+                              label: const Text('Chiudi selezionate'),
                             ),
 
                             ElevatedButton.icon(
                               onPressed: registroSelezionate,
                               icon: const Icon(Icons.fact_check, size: 18),
-                              label: const Text('Registro'),
+                              label: const Text('Segna registro'),
                             ),
 
                             ElevatedButton.icon(
                               onPressed: stampaSelezionate,
                               icon: const Icon(Icons.print, size: 18),
-                              label: const Text('Stampa'),
+                              label: const Text('Stampa selezionate'),
                             ),
                           ],
                         ],
@@ -1723,35 +1868,155 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 PopupMenuItem(
                                                                   value:
                                                                       'modifica',
-                                                                  child: Text(
-                                                                    'Modifica',
+                                                                  child: Row(
+                                                                    children: const [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .edit_rounded,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                          0xFF0F172A,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                      Text(
+                                                                        'Modifica prenotazione',
+                                                                        style: TextStyle(
+                                                                          color: Color(
+                                                                            0xFF0F172A,
+                                                                          ),
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                                 PopupMenuItem(
                                                                   value: 'apri',
-                                                                  child: Text(
-                                                                    'Apri',
+                                                                  child: Row(
+                                                                    children: const [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .lock_open_rounded,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                          0xFF2563EB,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                      Text(
+                                                                        'Apri prenotazione',
+                                                                        style: TextStyle(
+                                                                          color: Color(
+                                                                            0xFF2563EB,
+                                                                          ),
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                                 PopupMenuItem(
                                                                   value:
                                                                       'chiudi',
-                                                                  child: Text(
-                                                                    'Chiudi',
+                                                                  child: Row(
+                                                                    children: const [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .lock_rounded,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                          0xFF4B5563,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                      Text(
+                                                                        'Chiudi prenotazione',
+                                                                        style: TextStyle(
+                                                                          color: Color(
+                                                                            0xFF4B5563,
+                                                                          ),
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                                 PopupMenuItem(
                                                                   value:
                                                                       'registro',
-                                                                  child: Text(
-                                                                    'Registro',
+                                                                  child: Row(
+                                                                    children: const [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .fact_check_rounded,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                          0xFF7C3AED,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                      Text(
+                                                                        'Segna registro',
+                                                                        style: TextStyle(
+                                                                          color: Color(
+                                                                            0xFF7C3AED,
+                                                                          ),
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                                 PopupMenuItem(
                                                                   value:
                                                                       'elimina',
-                                                                  child: Text(
-                                                                    'Elimina',
+                                                                  child: Row(
+                                                                    children: const [
+                                                                      Icon(
+                                                                        Icons
+                                                                            .delete_outline_rounded,
+                                                                        size:
+                                                                            18,
+                                                                        color: Color(
+                                                                          0xFFDC2626,
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            8,
+                                                                      ),
+                                                                      Text(
+                                                                        'Elimina prenotazione',
+                                                                        style: TextStyle(
+                                                                          color: Color(
+                                                                            0xFFDC2626,
+                                                                          ),
+                                                                          fontWeight:
+                                                                              FontWeight.w700,
+                                                                        ),
+                                                                      ),
+                                                                    ],
                                                                   ),
                                                                 ),
                                                               ],

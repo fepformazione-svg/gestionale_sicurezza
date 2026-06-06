@@ -190,34 +190,23 @@ class _DiarioPageState extends State<DiarioPage> {
   InputDecoration _inputDecoration(String label) {
     return InputDecoration(
       labelText: label,
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-      ),
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
     );
   }
 
-  Future<void> apriSchedaDiscente(
-    Map<String, dynamic> riga,
-  ) async {
+  Future<void> apriSchedaDiscente(Map<String, dynamic> riga) async {
     final idDiscente = riga['discente_id'];
 
     if (idDiscente == null) return;
 
-    final discente =
-        await DatabaseService.instance.getDiscenteById(
-          idDiscente,
-        );
+    final discente = await DatabaseService.instance.getDiscenteById(idDiscente);
 
     if (discente == null) return;
     if (!mounted) return;
 
     final risultato = await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => DiscenteSchedaPage(
-          discente: discente,
-        ),
-      ),
+      MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
     );
 
     if (risultato == 'modifica') {
@@ -234,10 +223,6 @@ class _DiarioPageState extends State<DiarioPage> {
     }
 
     if (risultato == true) {
-      await caricaDiario();
-    }
-
-    if (risultato == true || risultato == 'modifica') {
       await caricaDiario();
     }
   }
@@ -360,7 +345,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                         apriSchedaDiscente(riga);
                                       },
                                       child: Text(
-                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'.trim(),
+                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                            .trim(),
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w600,
                                           color: Color(0xFF2563EB),
@@ -371,7 +357,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                   DataCell(Text(testo(riga['impresa']))),
                                   DataCell(Text(testo(riga['corso']))),
                                   DataCell(Text(formattaData(riga['data']))),
-                                  DataCell(Text(formattaData(riga['scadenza']))),
+                                  DataCell(
+                                    Text(formattaData(riga['scadenza'])),
+                                  ),
                                   DataCell(badge(stato)),
                                   DataCell(Text(testo(riga['prot']))),
                                   DataCell(
@@ -386,8 +374,12 @@ class _DiarioPageState extends State<DiarioPage> {
                                         final impresaId = riga['impresa_id'];
                                         final corsoId = riga['corso_id'];
 
-                                        if (discenteId == null || impresaId == null || corsoId == null) {
-                                          ScaffoldMessenger.of(context).showSnackBar(
+                                        if (discenteId == null ||
+                                            impresaId == null ||
+                                            corsoId == null) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             const SnackBar(
                                               content: Text(
                                                 'Impossibile rinnovare: discente, impresa o corso mancanti.',
@@ -397,19 +389,24 @@ class _DiarioPageState extends State<DiarioPage> {
                                           return;
                                         }
 
-                                        await DatabaseService.instance.rinnovaCorso(
-                                          idDiscente: discenteId as int,
-                                          idImpresa: impresaId as int,
-                                          idCorso: corsoId as int,
-                                        );
+                                        await DatabaseService.instance
+                                            .rinnovaCorso(
+                                              idDiscente: discenteId as int,
+                                              idImpresa: impresaId as int,
+                                              idCorso: corsoId as int,
+                                            );
 
                                         await caricaDiario();
 
                                         if (!mounted) return;
 
-                                        ScaffoldMessenger.of(context).showSnackBar(
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
                                           const SnackBar(
-                                            content: Text('Rinnovo creato correttamente.'),
+                                            content: Text(
+                                              'Rinnovo creato correttamente.',
+                                            ),
                                           ),
                                         );
                                       },

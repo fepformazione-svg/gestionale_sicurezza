@@ -1346,37 +1346,144 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     final conferma = await showDialog<bool>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
+        final int numeroCorsi = corsiSelezionatiValidi.length;
+
         return AlertDialog(
+          backgroundColor: Colors.white,
+          elevation: 12,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(20),
           ),
-          title: const Text(
-            'Conferma eliminazione',
-            style: TextStyle(fontWeight: FontWeight.w800),
+          titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+          contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+          actionsPadding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+          title: Row(
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFEF2F2),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFFECACA)),
+                ),
+                child: const Icon(
+                  Icons.warning_amber_rounded,
+                  color: Color(0xFFDC2626),
+                  size: 26,
+                ),
+              ),
+              const SizedBox(width: 14),
+              const Expanded(
+                child: Text(
+                  'Conferma eliminazione',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF0F172A),
+                  ),
+                ),
+              ),
+            ],
           ),
-          content: Text(
-            numeroCorsi == 1
-                ? 'Vuoi eliminare definitivamente il corso selezionato dallo storico formativo?'
-                : 'Vuoi eliminare definitivamente $numeroCorsi corsi selezionati dallo storico formativo?',
+          content: SizedBox(
+            width: 460,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  numeroCorsi == 1
+                      ? 'Stai per eliminare 1 corso dallo storico formativo del discente.'
+                      : 'Stai per eliminare $numeroCorsi corsi dallo storico formativo del discente.',
+                  style: const TextStyle(
+                    fontSize: 15,
+                    height: 1.45,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF334155),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF7ED),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFFED7AA)),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Icon(
+                        Icons.info_outline,
+                        color: Color(0xFFC2410C),
+                        size: 21,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          numeroCorsi == 1
+                              ? 'L’operazione eliminerà definitivamente il corso selezionato.'
+                              : 'L’operazione eliminerà definitivamente tutti i corsi selezionati.',
+                          style: const TextStyle(
+                            fontSize: 13.5,
+                            height: 1.4,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF9A3412),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                const Text(
+                  'Questa azione non può essere annullata.',
+                  style: TextStyle(
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+              ],
+            ),
           ),
           actions: [
-            TextButton(
+            TextButton.icon(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Annulla'),
+              icon: const Icon(Icons.close, size: 18),
+              label: const Text('Annulla'),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF475569),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
             ),
             ElevatedButton.icon(
               onPressed: () => Navigator.pop(context, true),
               icon: const Icon(Icons.delete_outline, size: 18),
-              label: const Text('Elimina'),
+              label: Text(numeroCorsi == 1 ? 'Elimina corso' : 'Elimina corsi'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFDC2626),
                 foregroundColor: Colors.white,
                 elevation: 0,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 18,
-                  vertical: 12,
+                  vertical: 13,
                 ),
+                textStyle: const TextStyle(fontWeight: FontWeight.w800),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),

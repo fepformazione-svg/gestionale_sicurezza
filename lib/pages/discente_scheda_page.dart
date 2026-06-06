@@ -118,7 +118,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             borderRadius: BorderRadius.circular(18),
           ),
           titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
-          contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
+          contentPadding: const EdgeInsets.fromLTRB(30, 18, 30, 14),
           actionsPadding: const EdgeInsets.fromLTRB(24, 6, 24, 20),
 
           title: Row(
@@ -1352,13 +1352,14 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
         return AlertDialog(
           backgroundColor: Colors.white,
-          elevation: 12,
+          elevation: 18,
+          shadowColor: const Color(0x33000000),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
           ),
-          titlePadding: const EdgeInsets.fromLTRB(24, 22, 24, 0),
+          titlePadding: const EdgeInsets.fromLTRB(30, 22, 30, 0),
           contentPadding: const EdgeInsets.fromLTRB(24, 18, 24, 8),
-          actionsPadding: const EdgeInsets.fromLTRB(18, 8, 18, 18),
+          actionsPadding: const EdgeInsets.fromLTRB(30, 14, 30, 20),
           title: Row(
             children: [
               Container(
@@ -1367,7 +1368,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFEF2F2),
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFFECACA)),
+                  border: Border.all(
+                    color: const Color(0xFFFCA5A5),
+                    width: 1.2,
+                  ),
                 ),
                 child: const Icon(
                   Icons.warning_amber_rounded,
@@ -1389,7 +1393,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             ],
           ),
           content: SizedBox(
-            width: 460,
+            width: 500,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1401,7 +1405,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                   style: const TextStyle(
                     fontSize: 15,
                     height: 1.45,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: Color(0xFF334155),
                   ),
                 ),
@@ -1415,7 +1419,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF7ED),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFFED7AA)),
+                    border: Border.all(
+                      color: const Color(0xFFFFB86A),
+                      width: 1.1,
+                    ),
                   ),
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1442,7 +1449,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 14),
                 const Text(
                   'Questa azione non può essere annullata.',
                   style: TextStyle(
@@ -1459,15 +1466,34 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               onPressed: () => Navigator.pop(context, false),
               icon: const Icon(Icons.close, size: 18),
               label: const Text('Annulla'),
-              style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFF475569),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+              style: ButtonStyle(
+                foregroundColor: WidgetStateProperty.resolveWith<Color>((
+                  states,
+                ) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return const Color(0xFF0F172A);
+                  }
+                  return const Color(0xFF475569);
+                }),
+                backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                  states,
+                ) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return const Color(0xFFF1F5F9);
+                  }
+                  return Colors.transparent;
+                }),
+                overlayColor: WidgetStateProperty.all(Colors.transparent),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontWeight: FontWeight.w700),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),
@@ -1475,17 +1501,30 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               onPressed: () => Navigator.pop(context, true),
               icon: const Icon(Icons.delete_outline, size: 18),
               label: Text(numeroCorsi == 1 ? 'Elimina corso' : 'Elimina corsi'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFDC2626),
-                foregroundColor: Colors.white,
-                elevation: 0,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 18,
-                  vertical: 13,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith<Color>((
+                  states,
+                ) {
+                  if (states.contains(WidgetState.hovered)) {
+                    return const Color(0xFFB91C1C);
+                  }
+                  if (states.contains(WidgetState.pressed)) {
+                    return const Color(0xFF991B1B);
+                  }
+                  return const Color(0xFFDC2626);
+                }),
+                foregroundColor: WidgetStateProperty.all(Colors.white),
+                elevation: WidgetStateProperty.all(0),
+                padding: WidgetStateProperty.all(
+                  const EdgeInsets.symmetric(horizontal: 18, vertical: 13),
                 ),
-                textStyle: const TextStyle(fontWeight: FontWeight.w800),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                textStyle: WidgetStateProperty.all(
+                  const TextStyle(fontWeight: FontWeight.w800),
+                ),
+                shape: WidgetStateProperty.all(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ),

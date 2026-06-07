@@ -1765,35 +1765,81 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             ),
 
                             ElevatedButton.icon(
-                              onPressed: () async {
-                                await aggiornaStatoPrenotazioniSelezionate(
-                                  aperto: 1,
-                                  registro: 0,
-                                  conferma: 0,
-                                );
-                              },
-                              icon: const Icon(Icons.lock_open, size: 18),
+                              onPressed: prenotazioniSelezionateIds.isEmpty
+                                  ? null
+                                  : () async {
+                                      await aggiornaStatoPrenotazioniSelezionate(
+                                        aperto: 1,
+                                        registro: 0,
+                                        conferma: 0,
+                                      );
+                                    },
+                              icon: const Icon(
+                                Icons.lock_open_rounded,
+                                size: 18,
+                              ),
                               label: Text(
-                                'Apri selezionate (${prenotazioniSelezionateIds.length})',
+                                prenotazioniSelezionateIds.isEmpty
+                                    ? 'Apri selezionate'
+                                    : 'Apri selezionate (${prenotazioniSelezionateIds.length})',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF7C3AED),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                elevation: 1,
                               ),
                             ),
 
                             ElevatedButton.icon(
-                              onPressed: () async {
-                                await aggiornaStatoPrenotazioniSelezionate(
-                                  aperto: 0,
-                                  registro: 0,
-                                  conferma: 1,
-                                );
-                              },
-                              icon: const Icon(Icons.lock, size: 18),
-                              label: const Text('Chiudi selezionate'),
-                            ),
-
-                            ElevatedButton.icon(
-                              onPressed: registroSelezionate,
-                              icon: const Icon(Icons.fact_check, size: 18),
-                              label: const Text('Segna registro'),
+                              onPressed: prenotazioniSelezionateIds.isEmpty
+                                  ? null
+                                  : registroSelezionate,
+                              icon: const Icon(
+                                Icons.fact_check_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                prenotazioniSelezionateIds.isEmpty
+                                    ? 'Segna registro'
+                                    : 'Segna registro (${prenotazioniSelezionateIds.length})',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF7C3AED),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                elevation: 1,
+                              ),
                             ),
 
                             ElevatedButton.icon(

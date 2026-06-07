@@ -1713,6 +1713,45 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 const SizedBox(width: 10),
                               ],
 
+                              if (ricercaController.text.trim().isNotEmpty ||
+                                  filtroLocale != 'tutte') ...[
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    setState(() {
+                                      ricercaController.clear();
+                                      filtroLocale = 'tutte';
+                                      azzeraSelezionePrenotazioni();
+                                    });
+                                  },
+                                  icon: const Icon(
+                                    Icons.restart_alt_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text(
+                                    'Azzera filtri',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    backgroundColor: const Color(0xFFF8FAFC),
+                                    foregroundColor: const Color(0xFF2563EB),
+                                    side: const BorderSide(
+                                      color: Color(0xFFBFDBFE),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12,
+                                      vertical: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+
                               Text(
                                 ricercaController.text.trim().isNotEmpty
                                     ? '${prenotazioniVisibili.length} record trovati'

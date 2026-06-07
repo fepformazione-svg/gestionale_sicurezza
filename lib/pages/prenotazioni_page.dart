@@ -1677,6 +1677,42 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 const SizedBox(width: 10),
                               ],
 
+                              if (filtroLocale != 'tutte') ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF7ED),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFFED7AA),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.filter_alt_rounded,
+                                        size: 16,
+                                        color: Color(0xFFF97316),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Filtro attivo: ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFFC2410C),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+
                               Text(
                                 ricercaController.text.trim().isNotEmpty
                                     ? '${prenotazioniVisibili.length} record trovati'
@@ -2162,58 +2198,17 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           autofocus: true,
                                           onKey: gestisciTasti,
                                           child: prenotazioniVisibili.isEmpty
-                                              ? SizedBox.expand(
-                                                  child: Center(
-                                                    child: Column(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Text(
-                                                          'Nessuna prenotazione trovata',
-                                                          style: TextStyle(
-                                                            fontSize: 15,
-                                                            fontWeight:
-                                                                FontWeight.w800,
-                                                            color: Color(
-                                                              0xFF374151,
-                                                            ),
-                                                          ),
-                                                        ),
-
-                                                        const SizedBox(
-                                                          height: 8,
-                                                        ),
-
-                                                        Text(
-                                                          ricercaController.text
-                                                                      .trim()
-                                                                      .isNotEmpty &&
-                                                                  filtroLocale !=
-                                                                      'tutte'
-                                                              ? 'La ricerca e il filtro attivo non hanno prodotto risultati.'
-                                                              : ricercaController
-                                                                    .text
-                                                                    .trim()
-                                                                    .isNotEmpty
-                                                              ? 'La ricerca attiva non ha prodotto risultati.'
-                                                              : filtroLocale !=
-                                                                    'tutte'
-                                                              ? 'Il filtro selezionato non contiene prenotazioni.'
-                                                              : 'Non sono presenti prenotazioni registrate.',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          style:
-                                                              const TextStyle(
-                                                                fontSize: 13,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w600,
-                                                                color: Color(
-                                                                  0xFF64748B,
-                                                                ),
-                                                              ),
-                                                        ),
-                                                      ],
+                                              ? Container(
+                                                  height: 34,
+                                                  width: double.infinity,
+                                                  alignment: Alignment.center,
+                                                  child: const Text(
+                                                    'Nessuna prenotazione trovata',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                      color: Color(0xFF374151),
                                                     ),
                                                   ),
                                                 )

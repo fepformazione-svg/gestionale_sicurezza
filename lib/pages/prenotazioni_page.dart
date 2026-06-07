@@ -1690,7 +1690,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 2),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -1752,16 +1752,92 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           ),
 
                           if (prenotazioniSelezionateIds.isNotEmpty) ...[
-                            ElevatedButton.icon(
-                              onPressed: selezionaTutto,
-                              icon: const Icon(Icons.select_all, size: 18),
-                              label: const Text('Seleziona tutte'),
+                            Tooltip(
+                              message: prenotazioniVisibili.isEmpty
+                                  ? 'Nessuna prenotazione visibile da selezionare'
+                                  : 'Seleziona tutte le prenotazioni visibili',
+                              child: ElevatedButton.icon(
+                                onPressed: prenotazioniVisibili.isEmpty
+                                    ? null
+                                    : selezionaTutto,
+                                icon: const Icon(
+                                  Icons.select_all_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  prenotazioniVisibili.isEmpty
+                                      ? 'Nessuna prenotazione'
+                                      : 'Seleziona tutte (${prenotazioniVisibili.length})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFFEFF6FF),
+                                  foregroundColor: const Color(0xFF2563EB),
+                                  disabledBackgroundColor: const Color(
+                                    0xFFF1F5F9,
+                                  ),
+                                  disabledForegroundColor: const Color(
+                                    0xFF94A3B8,
+                                  ),
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    side: const BorderSide(
+                                      color: Color(0xFFBFDBFE),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
 
-                            ElevatedButton.icon(
-                              onPressed: deselezionaTutto,
-                              icon: const Icon(Icons.deselect, size: 18),
-                              label: const Text('Deseleziona'),
+                            Tooltip(
+                              message: prenotazioniSelezionateIds.isEmpty
+                                  ? 'Nessuna prenotazione selezionata'
+                                  : 'Rimuovi la selezione corrente',
+                              child: ElevatedButton.icon(
+                                onPressed: prenotazioniSelezionateIds.isEmpty
+                                    ? null
+                                    : deselezionaTutto,
+                                icon: const Icon(
+                                  Icons.deselect_rounded,
+                                  size: 18,
+                                ),
+                                label: Text(
+                                  prenotazioniSelezionateIds.isEmpty
+                                      ? 'Nessuna selezione'
+                                      : 'Deseleziona (${prenotazioniSelezionateIds.length})',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: const Color(0xFF475569),
+                                  disabledBackgroundColor: const Color(
+                                    0xFFF1F5F9,
+                                  ),
+                                  disabledForegroundColor: const Color(
+                                    0xFF94A3B8,
+                                  ),
+                                  elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 18,
+                                    vertical: 16,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                    side: const BorderSide(
+                                      color: Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                ),
+                              ),
                             ),
 
                             ElevatedButton.icon(
@@ -1878,7 +1954,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 0),
 
                       Expanded(
                         child: ClipRRect(

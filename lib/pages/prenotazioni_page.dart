@@ -1638,12 +1638,57 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             ),
                           ),
 
-                          Text(
-                            '${prenotazioniVisibili.length} record',
-                            style: const TextStyle(
-                              color: Color(0xFF6B7280),
-                              fontWeight: FontWeight.w600,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              if (ricercaController.text.trim().isNotEmpty) ...[
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFBFDBFE),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.manage_search_rounded,
+                                        size: 16,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Ricerca attiva: ${ricercaController.text.trim()}',
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                          color: Color(0xFF1D4ED8),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                              ],
+
+                              Text(
+                                ricercaController.text.trim().isNotEmpty
+                                    ? '${prenotazioniVisibili.length} record trovati'
+                                    : filtroLocale != 'tutte'
+                                    ? '${prenotazioniVisibili.length} record visualizzati'
+                                    : '${prenotazioniVisibili.length} record',
+                                style: const TextStyle(
+                                  color: Color(0xFF6B7280),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -1745,27 +1790,59 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 6,
+                              horizontal: 12,
+                              vertical: 7,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(8),
+                              color: prenotazioniSelezionateIds.isEmpty
+                                  ? const Color(0xFFF8FAFC)
+                                  : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: prenotazioniSelezionateIds.isEmpty
+                                    ? const Color(0xFFE2E8F0)
+                                    : const Color(0xFFBFDBFE),
+                                width: 1.1,
                               ),
                             ),
-                            child: Text(
-                              '${prenotazioniSelezionateIds.length} selezionate',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF64748B),
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  prenotazioniSelezionateIds.isEmpty
+                                      ? Icons.radio_button_unchecked_rounded
+                                      : Icons.check_circle_rounded,
+                                  size: 15,
+                                  color: prenotazioniSelezionateIds.isEmpty
+                                      ? const Color(0xFF64748B)
+                                      : const Color(0xFF2563EB),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  prenotazioniSelezionateIds.length == 1
+                                      ? '1 selezionata'
+                                      : '${prenotazioniSelezionateIds.length} selezionate',
+                                  style: TextStyle(
+                                    color: prenotazioniSelezionateIds.isEmpty
+                                        ? const Color(0xFF64748B)
+                                        : const Color(0xFF2563EB),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
+                        ],
+                      ),
 
-                          if (prenotazioniSelezionateIds.isNotEmpty) ...[
+                      if (prenotazioniSelezionateIds.isNotEmpty) ...[
+                        const SizedBox(height: 12),
+
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
                             Tooltip(
                               message: prenotazioniVisibili.isEmpty
                                   ? 'Nessuna prenotazione visibile da selezionare'
@@ -2012,10 +2089,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                               ),
                             ),
                           ],
-                        ],
-                      ),
+                        ),
 
-                      const SizedBox(height: 0),
+                        const SizedBox(height: 14),
+                      ] else
+                        const SizedBox(height: 14),
 
                       Expanded(
                         child: ClipRRect(
@@ -2084,18 +2162,58 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           autofocus: true,
                                           onKey: gestisciTasti,
                                           child: prenotazioniVisibili.isEmpty
-                                              ? const SizedBox.expand(
+                                              ? SizedBox.expand(
                                                   child: Center(
-                                                    child: Text(
-                                                      'Nessuna prenotazione trovata',
-                                                      style: TextStyle(
-                                                        fontSize: 15,
-                                                        fontWeight:
-                                                            FontWeight.w700,
-                                                        color: Color(
-                                                          0xFF374151,
+                                                    child: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Text(
+                                                          'Nessuna prenotazione trovata',
+                                                          style: TextStyle(
+                                                            fontSize: 15,
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                            color: Color(
+                                                              0xFF374151,
+                                                            ),
+                                                          ),
                                                         ),
-                                                      ),
+
+                                                        const SizedBox(
+                                                          height: 8,
+                                                        ),
+
+                                                        Text(
+                                                          ricercaController.text
+                                                                      .trim()
+                                                                      .isNotEmpty &&
+                                                                  filtroLocale !=
+                                                                      'tutte'
+                                                              ? 'La ricerca e il filtro attivo non hanno prodotto risultati.'
+                                                              : ricercaController
+                                                                    .text
+                                                                    .trim()
+                                                                    .isNotEmpty
+                                                              ? 'La ricerca attiva non ha prodotto risultati.'
+                                                              : filtroLocale !=
+                                                                    'tutte'
+                                                              ? 'Il filtro selezionato non contiene prenotazioni.'
+                                                              : 'Non sono presenti prenotazioni registrate.',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 13,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w600,
+                                                                color: Color(
+                                                                  0xFF64748B,
+                                                                ),
+                                                              ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                 )

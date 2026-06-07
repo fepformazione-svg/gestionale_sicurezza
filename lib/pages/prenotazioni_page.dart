@@ -15,6 +15,8 @@ import 'package:open_file/open_file.dart';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:intl/intl.dart';
 
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
@@ -95,22 +97,160 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   bool ordineCrescente = true;
 
   Future<void> stampaSelezionate() async {
-    if (prenotazioniSelezionateIds.isEmpty) {
+    final prenotazioniDaStampare = prenotazioniVisibili
+        .where((p) => prenotazioniSelezionateIds.contains(p['id']))
+        .toList();
+
+    if (prenotazioniDaStampare.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Seleziona almeno una prenotazione da stampare'),
+          content: Text('Seleziona almeno una prenotazione da stampare.'),
+          backgroundColor: Color(0xFFDC2626),
         ),
       );
       return;
     }
 
-    debugPrint('STAMPA SELEZIONATE IDS: $prenotazioniSelezionateIds');
+    final pdf = pw.Document();
+
+    String testo(dynamic valore) {
+      if (valore == null) return '';
+      return valore.toString();
+    }
+
+    String valoreCampo(Map<String, dynamic> p, List<String> chiavi) {
+      for (final chiave in chiavi) {
+        final valore = p[chiave];
+
+        if (valore != null && valore.toString().trim().isNotEmpty) {
+          return valore.toString();
+        }
+      }
+
+      return '';
+    }
+
+    String dataItaliana(dynamic valore) {
+      if (valore == null || valore.toString().trim().isEmpty) return '';
+
+      try {
+        final data = DateTime.parse(valore.toString());
+        return DateFormat('dd/MM/yyyy').format(data);
+      } catch (_) {
+        return valore.toString();
+      }
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Stampa prenotazioni selezionate',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Totale prenotazioni: ${prenotazioniDaStampare.length}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 14),
+
+            pw.Table.fromTextArray(
+              headers: const [
+                'Discente',
+                'Impresa',
+                'Corso',
+                'Data',
+                'Prot.',
+                'Stato',
+              ],
+              data: prenotazioniDaStampare.map((p) {
+                final discenteCompleto = [
+                  testo(p['discente_cognome']),
+                  testo(p['discente_nome']),
+                ].where((v) => v.trim().isNotEmpty).join(' ');
+
+                String statoPrenotazione() {
+                  if (p['conferma'] == 1) return 'Chiusa';
+                  if (p['registro'] == 1) return 'Registro';
+                  if (p['aperto'] == 1) return 'Aperta';
+                  return 'Da fare';
+                }
+
+                return [
+                  discenteCompleto,
+                  testo(p['impresa_nome']),
+                  testo(p['corso_nome']),
+                  dataItaliana(p['data']),
+                  testo(p['prot']),
+                  statoPrenotazione(),
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 9,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey800,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 8),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(2),
+                1: pw.FlexColumnWidth(2),
+                2: pw.FlexColumnWidth(3),
+                3: pw.FlexColumnWidth(1),
+                4: pw.FlexColumnWidth(1),
+                5: pw.FlexColumnWidth(1.2),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final documenti = await getApplicationDocumentsDirectory();
+
+    final cartella = Directory(
+      '${documenti.path}\\Gestionale Sicurezza\\Stampe\\Prenotazioni',
+    );
+
+    if (!await cartella.exists()) {
+      await cartella.create(recursive: true);
+    }
+
+    final nomeFile =
+        'prenotazioni_selezionate_${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}.pdf';
+
+    final file = File('${cartella.path}\\$nomeFile');
+
+    await file.writeAsBytes(await pdf.save());
+
+    await Printing.layoutPdf(
+      name: nomeFile,
+      onLayout: (PdfPageFormat format) async => pdf.save(),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Stampa di ${prenotazioniSelezionateIds.length} prenotazioni selezionate',
+          'PDF creato per ${prenotazioniDaStampare.length} prenotazioni selezionate.',
         ),
+        backgroundColor: const Color(0xFF16A34A),
       ),
     );
   }
@@ -1657,9 +1797,36 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             ),
 
                             ElevatedButton.icon(
-                              onPressed: stampaSelezionate,
-                              icon: const Icon(Icons.print, size: 18),
-                              label: const Text('Stampa selezionate'),
+                              onPressed: prenotazioniSelezionateIds.isEmpty
+                                  ? null
+                                  : stampaSelezionate,
+                              icon: const Icon(Icons.print_rounded, size: 18),
+                              label: Text(
+                                prenotazioniSelezionateIds.isEmpty
+                                    ? 'Nessuna selezione'
+                                    : 'Stampa selezionate (${prenotazioniSelezionateIds.length})',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF2563EB),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 18,
+                                  vertical: 16,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                elevation: 0,
+                              ),
                             ),
                           ],
                         ],

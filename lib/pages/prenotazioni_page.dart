@@ -1720,6 +1720,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                     setState(() {
                                       ricercaController.clear();
                                       filtroLocale = 'tutte';
+                                      prenotazioniFiltrate =
+                                          List<Map<String, dynamic>>.from(
+                                            prenotazioni,
+                                          );
                                       azzeraSelezionePrenotazioni();
                                     });
                                   },
@@ -2241,9 +2245,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                   height: 34,
                                                   width: double.infinity,
                                                   alignment: Alignment.center,
-                                                  child: const Text(
-                                                    'Nessuna prenotazione trovata',
-                                                    style: TextStyle(
+                                                  child: Text(
+                                                    ricercaController.text
+                                                                .trim()
+                                                                .isNotEmpty &&
+                                                            filtroLocale !=
+                                                                'tutte'
+                                                        ? 'Nessuna prenotazione trovata per questa ricerca nel filtro ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}'
+                                                        : ricercaController.text
+                                                              .trim()
+                                                              .isNotEmpty
+                                                        ? 'Nessuna prenotazione trovata per questa ricerca'
+                                                        : filtroLocale !=
+                                                              'tutte'
+                                                        ? 'Nessuna prenotazione trovata nel filtro ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}'
+                                                        : 'Nessuna prenotazione trovata',
+                                                    style: const TextStyle(
                                                       fontSize: 14,
                                                       fontWeight:
                                                           FontWeight.w800,

@@ -328,6 +328,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }) {
     final id = prenotazione['id'] as int;
 
+    tableFocusNode.requestFocus();
+
     setState(() {
       if (shiftPremuto && ultimoIndexSelezionato != null) {
         final start = ultimoIndexSelezionato! < index
@@ -547,18 +549,23 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     // CTRL + A
     if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyA) {
       setState(() {
-        prenotazioniSelezionateIds = prenotazioniFiltrate
+        prenotazioniSelezionateIds = prenotazioniVisibili
             .map((p) => p['id'] as int)
             .toSet();
 
-        ultimoIndexSelezionato = prenotazioniFiltrate.isNotEmpty
-            ? prenotazioniFiltrate.length - 1
+        prenotazioneSelezionataId = prenotazioniVisibili.isNotEmpty
+            ? prenotazioniVisibili.first['id'] as int
+            : null;
+
+        selectedRowIndex = prenotazioniVisibili.isNotEmpty ? 0 : null;
+
+        ultimoIndexSelezionato = prenotazioniVisibili.isNotEmpty
+            ? prenotazioniVisibili.length - 1
             : null;
       });
 
       return;
     }
-
     // CTRL + N
     if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyN) {
       apriDialogNuovaPrenotazione();
@@ -1918,256 +1925,287 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                       if (prenotazioniSelezionateIds.isNotEmpty) ...[
                         const SizedBox(height: 12),
 
-                        Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          children: [
-                            Tooltip(
-                              message: prenotazioniVisibili.isEmpty
-                                  ? 'Nessuna prenotazione visibile da selezionare'
-                                  : prenotazioniSelezionateIds.length ==
-                                        prenotazioniVisibili.length
-                                  ? 'Tutte le prenotazioni visibili sono già selezionate'
-                                  : 'Seleziona tutte le prenotazioni visibili',
-                              child: ElevatedButton.icon(
-                                onPressed:
-                                    prenotazioniVisibili.isEmpty ||
-                                        prenotazioniSelezionateIds.length ==
-                                            prenotazioniVisibili.length
-                                    ? null
-                                    : selezionaTutto,
-                                icon: const Icon(
-                                  Icons.select_all_rounded,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  prenotazioniVisibili.isEmpty
-                                      ? 'Nessuna riga'
-                                      : prenotazioniSelezionateIds.length ==
-                                            prenotazioniVisibili.length
-                                      ? 'Tutte selezionate'
-                                      : 'Seleziona tutte (${prenotazioniVisibili.length})',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFEFF6FF),
-                                  foregroundColor: const Color(0xFF2563EB),
-                                  disabledBackgroundColor: const Color(
-                                    0xFFF1F5F9,
-                                  ),
-                                  disabledForegroundColor: const Color(
-                                    0xFF94A3B8,
-                                  ),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    side: BorderSide(
-                                      color:
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            return SizedBox(
+                              width: constraints.maxWidth,
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                alignment: WrapAlignment.start,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  Tooltip(
+                                    message: prenotazioniVisibili.isEmpty
+                                        ? 'Nessuna prenotazione visibile da selezionare'
+                                        : prenotazioniSelezionateIds.length ==
+                                              prenotazioniVisibili.length
+                                        ? 'Tutte le prenotazioni visibili sono già selezionate'
+                                        : 'Seleziona tutte le prenotazioni visibili',
+                                    child: ElevatedButton.icon(
+                                      onPressed:
                                           prenotazioniVisibili.isEmpty ||
                                               prenotazioniSelezionateIds
                                                       .length ==
                                                   prenotazioniVisibili.length
-                                          ? const Color(0xFFE2E8F0)
-                                          : const Color(0xFFBFDBFE),
-                                      width: 1.2,
+                                          ? null
+                                          : selezionaTutto,
+                                      icon: const Icon(
+                                        Icons.select_all_rounded,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        prenotazioniVisibili.isEmpty
+                                            ? 'Nessuna riga'
+                                            : prenotazioniSelezionateIds
+                                                      .length ==
+                                                  prenotazioniVisibili.length
+                                            ? 'Tutte selezionate'
+                                            : 'Seleziona tutte (${prenotazioniVisibili.length})',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFFEFF6FF,
+                                        ),
+                                        foregroundColor: const Color(
+                                          0xFF2563EB,
+                                        ),
+                                        disabledBackgroundColor: const Color(
+                                          0xFFF1F5F9,
+                                        ),
+                                        disabledForegroundColor: const Color(
+                                          0xFF94A3B8,
+                                        ),
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 16,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          side: BorderSide(
+                                            color:
+                                                prenotazioniVisibili.isEmpty ||
+                                                    prenotazioniSelezionateIds
+                                                            .length ==
+                                                        prenotazioniVisibili
+                                                            .length
+                                                ? const Color(0xFFE2E8F0)
+                                                : const Color(0xFFBFDBFE),
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
 
-                            Tooltip(
-                              message: prenotazioniSelezionateIds.isEmpty
-                                  ? 'Nessuna prenotazione selezionata'
-                                  : 'Rimuovi la selezione corrente',
-                              child: ElevatedButton.icon(
-                                onPressed: prenotazioniSelezionateIds.isEmpty
-                                    ? null
-                                    : deselezionaTutto,
-                                icon: const Icon(
-                                  Icons.deselect_rounded,
-                                  size: 18,
-                                ),
-                                label: Text(
-                                  prenotazioniSelezionateIds.isEmpty
-                                      ? 'Nessuna selezione'
-                                      : 'Deseleziona (${prenotazioniSelezionateIds.length})',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFFF8FAFC),
-                                  foregroundColor: const Color(0xFF475569),
-                                  disabledBackgroundColor: const Color(
-                                    0xFFE2E8F0,
-                                  ),
-                                  disabledForegroundColor: const Color(
-                                    0xFF94A3B8,
-                                  ),
-                                  elevation: 0,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 18,
-                                    vertical: 16,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                    side: const BorderSide(
-                                      color: Color(0xFFCBD5E1),
-                                      width: 1.2,
+                                  Tooltip(
+                                    message: prenotazioniSelezionateIds.isEmpty
+                                        ? 'Nessuna prenotazione selezionata'
+                                        : 'Rimuovi la selezione corrente',
+                                    child: ElevatedButton.icon(
+                                      onPressed:
+                                          prenotazioniSelezionateIds.isEmpty
+                                          ? null
+                                          : deselezionaTutto,
+                                      icon: const Icon(
+                                        Icons.deselect_rounded,
+                                        size: 18,
+                                      ),
+                                      label: Text(
+                                        prenotazioniSelezionateIds.isEmpty
+                                            ? 'Nessuna selezione'
+                                            : 'Deseleziona (${prenotazioniSelezionateIds.length})',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(
+                                          0xFFF8FAFC,
+                                        ),
+                                        foregroundColor: const Color(
+                                          0xFF475569,
+                                        ),
+                                        disabledBackgroundColor: const Color(
+                                          0xFFE2E8F0,
+                                        ),
+                                        disabledForegroundColor: const Color(
+                                          0xFF94A3B8,
+                                        ),
+                                        elevation: 0,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 16,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            14,
+                                          ),
+                                          side: const BorderSide(
+                                            color: Color(0xFFCBD5E1),
+                                            width: 1.2,
+                                          ),
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
 
-                            ElevatedButton.icon(
-                              onPressed: prenotazioniSelezionateIds.isEmpty
-                                  ? null
-                                  : () async {
-                                      await aggiornaStatoPrenotazioniSelezionate(
-                                        aperto: 1,
-                                        registro: 0,
-                                        conferma: 0,
-                                      );
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        prenotazioniSelezionateIds.isEmpty
+                                        ? null
+                                        : () async {
+                                            await aggiornaStatoPrenotazioniSelezionate(
+                                              aperto: 1,
+                                              registro: 0,
+                                              conferma: 0,
+                                            );
 
-                                      if (!mounted) return;
+                                            if (!mounted) return;
 
-                                      setState(() {
-                                        azzeraSelezionePrenotazioni();
-                                      });
-                                    },
-                              icon: const Icon(
-                                Icons.lock_open_rounded,
-                                size: 18,
-                              ),
-                              label: Text(
-                                prenotazioniSelezionateIds.isEmpty
-                                    ? 'Apri selezionate'
-                                    : 'Apri selezionate (${prenotazioniSelezionateIds.length})',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFEFF6FF),
-                                foregroundColor: const Color(0xFF2563EB),
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(
-                                    color: Color(0xFFBFDBFE),
-                                    width: 1.2,
+                                            setState(() {
+                                              azzeraSelezionePrenotazioni();
+                                            });
+                                          },
+                                    icon: const Icon(
+                                      Icons.lock_open_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      prenotazioniSelezionateIds.isEmpty
+                                          ? 'Apri selezionate'
+                                          : 'Apri selezionate (${prenotazioniSelezionateIds.length})',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFEFF6FF),
+                                      foregroundColor: const Color(0xFF2563EB),
+                                      disabledBackgroundColor: const Color(
+                                        0xFFE2E8F0,
+                                      ),
+                                      disabledForegroundColor: const Color(
+                                        0xFF94A3B8,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        side: const BorderSide(
+                                          color: Color(0xFFBFDBFE),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      elevation: 0,
+                                    ),
                                   ),
-                                ),
-                                elevation: 0,
-                              ),
-                            ),
 
-                            ElevatedButton.icon(
-                              onPressed: prenotazioniSelezionateIds.isEmpty
-                                  ? null
-                                  : () async {
-                                      await registroSelezionate();
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        prenotazioniSelezionateIds.isEmpty
+                                        ? null
+                                        : () async {
+                                            await registroSelezionate();
 
-                                      if (!mounted) return;
+                                            if (!mounted) return;
 
-                                      setState(() {
-                                        azzeraSelezionePrenotazioni();
-                                      });
-                                    },
-                              icon: const Icon(
-                                Icons.fact_check_rounded,
-                                size: 18,
-                              ),
-                              label: Text(
-                                prenotazioniSelezionateIds.isEmpty
-                                    ? 'Segna registro'
-                                    : 'Segna registro (${prenotazioniSelezionateIds.length})',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFF5F3FF),
-                                foregroundColor: const Color(0xFF7C3AED),
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                  side: const BorderSide(
-                                    color: Color(0xDDD8B4FE),
-                                    width: 1.2,
+                                            setState(() {
+                                              azzeraSelezionePrenotazioni();
+                                            });
+                                          },
+                                    icon: const Icon(
+                                      Icons.fact_check_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      prenotazioniSelezionateIds.isEmpty
+                                          ? 'Segna registro'
+                                          : 'Segna registro (${prenotazioniSelezionateIds.length})',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF5F3FF),
+                                      foregroundColor: const Color(0xFF7C3AED),
+                                      disabledBackgroundColor: const Color(
+                                        0xFFE2E8F0,
+                                      ),
+                                      disabledForegroundColor: const Color(
+                                        0xFF94A3B8,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                        side: const BorderSide(
+                                          color: Color(0xDDD8B4FE),
+                                          width: 1.2,
+                                        ),
+                                      ),
+                                      elevation: 0,
+                                    ),
                                   ),
-                                ),
-                                elevation: 0,
-                              ),
-                            ),
 
-                            ElevatedButton.icon(
-                              onPressed: prenotazioniSelezionateIds.isEmpty
-                                  ? null
-                                  : () async {
-                                      await stampaSelezionate();
+                                  ElevatedButton.icon(
+                                    onPressed:
+                                        prenotazioniSelezionateIds.isEmpty
+                                        ? null
+                                        : () async {
+                                            await stampaSelezionate();
 
-                                      if (!mounted) return;
+                                            if (!mounted) return;
 
-                                      setState(() {
-                                        azzeraSelezionePrenotazioni();
-                                      });
-                                    },
-                              icon: const Icon(Icons.print_rounded, size: 18),
-                              label: Text(
-                                prenotazioniSelezionateIds.isEmpty
-                                    ? 'Nessuna selezione'
-                                    : 'Stampa selezionate (${prenotazioniSelezionateIds.length})',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                ),
+                                            setState(() {
+                                              azzeraSelezionePrenotazioni();
+                                            });
+                                          },
+                                    icon: const Icon(
+                                      Icons.print_rounded,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      prenotazioniSelezionateIds.isEmpty
+                                          ? 'Nessuna selezione'
+                                          : 'Stampa selezionate (${prenotazioniSelezionateIds.length})',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF2563EB),
+                                      foregroundColor: Colors.white,
+                                      disabledBackgroundColor: const Color(
+                                        0xFFE2E8F0,
+                                      ),
+                                      disabledForegroundColor: const Color(
+                                        0xFF94A3B8,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 18,
+                                        vertical: 16,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                      elevation: 0,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF2563EB),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 18,
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                elevation: 0,
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
 
                         const SizedBox(height: 14),
@@ -2195,7 +2233,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       duration: const Duration(
                                         milliseconds: 180,
                                       ),
-                                      height: 40,
+                                      height: 39,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
                                         boxShadow: headerShadowVisible
@@ -2241,10 +2279,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           autofocus: true,
                                           onKey: gestisciTasti,
                                           child: prenotazioniVisibili.isEmpty
-                                              ? Container(
-                                                  height: 34,
-                                                  width: double.infinity,
-                                                  alignment: Alignment.center,
+                                              ? Center(
                                                   child: Text(
                                                     ricercaController.text
                                                                 .trim()
@@ -2909,7 +2944,7 @@ class PrenotazioneHeaderRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 48,
+      height: 39,
       decoration: const BoxDecoration(
         color: Color(0xFFF8FAFC),
         border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB), width: 1)),
@@ -2955,16 +2990,19 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: 30,
-                        child: Transform.scale(
-                          scale: 0.90,
-                          child: Checkbox(
-                            value: tutteSelezionate,
-                            tristate: true,
-                            onChanged: (_) => onToggleSelezionaTutte(),
-                            materialTapTargetSize:
-                                MaterialTapTargetSize.shrinkWrap,
-                            visualDensity: VisualDensity.compact,
+                        width: 28,
+                        height: 28,
+                        child: Center(
+                          child: Transform.scale(
+                            scale: 0.78,
+                            child: Checkbox(
+                              value: tutteSelezionate,
+                              tristate: true,
+                              onChanged: (_) => onToggleSelezionaTutte(),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: VisualDensity.compact,
+                            ),
                           ),
                         ),
                       ),

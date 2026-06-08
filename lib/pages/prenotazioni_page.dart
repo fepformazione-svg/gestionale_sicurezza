@@ -754,6 +754,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     return '$cognome $nome'.trim();
   }
 
+  String etichettaFiltroPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'aperte':
+        return 'Aperte';
+      case 'registro':
+        return 'Registro';
+      case 'chiuse':
+        return 'Chiuse';
+      case 'da_fare':
+        return 'Da fare';
+      case 'tutte':
+      default:
+        return 'Tutte';
+    }
+  }
+
   String statoPrenotazione(Map<String, dynamic> p) {
     final conferma = p['conferma'] == 1;
     final registro = p['registro'] == 1;
@@ -1707,7 +1723,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Filtro attivo: ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}',
+                                        'Filtro attivo: ${etichettaFiltroPrenotazioni(filtroLocale)}',
                                         style: const TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.w700,
@@ -2280,26 +2296,106 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           onKey: gestisciTasti,
                                           child: prenotazioniVisibili.isEmpty
                                               ? Center(
-                                                  child: Text(
-                                                    ricercaController.text
-                                                                .trim()
-                                                                .isNotEmpty &&
-                                                            filtroLocale !=
-                                                                'tutte'
-                                                        ? 'Nessuna prenotazione trovata per questa ricerca nel filtro ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}'
-                                                        : ricercaController.text
-                                                              .trim()
-                                                              .isNotEmpty
-                                                        ? 'Nessuna prenotazione trovata per questa ricerca'
-                                                        : filtroLocale !=
-                                                              'tutte'
-                                                        ? 'Nessuna prenotazione trovata nel filtro ${filtroLocale[0].toUpperCase()}${filtroLocale.substring(1)}'
-                                                        : 'Nessuna prenotazione trovata',
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w800,
-                                                      color: Color(0xFF374151),
+                                                  child: Container(
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                          maxWidth: 460,
+                                                        ),
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 22,
+                                                          vertical: 18,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFF8FAFC,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            18,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFFE2E8F0,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        const Icon(
+                                                          Icons
+                                                              .search_off_rounded,
+                                                          size: 26,
+                                                          color: Color(
+                                                            0xFF94A3B8,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 12,
+                                                        ),
+                                                        Flexible(
+                                                          child: Column(
+                                                            mainAxisSize:
+                                                                MainAxisSize
+                                                                    .min,
+                                                            crossAxisAlignment:
+                                                                CrossAxisAlignment
+                                                                    .start,
+                                                            children: [
+                                                              const Text(
+                                                                'Nessuna prenotazione trovata',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .left,
+                                                                style: TextStyle(
+                                                                  fontSize: 14,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                  color: Color(
+                                                                    0xFF374151,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                              const SizedBox(
+                                                                height: 4,
+                                                              ),
+                                                              Text(
+                                                                ricercaController
+                                                                            .text
+                                                                            .trim()
+                                                                            .isNotEmpty &&
+                                                                        filtroLocale !=
+                                                                            'tutte'
+                                                                    ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
+                                                                    : ricercaController
+                                                                          .text
+                                                                          .trim()
+                                                                          .isNotEmpty
+                                                                    ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati.'
+                                                                    : filtroLocale !=
+                                                                          'tutte'
+                                                                    ? 'Non ci sono prenotazioni nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
+                                                                    : 'Non ci sono prenotazioni da visualizzare.',
+                                                                textAlign:
+                                                                    TextAlign
+                                                                        .left,
+                                                                style: const TextStyle(
+                                                                  fontSize: 12,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                  color: Color(
+                                                                    0xFF64748B,
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ],
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                 )

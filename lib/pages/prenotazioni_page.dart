@@ -1522,11 +1522,17 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       if (!mounted) return;
 
+      final totaleEsportate = prenotazioniVisibili.length;
+
+      final messaggioExport = totaleEsportate == 1
+          ? 'Export Excel completato: 1 prenotazione esportata'
+          : 'Export Excel completato: $totaleEsportate prenotazioni esportate';
+
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Export Excel completato'),
-          backgroundColor: Color(0xFF16A34A),
-          duration: Duration(seconds: 2),
+        SnackBar(
+          content: Text(messaggioExport),
+          backgroundColor: const Color(0xFF16A34A),
+          duration: const Duration(seconds: 5),
         ),
       );
 

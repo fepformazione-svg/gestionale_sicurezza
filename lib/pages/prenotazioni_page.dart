@@ -1835,7 +1835,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                               if (ricercaController.text.trim().isNotEmpty ||
                                   filtroLocale != 'tutte') ...[
                                 Tooltip(
-                                  message: 'Rimuovi ricerca e filtro attivo',
+                                  message:
+                                      ricercaController.text
+                                              .trim()
+                                              .isNotEmpty &&
+                                          filtroLocale != 'tutte'
+                                      ? 'Azzera ricerca e filtro attivo'
+                                      : ricercaController.text.trim().isNotEmpty
+                                      ? 'Azzera la ricerca attiva'
+                                      : 'Azzera il filtro attivo',
                                   child: OutlinedButton.icon(
                                     onPressed: () {
                                       setState(() {
@@ -2071,8 +2079,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           ),
 
                           Tooltip(
-                            message:
-                                'Numero di prenotazioni attualmente selezionate',
+                            message: prenotazioniSelezionateIds.isEmpty
+                                ? 'Nessuna prenotazione selezionata'
+                                : prenotazioniSelezionateIds.length == 1
+                                ? '1 prenotazione selezionata'
+                                : '${prenotazioniSelezionateIds.length} prenotazioni selezionate',
                             child: Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 12,
@@ -2207,7 +2218,9 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                   Tooltip(
                                     message: prenotazioniSelezionateIds.isEmpty
                                         ? 'Nessuna prenotazione selezionata'
-                                        : 'Rimuovi la selezione corrente',
+                                        : prenotazioniSelezionateIds.length == 1
+                                        ? 'Deseleziona la prenotazione selezionata'
+                                        : 'Deseleziona ${prenotazioniSelezionateIds.length} prenotazioni selezionate',
                                     child: ElevatedButton.icon(
                                       onPressed:
                                           prenotazioniSelezionateIds.isEmpty
@@ -2220,7 +2233,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       label: Text(
                                         prenotazioniSelezionateIds.isEmpty
                                             ? 'Nessuna selezione'
-                                            : 'Deseleziona (${prenotazioniSelezionateIds.length})',
+                                            : prenotazioniSelezionateIds
+                                                      .length ==
+                                                  1
+                                            ? 'Deseleziona 1'
+                                            : 'Deseleziona ${prenotazioniSelezionateIds.length}',
                                         style: const TextStyle(
                                           fontWeight: FontWeight.w700,
                                         ),
@@ -2433,7 +2450,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       duration: const Duration(
                                         milliseconds: 180,
                                       ),
-                                      height: 39,
+                                      height: 34,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
                                         boxShadow: headerShadowVisible

@@ -770,6 +770,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
+  String tooltipFiltroPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'aperte':
+        return 'Mostra solo le prenotazioni aperte';
+      case 'registro':
+        return 'Mostra solo le prenotazioni in registro';
+      case 'chiuse':
+        return 'Mostra solo le prenotazioni chiuse';
+      case 'da_fare':
+        return 'Mostra solo le prenotazioni da fare';
+      case 'tutte':
+      default:
+        return 'Mostra tutte le prenotazioni';
+    }
+  }
+
   String statoPrenotazione(Map<String, dynamic> p) {
     final conferma = p['conferma'] == 1;
     final registro = p['registro'] == 1;
@@ -830,8 +846,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         return ordineCrescente ? confronto : -confronto;
       }
 
-      prenotazioniFiltrate.sort(confronta);
-      prenotazioni.sort(confronta);
+      prenotazioni = List<Map<String, dynamic>>.from(prenotazioni)
+        ..sort(confronta);
 
       selectedRowIndex = null;
       prenotazioneSelezionataId = null;
@@ -1277,42 +1293,48 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     final attivo =
         (filtroLocale.isNotEmpty ? filtroLocale : widget.filtro) == filtro;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
-      onTap: () {
-        setState(() {
-          filtroLocale = filtro;
-          azzeraSelezionePrenotazioni();
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        decoration: BoxDecoration(
-          color: attivo ? colore.withOpacity(0.12) : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: attivo ? colore : Colors.grey.shade300,
-            width: attivo ? 1.8 : 1,
+    return Tooltip(
+      message: tooltipFiltroPrenotazioni(filtro),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: () {
+          setState(() {
+            filtroLocale = filtro;
+            azzeraSelezionePrenotazioni();
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          decoration: BoxDecoration(
+            color: attivo ? colore.withOpacity(0.12) : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: attivo ? colore : Colors.grey.shade300,
+              width: attivo ? 1.8 : 1,
+            ),
           ),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: BoxDecoration(color: colore, shape: BoxShape.circle),
-            ),
-            const SizedBox(width: 10),
-            Text(
-              titolo,
-              style: TextStyle(
-                fontWeight: FontWeight.w600,
-                color: attivo ? colore : Colors.grey.shade800,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  color: colore,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 10),
+              Text(
+                titolo,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: attivo ? colore : Colors.grey.shade800,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1327,62 +1349,69 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     final attivo =
         (filtroLocale.isNotEmpty ? filtroLocale : widget.filtro) == filtro;
 
-    return InkWell(
-      borderRadius: BorderRadius.circular(18),
-      onTap: () {
-        setState(() {
-          filtroLocale = filtro;
-        });
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        width: 150,
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: attivo ? colore : Colors.grey.shade300,
-            width: attivo ? 1.8 : 1,
+    return Tooltip(
+      message: tooltipFiltroPrenotazioni(filtro),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: () {
+          setState(() {
+            filtroLocale = filtro;
+            azzeraSelezionePrenotazioni();
+          });
+        },
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 150,
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: attivo ? colore : Colors.grey.shade300,
+              width: attivo ? 1.8 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(color: colore, shape: BoxShape.circle),
-            ),
-
-            const SizedBox(height: 14),
-
-            Text(
-              valore,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: colore,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: colore,
+                  shape: BoxShape.circle,
+                ),
               ),
-            ),
 
-            const SizedBox(height: 4),
+              const SizedBox(height: 14),
 
-            Text(
-              titolo,
-              style: TextStyle(
-                color: Colors.grey.shade700,
-                fontWeight: FontWeight.w600,
+              Text(
+                valore,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: colore,
+                ),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 4),
+
+              Text(
+                titolo,
+                style: TextStyle(
+                  color: Colors.grey.shade700,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1474,35 +1503,81 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   Widget headerOrdinabile(String titolo, double larghezza, String colonna) {
     final attiva = colonnaOrdinata == colonna;
 
-    return SizedBox(
-      width: larghezza,
-      child: InkWell(
-        onTap: () => ordinaPrenotazioni(colonna),
-        child: Row(
-          children: [
-            Flexible(
-              child: Text(
-                titolo,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 0.2,
-                  color: attiva
-                      ? const Color(0xFF2563EB)
-                      : const Color(0xFF374151),
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => ordinaPrenotazioni(colonna),
+      child: SizedBox(
+        width: larghezza,
+        height: 39,
+        child: Tooltip(
+          message: attiva
+              ? ordineCrescente
+                    ? 'Ordinamento crescente attivo - clicca per invertire'
+                    : 'Ordinamento decrescente attivo - clicca per invertire'
+              : 'Ordina per $titolo',
+          child: Container(
+            alignment: Alignment.centerLeft,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    titolo,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 0.2,
+                      color: attiva
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFF374151),
+                    ),
+                  ),
                 ),
-              ),
+
+                const SizedBox(width: 5),
+                AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 180),
+                  transitionBuilder: (child, animation) {
+                    return FadeTransition(
+                      opacity: animation,
+                      child: ScaleTransition(scale: animation, child: child),
+                    );
+                  },
+                  child: attiva
+                      ? Container(
+                          key: ValueKey('attiva_${colonna}_${ordineCrescente}'),
+                          width: 18,
+                          height: 18,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEFF6FF),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: const Color(0xFFBFDBFE)),
+                          ),
+                          child: Icon(
+                            ordineCrescente
+                                ? Icons.keyboard_arrow_up_rounded
+                                : Icons.keyboard_arrow_down_rounded,
+                            size: 16,
+                            color: const Color(0xFF2563EB),
+                          ),
+                        )
+                      : Container(
+                          key: ValueKey('inattiva_$colonna'),
+                          width: 18,
+                          height: 18,
+                          alignment: Alignment.center,
+                          child: const Icon(
+                            Icons.unfold_more_rounded,
+                            size: 15,
+                            color: Color(0xFF94A3B8),
+                          ),
+                        ),
+                ),
+              ],
             ),
-            if (attiva) ...[
-              const SizedBox(width: 4),
-              Icon(
-                ordineCrescente ? Icons.arrow_upward : Icons.arrow_downward,
-                size: 14,
-                color: const Color(0xFF2563EB),
-              ),
-            ],
-          ],
+          ),
         ),
       ),
     );
@@ -1556,86 +1631,96 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         Row(
           children: [
             Expanded(
-              child: AppSearchBar(
-                controller: ricercaController,
-                focusNode: ricercaFocusNode,
-                hintText: 'Ricerca nella pagina prenotazioni...',
+              child: Tooltip(
+                message:
+                    'Cerca per discente, impresa, corso, data o protocollo',
+                child: AppSearchBar(
+                  controller: ricercaController,
+                  focusNode: ricercaFocusNode,
+                  hintText: 'Ricerca nella pagina prenotazioni...',
 
-                onArrowDown: () {
-                  if (prenotazioniVisibili.isEmpty) return;
+                  onArrowDown: () {
+                    if (prenotazioniVisibili.isEmpty) return;
 
-                  setState(() {
-                    selectedRowIndex = 0;
+                    setState(() {
+                      selectedRowIndex = 0;
 
-                    prenotazioneSelezionataId =
-                        prenotazioniVisibili.first['id'] as int?;
-                  });
+                      prenotazioneSelezionataId =
+                          prenotazioniVisibili.first['id'] as int?;
+                    });
 
-                  tableFocusNode.requestFocus();
+                    tableFocusNode.requestFocus();
 
-                  scrollToSelectedRow();
-                },
+                    scrollToSelectedRow();
+                  },
 
-                onChanged: (value) {
-                  cercaPrenotazioni(value);
+                  onChanged: (value) {
+                    cercaPrenotazioni(value);
 
-                  setState(() {
-                    azzeraSelezionePrenotazioni();
-                  });
-                },
+                    setState(() {
+                      azzeraSelezionePrenotazioni();
+                    });
+                  },
+                ),
               ),
             ),
 
             const SizedBox(width: 16),
 
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  azzeraSelezionePrenotazioni();
-                });
+            Tooltip(
+              message: 'Esporta le prenotazioni visualizzate in Excel',
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    azzeraSelezionePrenotazioni();
+                  });
 
-                exportPrenotazioniExcel();
-              },
-              icon: const Icon(Icons.table_view_outlined),
-              label: const Text('Esporta elenco Excel'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: const Color(0xFF2563EB),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 18,
+                  exportPrenotazioniExcel();
+                },
+                icon: const Icon(Icons.table_view_outlined),
+                label: const Text('Esporta elenco Excel'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF2563EB),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(color: Colors.grey.shade300),
+                  ),
+                  elevation: 0,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  side: BorderSide(color: Colors.grey.shade300),
-                ),
-                elevation: 0,
               ),
             ),
 
             const SizedBox(width: 12),
 
-            ElevatedButton.icon(
-              onPressed: () {
-                setState(() {
-                  azzeraSelezionePrenotazioni();
-                });
+            Tooltip(
+              message: 'Crea una nuova prenotazione',
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  setState(() {
+                    azzeraSelezionePrenotazioni();
+                  });
 
-                apriDialogNuovaPrenotazione();
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Nuova prenotazione'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 18,
+                  apriDialogNuovaPrenotazione();
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Nuova prenotazione'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 22,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  elevation: 0,
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
               ),
             ),
           ],
@@ -1738,41 +1823,46 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                               if (ricercaController.text.trim().isNotEmpty ||
                                   filtroLocale != 'tutte') ...[
-                                OutlinedButton.icon(
-                                  onPressed: () {
-                                    setState(() {
-                                      ricercaController.clear();
-                                      filtroLocale = 'tutte';
-                                      prenotazioniFiltrate =
-                                          List<Map<String, dynamic>>.from(
-                                            prenotazioni,
-                                          );
-                                      azzeraSelezionePrenotazioni();
-                                    });
-                                  },
-                                  icon: const Icon(
-                                    Icons.restart_alt_rounded,
-                                    size: 18,
-                                  ),
-                                  label: const Text(
-                                    'Azzera filtri',
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w700,
+                                Tooltip(
+                                  message: 'Rimuovi ricerca e filtro attivo',
+                                  child: OutlinedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        ricercaController.clear();
+                                        filtroLocale = 'tutte';
+                                        prenotazioniFiltrate =
+                                            List<Map<String, dynamic>>.from(
+                                              prenotazioni,
+                                            );
+                                        azzeraSelezionePrenotazioni();
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.restart_alt_rounded,
+                                      size: 18,
                                     ),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    backgroundColor: const Color(0xFFF8FAFC),
-                                    foregroundColor: const Color(0xFF2563EB),
-                                    side: const BorderSide(
-                                      color: Color(0xFFBFDBFE),
+                                    label: const Text(
+                                      'Azzera filtri',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
                                     ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 12,
-                                      vertical: 10,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(999),
+                                    style: OutlinedButton.styleFrom(
+                                      backgroundColor: const Color(0xFFF8FAFC),
+                                      foregroundColor: const Color(0xFF2563EB),
+                                      side: const BorderSide(
+                                        color: Color(0xFFBFDBFE),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 10,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -1890,49 +1980,53 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                             colore: Colors.red,
                           ),
 
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: prenotazioniSelezionateIds.isEmpty
-                                  ? const Color(0xFFF8FAFC)
-                                  : const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: prenotazioniSelezionateIds.isEmpty
-                                    ? const Color(0xFFE2E8F0)
-                                    : const Color(0xFFBFDBFE),
-                                width: 1.1,
+                          Tooltip(
+                            message:
+                                'Numero di prenotazioni attualmente selezionate',
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
                               ),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  prenotazioniSelezionateIds.isEmpty
-                                      ? Icons.radio_button_unchecked_rounded
-                                      : Icons.check_circle_rounded,
-                                  size: 15,
+                              decoration: BoxDecoration(
+                                color: prenotazioniSelezionateIds.isEmpty
+                                    ? const Color(0xFFF8FAFC)
+                                    : const Color(0xFFEFF6FF),
+                                borderRadius: BorderRadius.circular(999),
+                                border: Border.all(
                                   color: prenotazioniSelezionateIds.isEmpty
-                                      ? const Color(0xFF64748B)
-                                      : const Color(0xFF2563EB),
+                                      ? const Color(0xFFE2E8F0)
+                                      : const Color(0xFFBFDBFE),
+                                  width: 1.1,
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  prenotazioniSelezionateIds.length == 1
-                                      ? '1 selezionata'
-                                      : '${prenotazioniSelezionateIds.length} selezionate',
-                                  style: TextStyle(
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    prenotazioniSelezionateIds.isEmpty
+                                        ? Icons.radio_button_unchecked_rounded
+                                        : Icons.check_circle_rounded,
+                                    size: 15,
                                     color: prenotazioniSelezionateIds.isEmpty
                                         ? const Color(0xFF64748B)
                                         : const Color(0xFF2563EB),
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w800,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    prenotazioniSelezionateIds.length == 1
+                                        ? '1 selezionata'
+                                        : '${prenotazioniSelezionateIds.length} selezionate',
+                                    style: TextStyle(
+                                      color: prenotazioniSelezionateIds.isEmpty
+                                          ? const Color(0xFF64748B)
+                                          : const Color(0xFF2563EB),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -2940,7 +3034,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                             alignment: WrapAlignment.center,
                             children: [
                               IconButton(
-                                tooltip: 'Modifica',
+                                tooltip: 'Modifica prenotazione',
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
                                   minWidth: 24,
@@ -2955,7 +3049,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                               ),
 
                               IconButton(
-                                tooltip: 'Elimina',
+                                tooltip: 'Elimina prenotazione',
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
                                   minWidth: 36,

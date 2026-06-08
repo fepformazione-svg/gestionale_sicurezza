@@ -1449,6 +1449,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final sheet = excel['Prenotazioni'];
 
+    sheet.setColumnWidth(0, 28); // Discente
+    sheet.setColumnWidth(1, 24); // Impresa
+    sheet.setColumnWidth(2, 34); // Corso
+    sheet.setColumnWidth(3, 14); // Data
+    sheet.setColumnWidth(4, 16); // Protocollo
+    sheet.setColumnWidth(5, 14); // Stato
+
     // HEADER
     sheet.appendRow([
       TextCellValue('Discente'),
@@ -1458,6 +1465,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       TextCellValue('Protocollo'),
       TextCellValue('Stato'),
     ]);
+
+    for (int col = 0; col < 6; col++) {
+      final cell = sheet.cell(
+        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0),
+      );
+
+      cell.cellStyle = CellStyle(bold: true);
+    }
 
     // DATI
     for (final p in prenotazioniVisibili) {
@@ -1473,7 +1488,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final directory = await getApplicationDocumentsDirectory();
 
-    final path = '${directory.path}/prenotazioni_export.xlsx';
+    final now = DateTime.now();
+
+    final timestamp =
+        '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+
+    final path = '${directory.path}/prenotazioni_export_$timestamp.xlsx';
 
     final fileBytes = excel.encode();
 

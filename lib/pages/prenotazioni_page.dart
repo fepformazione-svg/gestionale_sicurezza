@@ -1445,71 +1445,105 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> exportPrenotazioniExcel() async {
-    final excel = Excel.createExcel();
+    try {
+      final excel = Excel.createExcel();
 
-    final sheet = excel['Prenotazioni'];
+      final sheet = excel['Prenotazioni'];
 
-    sheet.setColumnWidth(0, 28); // Discente
-    sheet.setColumnWidth(1, 24); // Impresa
-    sheet.setColumnWidth(2, 34); // Corso
-    sheet.setColumnWidth(3, 14); // Data
-    sheet.setColumnWidth(4, 16); // Protocollo
-    sheet.setColumnWidth(5, 14); // Stato
+      sheet.setColumnWidth(0, 28); // Discente
+      sheet.setColumnWidth(1, 24); // Impresa
+      sheet.setColumnWidth(2, 34); // Corso
+      sheet.setColumnWidth(3, 14); // Data
+      sheet.setColumnWidth(4, 16); // Protocollo
+      sheet.setColumnWidth(5, 14); // Stato
 
-    // HEADER
-    sheet.appendRow([
-      TextCellValue('Discente'),
-      TextCellValue('Impresa'),
-      TextCellValue('Corso'),
-      TextCellValue('Data'),
-      TextCellValue('Protocollo'),
-      TextCellValue('Stato'),
-    ]);
+      // HEADER
+      sheet.appendRow([
+        TextCellValue('Discente'),
+        TextCellValue('Impresa'),
+        TextCellValue('Corso'),
+        TextCellValue('Data'),
+        TextCellValue('Protocollo'),
+        TextCellValue('Stato'),
+      ]);
 
-    for (int col = 0; col < 6; col++) {
-      final cell = sheet.cell(
-        CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0),
+      for (int col = 0; col < 6; col++) {
+        final cell = sheet.cell(
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0),
+        );
+
+        cell.cellStyle = CellStyle(bold: true);
+      }
+
+      // DATI
+      for (final p in prenotazioniVisibili) {
+        sheet.appendRow([
+          TextCellValue(nomeDiscente(p)),
+          TextCellValue(testo(p['impresa_nome'])),
+          TextCellValue(testo(p['corso_nome'])),
+          TextCellValue(testo(p['data'])),
+          TextCellValue(testo(p['prot'])),
+          TextCellValue(statoPrenotazione(p)),
+        ]);
+      }
+
+      final directory = await getApplicationDocumentsDirectory();
+
+      final now = DateTime.now();
+
+      final timestamp =
+          '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+
+      final path = '${directory.path}/prenotazioni_export_$timestamp.xlsx';
+
+      final fileBytes = excel.encode();
+
+      if (fileBytes == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Errore durante la creazione del file Excel'),
+            backgroundColor: Color(0xFFDC2626),
+            duration: Duration(seconds: 3),
+          ),
+        );
+
+        ripristinaFocusTabella();
+        return;
+      }
+
+      final file = File(path)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(fileBytes);
+
+      await OpenFile.open(file.path);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Export Excel completato'),
+          backgroundColor: Color(0xFF16A34A),
+          duration: Duration(seconds: 2),
+        ),
       );
 
-      cell.cellStyle = CellStyle(bold: true);
-    }
-
-    // DATI
-    for (final p in prenotazioniVisibili) {
-      sheet.appendRow([
-        TextCellValue(nomeDiscente(p)),
-        TextCellValue(testo(p['impresa_nome'])),
-        TextCellValue(testo(p['corso_nome'])),
-        TextCellValue(testo(p['data'])),
-        TextCellValue(testo(p['prot'])),
-        TextCellValue(statoPrenotazione(p)),
-      ]);
-    }
-
-    final directory = await getApplicationDocumentsDirectory();
-
-    final now = DateTime.now();
-
-    final timestamp =
-        '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-        '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
-
-    final path = '${directory.path}/prenotazioni_export_$timestamp.xlsx';
-
-    final fileBytes = excel.encode();
-
-    if (fileBytes == null) {
       ripristinaFocusTabella();
-      return;
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore export Excel: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+
+      ripristinaFocusTabella();
     }
-
-    final file = File(path)
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(fileBytes);
-
-    await OpenFile.open(file.path);
-
-    ripristinaFocusTabella();
   }
 
   Future<void> esportaPdf() async {

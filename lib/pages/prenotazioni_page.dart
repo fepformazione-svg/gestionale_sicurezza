@@ -280,6 +280,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     ultimoIndexSelezionato = null;
   }
 
+  void ripristinaFocusTabella() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      tableFocusNode.requestFocus();
+    });
+  }
+
   String testoSelezionePrenotazioni() {
     final totale = prenotazioniSelezionateIds.length;
 
@@ -2172,12 +2179,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           : () {
                                               selezionaTutto();
 
-                                              WidgetsBinding.instance
-                                                  .addPostFrameCallback((_) {
-                                                    if (!mounted) return;
-                                                    tableFocusNode
-                                                        .requestFocus();
-                                                  });
+                                              ripristinaFocusTabella();
                                             },
                                       icon: const Icon(
                                         Icons.select_all_rounded,
@@ -2253,12 +2255,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                             : () {
                                                 deselezionaTutto();
 
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                      if (!mounted) return;
-                                                      tableFocusNode
-                                                          .requestFocus();
-                                                    });
+                                                ripristinaFocusTabella();
                                               },
                                         icon: const Icon(
                                           Icons.deselect_rounded,
@@ -2328,12 +2325,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                   azzeraSelezionePrenotazioni();
                                                 });
 
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                      if (!mounted) return;
-                                                      tableFocusNode
-                                                          .requestFocus();
-                                                    });
+                                                ripristinaFocusTabella();
                                               },
                                         icon: const Icon(
                                           Icons.lock_open_rounded,
@@ -2399,12 +2391,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                   azzeraSelezionePrenotazioni();
                                                 });
 
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                      if (!mounted) return;
-                                                      tableFocusNode
-                                                          .requestFocus();
-                                                    });
+                                                ripristinaFocusTabella();
                                               },
                                         icon: const Icon(
                                           Icons.fact_check_rounded,
@@ -2470,12 +2457,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                   azzeraSelezionePrenotazioni();
                                                 });
 
-                                                WidgetsBinding.instance
-                                                    .addPostFrameCallback((_) {
-                                                      if (!mounted) return;
-                                                      tableFocusNode
-                                                          .requestFocus();
-                                                    });
+                                                ripristinaFocusTabella();
                                               },
                                         icon: const Icon(
                                           Icons.print_rounded,

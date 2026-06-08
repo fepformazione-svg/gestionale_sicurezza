@@ -1526,8 +1526,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final totaleEsportate = prenotazioniVisibili.length;
 
+      final vistaFiltrata =
+          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
       final messaggioExport = totaleEsportate == 1
-          ? 'Export Excel completato: 1 prenotazione esportata'
+          ? vistaFiltrata
+                ? 'Export Excel completato: 1 prenotazione esportata dalla vista filtrata'
+                : 'Export Excel completato: 1 prenotazione esportata'
+          : vistaFiltrata
+          ? 'Export Excel completato: $totaleEsportate prenotazioni esportate dalla vista filtrata'
           : 'Export Excel completato: $totaleEsportate prenotazioni esportate';
 
       ScaffoldMessenger.of(context).showSnackBar(

@@ -1450,6 +1450,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final sheet = excel['Prenotazioni'];
 
+      excel.delete('Sheet1');
+
       sheet.setColumnWidth(0, 28); // Discente
       sheet.setColumnWidth(1, 24); // Impresa
       sheet.setColumnWidth(2, 34); // Corso

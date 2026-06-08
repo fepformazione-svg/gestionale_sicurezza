@@ -1477,13 +1477,18 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final fileBytes = excel.encode();
 
-    if (fileBytes == null) return;
+    if (fileBytes == null) {
+      ripristinaFocusTabella();
+      return;
+    }
 
     final file = File(path)
       ..createSync(recursive: true)
       ..writeAsBytesSync(fileBytes);
 
     await OpenFile.open(file.path);
+
+    ripristinaFocusTabella();
   }
 
   Future<void> esportaPdf() async {

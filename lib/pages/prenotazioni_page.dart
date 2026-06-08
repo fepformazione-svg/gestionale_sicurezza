@@ -1737,12 +1737,23 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                       Row(
                         children: [
                           const Expanded(
-                            child: Text(
-                              'DataTable Enterprise',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.event_note_rounded,
+                                  size: 20,
+                                  color: Color(0xFF2563EB),
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  'Elenco prenotazioni',
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF111827),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
 
@@ -1869,16 +1880,54 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 const SizedBox(width: 10),
                               ],
 
-                              Text(
-                                ricercaController.text.trim().isNotEmpty
-                                    ? '${prenotazioniVisibili.length} record trovati'
-                                    : filtroLocale != 'tutte'
-                                    ? '${prenotazioniVisibili.length} record visualizzati'
-                                    : '${prenotazioniVisibili.length} record',
-                                style: const TextStyle(
-                                  color: Color(0xFF6B7280),
-                                  fontWeight: FontWeight.w600,
-                                ),
+                              Builder(
+                                builder: (context) {
+                                  final numeroPrenotazioniVisibili =
+                                      prenotazioniVisibili.length;
+                                  final testoPrenotazione =
+                                      numeroPrenotazioniVisibili == 1
+                                      ? 'prenotazione'
+                                      : 'prenotazioni';
+
+                                  return Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 6,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFF8FAFC),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const Icon(
+                                          Icons.format_list_bulleted_rounded,
+                                          size: 14,
+                                          color: Color(0xFF64748B),
+                                        ),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          ricercaController.text
+                                                  .trim()
+                                                  .isNotEmpty
+                                              ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'trovata' : 'trovate'}'
+                                              : filtroLocale != 'tutte'
+                                              ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'visualizzata' : 'visualizzate'}'
+                                              : '$numeroPrenotazioniVisibili $testoPrenotazione',
+                                          style: const TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                },
                               ),
                             ],
                           ),

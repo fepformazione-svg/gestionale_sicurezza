@@ -1882,6 +1882,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                             );
                                         azzeraSelezionePrenotazioni();
                                       });
+
+                                      ripristinaFocusTabella();
                                     },
                                     icon: const Icon(
                                       Icons.restart_alt_rounded,

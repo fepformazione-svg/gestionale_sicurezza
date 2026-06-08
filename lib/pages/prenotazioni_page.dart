@@ -1889,42 +1889,83 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       ? 'prenotazione'
                                       : 'prenotazioni';
 
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFF8FAFC),
+                                  final filtriAttivi =
+                                      ricercaController.text
+                                          .trim()
+                                          .isNotEmpty ||
+                                      filtroLocale != 'tutte';
+
+                                  return Tooltip(
+                                    message:
+                                        ricercaController.text.trim().isNotEmpty
+                                        ? 'Numero di prenotazioni trovate con la ricerca attiva - clicca per azzerare'
+                                        : filtroLocale != 'tutte'
+                                        ? 'Numero di prenotazioni visualizzate con il filtro attivo - clicca per azzerare'
+                                        : 'Numero totale di prenotazioni visualizzate',
+                                    child: InkWell(
                                       borderRadius: BorderRadius.circular(999),
-                                      border: Border.all(
-                                        color: const Color(0xFFE2E8F0),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        const Icon(
-                                          Icons.format_list_bulleted_rounded,
-                                          size: 14,
-                                          color: Color(0xFF64748B),
+                                      onTap: filtriAttivi
+                                          ? () {
+                                              ricercaController.clear();
+
+                                              setState(() {
+                                                filtroLocale = 'tutte';
+                                              });
+
+                                              azzeraSelezionePrenotazioni();
+                                            }
+                                          : null,
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 10,
+                                          vertical: 6,
                                         ),
-                                        const SizedBox(width: 6),
-                                        Text(
-                                          ricercaController.text
-                                                  .trim()
-                                                  .isNotEmpty
-                                              ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'trovata' : 'trovate'}'
-                                              : filtroLocale != 'tutte'
-                                              ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'visualizzata' : 'visualizzate'}'
-                                              : '$numeroPrenotazioniVisibili $testoPrenotazione',
-                                          style: const TextStyle(
-                                            color: Color(0xFF64748B),
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 12,
+                                        decoration: BoxDecoration(
+                                          color: filtriAttivi
+                                              ? const Color(0xFFEFF6FF)
+                                              : const Color(0xFFF8FAFC),
+                                          borderRadius: BorderRadius.circular(
+                                            999,
+                                          ),
+                                          border: Border.all(
+                                            color: filtriAttivi
+                                                ? const Color(0xFFBFDBFE)
+                                                : const Color(0xFFE2E8F0),
                                           ),
                                         ),
-                                      ],
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              filtriAttivi
+                                                  ? Icons.filter_alt_off_rounded
+                                                  : Icons
+                                                        .format_list_bulleted_rounded,
+                                              size: 14,
+                                              color: filtriAttivi
+                                                  ? const Color(0xFF2563EB)
+                                                  : const Color(0xFF64748B),
+                                            ),
+                                            const SizedBox(width: 6),
+                                            Text(
+                                              ricercaController.text
+                                                      .trim()
+                                                      .isNotEmpty
+                                                  ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'trovata' : 'trovate'}'
+                                                  : filtroLocale != 'tutte'
+                                                  ? '$numeroPrenotazioniVisibili $testoPrenotazione ${numeroPrenotazioniVisibili == 1 ? 'visualizzata' : 'visualizzate'}'
+                                                  : '$numeroPrenotazioniVisibili $testoPrenotazione',
+                                              style: TextStyle(
+                                                color: filtriAttivi
+                                                    ? const Color(0xFF2563EB)
+                                                    : const Color(0xFF64748B),
+                                                fontWeight: FontWeight.w700,
+                                                fontSize: 12,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
                                   );
                                 },

@@ -1787,7 +1787,9 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             Tooltip(
               message: prenotazioniVisibili.isEmpty
                   ? 'Nessuna prenotazione da esportare'
-                  : 'Esporta le prenotazioni visualizzate in Excel',
+                  : prenotazioniVisibili.length == 1
+                  ? 'Esporta 1 prenotazione visualizzata in Excel'
+                  : 'Esporta ${prenotazioniVisibili.length} prenotazioni visualizzate in Excel',
               child: ElevatedButton.icon(
                 onPressed: prenotazioniVisibili.isEmpty
                     ? null

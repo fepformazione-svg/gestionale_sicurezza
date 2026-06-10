@@ -1512,7 +1512,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
           '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
 
-      final path = '${directory.path}/prenotazioni_export_$timestamp.xlsx';
+      final vistaFiltrata =
+          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+      final nomeFile = vistaFiltrata
+          ? 'prenotazioni_export_filtrato_$timestamp.xlsx'
+          : 'prenotazioni_export_$timestamp.xlsx';
+
+      final path = '${directory.path}/$nomeFile';
 
       final fileBytes = excel.encode();
 
@@ -1540,9 +1547,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       if (!mounted) return;
 
       final totaleEsportate = prenotazioniVisibili.length;
-
-      final vistaFiltrata =
-          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
 
       final messaggioExport = totaleEsportate == 1
           ? vistaFiltrata

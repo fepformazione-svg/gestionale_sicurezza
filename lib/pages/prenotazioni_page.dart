@@ -1474,6 +1474,48 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       sheet.setColumnWidth(4, 16); // Protocollo
       sheet.setColumnWidth(5, 14); // Stato
 
+      // RIGA INFORMATIVA EXPORT
+      final nowInfo = DateTime.now();
+
+      final dataOraExport =
+          '${nowInfo.day.toString().padLeft(2, '0')}/'
+          '${nowInfo.month.toString().padLeft(2, '0')}/'
+          '${nowInfo.year} '
+          '${nowInfo.hour.toString().padLeft(2, '0')}:'
+          '${nowInfo.minute.toString().padLeft(2, '0')}';
+
+      final exportFiltratoInfo =
+          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+      final testoInfoExport = exportFiltratoInfo
+          ? 'Export prenotazioni filtrato - ${prenotazioniVisibili.length} record - $dataOraExport'
+          : 'Export prenotazioni - ${prenotazioniVisibili.length} record - $dataOraExport';
+
+      sheet.appendRow([
+        TextCellValue(testoInfoExport),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+      ]);
+
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+          .cellStyle = CellStyle(
+        bold: true,
+      );
+
+      // RIGA VUOTA
+      sheet.appendRow([
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+        TextCellValue(''),
+      ]);
+
       // HEADER
       sheet.appendRow([
         TextCellValue('Discente'),
@@ -1486,7 +1528,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       for (int col = 0; col < 6; col++) {
         final cell = sheet.cell(
-          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 0),
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 2),
         );
 
         cell.cellStyle = CellStyle(bold: true);

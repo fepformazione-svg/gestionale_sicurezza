@@ -1676,6 +1676,31 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     await file.writeAsBytes(await pdf.save());
 
     await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    final totaleEsportate = prenotazioniVisibili.length;
+
+    final vistaFiltrata =
+        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+    final messaggioExportPdf = totaleEsportate == 1
+        ? vistaFiltrata
+              ? 'Export PDF completato: 1 prenotazione esportata dalla vista filtrata'
+              : 'Export PDF completato: 1 prenotazione esportata'
+        : vistaFiltrata
+        ? 'Export PDF completato: $totaleEsportate prenotazioni esportate dalla vista filtrata'
+        : 'Export PDF completato: $totaleEsportate prenotazioni esportate';
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(messaggioExportPdf),
+        backgroundColor: const Color(0xFF16A34A),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+
+    ripristinaFocusTabella();
   }
 
   Widget headerOrdinabile(String titolo, double larghezza, String colonna) {

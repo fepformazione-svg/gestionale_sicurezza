@@ -1671,7 +1671,20 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final directory = await getApplicationDocumentsDirectory();
 
-    final file = File('${directory.path}/prenotazioni.pdf');
+    final now = DateTime.now();
+
+    final timestamp =
+        '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+        '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata =
+        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+    final nomeFilePdf = vistaFiltrata
+        ? 'prenotazioni_export_filtrato_$timestamp.pdf'
+        : 'prenotazioni_export_$timestamp.pdf';
+
+    final file = File('${directory.path}/$nomeFilePdf');
 
     await file.writeAsBytes(await pdf.save());
 
@@ -1680,9 +1693,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     if (!mounted) return;
 
     final totaleEsportate = prenotazioniVisibili.length;
-
-    final vistaFiltrata =
-        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
 
     final messaggioExportPdf = totaleEsportate == 1
         ? vistaFiltrata

@@ -1661,6 +1661,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         pageFormat: PdfPageFormat.a4.landscape,
         build: (context) => [
           pw.Text(
+            'F&P Formazione e Prevenzione',
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+          ),
+
+          pw.SizedBox(height: 6),
+
+          pw.Text(
             'PRENOTAZIONI',
             style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
           ),

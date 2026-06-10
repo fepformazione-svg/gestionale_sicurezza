@@ -1799,7 +1799,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         exportPrenotazioniExcel();
                       },
                 icon: const Icon(Icons.table_view_outlined),
-                label: const Text('Esporta elenco Excel'),
+                label: Text(
+                  prenotazioniVisibili.isEmpty
+                      ? 'Esporta elenco Excel'
+                      : 'Esporta Excel (${prenotazioniVisibili.length})',
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF2563EB),

@@ -1640,6 +1640,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final pdf = pw.Document();
 
+    final nowPdfInfo = DateTime.now();
+
+    final dataOraExportPdf =
+        '${nowPdfInfo.day.toString().padLeft(2, '0')}/'
+        '${nowPdfInfo.month.toString().padLeft(2, '0')}/'
+        '${nowPdfInfo.year} '
+        '${nowPdfInfo.hour.toString().padLeft(2, '0')}:'
+        '${nowPdfInfo.minute.toString().padLeft(2, '0')}';
+
+    final exportFiltratoPdfInfo =
+        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+    final testoInfoPdf = exportFiltratoPdfInfo
+        ? 'Export prenotazioni filtrato - ${prenotazioniVisibili.length} record - $dataOraExportPdf'
+        : 'Export prenotazioni - ${prenotazioniVisibili.length} record - $dataOraExportPdf';
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -1649,7 +1665,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
           ),
 
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: 8),
+
+          pw.Text(testoInfoPdf, style: const pw.TextStyle(fontSize: 10)),
+
+          pw.SizedBox(height: 16),
 
           pw.Table.fromTextArray(
             headers: ['Discente', 'Impresa', 'Corso', 'Data', 'Prot.', 'Stato'],

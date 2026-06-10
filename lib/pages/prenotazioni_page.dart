@@ -1467,12 +1467,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       excel.delete('Sheet1');
 
-      sheet.setColumnWidth(0, 48); // Discente / riga informativa export
-      sheet.setColumnWidth(1, 24); // Impresa
-      sheet.setColumnWidth(2, 34); // Corso
-      sheet.setColumnWidth(3, 14); // Data
-      sheet.setColumnWidth(4, 16); // Protocollo
-      sheet.setColumnWidth(5, 14); // Stato
+      sheet.setColumnWidth(0, 52); // Discente / riga informativa export
+      sheet.setColumnWidth(1, 26); // Impresa
+      sheet.setColumnWidth(2, 38); // Corso
+      sheet.setColumnWidth(3, 16); // Data
+      sheet.setColumnWidth(4, 18); // Protocollo
+      sheet.setColumnWidth(5, 16); // Stato
 
       // RIGA INFORMATIVA EXPORT
       final nowInfo = DateTime.now();

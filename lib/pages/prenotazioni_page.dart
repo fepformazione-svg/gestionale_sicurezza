@@ -1467,7 +1467,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       excel.delete('Sheet1');
 
-      sheet.setColumnWidth(0, 28); // Discente
+      sheet.setColumnWidth(0, 48); // Discente / riga informativa export
       sheet.setColumnWidth(1, 24); // Impresa
       sheet.setColumnWidth(2, 34); // Corso
       sheet.setColumnWidth(3, 14); // Data
@@ -1552,7 +1552,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final timestamp =
           '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-          '${now.hour.toString().padLeft(2, '0')}${now.minute.toString().padLeft(2, '0')}';
+          '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
       final vistaFiltrata =
           ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';

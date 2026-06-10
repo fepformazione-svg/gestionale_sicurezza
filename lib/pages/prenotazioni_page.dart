@@ -1623,6 +1623,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> esportaPdf() async {
+    if (prenotazioniVisibili.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna prenotazione da esportare in PDF'),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 4),
+        ),
+      );
+
+      ripristinaFocusTabella();
+      return;
+    }
+
     final pdf = pw.Document();
 
     pdf.addPage(
@@ -1855,6 +1870,50 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF2563EB),
+                  disabledBackgroundColor: const Color(0xFFF8FAFC),
+                  disabledForegroundColor: const Color(0xFF94A3B8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(
+                      color: prenotazioniVisibili.isEmpty
+                          ? const Color(0xFFE2E8F0)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
+
+            Tooltip(
+              message: prenotazioniVisibili.isEmpty
+                  ? 'Nessuna prenotazione da esportare in PDF'
+                  : prenotazioniVisibili.length == 1
+                  ? 'Esporta 1 prenotazione visualizzata in PDF'
+                  : 'Esporta ${prenotazioniVisibili.length} prenotazioni visualizzate in PDF',
+              child: ElevatedButton.icon(
+                onPressed: prenotazioniVisibili.isEmpty
+                    ? null
+                    : () {
+                        setState(() {
+                          azzeraSelezionePrenotazioni();
+                        });
+
+                        esportaPdf();
+                      },
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: Text(
+                  prenotazioniVisibili.isEmpty
+                      ? 'Esporta PDF'
+                      : 'Esporta PDF (${prenotazioniVisibili.length})',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFFDC2626),
                   disabledBackgroundColor: const Color(0xFFF8FAFC),
                   disabledForegroundColor: const Color(0xFF94A3B8),
                   padding: const EdgeInsets.symmetric(

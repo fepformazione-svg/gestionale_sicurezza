@@ -1446,6 +1446,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
   Future<void> exportPrenotazioniExcel() async {
     try {
+      if (prenotazioniVisibili.isEmpty) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nessuna prenotazione da esportare'),
+            backgroundColor: Color(0xFFF97316),
+            duration: Duration(seconds: 4),
+          ),
+        );
+
+        ripristinaFocusTabella();
+        return;
+      }
+
       final excel = Excel.createExcel();
 
       final sheet = excel['Prenotazioni'];

@@ -7,10 +7,7 @@ import '../services/database_service.dart';
 class PrenotazioneDialog extends StatefulWidget {
   final Map<String, dynamic>? prenotazione;
 
-  const PrenotazioneDialog({
-    super.key,
-    this.prenotazione,
-  });
+  const PrenotazioneDialog({super.key, this.prenotazione});
 
   @override
   State<PrenotazioneDialog> createState() => _PrenotazioneDialogState();
@@ -125,77 +122,77 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   void filtraDiscenti(String query) {
     debounceDiscente?.cancel();
 
-    debounceDiscente = Timer(
-      const Duration(milliseconds: 250),
-      () {
-        if (!mounted) return;
+    debounceDiscente = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
 
-        setState(() {
-          if (query.trim().isEmpty) {
-            discentiFiltrati = [];
-            return;
-          }
+      setState(() {
+        if (query.trim().isEmpty) {
+          discentiFiltrati = [];
+          return;
+        }
 
-          final ricerca = query.toLowerCase();
+        final ricerca = query.toLowerCase();
 
-          discentiFiltrati = discenti.where((d) {
-            final testo =
-                '${d['nome'] ?? ''} ${d['cognome'] ?? ''} ${d['nome_impresa'] ?? ''}'
-                    .toLowerCase();
+        discentiFiltrati = discenti
+            .where((d) {
+              final testo =
+                  '${d['nome'] ?? ''} ${d['cognome'] ?? ''} ${d['nome_impresa'] ?? ''}'
+                      .toLowerCase();
 
-            return testo.contains(ricerca);
-          }).take(8).toList();
-        });
-      },
-    );
+              return testo.contains(ricerca);
+            })
+            .take(8)
+            .toList();
+      });
+    });
   }
 
   void filtraImprese(String query) {
     debounceImpresa?.cancel();
 
-    debounceImpresa = Timer(
-      const Duration(milliseconds: 250),
-      () {
-        if (!mounted) return;
+    debounceImpresa = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
 
-        setState(() {
-          if (query.trim().isEmpty) {
-            impreseFiltrate = [];
-            return;
-          }
+      setState(() {
+        if (query.trim().isEmpty) {
+          impreseFiltrate = [];
+          return;
+        }
 
-          final ricerca = query.toLowerCase();
+        final ricerca = query.toLowerCase();
 
-          impreseFiltrate = imprese.where((i) {
-            return nomeImpresa(i).toLowerCase().contains(ricerca);
-          }).take(8).toList();
-        });
-      },
-    );
+        impreseFiltrate = imprese
+            .where((i) {
+              return nomeImpresa(i).toLowerCase().contains(ricerca);
+            })
+            .take(8)
+            .toList();
+      });
+    });
   }
 
   void filtraCorsi(String query) {
     debounceCorso?.cancel();
 
-    debounceCorso = Timer(
-      const Duration(milliseconds: 250),
-      () {
-        if (!mounted) return;
+    debounceCorso = Timer(const Duration(milliseconds: 250), () {
+      if (!mounted) return;
 
-        setState(() {
-          if (query.trim().isEmpty) {
-            corsiFiltrati = [];
-            return;
-          }
+      setState(() {
+        if (query.trim().isEmpty) {
+          corsiFiltrati = [];
+          return;
+        }
 
-          final ricerca = query.toLowerCase();
+        final ricerca = query.toLowerCase();
 
-          corsiFiltrati = corsi.where((c) {
-            return nomeCorso(c).toLowerCase().contains(ricerca);
-          }).take(8).toList();
-        });
-      },
-    );
+        corsiFiltrati = corsi
+            .where((c) {
+              return nomeCorso(c).toLowerCase().contains(ricerca);
+            })
+            .take(8)
+            .toList();
+      });
+    });
   }
 
   Widget buildAutocompleteBox({
@@ -217,21 +214,14 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
             labelText: label,
             filled: true,
             fillColor: Colors.white,
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-            ),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFFE5E7EB),
-              ),
+              borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(
-                color: Color(0xFF2563EB),
-                width: 2,
-              ),
+              borderSide: const BorderSide(color: Color(0xFF2563EB), width: 2),
             ),
           ),
           validator: (value) {
@@ -245,18 +235,14 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
         if (risultati.isNotEmpty)
           Container(
             margin: const EdgeInsets.only(top: 4),
-            constraints: const BoxConstraints(
-              maxHeight: 220,
-            ),
+            constraints: const BoxConstraints(maxHeight: 220),
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: const Color(0xFFE5E7EB),
-              ),
+              border: Border.all(color: const Color(0xFFE5E7EB)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.06),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 18,
                   offset: const Offset(0, 8),
                 ),
@@ -265,7 +251,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
             child: ListView.separated(
               shrinkWrap: true,
               itemCount: risultati.length,
-              separatorBuilder: (_, __) => const Divider(height: 1),
+              separatorBuilder: (_, _) => const Divider(height: 1),
               itemBuilder: (context, index) {
                 final item = risultati[index];
                 final subtitle = getSubtitle?.call(item) ?? '';
@@ -274,9 +260,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                   dense: true,
                   title: Text(
                     getTitle(item),
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
                   subtitle: subtitle.isEmpty ? null : Text(subtitle),
                   onTap: () => onSelect(item),
@@ -291,20 +275,17 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   void salva() {
     if (!formKey.currentState!.validate()) return;
 
-    Navigator.pop(
-      context,
-      {
-        'discente_id': discenteId,
-        'impresa_id': impresaId,
-        'corso_id': corsoId,
-        'data': dataController.text.trim(),
-        'prot': protController.text.trim(),
-        'note': noteController.text.trim(),
-        'aperto': aperto ? 1 : 0,
-        'conferma': conferma ? 1 : 0,
-        'registro': registro ? 1 : 0,
-      },
-    );
+    Navigator.pop(context, {
+      'discente_id': discenteId,
+      'impresa_id': impresaId,
+      'corso_id': corsoId,
+      'data': dataController.text.trim(),
+      'prot': protController.text.trim(),
+      'note': noteController.text.trim(),
+      'aperto': aperto ? 1 : 0,
+      'conferma': conferma ? 1 : 0,
+      'registro': registro ? 1 : 0,
+    });
   }
 
   @override
@@ -313,18 +294,14 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
       return const Dialog(
         child: SizedBox(
           height: 220,
-          child: Center(
-            child: CircularProgressIndicator(),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
 
     return Dialog(
       backgroundColor: const Color(0xFFF8FAFC),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Container(
         width: 760,
         padding: const EdgeInsets.all(28),
@@ -371,8 +348,8 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                     impresaId = item['impresa_id'];
 
                     discenteController.text = nomeDiscente(item);
-                    impresaController.text =
-                        (item['nome_impresa'] ?? '').toString();
+                    impresaController.text = (item['nome_impresa'] ?? '')
+                        .toString();
 
                     discentiFiltrati = [];
 

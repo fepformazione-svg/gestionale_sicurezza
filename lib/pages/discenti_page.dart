@@ -245,7 +245,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
                       const SizedBox(height: 16),
 
                       DropdownButtonFormField<int?>(
-                        value: impresaId,
+                        initialValue: impresaId,
                         decoration: _inputDecoration('Impresa di appartenenza'),
                         items: [
                           const DropdownMenuItem<int?>(

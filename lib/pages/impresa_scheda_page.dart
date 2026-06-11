@@ -4,7 +4,7 @@ import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
 import 'discente_scheda_page.dart';
-import '../dialogs/discente_dialog.dart' as dialogDiscente;
+import '../dialogs/discente_dialog.dart' as dialog_discente;
 
 class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
@@ -195,7 +195,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   }
 
   Future<void> apriDialogDiscenteDaSchedaImpresa({Discente? discente}) async {
-    final salvato = await dialogDiscente.apriDialogDiscente(
+    final salvato = await dialog_discente.apriDialogDiscente(
       context: context,
       discente: discente,
       impresaIdPreselezionata: widget.impresa.id,
@@ -331,7 +331,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                       )
                     : ListView.separated(
                         itemCount: discentiAssociati.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
                         itemBuilder: (context, index) {
                           final discente = discentiAssociati[index];
                           final statoVisita = statoVisitaMedica(discente);

@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 
 import '../database/database_service.dart';
 import 'discente_scheda_page.dart';
-import '../models/discente.dart';
 
 import '../dialogs/discente_dialog.dart';
 
@@ -216,6 +214,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
       context,
       MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
     );
+
+    if (!mounted) return;
 
     if (risultato == 'modifica') {
       final salvato = await apriDialogDiscente(
@@ -467,7 +467,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
                                       vertical: 6,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: colore.withOpacity(0.12),
+                                      color: colore.withValues(alpha: 0.12),
                                       borderRadius: BorderRadius.circular(999),
                                     ),
                                     child: Text(

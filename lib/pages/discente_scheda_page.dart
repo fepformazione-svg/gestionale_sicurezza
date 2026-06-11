@@ -164,7 +164,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     border: Border.all(color: const Color(0xFFE5E7EB)),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),
@@ -324,7 +324,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: Colors.black.withValues(alpha: 0.03),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
@@ -743,7 +743,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 Expanded(
                   child: ListView.separated(
                     itemCount: storico.length,
-                    separatorBuilder: (_, __) =>
+                    separatorBuilder: (_, _) =>
                         const Divider(height: 1, color: Color(0xFFE5E7EB)),
                     itemBuilder: (context, index) {
                       final r = storico[index];
@@ -1294,7 +1294,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               style: const pw.TextStyle(fontSize: 11),
             ),
             pw.SizedBox(height: 18),
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: ['Corso', 'Data corso', 'Scadenza', 'Ore', 'Stato'],
               data: corsiDaEsportare.map((corso) {
                 final stato = statoScadenzaCorso(corso['scadenza']);
@@ -2309,8 +2309,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                       boxShadow: [
                         BoxShadow(
                           color: eliminazioneCorsiInCorso
-                              ? const Color(0xFFF97316).withOpacity(0.10)
-                              : const Color(0xFF2563EB).withOpacity(0.08),
+                              ? const Color(0xFFF97316).withValues(alpha: 0.10)
+                              : const Color(0xFF2563EB).withValues(alpha: 0.08),
                           blurRadius: 14,
                           offset: const Offset(0, 6),
                         ),
@@ -2582,7 +2582,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                             BoxShadow(
                                               color: const Color(
                                                 0xFF64748B,
-                                              ).withOpacity(0.08),
+                                              ).withValues(alpha: 0.08),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
                                             ),
@@ -2652,7 +2652,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                                             BoxShadow(
                                               color: const Color(
                                                 0xFF2563EB,
-                                              ).withOpacity(0.08),
+                                              ).withValues(alpha: 0.08),
                                               blurRadius: 10,
                                               offset: const Offset(0, 4),
                                             ),
@@ -2872,7 +2872,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           Expanded(
                             child: ListView.separated(
                               itemCount: storicoFiltrato.length,
-                              separatorBuilder: (_, __) => const Divider(
+                              separatorBuilder: (_, _) => const Divider(
                                 height: 1,
                                 color: Color(0xFFE5E7EB),
                               ),

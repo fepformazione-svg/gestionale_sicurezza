@@ -5,7 +5,6 @@ import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
 import 'app_database.dart';
-import '../services/database_service.dart';
 
 class DatabaseService {
   DatabaseService._();
@@ -182,17 +181,9 @@ class DatabaseService {
 
     await db.transaction((txn) async {
       for (final id in ids) {
-        await txn.delete(
-          'scadenze',
-          where: 'diario_id = ?',
-          whereArgs: [id],
-        );
+        await txn.delete('scadenze', where: 'diario_id = ?', whereArgs: [id]);
 
-        await txn.delete(
-          'diario',
-          where: 'id = ?',
-          whereArgs: [id],
-        );
+        await txn.delete('diario', where: 'id = ?', whereArgs: [id]);
       }
     });
   }
@@ -494,17 +485,9 @@ class DatabaseService {
   Future<void> deleteDiario(int id) async {
     final db = await _db;
 
-    await db.delete(
-      'scadenze',
-      where: 'diario_id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('scadenze', where: 'diario_id = ?', whereArgs: [id]);
 
-    await db.delete(
-      'diario',
-      where: 'id = ?',
-      whereArgs: [id],
-    );
+    await db.delete('diario', where: 'id = ?', whereArgs: [id]);
 
     await aggiornaScadenzeDaDiario();
   }

@@ -4,9 +4,6 @@ import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
 import 'discente_scheda_page.dart';
 
-import '../models/discente.dart';
-import '../models/impresa.dart';
-
 class DiarioPage extends StatefulWidget {
   final bool soloDaFatturare;
 
@@ -128,9 +125,9 @@ class _DiarioPageState extends State<DiarioPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
-        color: colore.withOpacity(0.12),
+        color: colore.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: colore.withOpacity(0.45)),
+        border: Border.all(color: colore.withValues(alpha: 0.45)),
       ),
       child: Text(
         testo,
@@ -187,13 +184,6 @@ class _DiarioPageState extends State<DiarioPage> {
     super.dispose();
   }
 
-  InputDecoration _inputDecoration(String label) {
-    return InputDecoration(
-      labelText: label,
-      border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-    );
-  }
-
   Future<void> apriSchedaDiscente(Map<String, dynamic> riga) async {
     final idDiscente = riga['discente_id'];
 
@@ -208,6 +198,8 @@ class _DiarioPageState extends State<DiarioPage> {
       context,
       MaterialPageRoute(builder: (_) => DiscenteSchedaPage(discente: discente)),
     );
+
+    if (!mounted) return;
 
     if (risultato == 'modifica') {
       final salvato = await apriDialogDiscente(
@@ -401,7 +393,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                         if (!mounted) return;
 
                                         ScaffoldMessenger.of(
-                                          context,
+                                          this.context,
                                         ).showSnackBar(
                                           const SnackBar(
                                             content: Text(

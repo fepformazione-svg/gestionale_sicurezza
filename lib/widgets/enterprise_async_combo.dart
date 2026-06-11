@@ -166,15 +166,11 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
             child: Material(
               color: Colors.transparent,
               child: Container(
-                constraints: const BoxConstraints(
-                  maxHeight: 280,
-                ),
+                constraints: const BoxConstraints(maxHeight: 280),
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFFE5E7EB),
-                  ),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
                   boxShadow: const [
                     BoxShadow(
                       color: Color(0x26000000),
@@ -241,15 +237,11 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
-                borderSide: const BorderSide(
-                  color: Color(0xFFE5E7EB),
-                ),
+                borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
@@ -279,10 +271,7 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
             SizedBox(width: 12),
             Text(
               'Ricerca in corso...',
-              style: TextStyle(
-                fontSize: 13,
-                color: Color(0xFF6B7280),
-              ),
+              style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
             ),
           ],
         ),
@@ -294,10 +283,7 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
         padding: EdgeInsets.all(18),
         child: Text(
           'Nessun risultato trovato',
-          style: TextStyle(
-            fontSize: 13,
-            color: Color(0xFF6B7280),
-          ),
+          style: TextStyle(fontSize: 13, color: Color(0xFF6B7280)),
         ),
       );
     }
@@ -306,10 +292,8 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
       padding: const EdgeInsets.symmetric(vertical: 6),
       shrinkWrap: true,
       itemCount: _items.length,
-      separatorBuilder: (_, __) => const Divider(
-        height: 1,
-        color: Color(0xFFF3F4F6),
-      ),
+      separatorBuilder: (_, _) =>
+          const Divider(height: 1, color: Color(0xFFF3F4F6)),
       itemBuilder: (context, index) {
         final item = _items[index];
 
@@ -321,10 +305,7 @@ class _EnterpriseAsyncComboState extends State<EnterpriseAsyncCombo> {
               _select(item);
             },
             child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 12,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               child: Text(
                 item.text,
                 style: const TextStyle(

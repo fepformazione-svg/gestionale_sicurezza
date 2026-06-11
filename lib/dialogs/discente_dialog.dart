@@ -17,6 +17,8 @@ Future<bool> apriDialogDiscente({
 }) async {
   final imprese = await DatabaseService.instance.getImprese();
 
+  if (!context.mounted) return false;
+
   final bool modifica = discente != null;
 
   final nomeController = TextEditingController(text: discente?.nome ?? '');
@@ -99,7 +101,7 @@ Future<bool> apriDialogDiscente({
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<int?>(
-                      value: impresaId,
+                      initialValue: impresaId,
                       decoration: _inputDecoration('Impresa'),
                       items: [
                         const DropdownMenuItem<int?>(
@@ -205,6 +207,8 @@ Future<bool> apriDialogDiscente({
       );
     },
   );
+
+  if (!context.mounted) return false;
 
   return salvato == true;
 }

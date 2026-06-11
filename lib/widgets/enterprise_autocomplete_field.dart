@@ -90,12 +90,15 @@ class _EnterpriseAutocompleteFieldState<T>
       return widget.options.take(30).toList();
     }
 
-    return widget.options.where((item) {
-      final label = item.label.toLowerCase();
-      final subtitle = item.subtitle?.toLowerCase() ?? '';
+    return widget.options
+        .where((item) {
+          final label = item.label.toLowerCase();
+          final subtitle = item.subtitle?.toLowerCase() ?? '';
 
-      return label.contains(q) || subtitle.contains(q);
-    }).take(50).toList();
+          return label.contains(q) || subtitle.contains(q);
+        })
+        .take(50)
+        .toList();
   }
 
   void _select(EnterpriseOption<T> option) {
@@ -153,8 +156,9 @@ class _EnterpriseAutocompleteFieldState<T>
               decoration: InputDecoration(
                 hintText: widget.hint,
                 filled: true,
-                fillColor:
-                    widget.enabled ? Colors.white : const Color(0xFFF1F5F9),
+                fillColor: widget.enabled
+                    ? Colors.white
+                    : const Color(0xFFF1F5F9),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 14,
                   vertical: 14,
@@ -174,15 +178,11 @@ class _EnterpriseAutocompleteFieldState<T>
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE2E8F0),
-                  ),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: const BorderSide(
-                    color: Color(0xFFE2E8F0),
-                  ),
+                  borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
@@ -201,14 +201,10 @@ class _EnterpriseAutocompleteFieldState<T>
                 borderRadius: BorderRadius.circular(16),
                 color: Colors.white,
                 child: Container(
-                  constraints: const BoxConstraints(
-                    maxHeight: 260,
-                  ),
+                  constraints: const BoxConstraints(maxHeight: 260),
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFFE2E8F0),
-                    ),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
                   ),
                   child: items.isEmpty
                       ? const Padding(
@@ -225,7 +221,7 @@ class _EnterpriseAutocompleteFieldState<T>
                           shrinkWrap: true,
                           padding: const EdgeInsets.symmetric(vertical: 6),
                           itemCount: items.length,
-                          separatorBuilder: (_, __) => const Divider(
+                          separatorBuilder: (_, _) => const Divider(
                             height: 1,
                             color: Color(0xFFF1F5F9),
                           ),
@@ -276,8 +272,9 @@ class _EnterpriseAutocompleteFieldState<T>
                                           if (item.subtitle != null &&
                                               item.subtitle!.trim().isNotEmpty)
                                             Padding(
-                                              padding:
-                                                  const EdgeInsets.only(top: 3),
+                                              padding: const EdgeInsets.only(
+                                                top: 3,
+                                              ),
                                               child: Text(
                                                 item.subtitle!,
                                                 maxLines: 1,

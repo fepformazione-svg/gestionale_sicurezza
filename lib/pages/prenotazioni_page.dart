@@ -118,18 +118,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       return valore.toString();
     }
 
-    String valoreCampo(Map<String, dynamic> p, List<String> chiavi) {
-      for (final chiave in chiavi) {
-        final valore = p[chiave];
-
-        if (valore != null && valore.toString().trim().isNotEmpty) {
-          return valore.toString();
-        }
-      }
-
-      return '';
-    }
-
     String dataItaliana(dynamic valore) {
       if (valore == null || valore.toString().trim().isEmpty) return '';
 
@@ -163,7 +151,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             ),
             pw.SizedBox(height: 14),
 
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               headers: const [
                 'Discente',
                 'Impresa',
@@ -589,10 +577,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     super.dispose();
   }
 
-  void gestisciTasti(RawKeyEvent event) async {
-    if (event is! RawKeyDownEvent) return;
+  void gestisciTasti(KeyEvent event) async {
+    if (event is! KeyDownEvent) return;
 
-    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyF) {
+    if (HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyF) {
       ricercaFocusNode.requestFocus();
 
       ricercaController.selection = TextSelection(
@@ -604,7 +593,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
 
     // CTRL + A
-    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyA) {
+    if (HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyA) {
       setState(() {
         prenotazioniSelezionateIds = prenotazioniVisibili
             .map((p) => p['id'] as int)
@@ -624,19 +614,25 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       return;
     }
     // CTRL + N
-    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyN) {
+    if (HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyN) {
       apriDialogNuovaPrenotazione();
       return;
     }
 
     // CTRL + E
-    if (event.isControlPressed && event.logicalKey == LogicalKeyboardKey.keyE) {
+    if (HardwareKeyboard.instance.isControlPressed &&
+        event.logicalKey == LogicalKeyboardKey.keyE) {
       exportPrenotazioniExcel();
       return;
     }
 
     if (event.logicalKey == LogicalKeyboardKey.escape) {
-      tableFocusNode.requestFocus();
+      setState(() {
+        azzeraSelezionePrenotazioni();
+      });
+
+      ripristinaFocusTabella();
       return;
     }
 
@@ -1402,7 +1398,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           duration: const Duration(milliseconds: 180),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
-            color: attivo ? colore.withOpacity(0.12) : Colors.white,
+            color: attivo ? colore.withValues(alpha: 0.12) : Colors.white,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: attivo ? colore : Colors.grey.shade300,
@@ -1467,7 +1463,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.04),
+                color: Colors.black.withValues(alpha: 0.04),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -1820,7 +1816,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
             pw.SizedBox(height: 10),
 
-            pw.Table.fromTextArray(
+            pw.TableHelper.fromTextArray(
               border: pw.TableBorder.all(
                 color: PdfColors.blueGrey400,
                 width: 0.5,
@@ -1978,7 +1974,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   },
                   child: attiva
                       ? Container(
-                          key: ValueKey('attiva_${colonna}_${ordineCrescente}'),
+                          key: ValueKey('attiva_${colonna}_$ordineCrescente'),
                           width: 18,
                           height: 18,
                           alignment: Alignment.center,
@@ -2019,8 +2015,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
 
-    final ultraWide = width > 1800;
-    final desktop = width > 1400;
     final tablet = width < 1100;
 
     final double tableWidth =
@@ -2032,23 +2026,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         colStato +
         colAzioni +
         (tablet ? 24 : 40);
-
-    final double rowHeight = 64;
-    final int numeroRighe =
-        prenotazioniVisibili.length + (caricamentoPaginaDb ? 1 : 0);
-
-    final double altezzaRighe = numeroRighe * rowHeight;
-
-    final double altezzaMassimaTabella =
-        (MediaQuery.of(context).size.height * 0.28).clamp(160.0, 280.0);
-
-    final double altezzaMinimaTabella = rowHeight * 2;
-
-    final double altezzaTabella = altezzaRighe < altezzaMinimaTabella
-        ? altezzaMinimaTabella
-        : altezzaRighe > altezzaMassimaTabella
-        ? altezzaMassimaTabella
-        : altezzaRighe;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -2621,7 +2598,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                       ),
 
                       if (prenotazioniSelezionateIds.isNotEmpty) ...[
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
 
                         LayoutBuilder(
                           builder: (context, constraints) {
@@ -2689,7 +2666,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                         elevation: 0,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 18,
-                                          vertical: 16,
+                                          vertical: 8,
                                         ),
                                         shape: RoundedRectangleBorder(
                                           borderRadius: BorderRadius.circular(
@@ -2758,7 +2735,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                           elevation: 0,
                                           padding: const EdgeInsets.symmetric(
                                             horizontal: 18,
-                                            vertical: 16,
+                                            vertical: 8,
                                           ),
                                           shape: RoundedRectangleBorder(
                                             borderRadius: BorderRadius.circular(
@@ -2975,7 +2952,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           },
                         ),
 
-                        const SizedBox(height: 14),
+                        const SizedBox(height: 0),
                       ] else
                         const SizedBox(height: 14),
 
@@ -3007,7 +2984,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                             ? [
                                                 BoxShadow(
                                                   color: Colors.black
-                                                      .withOpacity(0.06),
+                                                      .withValues(alpha: 0.06),
                                                   blurRadius: 10,
                                                   offset: const Offset(0, 3),
                                                 ),
@@ -3041,10 +3018,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                             ),
                                           ),
                                         ),
-                                        child: RawKeyboardListener(
+                                        child: KeyboardListener(
                                           focusNode: tableFocusNode,
                                           autofocus: true,
-                                          onKey: gestisciTasti,
+                                          onKeyEvent: gestisciTasti,
                                           child: prenotazioniVisibili.isEmpty
                                               ? Center(
                                                   child: Container(
@@ -3270,7 +3247,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   value:
                                                                       'modifica',
                                                                   child: Row(
-                                                                    children: const [
+                                                                    children: [
                                                                       Icon(
                                                                         Icons
                                                                             .edit_rounded,
@@ -3300,7 +3277,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 PopupMenuItem(
                                                                   value: 'apri',
                                                                   child: Row(
-                                                                    children: const [
+                                                                    children: [
                                                                       Icon(
                                                                         Icons
                                                                             .lock_open_rounded,
@@ -3331,7 +3308,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   value:
                                                                       'chiudi',
                                                                   child: Row(
-                                                                    children: const [
+                                                                    children: [
                                                                       Icon(
                                                                         Icons
                                                                             .lock_rounded,
@@ -3362,7 +3339,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   value:
                                                                       'registro',
                                                                   child: Row(
-                                                                    children: const [
+                                                                    children: [
                                                                       Icon(
                                                                         Icons
                                                                             .fact_check_rounded,
@@ -3393,7 +3370,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   value:
                                                                       'elimina',
                                                                   child: Row(
-                                                                    children: const [
+                                                                    children: [
                                                                       Icon(
                                                                         Icons
                                                                             .delete_outline_rounded,
@@ -3423,8 +3400,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                               ],
                                                             );
 
-                                                            if (result == null)
+                                                            if (result ==
+                                                                null) {
                                                               return;
+                                                            }
 
                                                             if (result ==
                                                                 'modifica') {

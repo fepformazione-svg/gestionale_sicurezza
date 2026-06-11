@@ -91,7 +91,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     });
   }
 
-  String filtroLocale = 'aperte';
+  late String filtroLocale;
 
   String colonnaOrdinata = '';
   bool ordineCrescente = true;
@@ -178,26 +178,23 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   testo(p['discente_nome']),
                 ].where((v) => v.trim().isNotEmpty).join(' ');
 
-                String statoPrenotazione() {
-                  if (p['conferma'] == 1) return 'Chiusa';
-                  if (p['registro'] == 1) return 'Registro';
-                  if (p['aperto'] == 1) return 'Aperta';
-                  return 'Da fare';
-                }
-
                 return [
                   discenteCompleto,
                   testo(p['impresa_nome']),
                   testo(p['corso_nome']),
                   dataItaliana(p['data']),
                   testo(p['prot']),
-                  statoPrenotazione(),
+                  statoPrenotazione(p),
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(
                 fontWeight: pw.FontWeight.bold,
                 fontSize: 9,
-                color: PdfColors.white,
+                color: PdfColors.blueGrey900,
+              ),
+              headerPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
               ),
               headerDecoration: const pw.BoxDecoration(
                 color: PdfColors.blueGrey800,
@@ -245,14 +242,26 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       onLayout: (PdfPageFormat format) async => pdf.save(),
     );
 
+    if (!mounted) return;
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'PDF creato per ${prenotazioniDaStampare.length} prenotazioni selezionate.',
+          prenotazioniDaStampare.length == 1
+              ? 'PDF creato per 1 prenotazione selezionata.'
+              : 'PDF creato per ${prenotazioniDaStampare.length} prenotazioni selezionate.',
         ),
         backgroundColor: const Color(0xFF16A34A),
       ),
     );
+
+    if (!mounted) return;
+
+    setState(() {
+      azzeraSelezionePrenotazioni();
+    });
+
+    ripristinaFocusTabella();
   }
 
   void selezionaTutto() {
@@ -408,7 +417,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         registro: registro,
         conferma: conferma,
       );
+
+      if (conferma == 1) {
+        await DatabaseService.instance.confermaPrenotazioneWorkflow(id);
+      } else {
+        await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(id);
+      }
     }
+
+    if (!mounted) return;
 
     setState(() {
       prenotazioni = prenotazioni.map((p) {
@@ -461,6 +478,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         offset: 0,
       );
 
+      if (!mounted) return;
+
       setState(() {
         prenotazioni = dati;
         prenotazioniFiltrate = dati;
@@ -474,10 +493,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     } catch (e) {
       debugPrint('ERRORE caricaPrenotazioniIniziali: $e');
     } finally {
-      setState(() {
-        loading = false;
-        caricamentoPaginaDb = false;
-      });
+      if (mounted) {
+        setState(() {
+          loading = false;
+          caricamentoPaginaDb = false;
+        });
+      }
     }
   }
 
@@ -492,6 +513,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   @override
   void initState() {
     super.initState();
+
+    filtroLocale = widget.filtro;
+
+    ricercaController.text = widget.globalSearch;
+    ricercaController.selection = TextSelection.collapsed(
+      offset: ricercaController.text.length,
+    );
 
     _scrollController.addListener(() {
       final showShadow = _scrollController.offset > 0;
@@ -553,6 +581,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
   @override
   void dispose() {
+    ricercaController.dispose();
+    ricercaFocusNode.dispose();
     tableFocusNode.dispose();
     _scrollController.dispose();
     horizontalController.dispose();
@@ -705,6 +735,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         conferma: nuovoConferma,
       );
 
+      if (nuovoConferma == 1) {
+        await DatabaseService.instance.confermaPrenotazioneWorkflow(id);
+      } else {
+        await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(id);
+      }
+
       notificaDatiModificati();
 
       return;
@@ -741,23 +777,42 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       caricamentoPaginaDb = true;
     });
 
-    final dati = await DatabaseService.instance.getPrenotazioniPaged(
-      limit: righePerPaginaDb,
-      offset: paginaDbCorrente * righePerPaginaDb,
-    );
+    try {
+      final dati = await DatabaseService.instance.getPrenotazioniPaged(
+        limit: righePerPaginaDb,
+        offset: paginaDbCorrente * righePerPaginaDb,
+      );
 
-    setState(() {
-      prenotazioni.addAll(dati);
-      prenotazioniFiltrate = prenotazioni;
+      if (!mounted) return;
 
-      paginaDbCorrente++;
+      setState(() {
+        prenotazioni.addAll(dati);
+        prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
 
-      caricamentoPaginaDb = false;
+        paginaDbCorrente++;
 
-      if (dati.length < righePerPaginaDb) {
-        fineArchivioPrenotazioni = true;
+        if (dati.length < righePerPaginaDb) {
+          fineArchivioPrenotazioni = true;
+        }
+      });
+    } catch (e) {
+      debugPrint('Errore caricamento altre prenotazioni: $e');
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore caricamento altre prenotazioni: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          caricamentoPaginaDb = false;
+        });
       }
-    });
+    }
   }
 
   @override
@@ -766,6 +821,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     if (oldWidget.globalSearch != widget.globalSearch ||
         oldWidget.filtro != widget.filtro) {
+      ricercaController.text = widget.globalSearch;
+      ricercaController.selection = TextSelection.collapsed(
+        offset: ricercaController.text.length,
+      );
+
+      setState(() {
+        filtroLocale = widget.filtro;
+        azzeraSelezionePrenotazioni();
+      });
+
       cercaPrenotazioni(widget.globalSearch);
     }
   }
@@ -931,6 +996,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   Future<void> caricaPrenotazioni() async {
     setState(() {
       loading = true;
+      caricamentoPaginaDb = false;
       paginaDbCorrente = 0;
       fineArchivioPrenotazioni = false;
       prenotazioni = [];
@@ -955,6 +1021,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         offset: offset,
       );
 
+      if (!mounted) return;
+
       setState(() {
         if (reset) {
           prenotazioni.clear();
@@ -977,21 +1045,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         cercaPrenotazioni(widget.globalSearch);
       }
     } catch (e) {
+      debugPrint('Errore caricamento prenotazioni paged: $e');
+
+      if (!mounted) return;
+
       setState(() {
         caricamentoPaginaDb = false;
         loading = false;
       });
 
-      debugPrint('Errore caricamento prenotazioni paged: $e');
-
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Errore caricamento prenotazioni: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore caricamento prenotazioni: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
     }
   }
 
@@ -1445,6 +1513,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> exportPrenotazioniExcel() async {
+    if (prenotazioniVisibili.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna prenotazione da esportare in Excel'),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 4),
+        ),
+      );
+
+      ripristinaFocusTabella();
+      return;
+    }
+
     try {
       if (prenotazioniVisibili.isEmpty) {
         if (!mounted) return;
@@ -1465,6 +1548,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final sheet = excel['Prenotazioni'];
 
+      final now = DateTime.now();
+
+      final vistaFiltrata =
+          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+
+      final totaleEsportate = prenotazioniVisibili.length;
+
+      final dataOraExport = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
       excel.delete('Sheet1');
 
       sheet.setColumnWidth(0, 52); // Discente / riga informativa export
@@ -1475,14 +1567,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       sheet.setColumnWidth(5, 16); // Stato
 
       // RIGA INFORMATIVA EXPORT
-      final nowInfo = DateTime.now();
-
-      final dataOraExport =
-          '${nowInfo.day.toString().padLeft(2, '0')}/'
-          '${nowInfo.month.toString().padLeft(2, '0')}/'
-          '${nowInfo.year} '
-          '${nowInfo.hour.toString().padLeft(2, '0')}:'
-          '${nowInfo.minute.toString().padLeft(2, '0')}';
 
       final exportFiltratoInfo =
           ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
@@ -1516,6 +1600,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         TextCellValue(''),
       ]);
 
+      sheet.appendRow([
+        TextCellValue(
+          vistaFiltrata
+              ? 'Export prenotazioni filtrato - $totaleEsportate record - $dataOraExport'
+              : 'Export prenotazioni - $totaleEsportate record - $dataOraExport',
+        ),
+      ]);
+
+      sheet.appendRow([TextCellValue('')]);
+
       // HEADER
       sheet.appendRow([
         TextCellValue('Discente'),
@@ -1548,20 +1642,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final directory = await getApplicationDocumentsDirectory();
 
-      final now = DateTime.now();
-
       final timestamp =
           '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
           '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
-      final vistaFiltrata =
-          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
-
-      final nomeFile = vistaFiltrata
+      final nomeFileExcel = vistaFiltrata
           ? 'prenotazioni_export_filtrato_$timestamp.xlsx'
           : 'prenotazioni_export_$timestamp.xlsx';
 
-      final path = '${directory.path}/$nomeFile';
+      final path = '${directory.path}/$nomeFileExcel';
 
       final fileBytes = excel.encode();
 
@@ -1587,8 +1676,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       await OpenFile.open(file.path);
 
       if (!mounted) return;
-
-      final totaleEsportate = prenotazioniVisibili.length;
 
       final messaggioExport = totaleEsportate == 1
           ? vistaFiltrata
@@ -1638,106 +1725,211 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       return;
     }
 
-    final pdf = pw.Document();
+    try {
+      final now = DateTime.now();
 
-    final nowPdfInfo = DateTime.now();
+      final vistaFiltrata =
+          ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
 
-    final dataOraExportPdf =
-        '${nowPdfInfo.day.toString().padLeft(2, '0')}/'
-        '${nowPdfInfo.month.toString().padLeft(2, '0')}/'
-        '${nowPdfInfo.year} '
-        '${nowPdfInfo.hour.toString().padLeft(2, '0')}:'
-        '${nowPdfInfo.minute.toString().padLeft(2, '0')}';
+      final totaleEsportate = prenotazioniVisibili.length;
 
-    final exportFiltratoPdfInfo =
-        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+      final ricercaAttiva = ricercaController.text.trim();
 
-    final testoInfoPdf = exportFiltratoPdfInfo
-        ? 'Export prenotazioni filtrato - ${prenotazioniVisibili.length} record - $dataOraExportPdf'
-        : 'Export prenotazioni - ${prenotazioniVisibili.length} record - $dataOraExportPdf';
+      final descrizioneFiltro = switch (filtroLocale) {
+        'aperte' => 'Aperte',
+        'registro' => 'Registro',
+        'chiuse' => 'Chiuse',
+        'da_fare' => 'Da fare',
+        _ => '',
+      };
 
-    pdf.addPage(
-      pw.MultiPage(
-        pageFormat: PdfPageFormat.a4.landscape,
-        build: (context) => [
-          pw.Text(
-            'F&P Formazione e Prevenzione',
-            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
+      final dettaglioVista = ricercaAttiva.isNotEmpty && filtroLocale != 'tutte'
+          ? 'Ricerca: $ricercaAttiva - Filtro: $descrizioneFiltro'
+          : ricercaAttiva.isNotEmpty
+          ? 'Ricerca: $ricercaAttiva'
+          : filtroLocale != 'tutte'
+          ? 'Filtro: $descrizioneFiltro'
+          : '';
+
+      final dataOraExport = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4.landscape,
+          margin: const pw.EdgeInsets.fromLTRB(36, 32, 36, 30),
+          footer: (context) => pw.Container(
+            margin: const pw.EdgeInsets.only(top: 10),
+            child: pw.Row(
+              mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+              children: [
+                pw.Text(
+                  'F&P Formazione e Prevenzione',
+                  style: const pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+                pw.Text(
+                  'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                  style: const pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+              ],
+            ),
           ),
+          build: (context) => [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
 
-          pw.SizedBox(height: 6),
+            pw.SizedBox(height: 4),
 
-          pw.Text(
-            'PRENOTAZIONI',
-            style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold),
-          ),
+            pw.Text(
+              'PRENOTAZIONI',
+              style: pw.TextStyle(
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue700,
+              ),
+            ),
 
-          pw.SizedBox(height: 8),
+            pw.SizedBox(height: 6),
 
-          pw.Text(testoInfoPdf, style: const pw.TextStyle(fontSize: 10)),
+            pw.Text(
+              vistaFiltrata
+                  ? 'Vista filtrata - $dettaglioVista - $totaleEsportate record - $dataOraExport'
+                  : 'Vista completa - $totaleEsportate record - $dataOraExport',
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
 
-          pw.SizedBox(height: 16),
+            pw.SizedBox(height: 8),
 
-          pw.Table.fromTextArray(
-            headers: ['Discente', 'Impresa', 'Corso', 'Data', 'Prot.', 'Stato'],
+            pw.Divider(color: PdfColors.blue700, thickness: 1),
 
-            data: prenotazioniVisibili.map((p) {
-              return [
-                nomeDiscente(p),
-                testo(p['impresa_nome']),
-                testo(p['corso_nome']),
-                testo(p['data']),
-                testo(p['prot']),
-                statoPrenotazione(p),
-              ];
-            }).toList(),
-          ),
-        ],
-      ),
-    );
+            pw.SizedBox(height: 10),
 
-    final directory = await getApplicationDocumentsDirectory();
+            pw.Table.fromTextArray(
+              border: pw.TableBorder.all(
+                color: PdfColors.blueGrey400,
+                width: 0.5,
+              ),
+              headerCount: 1,
+              headers: [
+                'Discente',
+                'Impresa',
+                'Corso',
+                'Data',
+                'Prot.',
+                'Stato',
+              ],
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.7),
+                1: const pw.FlexColumnWidth(1.2),
+                2: const pw.FlexColumnWidth(2.8),
+                3: const pw.FlexColumnWidth(1.2),
+                4: const pw.FlexColumnWidth(0.7),
+                5: const pw.FlexColumnWidth(1.1),
+              },
+              cellAlignments: {
+                0: pw.Alignment.centerLeft,
+                1: pw.Alignment.centerLeft,
+                2: pw.Alignment.centerLeft,
+                3: pw.Alignment.center,
+                4: pw.Alignment.center,
+                5: pw.Alignment.center,
+              },
+              headerAlignment: pw.Alignment.center,
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 10,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey100,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey900,
+              ),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              data: prenotazioniVisibili.map((p) {
+                return [
+                  nomeDiscente(p),
+                  testo(p['impresa_nome']),
+                  testo(p['corso_nome']),
+                  testo(p['data']),
+                  testo(p['prot']),
+                  statoPrenotazione(p),
+                ];
+              }).toList(),
+            ),
+          ],
+        ),
+      );
 
-    final now = DateTime.now();
+      final directory = await getApplicationDocumentsDirectory();
 
-    final timestamp =
-        '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-        '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
+      final timestamp =
+          '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
-    final vistaFiltrata =
-        ricercaController.text.trim().isNotEmpty || filtroLocale != 'tutte';
+      final nomeFilePdf = vistaFiltrata
+          ? 'prenotazioni_export_filtrato_$timestamp.pdf'
+          : 'prenotazioni_export_$timestamp.pdf';
 
-    final nomeFilePdf = vistaFiltrata
-        ? 'prenotazioni_export_filtrato_$timestamp.pdf'
-        : 'prenotazioni_export_$timestamp.pdf';
+      final file = File('${directory.path}/$nomeFilePdf');
 
-    final file = File('${directory.path}/$nomeFilePdf');
+      await file.writeAsBytes(await pdf.save());
 
-    await file.writeAsBytes(await pdf.save());
+      await OpenFile.open(file.path);
 
-    await OpenFile.open(file.path);
+      if (!mounted) return;
 
-    if (!mounted) return;
+      final messaggioExportPdf = totaleEsportate == 1
+          ? vistaFiltrata
+                ? 'Export PDF completato: 1 prenotazione esportata dalla vista filtrata'
+                : 'Export PDF completato: 1 prenotazione esportata'
+          : vistaFiltrata
+          ? 'Export PDF completato: $totaleEsportate prenotazioni esportate dalla vista filtrata'
+          : 'Export PDF completato: $totaleEsportate prenotazioni esportate';
 
-    final totaleEsportate = prenotazioniVisibili.length;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(messaggioExportPdf),
+          backgroundColor: const Color(0xFF16A34A),
+          duration: const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
 
-    final messaggioExportPdf = totaleEsportate == 1
-        ? vistaFiltrata
-              ? 'Export PDF completato: 1 prenotazione esportata dalla vista filtrata'
-              : 'Export PDF completato: 1 prenotazione esportata'
-        : vistaFiltrata
-        ? 'Export PDF completato: $totaleEsportate prenotazioni esportate dalla vista filtrata'
-        : 'Export PDF completato: $totaleEsportate prenotazioni esportate';
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(messaggioExportPdf),
-        backgroundColor: const Color(0xFF16A34A),
-        duration: const Duration(seconds: 5),
-      ),
-    );
-
-    ripristinaFocusTabella();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione o l’apertura del PDF'),
+          backgroundColor: Color(0xFFDC2626),
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } finally {
+      ripristinaFocusTabella();
+    }
   }
 
   Widget headerOrdinabile(String titolo, double larghezza, String colonna) {
@@ -1932,7 +2124,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFF2563EB),
-                  disabledBackgroundColor: const Color(0xFFF8FAFC),
+                  disabledBackgroundColor: const Color(0xFFF1F5F9),
                   disabledForegroundColor: const Color(0xFF94A3B8),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -1951,9 +2143,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
               ),
             ),
 
+            const SizedBox(width: 10),
+
             Tooltip(
               message: prenotazioniVisibili.isEmpty
-                  ? 'Nessuna prenotazione da esportare in PDF'
+                  ? 'Nessuna prenotazione da esportare'
                   : prenotazioniVisibili.length == 1
                   ? 'Esporta 1 prenotazione visualizzata in PDF'
                   : 'Esporta ${prenotazioniVisibili.length} prenotazioni visualizzate in PDF',
@@ -1976,7 +2170,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   foregroundColor: const Color(0xFFDC2626),
-                  disabledBackgroundColor: const Color(0xFFF8FAFC),
+                  disabledBackgroundColor: const Color(0xFFF1F5F9),
                   disabledForegroundColor: const Color(0xFF94A3B8),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -1987,7 +2181,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                     side: BorderSide(
                       color: prenotazioniVisibili.isEmpty
                           ? const Color(0xFFE2E8F0)
-                          : Colors.grey.shade300,
+                          : const Color(0xFFFECACA),
                     ),
                   ),
                   elevation: 0,
@@ -2216,13 +2410,17 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       borderRadius: BorderRadius.circular(999),
                                       onTap: filtriAttivi
                                           ? () {
-                                              ricercaController.clear();
-
                                               setState(() {
+                                                ricercaController.clear();
                                                 filtroLocale = 'tutte';
+                                                prenotazioniFiltrate =
+                                                    List<
+                                                      Map<String, dynamic>
+                                                    >.from(prenotazioni);
+                                                azzeraSelezionePrenotazioni();
                                               });
 
-                                              azzeraSelezionePrenotazioni();
+                                              ripristinaFocusTabella();
                                             }
                                           : null,
                                       child: Container(
@@ -2802,7 +3000,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       duration: const Duration(
                                         milliseconds: 180,
                                       ),
-                                      height: 34,
+                                      height: 39,
                                       decoration: BoxDecoration(
                                         color: const Color(0xFFF8FAFC),
                                         boxShadow: headerShadowVisible

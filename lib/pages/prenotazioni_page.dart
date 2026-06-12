@@ -1105,8 +1105,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         loading = false;
       });
 
-      if (widget.globalSearch.trim().isNotEmpty) {
-        cercaPrenotazioni(widget.globalSearch);
+      final ricercaCorrente = ricercaController.text.trim();
+
+      if (ricercaCorrente.isNotEmpty) {
+        cercaPrenotazioni(ricercaCorrente);
       }
 
       if (!mounted) return;

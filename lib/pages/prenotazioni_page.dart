@@ -48,6 +48,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   List<Map<String, dynamic>> prenotazioniFiltrate = [];
 
   final int righePerPaginaDb = 50;
+  bool mostraTutteLePrenotazioni = false;
   int paginaDbCorrente = 0;
   bool fineArchivioPrenotazioni = false;
   bool caricamentoPaginaDb = false;
@@ -1053,6 +1054,70 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Errore caricamento prenotazioni: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
+  }
+
+  Future<void> caricaTutteLePrenotazioni() async {
+    if (caricamentoPaginaDb) return;
+
+    setState(() {
+      caricamentoPaginaDb = true;
+    });
+
+    try {
+      final tutteLePrenotazioni = <Map<String, dynamic>>[];
+      int offset = 0;
+
+      while (true) {
+        final dati = await DatabaseService.instance.getPrenotazioniPaged(
+          limit: righePerPaginaDb,
+          offset: offset,
+        );
+
+        tutteLePrenotazioni.addAll(dati);
+
+        if (dati.length < righePerPaginaDb) {
+          break;
+        }
+
+        offset += righePerPaginaDb;
+      }
+
+      if (!mounted) return;
+
+      setState(() {
+        prenotazioni = List<Map<String, dynamic>>.from(tutteLePrenotazioni);
+
+        prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
+
+        mostraTutteLePrenotazioni = true;
+        paginaDbCorrente = (tutteLePrenotazioni.length / righePerPaginaDb)
+            .ceil();
+        fineArchivioPrenotazioni = true;
+
+        caricamentoPaginaDb = false;
+        loading = false;
+      });
+
+      if (widget.globalSearch.trim().isNotEmpty) {
+        cercaPrenotazioni(widget.globalSearch);
+      }
+    } catch (e) {
+      debugPrint('Errore caricamento completo prenotazioni: $e');
+
+      if (!mounted) return;
+
+      setState(() {
+        caricamentoPaginaDb = false;
+        loading = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore caricamento completo prenotazioni: $e'),
           backgroundColor: const Color(0xFFDC2626),
         ),
       );
@@ -2075,6 +2140,55 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             ),
 
             const SizedBox(width: 16),
+
+            Tooltip(
+              message: mostraTutteLePrenotazioni
+                  ? 'Tutte le prenotazioni sono già visualizzate'
+                  : 'Carica tutte le prenotazioni',
+              child: ElevatedButton.icon(
+                onPressed: mostraTutteLePrenotazioni || caricamentoPaginaDb
+                    ? null
+                    : () async {
+                        setState(() {
+                          azzeraSelezionePrenotazioni();
+                        });
+
+                        await caricaTutteLePrenotazioni();
+                        ripristinaFocusTabella();
+                      },
+                icon: caricamentoPaginaDb && !mostraTutteLePrenotazioni
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.unfold_more_rounded),
+                label: Text(
+                  mostraTutteLePrenotazioni
+                      ? 'Tutto visualizzato'
+                      : 'Mostra tutto',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                  foregroundColor: const Color(0xFF475569),
+                  disabledBackgroundColor: const Color(0xFFF1F5F9),
+                  disabledForegroundColor: const Color(0xFF94A3B8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(
+                      color: mostraTutteLePrenotazioni
+                          ? const Color(0xFFE2E8F0)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  elevation: 0,
+                ),
+              ),
+            ),
 
             Tooltip(
               message: prenotazioniVisibili.isEmpty

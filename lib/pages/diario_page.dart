@@ -14,6 +14,8 @@ class DiarioPage extends StatefulWidget {
 }
 
 class _DiarioPageState extends State<DiarioPage> {
+  bool rinnovoInCorso = false;
+
   final TextEditingController _cercaController = TextEditingController();
 
   List<Map<String, dynamic>> _diario = [];
@@ -528,111 +530,147 @@ class _DiarioPageState extends State<DiarioPage> {
                                         DataCell(
                                           IconButton(
                                             tooltip: 'Rinnova corso',
-                                            icon: const Icon(
-                                              Icons.refresh,
-                                              color: Colors.blueGrey,
-                                            ),
-                                            onPressed: () async {
-                                              final confermato = await showDialog<bool>(
-                                                context: context,
-                                                barrierDismissible: false,
-                                                builder: (dialogContext) {
-                                                  return AlertDialog(
-                                                    title: const Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.refresh_rounded,
-                                                          color: Color(
-                                                            0xFF2563EB,
+                                            icon: rinnovoInCorso
+                                                ? const SizedBox(
+                                                    width: 20,
+                                                    height: 20,
+                                                    child:
+                                                        CircularProgressIndicator(
+                                                          strokeWidth: 2.2,
+                                                        ),
+                                                  )
+                                                : const Icon(
+                                                    Icons.refresh,
+                                                    color: Colors.blueGrey,
+                                                  ),
+                                            onPressed: rinnovoInCorso
+                                                ? null
+                                                : () async {
+                                                    final confermato = await showDialog<bool>(
+                                                      context: context,
+                                                      barrierDismissible: false,
+                                                      builder: (dialogContext) {
+                                                        return AlertDialog(
+                                                          title: const Row(
+                                                            children: [
+                                                              Icon(
+                                                                Icons
+                                                                    .refresh_rounded,
+                                                                color: Color(
+                                                                  0xFF2563EB,
+                                                                ),
+                                                              ),
+                                                              SizedBox(
+                                                                width: 10,
+                                                              ),
+                                                              Text(
+                                                                'Conferma rinnovo corso',
+                                                              ),
+                                                            ],
+                                                          ),
+                                                          content: Text(
+                                                            'Vuoi creare un nuovo rinnovo per il corso '
+                                                            '"${testo(riga['corso'])}" di '
+                                                            '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
+                                                          ),
+                                                          actions: [
+                                                            TextButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                  dialogContext,
+                                                                ).pop(false);
+                                                              },
+                                                              child: const Text(
+                                                                'Annulla',
+                                                              ),
+                                                            ),
+                                                            FilledButton.icon(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                  dialogContext,
+                                                                ).pop(true);
+                                                              },
+                                                              icon: const Icon(
+                                                                Icons
+                                                                    .refresh_rounded,
+                                                                size: 18,
+                                                              ),
+                                                              label: const Text(
+                                                                'Rinnova',
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        );
+                                                      },
+                                                    );
+
+                                                    if (!mounted) return;
+                                                    if (confermato != true) {
+                                                      return;
+                                                    }
+
+                                                    final discenteId =
+                                                        riga['discente_id'];
+                                                    final impresaId =
+                                                        riga['impresa_id'];
+                                                    final corsoId =
+                                                        riga['corso_id'];
+
+                                                    if (discenteId == null ||
+                                                        impresaId == null ||
+                                                        corsoId == null) {
+                                                      ScaffoldMessenger.of(
+                                                        this.context,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            'Impossibile rinnovare: discente, impresa o corso mancanti.',
                                                           ),
                                                         ),
-                                                        SizedBox(width: 10),
-                                                        Text(
-                                                          'Conferma rinnovo corso',
+                                                      );
+                                                      return;
+                                                    }
+
+                                                    setState(() {
+                                                      rinnovoInCorso = true;
+                                                    });
+
+                                                    try {
+                                                      await DatabaseService
+                                                          .instance
+                                                          .rinnovaCorso(
+                                                            idDiscente:
+                                                                discenteId
+                                                                    as int,
+                                                            idImpresa:
+                                                                impresaId
+                                                                    as int,
+                                                            idCorso:
+                                                                corsoId as int,
+                                                          );
+
+                                                      await caricaDiario();
+
+                                                      if (!mounted) return;
+
+                                                      ScaffoldMessenger.of(
+                                                        this.context,
+                                                      ).showSnackBar(
+                                                        const SnackBar(
+                                                          content: Text(
+                                                            'Rinnovo creato correttamente.',
+                                                          ),
                                                         ),
-                                                      ],
-                                                    ),
-                                                    content: Text(
-                                                      'Vuoi creare un nuovo rinnovo per il corso '
-                                                      '"${testo(riga['corso'])}" di '
-                                                      '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
-                                                    ),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            dialogContext,
-                                                          ).pop(false);
-                                                        },
-                                                        child: const Text(
-                                                          'Annulla',
-                                                        ),
-                                                      ),
-                                                      FilledButton.icon(
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            dialogContext,
-                                                          ).pop(true);
-                                                        },
-                                                        icon: const Icon(
-                                                          Icons.refresh_rounded,
-                                                          size: 18,
-                                                        ),
-                                                        label: const Text(
-                                                          'Rinnova',
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  );
-                                                },
-                                              );
-
-                                              if (!mounted) return;
-                                              if (confermato != true) return;
-
-                                              final discenteId =
-                                                  riga['discente_id'];
-                                              final impresaId =
-                                                  riga['impresa_id'];
-                                              final corsoId = riga['corso_id'];
-
-                                              if (discenteId == null ||
-                                                  impresaId == null ||
-                                                  corsoId == null) {
-                                                ScaffoldMessenger.of(
-                                                  this.context,
-                                                ).showSnackBar(
-                                                  const SnackBar(
-                                                    content: Text(
-                                                      'Impossibile rinnovare: discente, impresa o corso mancanti.',
-                                                    ),
-                                                  ),
-                                                );
-                                                return;
-                                              }
-
-                                              await DatabaseService.instance
-                                                  .rinnovaCorso(
-                                                    idDiscente:
-                                                        discenteId as int,
-                                                    idImpresa: impresaId as int,
-                                                    idCorso: corsoId as int,
-                                                  );
-
-                                              await caricaDiario();
-
-                                              if (!mounted) return;
-
-                                              ScaffoldMessenger.of(
-                                                this.context,
-                                              ).showSnackBar(
-                                                const SnackBar(
-                                                  content: Text(
-                                                    'Rinnovo creato correttamente.',
-                                                  ),
-                                                ),
-                                              );
-                                            },
+                                                      );
+                                                    } finally {
+                                                      if (mounted) {
+                                                        setState(() {
+                                                          rinnovoInCorso =
+                                                              false;
+                                                        });
+                                                      }
+                                                    }
+                                                  },
                                           ),
                                         ),
                                       ],

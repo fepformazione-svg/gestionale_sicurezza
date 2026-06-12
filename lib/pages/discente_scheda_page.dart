@@ -1901,7 +1901,44 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                     enabled: !eliminazioneCorsiInCorso,
                     onChanged: filtraStorico,
                     decoration: InputDecoration(
-                      // qui resta tutto quello che hai già modificato
+                      hintText: 'Cerca corso...',
+                      prefixIcon: const Icon(
+                        Icons.search_rounded,
+                        color: Color(0xFF64748B),
+                      ),
+                      suffixIcon: _cercaStoricoController.text.isNotEmpty
+                          ? IconButton(
+                              tooltip: 'Azzera ricerca',
+                              icon: const Icon(Icons.close_rounded),
+                              onPressed: eliminazioneCorsiInCorso
+                                  ? null
+                                  : () {
+                                      _cercaStoricoController.clear();
+                                      filtraStorico('');
+                                    },
+                            )
+                          : null,
+                      filled: true,
+                      fillColor: Colors.white,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(14),
+                        borderSide: const BorderSide(
+                          color: Color(0xFF2563EB),
+                          width: 1.5,
+                        ),
+                      ),
                     ),
                   ),
                 ),

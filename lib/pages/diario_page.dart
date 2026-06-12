@@ -14,7 +14,7 @@ class DiarioPage extends StatefulWidget {
 }
 
 class _DiarioPageState extends State<DiarioPage> {
-  bool rinnovoInCorso = false;
+  int? rinnovoInCorsoId;
 
   final TextEditingController _cercaController = TextEditingController();
 
@@ -493,6 +493,10 @@ class _DiarioPageState extends State<DiarioPage> {
                                     ),
                                   ],
                                   rows: _diario.map((riga) {
+                                    final idDiario = riga['id'] as int;
+                                    final rinnovoQuestaRiga =
+                                        rinnovoInCorsoId == idDiario;
+
                                     final stato = statoScadenza(
                                       riga['scadenza']?.toString(),
                                     );
@@ -530,7 +534,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                         DataCell(
                                           IconButton(
                                             tooltip: 'Rinnova corso',
-                                            icon: rinnovoInCorso
+                                            icon: rinnovoQuestaRiga
                                                 ? const SizedBox(
                                                     width: 20,
                                                     height: 20,
@@ -543,7 +547,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     Icons.refresh,
                                                     color: Colors.blueGrey,
                                                   ),
-                                            onPressed: rinnovoInCorso
+                                            onPressed: rinnovoQuestaRiga
                                                 ? null
                                                 : () async {
                                                     final confermato = await showDialog<bool>(
@@ -632,7 +636,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     }
 
                                                     setState(() {
-                                                      rinnovoInCorso = true;
+                                                      rinnovoInCorsoId =
+                                                          idDiario;
                                                     });
 
                                                     try {
@@ -665,8 +670,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     } finally {
                                                       if (mounted) {
                                                         setState(() {
-                                                          rinnovoInCorso =
-                                                              false;
+                                                          rinnovoInCorsoId =
+                                                              null;
                                                         });
                                                       }
                                                     }

@@ -259,34 +259,50 @@ class _DiarioPageState extends State<DiarioPage> {
             Row(
               children: [
                 if (_cercaController.text.trim().isNotEmpty)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEFF6FF),
+                  Tooltip(
+                    message: 'Clicca per azzerare la ricerca',
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFBFDBFE)),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(
-                          Icons.manage_search_rounded,
-                          size: 15,
-                          color: Color(0xFF2563EB),
+                      onTap: () {
+                        _cercaController.clear();
+                        caricaDiario();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Ricerca attiva: ${_cercaController.text.trim()}',
-                          style: const TextStyle(
-                            color: Color(0xFF2563EB),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFEFF6FF),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFBFDBFE)),
                         ),
-                      ],
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.manage_search_rounded,
+                              size: 15,
+                              color: Color(0xFF2563EB),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              'Ricerca attiva: ${_cercaController.text.trim()}',
+                              style: const TextStyle(
+                                color: Color(0xFF2563EB),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            const Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: Color(0xFF2563EB),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
 

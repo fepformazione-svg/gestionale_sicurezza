@@ -474,7 +474,21 @@ class _DiarioPageState extends State<DiarioPage> {
                                     ),
                                     const DataColumn(label: Text('Stato')),
                                     const DataColumn(label: Text('Prot.')),
-                                    const DataColumn(label: Text('↻')),
+                                    const DataColumn(
+                                      label: Tooltip(
+                                        message: 'Rinnova corso',
+                                        child: SizedBox(
+                                          width: 32,
+                                          child: Center(
+                                            child: Icon(
+                                              Icons.refresh_rounded,
+                                              size: 22,
+                                              color: Color(0xFF334155),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
                                   ],
                                   rows: _diario.map((riga) {
                                     final stato = statoScadenza(

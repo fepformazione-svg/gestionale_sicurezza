@@ -533,7 +533,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                         DataCell(Text(testo(riga['prot']))),
                                         DataCell(
                                           IconButton(
-                                            tooltip: 'Rinnova corso',
+                                            tooltip: rinnovoQuestaRiga
+                                                ? 'Rinnovo in corso...'
+                                                : 'Rinnova corso',
                                             icon: rinnovoQuestaRiga
                                                 ? const SizedBox(
                                                     width: 20,

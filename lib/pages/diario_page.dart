@@ -264,151 +264,165 @@ class _DiarioPageState extends State<DiarioPage> {
                         borderRadius: BorderRadius.circular(18),
                         border: Border.all(color: Colors.grey.shade300),
                       ),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SingleChildScrollView(
-                          child: DataTable(
-                            showCheckboxColumn: false,
-                            sortColumnIndex: _sortColumnIndex,
-                            sortAscending: _sortAscending,
-                            headingRowColor: WidgetStateProperty.all(
-                              Colors.grey.shade100,
-                            ),
-                            columns: [
-                              DataColumn(
-                                label: const Text('Discente'),
-                                onSort: (columnIndex, ascending) {
-                                  ordina<String>(
-                                    (riga) =>
-                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-                                    columnIndex,
-                                    ascending,
-                                  );
-                                },
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                minWidth: constraints.maxWidth,
                               ),
-                              DataColumn(
-                                label: const Text('Impresa'),
-                                onSort: (columnIndex, ascending) {
-                                  ordina<String>(
-                                    (riga) => testo(riga['impresa']),
-                                    columnIndex,
-                                    ascending,
-                                  );
-                                },
-                              ),
-                              DataColumn(
-                                label: const Text('Corso'),
-                                onSort: (columnIndex, ascending) {
-                                  ordina<String>(
-                                    (riga) => testo(riga['corso']),
-                                    columnIndex,
-                                    ascending,
-                                  );
-                                },
-                              ),
-                              const DataColumn(label: Text('Data corso')),
-                              DataColumn(
-                                label: const Text('Scadenza'),
-                                onSort: (columnIndex, ascending) {
-                                  ordina<String>(
-                                    (riga) => testo(riga['scadenza']),
-                                    columnIndex,
-                                    ascending,
-                                  );
-                                },
-                              ),
-                              const DataColumn(label: Text('Stato')),
-                              const DataColumn(label: Text('Prot.')),
-                              const DataColumn(label: Text('↻')),
-                            ],
-                            rows: _diario.map((riga) {
-                              final stato = statoScadenza(
-                                riga['scadenza']?.toString(),
-                              );
-
-                              return DataRow(
-                                onSelectChanged: (_) {
-                                  apriSchedaDiscente(riga);
-                                },
-                                cells: [
-                                  DataCell(
-                                    InkWell(
-                                      onTap: () {
-                                        apriSchedaDiscente(riga);
-                                      },
-                                      child: Text(
-                                        '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                                            .trim(),
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          color: Color(0xFF2563EB),
-                                        ),
-                                      ),
-                                    ),
+                              child: SingleChildScrollView(
+                                child: DataTable(
+                                  showCheckboxColumn: false,
+                                  sortColumnIndex: _sortColumnIndex,
+                                  sortAscending: _sortAscending,
+                                  headingRowColor: WidgetStateProperty.all(
+                                    Colors.grey.shade100,
                                   ),
-                                  DataCell(Text(testo(riga['impresa']))),
-                                  DataCell(Text(testo(riga['corso']))),
-                                  DataCell(Text(formattaData(riga['data']))),
-                                  DataCell(
-                                    Text(formattaData(riga['scadenza'])),
-                                  ),
-                                  DataCell(badge(stato)),
-                                  DataCell(Text(testo(riga['prot']))),
-                                  DataCell(
-                                    IconButton(
-                                      tooltip: 'Rinnova corso',
-                                      icon: const Icon(
-                                        Icons.refresh,
-                                        color: Colors.blueGrey,
-                                      ),
-                                      onPressed: () async {
-                                        final discenteId = riga['discente_id'];
-                                        final impresaId = riga['impresa_id'];
-                                        final corsoId = riga['corso_id'];
-
-                                        if (discenteId == null ||
-                                            impresaId == null ||
-                                            corsoId == null) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                'Impossibile rinnovare: discente, impresa o corso mancanti.',
-                                              ),
-                                            ),
-                                          );
-                                          return;
-                                        }
-
-                                        await DatabaseService.instance
-                                            .rinnovaCorso(
-                                              idDiscente: discenteId as int,
-                                              idImpresa: impresaId as int,
-                                              idCorso: corsoId as int,
-                                            );
-
-                                        await caricaDiario();
-
-                                        if (!mounted) return;
-
-                                        ScaffoldMessenger.of(
-                                          this.context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Rinnovo creato correttamente.',
-                                            ),
-                                          ),
+                                  columns: [
+                                    DataColumn(
+                                      label: const Text('Discente'),
+                                      onSort: (columnIndex, ascending) {
+                                        ordina<String>(
+                                          (riga) =>
+                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+                                          columnIndex,
+                                          ascending,
                                         );
                                       },
                                     ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                        ),
+                                    DataColumn(
+                                      label: const Text('Impresa'),
+                                      onSort: (columnIndex, ascending) {
+                                        ordina<String>(
+                                          (riga) => testo(riga['impresa']),
+                                          columnIndex,
+                                          ascending,
+                                        );
+                                      },
+                                    ),
+                                    DataColumn(
+                                      label: const Text('Corso'),
+                                      onSort: (columnIndex, ascending) {
+                                        ordina<String>(
+                                          (riga) => testo(riga['corso']),
+                                          columnIndex,
+                                          ascending,
+                                        );
+                                      },
+                                    ),
+                                    const DataColumn(label: Text('Data corso')),
+                                    DataColumn(
+                                      label: const Text('Scadenza'),
+                                      onSort: (columnIndex, ascending) {
+                                        ordina<String>(
+                                          (riga) => testo(riga['scadenza']),
+                                          columnIndex,
+                                          ascending,
+                                        );
+                                      },
+                                    ),
+                                    const DataColumn(label: Text('Stato')),
+                                    const DataColumn(label: Text('Prot.')),
+                                    const DataColumn(label: Text('↻')),
+                                  ],
+                                  rows: _diario.map((riga) {
+                                    final stato = statoScadenza(
+                                      riga['scadenza']?.toString(),
+                                    );
+
+                                    return DataRow(
+                                      onSelectChanged: (_) {
+                                        apriSchedaDiscente(riga);
+                                      },
+                                      cells: [
+                                        DataCell(
+                                          InkWell(
+                                            onTap: () {
+                                              apriSchedaDiscente(riga);
+                                            },
+                                            child: Text(
+                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                                  .trim(),
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                color: Color(0xFF2563EB),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        DataCell(Text(testo(riga['impresa']))),
+                                        DataCell(Text(testo(riga['corso']))),
+                                        DataCell(
+                                          Text(formattaData(riga['data'])),
+                                        ),
+                                        DataCell(
+                                          Text(formattaData(riga['scadenza'])),
+                                        ),
+                                        DataCell(badge(stato)),
+                                        DataCell(Text(testo(riga['prot']))),
+                                        DataCell(
+                                          IconButton(
+                                            tooltip: 'Rinnova corso',
+                                            icon: const Icon(
+                                              Icons.refresh,
+                                              color: Colors.blueGrey,
+                                            ),
+                                            onPressed: () async {
+                                              final discenteId =
+                                                  riga['discente_id'];
+                                              final impresaId =
+                                                  riga['impresa_id'];
+                                              final corsoId = riga['corso_id'];
+
+                                              if (discenteId == null ||
+                                                  impresaId == null ||
+                                                  corsoId == null) {
+                                                ScaffoldMessenger.of(
+                                                  context,
+                                                ).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Text(
+                                                      'Impossibile rinnovare: discente, impresa o corso mancanti.',
+                                                    ),
+                                                  ),
+                                                );
+                                                return;
+                                              }
+
+                                              await DatabaseService.instance
+                                                  .rinnovaCorso(
+                                                    idDiscente:
+                                                        discenteId as int,
+                                                    idImpresa: impresaId as int,
+                                                    idCorso: corsoId as int,
+                                                  );
+
+                                              await caricaDiario();
+
+                                              if (!mounted) return;
+
+                                              ScaffoldMessenger.of(
+                                                this.context,
+                                              ).showSnackBar(
+                                                const SnackBar(
+                                                  content: Text(
+                                                    'Rinnovo creato correttamente.',
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  }).toList(),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
             ),

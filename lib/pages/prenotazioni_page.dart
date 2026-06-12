@@ -456,6 +456,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       caricamentoPaginaDb = true;
       paginaDbCorrente = 0;
       fineArchivioPrenotazioni = false;
+      mostraTutteLePrenotazioni = false;
 
       prenotazioni.clear();
       prenotazioniFiltrate.clear();
@@ -477,6 +478,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
         if (dati.length < righePerPaginaDb) {
           fineArchivioPrenotazioni = true;
+          mostraTutteLePrenotazioni = true;
         }
       });
     } catch (e) {
@@ -1032,6 +1034,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
         if (dati.length < righePerPaginaDb) {
           fineArchivioPrenotazioni = true;
+          mostraTutteLePrenotazioni = true;
         }
 
         caricamentoPaginaDb = false;

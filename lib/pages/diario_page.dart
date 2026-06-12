@@ -533,6 +533,63 @@ class _DiarioPageState extends State<DiarioPage> {
                                               color: Colors.blueGrey,
                                             ),
                                             onPressed: () async {
+                                              final confermato = await showDialog<bool>(
+                                                context: context,
+                                                barrierDismissible: false,
+                                                builder: (dialogContext) {
+                                                  return AlertDialog(
+                                                    title: const Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.refresh_rounded,
+                                                          color: Color(
+                                                            0xFF2563EB,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                          'Conferma rinnovo corso',
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    content: Text(
+                                                      'Vuoi creare un nuovo rinnovo per il corso '
+                                                      '"${testo(riga['corso'])}" di '
+                                                      '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop(false);
+                                                        },
+                                                        child: const Text(
+                                                          'Annulla',
+                                                        ),
+                                                      ),
+                                                      FilledButton.icon(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop(true);
+                                                        },
+                                                        icon: const Icon(
+                                                          Icons.refresh_rounded,
+                                                          size: 18,
+                                                        ),
+                                                        label: const Text(
+                                                          'Rinnova',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+
+                                              if (!mounted) return;
+                                              if (confermato != true) return;
+
                                               final discenteId =
                                                   riga['discente_id'];
                                               final impresaId =
@@ -543,7 +600,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                   impresaId == null ||
                                                   corsoId == null) {
                                                 ScaffoldMessenger.of(
-                                                  context,
+                                                  this.context,
                                                 ).showSnackBar(
                                                   const SnackBar(
                                                     content: Text(

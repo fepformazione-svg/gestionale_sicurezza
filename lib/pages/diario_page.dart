@@ -334,12 +334,21 @@ class _DiarioPageState extends State<DiarioPage> {
                             ),
                             if (_cercaController.text.trim().isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text(
+                              const Text(
                                 'Prova a modificare o azzerare la ricerca.',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
                                   color: Color(0xFF64748B),
                                 ),
+                              ),
+                              const SizedBox(height: 14),
+                              OutlinedButton.icon(
+                                onPressed: () {
+                                  _cercaController.clear();
+                                  caricaDiario();
+                                },
+                                icon: const Icon(Icons.clear_rounded, size: 18),
+                                label: const Text('Azzera ricerca'),
                               ),
                             ],
                           ],

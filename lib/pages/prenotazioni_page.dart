@@ -1108,6 +1108,20 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       if (widget.globalSearch.trim().isNotEmpty) {
         cercaPrenotazioni(widget.globalSearch);
       }
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            tutteLePrenotazioni.length == 1
+                ? 'Archivio completo: 1 prenotazione visualizzata'
+                : 'Archivio completo: ${tutteLePrenotazioni.length} prenotazioni visualizzate',
+          ),
+          backgroundColor: const Color(0xFF16A34A),
+          duration: const Duration(seconds: 4),
+        ),
+      );
     } catch (e) {
       debugPrint('Errore caricamento completo prenotazioni: $e');
 

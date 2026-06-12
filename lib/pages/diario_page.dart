@@ -667,6 +667,22 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           ),
                                                         ),
                                                       );
+                                                    } catch (errore) {
+                                                      if (!mounted) return;
+
+                                                      ScaffoldMessenger.of(
+                                                        this.context,
+                                                      ).showSnackBar(
+                                                        SnackBar(
+                                                          content: Text(
+                                                            'Errore durante il rinnovo: $errore',
+                                                          ),
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFFDC2626,
+                                                              ),
+                                                        ),
+                                                      );
                                                     } finally {
                                                       if (mounted) {
                                                         setState(() {

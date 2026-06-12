@@ -301,6 +301,51 @@ class _DiarioPageState extends State<DiarioPage> {
             Expanded(
               child: _caricamento
                   ? const Center(child: CircularProgressIndicator())
+                  : _diario.isEmpty
+                  ? Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 28,
+                          vertical: 24,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.search_off_rounded,
+                              size: 52,
+                              color: Color(0xFF94A3B8),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              _cercaController.text.trim().isNotEmpty
+                                  ? 'Nessun corso trovato'
+                                  : 'Nessun corso presente nel diario',
+                              style: const TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF334155),
+                              ),
+                            ),
+                            if (_cercaController.text.trim().isNotEmpty) ...[
+                              const SizedBox(height: 6),
+                              Text(
+                                'Prova a modificare o azzerare la ricerca.',
+                                style: const TextStyle(
+                                  fontSize: 13,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    )
                   : Container(
                       width: double.infinity,
                       decoration: BoxDecoration(

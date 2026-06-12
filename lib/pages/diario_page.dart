@@ -242,6 +242,7 @@ class _DiarioPageState extends State<DiarioPage> {
                 suffixIcon: _cercaController.text.isEmpty
                     ? null
                     : IconButton(
+                        tooltip: 'Azzera ricerca',
                         icon: const Icon(Icons.clear),
                         onPressed: () {
                           _cercaController.clear();

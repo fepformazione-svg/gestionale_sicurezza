@@ -663,10 +663,19 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       ScaffoldMessenger.of(
                                                         this.context,
                                                       ).showSnackBar(
-                                                        const SnackBar(
+                                                        SnackBar(
                                                           content: Text(
-                                                            'Rinnovo creato correttamente.',
+                                                            'Rinnovo creato: ${testo(riga['corso'])} — '
+                                                            '${testo(riga['cognome'])} ${testo(riga['nome'])}',
                                                           ),
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF16A34A,
+                                                              ),
+                                                          duration:
+                                                              const Duration(
+                                                                seconds: 4,
+                                                              ),
                                                         ),
                                                       );
                                                     } catch (errore) {

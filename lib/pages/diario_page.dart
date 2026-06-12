@@ -549,7 +549,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     Icons.refresh,
                                                     color: Colors.blueGrey,
                                                   ),
-                                            onPressed: rinnovoQuestaRiga
+                                            onPressed: rinnovoInCorsoId != null
                                                 ? null
                                                 : () async {
                                                     final confermato = await showDialog<bool>(

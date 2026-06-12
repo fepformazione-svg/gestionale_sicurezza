@@ -256,44 +256,79 @@ class _DiarioPageState extends State<DiarioPage> {
             ),
             const SizedBox(height: 14),
 
-            Align(
-              alignment: Alignment.centerRight,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 7,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF8FAFC),
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.format_list_bulleted_rounded,
-                      size: 15,
-                      color: Color(0xFF64748B),
+            Row(
+              children: [
+                if (_cercaController.text.trim().isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      _cercaController.text.trim().isNotEmpty
-                          ? _diario.length == 1
-                                ? '1 corso trovato'
-                                : '${_diario.length} corsi trovati'
-                          : _diario.length == 1
-                          ? '1 corso visualizzato'
-                          : '${_diario.length} corsi visualizzati',
-                      style: const TextStyle(
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEFF6FF),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFBFDBFE)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(
+                          Icons.manage_search_rounded,
+                          size: 15,
+                          color: Color(0xFF2563EB),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'Ricerca attiva: ${_cercaController.text.trim()}',
+                          style: const TextStyle(
+                            color: Color(0xFF2563EB),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                const Spacer(),
+
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 7,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.format_list_bulleted_rounded,
+                        size: 15,
                         color: Color(0xFF64748B),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Text(
+                        _cercaController.text.trim().isNotEmpty
+                            ? _diario.length == 1
+                                  ? '1 corso trovato'
+                                  : '${_diario.length} corsi trovati'
+                            : _diario.length == 1
+                            ? '1 corso visualizzato'
+                            : '${_diario.length} corsi visualizzati',
+                        style: const TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
 
             const SizedBox(height: 10),

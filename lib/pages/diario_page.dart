@@ -535,6 +535,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                           IconButton(
                                             tooltip: rinnovoQuestaRiga
                                                 ? 'Rinnovo in corso...'
+                                                : rinnovoInCorsoId != null
+                                                ? 'Attendi il completamento del rinnovo in corso'
                                                 : 'Rinnova corso',
                                             icon: rinnovoQuestaRiga
                                                 ? const SizedBox(

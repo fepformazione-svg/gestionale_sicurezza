@@ -311,34 +311,53 @@ class _DiarioPageState extends State<DiarioPage> {
                 if (_soloDaFatturare) ...[
                   if (_cercaController.text.trim().isNotEmpty)
                     const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 7,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFFF7ED),
+                  Tooltip(
+                    message: 'Clicca per mostrare tutto il diario',
+                    child: InkWell(
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFFFED7AA)),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          Icons.receipt_long_rounded,
-                          size: 15,
-                          color: Color(0xFFF97316),
+                      onTap: () {
+                        setState(() {
+                          _soloDaFatturare = false;
+                        });
+
+                        caricaDiario();
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 7,
                         ),
-                        SizedBox(width: 6),
-                        Text(
-                          'Filtro attivo: Da fatturare',
-                          style: TextStyle(
-                            color: Color(0xFFF97316),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w700,
-                          ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF7ED),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFFED7AA)),
                         ),
-                      ],
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_rounded,
+                              size: 15,
+                              color: Color(0xFFF97316),
+                            ),
+                            SizedBox(width: 6),
+                            Text(
+                              'Filtro attivo: Da fatturare',
+                              style: TextStyle(
+                                color: Color(0xFFF97316),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            SizedBox(width: 6),
+                            Icon(
+                              Icons.close_rounded,
+                              size: 14,
+                              color: Color(0xFFF97316),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -416,7 +435,9 @@ class _DiarioPageState extends State<DiarioPage> {
                             const SizedBox(height: 12),
                             Text(
                               _cercaController.text.trim().isNotEmpty
-                                  ? 'Nessun corso trovato'
+                                  ? _soloDaFatturare
+                                        ? 'Nessun corso da fatturare trovato'
+                                        : 'Nessun corso trovato'
                                   : _soloDaFatturare
                                   ? 'Nessun corso da fatturare'
                                   : 'Nessun corso presente nel diario',

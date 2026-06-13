@@ -362,6 +362,37 @@ class _DiarioPageState extends State<DiarioPage> {
                   ),
                 ],
 
+                if (_cercaController.text.trim().isNotEmpty ||
+                    _soloDaFatturare) ...[
+                  const SizedBox(width: 8),
+                  Tooltip(
+                    message: 'Azzera ricerca e filtri del diario',
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        setState(() {
+                          _cercaController.clear();
+                          _soloDaFatturare = false;
+                        });
+
+                        caricaDiario();
+                      },
+                      icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
+                      label: const Text('Mostra tutto'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF334155),
+                        side: const BorderSide(color: Color(0xFFCBD5E1)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 10,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+
                 const Spacer(),
 
                 Container(

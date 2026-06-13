@@ -578,6 +578,12 @@ class _DiarioPageState extends State<DiarioPage> {
                                     const DataColumn(label: Text('Prot.')),
                                     const DataColumn(
                                       label: Tooltip(
+                                        message: 'Da fatturare',
+                                        child: Text('Da Fatt.'),
+                                      ),
+                                    ),
+                                    const DataColumn(
+                                      label: Tooltip(
                                         message: 'Rinnova corso',
                                         child: SizedBox(
                                           width: 32,
@@ -641,6 +647,46 @@ class _DiarioPageState extends State<DiarioPage> {
                                         ),
                                         DataCell(badge(stato)),
                                         DataCell(Text(testo(riga['prot']))),
+                                        DataCell(
+                                          riga['da_fatturare'] == 1
+                                              ? Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 9,
+                                                        vertical: 5,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFFFFF7ED,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          999,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFFFED7AA,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'SÌ',
+                                                    style: TextStyle(
+                                                      color: Color(0xFFF97316),
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                )
+                                              : const Text(
+                                                  '-',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF94A3B8),
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                ),
+                                        ),
                                         DataCell(
                                           IconButton(
                                             tooltip: rinnovoQuestaRiga

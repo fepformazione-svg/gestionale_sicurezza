@@ -369,6 +369,10 @@ class _DiarioPageState extends State<DiarioPage> {
                             ? _diario.length == 1
                                   ? '1 corso trovato'
                                   : '${_diario.length} corsi trovati'
+                            : _soloDaFatturare
+                            ? _diario.length == 1
+                                  ? '1 corso da fatturare'
+                                  : '${_diario.length} corsi da fatturare'
                             : _diario.length == 1
                             ? '1 corso visualizzato'
                             : '${_diario.length} corsi visualizzati',

@@ -463,7 +463,10 @@ class _DiarioPageState extends State<DiarioPage> {
                               const SizedBox(height: 14),
                               OutlinedButton.icon(
                                 onPressed: () {
-                                  _cercaController.clear();
+                                  setState(() {
+                                    _cercaController.clear();
+                                  });
+
                                   caricaDiario();
                                 },
                                 icon: const Icon(Icons.clear_rounded, size: 18),

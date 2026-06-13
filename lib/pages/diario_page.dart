@@ -149,6 +149,50 @@ class _DiarioPageState extends State<DiarioPage> {
     );
   }
 
+  Widget badgeDaFatturare(bool valore) {
+    return Tooltip(
+      message: valore ? 'Da fatturare' : 'Non da fatturare',
+      child: Container(
+        width: 98,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+        decoration: BoxDecoration(
+          color: valore ? const Color(0xFFFFEDD5) : const Color(0xFFE5E7EB),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(
+            color: valore ? const Color(0xFFF97316) : const Color(0xFFCBD5E1),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              valore
+                  ? Icons.receipt_long_rounded
+                  : Icons.check_circle_outline_rounded,
+              size: 15,
+              color: valore ? const Color(0xFFC2410C) : const Color(0xFF64748B),
+            ),
+            const SizedBox(width: 4),
+            Text(
+              valore ? 'DA FATT' : 'OK',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.2,
+                color: valore
+                    ? const Color(0xFFC2410C)
+                    : const Color(0xFF475569),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   String testo(dynamic valore) {
     if (valore == null) return '';
     return valore.toString();
@@ -864,7 +908,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                           ),
                                           DataCell(
                                             SizedBox(
-                                              width: 85,
+                                              width: 108,
                                               child: Center(
                                                 child: Tooltip(
                                                   message:
@@ -917,79 +961,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         ),
                                                       );
                                                     },
-                                                    child:
-                                                        riga['da_fatturare'] ==
-                                                            1
-                                                        ? Container(
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 9,
-                                                                  vertical: 5,
-                                                                ),
-                                                            decoration: BoxDecoration(
-                                                              color:
-                                                                  const Color(
-                                                                    0xFFFFF7ED,
-                                                                  ),
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    999,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color:
-                                                                    const Color(
-                                                                      0xFFFED7AA,
-                                                                    ),
-                                                              ),
-                                                            ),
-                                                            child: const Text(
-                                                              'SÌ',
-                                                              style: TextStyle(
-                                                                color: Color(
-                                                                  0xFFF97316,
-                                                                ),
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                            ),
-                                                          )
-                                                        : Container(
-                                                            padding:
-                                                                const EdgeInsets.symmetric(
-                                                                  horizontal: 9,
-                                                                  vertical: 5,
-                                                                ),
-                                                            decoration: BoxDecoration(
-                                                              color:
-                                                                  const Color(
-                                                                    0xFFF8FAFC,
-                                                                  ),
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    999,
-                                                                  ),
-                                                              border: Border.all(
-                                                                color:
-                                                                    const Color(
-                                                                      0xFFE2E8F0,
-                                                                    ),
-                                                              ),
-                                                            ),
-                                                            child: const Text(
-                                                              '-',
-                                                              style: TextStyle(
-                                                                color: Color(
-                                                                  0xFF94A3B8,
-                                                                ),
-                                                                fontSize: 12,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700,
-                                                              ),
-                                                            ),
-                                                          ),
+                                                    child: badgeDaFatturare(
+                                                      riga['da_fatturare'] == 1,
+                                                    ),
                                                   ),
                                                 ),
                                               ),

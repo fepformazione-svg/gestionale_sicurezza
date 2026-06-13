@@ -413,6 +413,8 @@ class _DiarioPageState extends State<DiarioPage> {
                             Text(
                               _cercaController.text.trim().isNotEmpty
                                   ? 'Nessun corso trovato'
+                                  : _soloDaFatturare
+                                  ? 'Nessun corso da fatturare'
                                   : 'Nessun corso presente nel diario',
                               style: const TextStyle(
                                 fontSize: 17,

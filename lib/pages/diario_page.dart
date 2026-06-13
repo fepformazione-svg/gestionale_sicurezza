@@ -17,6 +17,7 @@ class _DiarioPageState extends State<DiarioPage> {
   int? rinnovoInCorsoId;
 
   final TextEditingController _cercaController = TextEditingController();
+  final ScrollController diarioHorizontalController = ScrollController();
 
   List<Map<String, dynamic>> _diario = [];
   bool _caricamento = true;
@@ -183,6 +184,7 @@ class _DiarioPageState extends State<DiarioPage> {
   @override
   void dispose() {
     _cercaController.dispose();
+    diarioHorizontalController.dispose();
     super.dispose();
   }
 
@@ -517,521 +519,551 @@ class _DiarioPageState extends State<DiarioPage> {
                       ),
                       child: LayoutBuilder(
                         builder: (context, constraints) {
-                          return SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: ConstrainedBox(
-                              constraints: BoxConstraints(
-                                minWidth: constraints.maxWidth,
-                              ),
-                              child: SingleChildScrollView(
-                                child: DataTable(
-                                  showCheckboxColumn: false,
-                                  sortColumnIndex: _sortColumnIndex,
-                                  sortAscending: _sortAscending,
-                                  headingRowColor: WidgetStateProperty.all(
-                                    Colors.grey.shade100,
-                                  ),
-                                  columns: [
-                                    DataColumn(
-                                      label: const Text('Discente'),
-                                      onSort: (columnIndex, ascending) {
-                                        ordina<String>(
-                                          (riga) =>
-                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-                                          columnIndex,
-                                          ascending,
-                                        );
-                                      },
+                          return Scrollbar(
+                            controller: diarioHorizontalController,
+                            thumbVisibility: true,
+                            trackVisibility: true,
+                            interactive: true,
+                            child: SingleChildScrollView(
+                              controller: diarioHorizontalController,
+                              scrollDirection: Axis.horizontal,
+                              child: ConstrainedBox(
+                                constraints: BoxConstraints(
+                                  minWidth: constraints.maxWidth < 1600
+                                      ? 1600
+                                      : constraints.maxWidth,
+                                ),
+                                child: SingleChildScrollView(
+                                  child: DataTable(
+                                    showCheckboxColumn: false,
+                                    sortColumnIndex: _sortColumnIndex,
+                                    sortAscending: _sortAscending,
+                                    headingRowColor: WidgetStateProperty.all(
+                                      Colors.grey.shade100,
                                     ),
-                                    DataColumn(
-                                      label: const Text('Impresa'),
-                                      onSort: (columnIndex, ascending) {
-                                        ordina<String>(
-                                          (riga) => testo(riga['impresa']),
-                                          columnIndex,
-                                          ascending,
-                                        );
-                                      },
-                                    ),
-                                    DataColumn(
-                                      label: const Text('Corso'),
-                                      onSort: (columnIndex, ascending) {
-                                        ordina<String>(
-                                          (riga) => testo(riga['corso']),
-                                          columnIndex,
-                                          ascending,
-                                        );
-                                      },
-                                    ),
-                                    const DataColumn(label: Text('Data corso')),
-                                    DataColumn(
-                                      label: const Text('Scadenza'),
-                                      onSort: (columnIndex, ascending) {
-                                        ordina<String>(
-                                          (riga) => testo(riga['scadenza']),
-                                          columnIndex,
-                                          ascending,
-                                        );
-                                      },
-                                    ),
-                                    const DataColumn(label: Text('Stato')),
-                                    const DataColumn(label: Text('Prot.')),
-                                    const DataColumn(
-                                      label: Tooltip(
-                                        message: 'Numero o riferimento fattura',
-                                        child: Text('Fattura'),
+                                    columns: [
+                                      DataColumn(
+                                        label: const Text('Discente'),
+                                        onSort: (columnIndex, ascending) {
+                                          ordina<String>(
+                                            (riga) =>
+                                                '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+                                            columnIndex,
+                                            ascending,
+                                          );
+                                        },
                                       ),
-                                    ),
-                                    const DataColumn(
-                                      label: Tooltip(
-                                        message: 'Attestato/documento inviato',
-                                        child: Text('Invio'),
+                                      DataColumn(
+                                        label: const Text('Impresa'),
+                                        onSort: (columnIndex, ascending) {
+                                          ordina<String>(
+                                            (riga) => testo(riga['impresa']),
+                                            columnIndex,
+                                            ascending,
+                                          );
+                                        },
                                       ),
-                                    ),
-                                    const DataColumn(
-                                      label: Tooltip(
-                                        message: 'Da fatturare',
-                                        child: Text('Da Fatt.'),
+                                      DataColumn(
+                                        label: const Text('Corso'),
+                                        onSort: (columnIndex, ascending) {
+                                          ordina<String>(
+                                            (riga) => testo(riga['corso']),
+                                            columnIndex,
+                                            ascending,
+                                          );
+                                        },
                                       ),
-                                    ),
-                                    const DataColumn(
-                                      label: Tooltip(
-                                        message: 'Rinnova corso',
-                                        child: SizedBox(
-                                          width: 32,
-                                          child: Center(
-                                            child: Icon(
-                                              Icons.refresh_rounded,
-                                              size: 22,
-                                              color: Color(0xFF334155),
-                                            ),
-                                          ),
+                                      const DataColumn(
+                                        label: Text('Data corso'),
+                                      ),
+                                      DataColumn(
+                                        label: const Text('Scadenza'),
+                                        onSort: (columnIndex, ascending) {
+                                          ordina<String>(
+                                            (riga) => testo(riga['scadenza']),
+                                            columnIndex,
+                                            ascending,
+                                          );
+                                        },
+                                      ),
+                                      const DataColumn(label: Text('Stato')),
+                                      const DataColumn(label: Text('Prot.')),
+                                      const DataColumn(
+                                        label: Tooltip(
+                                          message:
+                                              'Numero o riferimento fattura',
+                                          child: Text('Fattura'),
                                         ),
                                       ),
-                                    ),
-                                  ],
-                                  rows: _diario.map((riga) {
-                                    final idDiario = riga['id'] as int;
-                                    final rinnovoQuestaRiga =
-                                        rinnovoInCorsoId == idDiario;
-
-                                    final stato = statoScadenza(
-                                      riga['scadenza']?.toString(),
-                                    );
-
-                                    return DataRow(
-                                      color:
-                                          WidgetStateProperty.resolveWith<
-                                            Color?
-                                          >((states) {
-                                            if (rinnovoQuestaRiga) {
-                                              return const Color(0xFFEFF6FF);
-                                            }
-
-                                            return null;
-                                          }),
-                                      onSelectChanged: (_) {
-                                        apriSchedaDiscente(riga);
-                                      },
-                                      cells: [
-                                        DataCell(
-                                          InkWell(
-                                            onTap: () {
-                                              apriSchedaDiscente(riga);
-                                            },
-                                            child: Text(
-                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                                                  .trim(),
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w600,
-                                                color: Color(0xFF2563EB),
+                                      const DataColumn(
+                                        label: Tooltip(
+                                          message:
+                                              'Attestato/documento inviato',
+                                          child: Text('Invio'),
+                                        ),
+                                      ),
+                                      const DataColumn(
+                                        label: Tooltip(
+                                          message: 'Da fatturare',
+                                          child: Text('Da Fatt.'),
+                                        ),
+                                      ),
+                                      const DataColumn(
+                                        label: Tooltip(
+                                          message: 'Rinnova corso',
+                                          child: SizedBox(
+                                            width: 32,
+                                            child: Center(
+                                              child: Icon(
+                                                Icons.refresh_rounded,
+                                                size: 22,
+                                                color: Color(0xFF334155),
                                               ),
                                             ),
                                           ),
                                         ),
-                                        DataCell(Text(testo(riga['impresa']))),
-                                        DataCell(Text(testo(riga['corso']))),
-                                        DataCell(
-                                          Text(formattaData(riga['data'])),
-                                        ),
-                                        DataCell(
-                                          Text(formattaData(riga['scadenza'])),
-                                        ),
-                                        DataCell(badge(stato)),
-                                        DataCell(Text(testo(riga['prot']))),
-                                        DataCell(
-                                          testo(riga['fattura']).trim().isEmpty
-                                              ? const Text(
-                                                  '-',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF94A3B8),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                )
-                                              : Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 9,
-                                                        vertical: 5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFEFF6FF,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          999,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: const Color(
-                                                        0xFFBFDBFE,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  child: Text(
-                                                    testo(riga['fattura']),
-                                                    style: const TextStyle(
-                                                      color: Color(0xFF2563EB),
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                ),
-                                        ),
-                                        DataCell(
-                                          riga['invio'] == 1
-                                              ? Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 9,
-                                                        vertical: 5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFEFF6FF,
-                                                    ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          999,
-                                                        ),
-                                                    border: Border.all(
-                                                      color: const Color(
-                                                        0xFFBFDBFE,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  child: const Text(
-                                                    'SÌ',
-                                                    style: TextStyle(
-                                                      color: Color(0xFF2563EB),
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const Text(
-                                                  '-',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF94A3B8),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-                                        ),
-                                        DataCell(
-                                          Tooltip(
-                                            message: riga['da_fatturare'] == 1
-                                                ? 'Rimuovi da fatturare'
-                                                : 'Segna come da fatturare',
-                                            child: InkWell(
-                                              borderRadius:
-                                                  BorderRadius.circular(999),
-                                              onTap: () async {
-                                                final attualmenteDaFatturare =
-                                                    riga['da_fatturare'] == 1;
+                                      ),
+                                    ],
+                                    rows: _diario.map((riga) {
+                                      final idDiario = riga['id'] as int;
+                                      final rinnovoQuestaRiga =
+                                          rinnovoInCorsoId == idDiario;
 
-                                                await DatabaseService.instance
-                                                    .aggiornaDaFatturareDiario(
-                                                      id: idDiario,
-                                                      valore:
-                                                          !attualmenteDaFatturare,
-                                                    );
+                                      final stato = statoScadenza(
+                                        riga['scadenza']?.toString(),
+                                      );
 
-                                                await caricaDiario();
+                                      return DataRow(
+                                        color:
+                                            WidgetStateProperty.resolveWith<
+                                              Color?
+                                            >((states) {
+                                              if (rinnovoQuestaRiga) {
+                                                return const Color(0xFFEFF6FF);
+                                              }
 
-                                                if (!mounted) return;
-
-                                                ScaffoldMessenger.of(
-                                                  this.context,
-                                                ).showSnackBar(
-                                                  SnackBar(
-                                                    content: Text(
-                                                      !attualmenteDaFatturare
-                                                          ? 'Corso segnato come da fatturare'
-                                                          : 'Corso rimosso da fatturare',
-                                                    ),
-                                                    backgroundColor:
-                                                        !attualmenteDaFatturare
-                                                        ? const Color(
-                                                            0xFFF97316,
-                                                          )
-                                                        : const Color(
-                                                            0xFF64748B,
-                                                          ),
-                                                    duration: const Duration(
-                                                      seconds: 3,
-                                                    ),
-                                                  ),
-                                                );
+                                              return null;
+                                            }),
+                                        onSelectChanged: (_) {
+                                          apriSchedaDiscente(riga);
+                                        },
+                                        cells: [
+                                          DataCell(
+                                            InkWell(
+                                              onTap: () {
+                                                apriSchedaDiscente(riga);
                                               },
-                                              child: riga['da_fatturare'] == 1
-                                                  ? Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 9,
-                                                            vertical: 5,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                          0xFFFFF7ED,
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              999,
-                                                            ),
-                                                        border: Border.all(
-                                                          color: const Color(
-                                                            0xFFFED7AA,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      child: const Text(
-                                                        'SÌ',
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFFF97316,
-                                                          ),
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                    )
-                                                  : Container(
-                                                      padding:
-                                                          const EdgeInsets.symmetric(
-                                                            horizontal: 9,
-                                                            vertical: 5,
-                                                          ),
-                                                      decoration: BoxDecoration(
-                                                        color: const Color(
-                                                          0xFFF8FAFC,
-                                                        ),
-                                                        borderRadius:
-                                                            BorderRadius.circular(
-                                                              999,
-                                                            ),
-                                                        border: Border.all(
-                                                          color: const Color(
-                                                            0xFFE2E8F0,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                      child: const Text(
-                                                        '-',
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF94A3B8,
-                                                          ),
-                                                          fontSize: 12,
-                                                          fontWeight:
-                                                              FontWeight.w700,
-                                                        ),
-                                                      ),
-                                                    ),
+                                              child: Text(
+                                                '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                                    .trim(),
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF2563EB),
+                                                ),
+                                              ),
                                             ),
                                           ),
-                                        ),
-                                        DataCell(
-                                          IconButton(
-                                            tooltip: rinnovoQuestaRiga
-                                                ? 'Rinnovo in corso...'
-                                                : rinnovoInCorsoId != null
-                                                ? 'Attendi il completamento del rinnovo in corso'
-                                                : 'Rinnova corso',
-                                            icon: rinnovoQuestaRiga
-                                                ? const SizedBox(
-                                                    width: 20,
-                                                    height: 20,
-                                                    child:
-                                                        CircularProgressIndicator(
-                                                          strokeWidth: 2.2,
-                                                        ),
+                                          DataCell(
+                                            Text(testo(riga['impresa'])),
+                                          ),
+                                          DataCell(Text(testo(riga['corso']))),
+                                          DataCell(
+                                            Text(formattaData(riga['data'])),
+                                          ),
+                                          DataCell(
+                                            Text(
+                                              formattaData(riga['scadenza']),
+                                            ),
+                                          ),
+                                          DataCell(badge(stato)),
+                                          DataCell(Text(testo(riga['prot']))),
+                                          DataCell(
+                                            testo(
+                                                  riga['fattura'],
+                                                ).trim().isEmpty
+                                                ? const Text(
+                                                    '-',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF94A3B8),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
                                                   )
-                                                : const Icon(
-                                                    Icons.refresh,
-                                                    color: Colors.blueGrey,
+                                                : Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 9,
+                                                          vertical: 5,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFEFF6FF,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            999,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFFBFDBFE,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    child: Text(
+                                                      testo(riga['fattura']),
+                                                      style: const TextStyle(
+                                                        color: Color(
+                                                          0xFF2563EB,
+                                                        ),
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
                                                   ),
-                                            onPressed: rinnovoInCorsoId != null
-                                                ? null
-                                                : () async {
-                                                    final confermato = await showDialog<bool>(
-                                                      context: context,
-                                                      barrierDismissible: false,
-                                                      builder: (dialogContext) {
-                                                        return AlertDialog(
-                                                          title: const Row(
-                                                            children: [
-                                                              Icon(
-                                                                Icons
-                                                                    .refresh_rounded,
-                                                                color: Color(
-                                                                  0xFF2563EB,
+                                          ),
+                                          DataCell(
+                                            riga['invio'] == 1
+                                                ? Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 9,
+                                                          vertical: 5,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: const Color(
+                                                        0xFFEFF6FF,
+                                                      ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            999,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: const Color(
+                                                          0xFFBFDBFE,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    child: const Text(
+                                                      'SÌ',
+                                                      style: TextStyle(
+                                                        color: Color(
+                                                          0xFF2563EB,
+                                                        ),
+                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.w700,
+                                                      ),
+                                                    ),
+                                                  )
+                                                : const Text(
+                                                    '-',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF94A3B8),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                          ),
+                                          DataCell(
+                                            Tooltip(
+                                              message: riga['da_fatturare'] == 1
+                                                  ? 'Rimuovi da fatturare'
+                                                  : 'Segna come da fatturare',
+                                              child: InkWell(
+                                                borderRadius:
+                                                    BorderRadius.circular(999),
+                                                onTap: () async {
+                                                  final attualmenteDaFatturare =
+                                                      riga['da_fatturare'] == 1;
+
+                                                  await DatabaseService.instance
+                                                      .aggiornaDaFatturareDiario(
+                                                        id: idDiario,
+                                                        valore:
+                                                            !attualmenteDaFatturare,
+                                                      );
+
+                                                  await caricaDiario();
+
+                                                  if (!mounted) return;
+
+                                                  ScaffoldMessenger.of(
+                                                    this.context,
+                                                  ).showSnackBar(
+                                                    SnackBar(
+                                                      content: Text(
+                                                        !attualmenteDaFatturare
+                                                            ? 'Corso segnato come da fatturare'
+                                                            : 'Corso rimosso da fatturare',
+                                                      ),
+                                                      backgroundColor:
+                                                          !attualmenteDaFatturare
+                                                          ? const Color(
+                                                              0xFFF97316,
+                                                            )
+                                                          : const Color(
+                                                              0xFF64748B,
+                                                            ),
+                                                      duration: const Duration(
+                                                        seconds: 3,
+                                                      ),
+                                                    ),
+                                                  );
+                                                },
+                                                child: riga['da_fatturare'] == 1
+                                                    ? Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 9,
+                                                              vertical: 5,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFFFF7ED,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFFFED7AA,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'SÌ',
+                                                          style: TextStyle(
+                                                            color: Color(
+                                                              0xFFF97316,
+                                                            ),
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 9,
+                                                              vertical: 5,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFF8FAFC,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFFE2E8F0,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          '-',
+                                                          style: TextStyle(
+                                                            color: Color(
+                                                              0xFF94A3B8,
+                                                            ),
+                                                            fontSize: 12,
+                                                            fontWeight:
+                                                                FontWeight.w700,
+                                                          ),
+                                                        ),
+                                                      ),
+                                              ),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            IconButton(
+                                              tooltip: rinnovoQuestaRiga
+                                                  ? 'Rinnovo in corso...'
+                                                  : rinnovoInCorsoId != null
+                                                  ? 'Attendi il completamento del rinnovo in corso'
+                                                  : 'Rinnova corso',
+                                              icon: rinnovoQuestaRiga
+                                                  ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child:
+                                                          CircularProgressIndicator(
+                                                            strokeWidth: 2.2,
+                                                          ),
+                                                    )
+                                                  : const Icon(
+                                                      Icons.refresh,
+                                                      color: Colors.blueGrey,
+                                                    ),
+                                              onPressed:
+                                                  rinnovoInCorsoId != null
+                                                  ? null
+                                                  : () async {
+                                                      final confermato = await showDialog<bool>(
+                                                        context: context,
+                                                        barrierDismissible:
+                                                            false,
+                                                        builder: (dialogContext) {
+                                                          return AlertDialog(
+                                                            title: const Row(
+                                                              children: [
+                                                                Icon(
+                                                                  Icons
+                                                                      .refresh_rounded,
+                                                                  color: Color(
+                                                                    0xFF2563EB,
+                                                                  ),
                                                                 ),
+                                                                SizedBox(
+                                                                  width: 10,
+                                                                ),
+                                                                Text(
+                                                                  'Conferma rinnovo corso',
+                                                                ),
+                                                              ],
+                                                            ),
+                                                            content: Text(
+                                                              'Vuoi creare un nuovo rinnovo per il corso '
+                                                              '"${testo(riga['corso'])}" di '
+                                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
+                                                            ),
+                                                            actions: [
+                                                              TextButton(
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                    dialogContext,
+                                                                  ).pop(false);
+                                                                },
+                                                                child:
+                                                                    const Text(
+                                                                      'Annulla',
+                                                                    ),
                                                               ),
-                                                              SizedBox(
-                                                                width: 10,
-                                                              ),
-                                                              Text(
-                                                                'Conferma rinnovo corso',
+                                                              FilledButton.icon(
+                                                                onPressed: () {
+                                                                  Navigator.of(
+                                                                    dialogContext,
+                                                                  ).pop(true);
+                                                                },
+                                                                icon: const Icon(
+                                                                  Icons
+                                                                      .refresh_rounded,
+                                                                  size: 18,
+                                                                ),
+                                                                label:
+                                                                    const Text(
+                                                                      'Rinnova',
+                                                                    ),
                                                               ),
                                                             ],
-                                                          ),
-                                                          content: Text(
-                                                            'Vuoi creare un nuovo rinnovo per il corso '
-                                                            '"${testo(riga['corso'])}" di '
-                                                            '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
-                                                          ),
-                                                          actions: [
-                                                            TextButton(
-                                                              onPressed: () {
-                                                                Navigator.of(
-                                                                  dialogContext,
-                                                                ).pop(false);
-                                                              },
-                                                              child: const Text(
-                                                                'Annulla',
-                                                              ),
-                                                            ),
-                                                            FilledButton.icon(
-                                                              onPressed: () {
-                                                                Navigator.of(
-                                                                  dialogContext,
-                                                                ).pop(true);
-                                                              },
-                                                              icon: const Icon(
-                                                                Icons
-                                                                    .refresh_rounded,
-                                                                size: 18,
-                                                              ),
-                                                              label: const Text(
-                                                                'Rinnova',
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        );
-                                                      },
-                                                    );
-
-                                                    if (!mounted) return;
-                                                    if (confermato != true) {
-                                                      return;
-                                                    }
-
-                                                    final discenteId =
-                                                        riga['discente_id'];
-                                                    final impresaId =
-                                                        riga['impresa_id'];
-                                                    final corsoId =
-                                                        riga['corso_id'];
-
-                                                    if (discenteId == null ||
-                                                        impresaId == null ||
-                                                        corsoId == null) {
-                                                      ScaffoldMessenger.of(
-                                                        this.context,
-                                                      ).showSnackBar(
-                                                        const SnackBar(
-                                                          content: Text(
-                                                            'Impossibile rinnovare: discente, impresa o corso mancanti.',
-                                                          ),
-                                                        ),
-                                                      );
-                                                      return;
-                                                    }
-
-                                                    setState(() {
-                                                      rinnovoInCorsoId =
-                                                          idDiario;
-                                                    });
-
-                                                    try {
-                                                      await DatabaseService
-                                                          .instance
-                                                          .rinnovaCorso(
-                                                            idDiscente:
-                                                                discenteId
-                                                                    as int,
-                                                            idImpresa:
-                                                                impresaId
-                                                                    as int,
-                                                            idCorso:
-                                                                corsoId as int,
                                                           );
-
-                                                      await caricaDiario();
+                                                        },
+                                                      );
 
                                                       if (!mounted) return;
-
-                                                      ScaffoldMessenger.of(
-                                                        this.context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'Rinnovo creato: ${testo(riga['corso'])} — '
-                                                            '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-                                                          ),
-                                                          backgroundColor:
-                                                              const Color(
-                                                                0xFF16A34A,
-                                                              ),
-                                                          duration:
-                                                              const Duration(
-                                                                seconds: 4,
-                                                              ),
-                                                        ),
-                                                      );
-                                                    } catch (errore) {
-                                                      if (!mounted) return;
-
-                                                      ScaffoldMessenger.of(
-                                                        this.context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            'Errore durante il rinnovo: $errore',
-                                                          ),
-                                                          backgroundColor:
-                                                              const Color(
-                                                                0xFFDC2626,
-                                                              ),
-                                                        ),
-                                                      );
-                                                    } finally {
-                                                      if (mounted) {
-                                                        setState(() {
-                                                          rinnovoInCorsoId =
-                                                              null;
-                                                        });
+                                                      if (confermato != true) {
+                                                        return;
                                                       }
-                                                    }
-                                                  },
+
+                                                      final discenteId =
+                                                          riga['discente_id'];
+                                                      final impresaId =
+                                                          riga['impresa_id'];
+                                                      final corsoId =
+                                                          riga['corso_id'];
+
+                                                      if (discenteId == null ||
+                                                          impresaId == null ||
+                                                          corsoId == null) {
+                                                        ScaffoldMessenger.of(
+                                                          this.context,
+                                                        ).showSnackBar(
+                                                          const SnackBar(
+                                                            content: Text(
+                                                              'Impossibile rinnovare: discente, impresa o corso mancanti.',
+                                                            ),
+                                                          ),
+                                                        );
+                                                        return;
+                                                      }
+
+                                                      setState(() {
+                                                        rinnovoInCorsoId =
+                                                            idDiario;
+                                                      });
+
+                                                      try {
+                                                        await DatabaseService
+                                                            .instance
+                                                            .rinnovaCorso(
+                                                              idDiscente:
+                                                                  discenteId
+                                                                      as int,
+                                                              idImpresa:
+                                                                  impresaId
+                                                                      as int,
+                                                              idCorso:
+                                                                  corsoId
+                                                                      as int,
+                                                            );
+
+                                                        await caricaDiario();
+
+                                                        if (!mounted) return;
+
+                                                        ScaffoldMessenger.of(
+                                                          this.context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              'Rinnovo creato: ${testo(riga['corso'])} — '
+                                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+                                                            ),
+                                                            backgroundColor:
+                                                                const Color(
+                                                                  0xFF16A34A,
+                                                                ),
+                                                            duration:
+                                                                const Duration(
+                                                                  seconds: 4,
+                                                                ),
+                                                          ),
+                                                        );
+                                                      } catch (errore) {
+                                                        if (!mounted) return;
+
+                                                        ScaffoldMessenger.of(
+                                                          this.context,
+                                                        ).showSnackBar(
+                                                          SnackBar(
+                                                            content: Text(
+                                                              'Errore durante il rinnovo: $errore',
+                                                            ),
+                                                            backgroundColor:
+                                                                const Color(
+                                                                  0xFFDC2626,
+                                                                ),
+                                                          ),
+                                                        );
+                                                      } finally {
+                                                        if (mounted) {
+                                                          setState(() {
+                                                            rinnovoInCorsoId =
+                                                                null;
+                                                          });
+                                                        }
+                                                      }
+                                                    },
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
                               ),
                             ),

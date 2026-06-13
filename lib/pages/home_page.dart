@@ -27,6 +27,7 @@ class _HomePageState extends State<HomePage> {
   String globalSearch = '';
   String filtroScadenze = 'tutte';
   String filtroPrenotazioni = 'tutte';
+  bool diarioSoloDaFatturare = false;
   int dashboardRefresh = 0;
   List<Widget> get pages => [
     DashboardPage(key: ValueKey(dashboardRefresh)),
@@ -39,7 +40,7 @@ class _HomePageState extends State<HomePage> {
         });
       },
     ),
-    DiarioPage(soloDaFatturare: false),
+    DiarioPage(soloDaFatturare: diarioSoloDaFatturare),
     ScadenzePage(filtro: filtroScadenze),
     DiscentiPage(globalSearch: globalSearch),
     const ImpresePage(),
@@ -69,6 +70,10 @@ class _HomePageState extends State<HomePage> {
 
                 if (index == 1) {
                   filtroPrenotazioni = 'tutte';
+                }
+
+                if (index == 2) {
+                  diarioSoloDaFatturare = false;
                 }
 
                 if (index == 3) {
@@ -253,7 +258,15 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
 
               GestureDetector(
-                onTap: () => apriPagina(context, 2),
+                onTap: () {
+                  final homeState = context
+                      .findAncestorStateOfType<_HomePageState>();
+
+                  homeState?.setState(() {
+                    homeState.diarioSoloDaFatturare = false;
+                    homeState.selectedIndex = 2;
+                  });
+                },
                 child: KpiCard(
                   title: 'Diario corsi',
                   value: kpi['diario'].toString(),
@@ -319,6 +332,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       .findAncestorStateOfType<_HomePageState>();
 
                   homeState?.setState(() {
+                    homeState.diarioSoloDaFatturare = true;
                     homeState.selectedIndex = 2;
                   });
                 },

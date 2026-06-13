@@ -308,6 +308,41 @@ class _DiarioPageState extends State<DiarioPage> {
                     ),
                   ),
 
+                if (_soloDaFatturare) ...[
+                  if (_cercaController.text.trim().isNotEmpty)
+                    const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 7,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF7ED),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFFFED7AA)),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.receipt_long_rounded,
+                          size: 15,
+                          color: Color(0xFFF97316),
+                        ),
+                        SizedBox(width: 6),
+                        Text(
+                          'Filtro attivo: Da fatturare',
+                          style: TextStyle(
+                            color: Color(0xFFF97316),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+
                 const Spacer(),
 
                 Container(

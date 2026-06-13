@@ -385,7 +385,11 @@ class _DiarioPageState extends State<DiarioPage> {
                       const SizedBox(width: 6),
                       Text(
                         _cercaController.text.trim().isNotEmpty
-                            ? _diario.length == 1
+                            ? _soloDaFatturare
+                                  ? _diario.length == 1
+                                        ? '1 corso da fatturare trovato'
+                                        : '${_diario.length} corsi da fatturare trovati'
+                                  : _diario.length == 1
                                   ? '1 corso trovato'
                                   : '${_diario.length} corsi trovati'
                             : _soloDaFatturare

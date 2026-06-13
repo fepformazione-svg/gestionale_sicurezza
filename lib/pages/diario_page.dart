@@ -502,6 +502,16 @@ class _DiarioPageState extends State<DiarioPage> {
                                     );
 
                                     return DataRow(
+                                      color:
+                                          WidgetStateProperty.resolveWith<
+                                            Color?
+                                          >((states) {
+                                            if (rinnovoQuestaRiga) {
+                                              return const Color(0xFFEFF6FF);
+                                            }
+
+                                            return null;
+                                          }),
                                       onSelectChanged: (_) {
                                         apriSchedaDiscente(riga);
                                       },

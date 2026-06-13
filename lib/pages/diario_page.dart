@@ -677,7 +677,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     content: Text(
                                                       !attualmenteDaFatturare
                                                           ? 'Corso segnato come da fatturare'
-                                                          : 'Corso rimosso da da fatturare',
+                                                          : 'Corso rimosso da fatturare',
                                                     ),
                                                     backgroundColor:
                                                         !attualmenteDaFatturare

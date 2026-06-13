@@ -584,6 +584,12 @@ class _DiarioPageState extends State<DiarioPage> {
                                     ),
                                     const DataColumn(
                                       label: Tooltip(
+                                        message: 'Attestato/documento inviato',
+                                        child: Text('Invio'),
+                                      ),
+                                    ),
+                                    const DataColumn(
+                                      label: Tooltip(
                                         message: 'Da fatturare',
                                         child: Text('Da Fatt.'),
                                       ),
@@ -690,6 +696,46 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       fontWeight:
                                                           FontWeight.w700,
                                                     ),
+                                                  ),
+                                                ),
+                                        ),
+                                        DataCell(
+                                          riga['invio'] == 1
+                                              ? Container(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        horizontal: 9,
+                                                        vertical: 5,
+                                                      ),
+                                                  decoration: BoxDecoration(
+                                                    color: const Color(
+                                                      0xFFEFF6FF,
+                                                    ),
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          999,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: const Color(
+                                                        0xFFBFDBFE,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  child: const Text(
+                                                    'SÌ',
+                                                    style: TextStyle(
+                                                      color: Color(0xFF2563EB),
+                                                      fontSize: 12,
+                                                      fontWeight:
+                                                          FontWeight.w700,
+                                                    ),
+                                                  ),
+                                                )
+                                              : const Text(
+                                                  '-',
+                                                  style: TextStyle(
+                                                    color: Color(0xFF94A3B8),
+                                                    fontWeight: FontWeight.w600,
                                                   ),
                                                 ),
                                         ),

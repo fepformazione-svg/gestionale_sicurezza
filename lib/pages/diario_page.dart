@@ -648,44 +648,118 @@ class _DiarioPageState extends State<DiarioPage> {
                                         DataCell(badge(stato)),
                                         DataCell(Text(testo(riga['prot']))),
                                         DataCell(
-                                          riga['da_fatturare'] == 1
-                                              ? Container(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        horizontal: 9,
-                                                        vertical: 5,
-                                                      ),
-                                                  decoration: BoxDecoration(
-                                                    color: const Color(
-                                                      0xFFFFF7ED,
+                                          Tooltip(
+                                            message: riga['da_fatturare'] == 1
+                                                ? 'Rimuovi da fatturare'
+                                                : 'Segna come da fatturare',
+                                            child: InkWell(
+                                              borderRadius:
+                                                  BorderRadius.circular(999),
+                                              onTap: () async {
+                                                final attualmenteDaFatturare =
+                                                    riga['da_fatturare'] == 1;
+
+                                                await DatabaseService.instance
+                                                    .aggiornaDaFatturareDiario(
+                                                      id: idDiario,
+                                                      valore:
+                                                          !attualmenteDaFatturare,
+                                                    );
+
+                                                await caricaDiario();
+
+                                                if (!mounted) return;
+
+                                                ScaffoldMessenger.of(
+                                                  this.context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      !attualmenteDaFatturare
+                                                          ? 'Corso segnato come da fatturare'
+                                                          : 'Corso rimosso da da fatturare',
                                                     ),
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          999,
+                                                    backgroundColor:
+                                                        !attualmenteDaFatturare
+                                                        ? const Color(
+                                                            0xFFF97316,
+                                                          )
+                                                        : const Color(
+                                                            0xFF64748B,
+                                                          ),
+                                                    duration: const Duration(
+                                                      seconds: 3,
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                              child: riga['da_fatturare'] == 1
+                                                  ? Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 9,
+                                                            vertical: 5,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                          0xFFFFF7ED,
                                                         ),
-                                                    border: Border.all(
-                                                      color: const Color(
-                                                        0xFFFED7AA,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              999,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                            0xFFFED7AA,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: const Text(
+                                                        'SÌ',
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFFF97316,
+                                                          ),
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
+                                                      ),
+                                                    )
+                                                  : Container(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 9,
+                                                            vertical: 5,
+                                                          ),
+                                                      decoration: BoxDecoration(
+                                                        color: const Color(
+                                                          0xFFF8FAFC,
+                                                        ),
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              999,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                            0xFFE2E8F0,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                      child: const Text(
+                                                        '-',
+                                                        style: TextStyle(
+                                                          color: Color(
+                                                            0xFF94A3B8,
+                                                          ),
+                                                          fontSize: 12,
+                                                          fontWeight:
+                                                              FontWeight.w700,
+                                                        ),
                                                       ),
                                                     ),
-                                                  ),
-                                                  child: const Text(
-                                                    'SÌ',
-                                                    style: TextStyle(
-                                                      color: Color(0xFFF97316),
-                                                      fontSize: 12,
-                                                      fontWeight:
-                                                          FontWeight.w700,
-                                                    ),
-                                                  ),
-                                                )
-                                              : const Text(
-                                                  '-',
-                                                  style: TextStyle(
-                                                    color: Color(0xFF94A3B8),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
+                                            ),
+                                          ),
                                         ),
                                         DataCell(
                                           IconButton(

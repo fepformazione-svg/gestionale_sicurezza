@@ -854,9 +854,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                         label: Tooltip(
                                           message: 'Stato da fatturare',
                                           child: SizedBox(
-                                            width: 85,
+                                            width: 105,
                                             child: Center(
-                                              child: Text('Da Fatt.'),
+                                              child: Text('Da fatturare'),
                                             ),
                                           ),
                                         ),

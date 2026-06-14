@@ -1426,8 +1426,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                   SnackBar(
                                                     content: Text(
                                                       nuovoValore == 1
-                                                          ? 'Corso segnato come inviato'
-                                                          : 'Invio rimosso',
+                                                          ? 'Invio documentazione registrato.'
+                                                          : 'Stato invio documentazione rimosso.',
                                                     ),
                                                     backgroundColor:
                                                         nuovoValore == 1

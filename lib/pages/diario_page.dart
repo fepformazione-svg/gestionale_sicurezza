@@ -972,7 +972,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       testo(
                                                         riga['fattura'],
                                                       ).trim().isEmpty
-                                                      ? 'Inserisci riferimento fattura'
+                                                      ? 'Nessuna fattura inserita. Clicca per aggiungere un riferimento'
                                                       : 'Modifica o svuota riferimento fattura: ${testo(riga['fattura']).trim()}',
                                                   child:
                                                       testo(

@@ -1182,7 +1182,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                 SnackBar(
                                                   content: Text(
                                                     nuovaFattura.trim().isEmpty
-                                                        ? 'Riferimento fattura rimosso. Il campo Da Fatt. torna modificabile manualmente.'
+                                                        ? 'Riferimento fattura rimosso. Il campo Da fatturare torna modificabile manualmente.'
                                                         : 'Riferimento fattura salvato. Il corso è stato rimosso dai Da fatturare.',
                                                   ),
                                                   backgroundColor:

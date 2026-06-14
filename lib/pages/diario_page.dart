@@ -414,36 +414,58 @@ class _DiarioPageState extends State<DiarioPage> {
                   ),
                 ],
 
-                if (_cercaController.text.trim().isNotEmpty ||
-                    _soloDaFatturare) ...[
-                  const SizedBox(width: 8),
-                  Tooltip(
-                    message: 'Azzera ricerca e filtri del diario',
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        setState(() {
-                          _cercaController.clear();
-                          _soloDaFatturare = false;
-                        });
+                const SizedBox(width: 8),
+                Tooltip(
+                  message:
+                      _cercaController.text.trim().isNotEmpty ||
+                          _soloDaFatturare
+                      ? 'Mostra tutto il diario rimuovendo ricerca e filtro'
+                      : 'Tutto il diario è già visibile',
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _cercaController.clear();
+                        _soloDaFatturare = false;
+                      });
 
-                        caricaDiario();
-                      },
-                      icon: const Icon(Icons.filter_alt_off_rounded, size: 18),
-                      label: const Text('Mostra tutto'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: const Color(0xFF334155),
-                        side: const BorderSide(color: Color(0xFFCBD5E1)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
+                      caricaDiario();
+                    },
+                    icon: Icon(
+                      _cercaController.text.trim().isNotEmpty ||
+                              _soloDaFatturare
+                          ? Icons.filter_alt_off_rounded
+                          : Icons.visibility_rounded,
+                      size: 18,
+                    ),
+                    label: Text(
+                      _cercaController.text.trim().isNotEmpty ||
+                              _soloDaFatturare
+                          ? 'Mostra tutto'
+                          : 'Tutto visibile',
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor:
+                          _cercaController.text.trim().isNotEmpty ||
+                              _soloDaFatturare
+                          ? const Color(0xFF2563EB)
+                          : const Color(0xFF64748B),
+                      side: BorderSide(
+                        color:
+                            _cercaController.text.trim().isNotEmpty ||
+                                _soloDaFatturare
+                            ? const Color(0xFF93C5FD)
+                            : const Color(0xFFCBD5E1),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
                       ),
                     ),
                   ),
-                ],
+                ),
 
                 const Spacer(),
 

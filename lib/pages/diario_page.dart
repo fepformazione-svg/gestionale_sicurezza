@@ -638,8 +638,25 @@ class _DiarioPageState extends State<DiarioPage> {
                             ),
                             if (_cercaController.text.trim().isNotEmpty ||
                                 _soloDaFatturare) ...[
-                              const SizedBox(height: 14),
+                              const SizedBox(height: 16),
                               OutlinedButton.icon(
+                                style: OutlinedButton.styleFrom(
+                                  foregroundColor: const Color(0xFF334155),
+                                  side: const BorderSide(
+                                    color: Color(0xFFCBD5E1),
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 12,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(999),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                                 onPressed: () {
                                   setState(() {
                                     _cercaController.clear();

@@ -1797,6 +1797,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                 ),
                                               ),
                                             ),
+                                            onTap: () {},
                                           ),
                                         ],
                                       );

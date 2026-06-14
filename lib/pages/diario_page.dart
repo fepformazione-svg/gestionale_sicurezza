@@ -859,6 +859,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                     ],
                                     rows: _diario.map((riga) {
                                       final idDiario = riga['id'] as int;
+                                      final fatturaPresente = testo(
+                                        riga['fattura'],
+                                      ).trim().isNotEmpty;
                                       final rinnovoQuestaRiga =
                                           rinnovoInCorsoId == idDiario;
 
@@ -1332,8 +1335,10 @@ class _DiarioPageState extends State<DiarioPage> {
                                               width: 108,
                                               child: Center(
                                                 child: Tooltip(
-                                                  message:
-                                                      riga['da_fatturare'] == 1
+                                                  message: fatturaPresente
+                                                      ? 'Fattura già inserita: per modificare lo stato, svuota prima la fattura'
+                                                      : riga['da_fatturare'] ==
+                                                            1
                                                       ? 'Rimuovi da elenco da fatturare'
                                                       : 'Segna come da fatturare',
                                                   child: InkWell(
@@ -1341,47 +1346,71 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         BorderRadius.circular(
                                                           999,
                                                         ),
-                                                    onTap: () async {
-                                                      final attualmenteDaFatturare =
-                                                          riga['da_fatturare'] ==
-                                                          1;
-
-                                                      await DatabaseService
-                                                          .instance
-                                                          .aggiornaDaFatturareDiario(
-                                                            id: idDiario,
-                                                            valore:
-                                                                !attualmenteDaFatturare,
-                                                          );
-
-                                                      await caricaDiario();
-
-                                                      if (!mounted) return;
-
-                                                      ScaffoldMessenger.of(
-                                                        this.context,
-                                                      ).showSnackBar(
-                                                        SnackBar(
-                                                          content: Text(
-                                                            !attualmenteDaFatturare
-                                                                ? 'Corso segnato come da fatturare'
-                                                                : 'Corso rimosso da fatturare',
-                                                          ),
-                                                          backgroundColor:
-                                                              !attualmenteDaFatturare
-                                                              ? const Color(
-                                                                  0xFFF97316,
-                                                                )
-                                                              : const Color(
-                                                                  0xFF64748B,
+                                                    onTap: fatturaPresente
+                                                        ? () {
+                                                            ScaffoldMessenger.of(
+                                                              this.context,
+                                                            ).showSnackBar(
+                                                              const SnackBar(
+                                                                content: Text(
+                                                                  'Fattura già inserita: svuota prima la fattura per modificare lo stato da fatturare',
                                                                 ),
-                                                          duration:
-                                                              const Duration(
-                                                                seconds: 3,
+                                                                backgroundColor:
+                                                                    Color(
+                                                                      0xFF64748B,
+                                                                    ),
+                                                                duration:
+                                                                    Duration(
+                                                                      seconds:
+                                                                          3,
+                                                                    ),
                                                               ),
-                                                        ),
-                                                      );
-                                                    },
+                                                            );
+                                                          }
+                                                        : () async {
+                                                            final attualmenteDaFatturare =
+                                                                riga['da_fatturare'] ==
+                                                                1;
+
+                                                            await DatabaseService
+                                                                .instance
+                                                                .aggiornaDaFatturareDiario(
+                                                                  id: idDiario,
+                                                                  valore:
+                                                                      !attualmenteDaFatturare,
+                                                                );
+
+                                                            await caricaDiario();
+
+                                                            if (!mounted) {
+                                                              return;
+                                                            }
+
+                                                            ScaffoldMessenger.of(
+                                                              this.context,
+                                                            ).showSnackBar(
+                                                              SnackBar(
+                                                                content: Text(
+                                                                  !attualmenteDaFatturare
+                                                                      ? 'Corso segnato come da fatturare'
+                                                                      : 'Corso rimosso da fatturare',
+                                                                ),
+                                                                backgroundColor:
+                                                                    !attualmenteDaFatturare
+                                                                    ? const Color(
+                                                                        0xFFF97316,
+                                                                      )
+                                                                    : const Color(
+                                                                        0xFF64748B,
+                                                                      ),
+                                                                duration:
+                                                                    const Duration(
+                                                                      seconds:
+                                                                          3,
+                                                                    ),
+                                                              ),
+                                                            );
+                                                          },
                                                     child: badgeDaFatturare(
                                                       riga['da_fatturare'] == 1,
                                                     ),

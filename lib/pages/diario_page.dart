@@ -388,7 +388,7 @@ class _DiarioPageState extends State<DiarioPage> {
 
                           if (_soloDaFatturare)
                             Tooltip(
-                              message: 'Rimuovi solo il filtro Da fatturare',
+                              message: 'Mostra anche i corsi non da fatturare',
                               child: InkWell(
                                 borderRadius: BorderRadius.circular(999),
                                 onTap: () {
@@ -420,11 +420,11 @@ class _DiarioPageState extends State<DiarioPage> {
                                       ),
                                       SizedBox(width: 6),
                                       Text(
-                                        'Filtro attivo: Da fatturare',
+                                        'Da fatturare',
                                         style: TextStyle(
                                           color: Color(0xFFF97316),
                                           fontSize: 12,
-                                          fontWeight: FontWeight.w700,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                       ),
                                       SizedBox(width: 6),

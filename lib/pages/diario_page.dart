@@ -1307,7 +1307,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                               ?.toString() ==
                                                           '1'
                                                       ? 'Rimuovi invio'
-                                                      : 'Segna come inviato',
+                                                      : 'Nessun invio registrato. Clicca per segnare come inviato',
                                                   child:
                                                       riga['invio']
                                                               ?.toString() ==

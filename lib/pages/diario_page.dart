@@ -1193,7 +1193,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                 child: Tooltip(
                                                   message:
                                                       riga['da_fatturare'] == 1
-                                                      ? 'Rimuovi da fatturare'
+                                                      ? 'Rimuovi da elenco da fatturare'
                                                       : 'Segna come da fatturare',
                                                   child: InkWell(
                                                     borderRadius:

@@ -36,24 +36,28 @@ class _DiarioPageState extends State<DiarioPage> {
   Future<void> caricaDiario() async {
     setState(() => _caricamento = true);
 
-    final dati = await DatabaseService.instance.caricaDiario(
-      ricerca: _cercaController.text.trim(),
-    );
+    final dati = await DatabaseService.instance.caricaDiario(ricerca: '');
 
     final ricerca = _cercaController.text.trim().toLowerCase();
 
     final datiFiltrati = ricerca.isEmpty
         ? dati
         : dati.where((riga) {
-            final discente = '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                .toLowerCase();
+            final nome = testo(riga['nome']).toLowerCase();
+            final cognome = testo(riga['cognome']).toLowerCase();
+            final discenteCognomeNome = '$cognome $nome'.trim();
+            final discenteNomeCognome = '$nome $cognome'.trim();
+
             final impresa = testo(riga['impresa']).toLowerCase();
             final corso = testo(riga['corso']).toLowerCase();
             final prot = testo(riga['prot']).toLowerCase();
             final data = testo(riga['data']).toLowerCase();
             final scadenza = testo(riga['scadenza']).toLowerCase();
 
-            return discente.contains(ricerca) ||
+            return nome.contains(ricerca) ||
+                cognome.contains(ricerca) ||
+                discenteCognomeNome.contains(ricerca) ||
+                discenteNomeCognome.contains(ricerca) ||
                 impresa.contains(ricerca) ||
                 corso.contains(ricerca) ||
                 prot.contains(ricerca) ||
@@ -310,210 +314,233 @@ class _DiarioPageState extends State<DiarioPage> {
             ),
             const SizedBox(height: 14),
 
-            Row(
-              children: [
-                if (_cercaController.text.trim().isNotEmpty)
-                  Tooltip(
-                    message: 'Rimuovi solo la ricerca attiva',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(999),
-                      onTap: () {
-                        _cercaController.clear();
-                        caricaDiario();
-                      },
-                      child: Container(
+            LayoutBuilder(
+              builder: (context, constraints) {
+                return SizedBox(
+                  width: constraints.maxWidth,
+                  child: Wrap(
+                    alignment: WrapAlignment.spaceBetween,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    runSpacing: 8,
+                    spacing: 12,
+                    children: [
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        children: [
+                          if (_cercaController.text.trim().isNotEmpty)
+                            Tooltip(
+                              message: 'Rimuovi solo la ricerca attiva',
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(999),
+                                onTap: () {
+                                  _cercaController.clear();
+                                  caricaDiario();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFEFF6FF),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFBFDBFE),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        Icons.manage_search_rounded,
+                                        size: 15,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      ConstrainedBox(
+                                        constraints: const BoxConstraints(
+                                          maxWidth: 260,
+                                        ),
+                                        child: Text(
+                                          'Ricerca attiva: ${_cercaController.text.trim()}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Color(0xFF2563EB),
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      const Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Color(0xFF2563EB),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          if (_soloDaFatturare)
+                            Tooltip(
+                              message: 'Rimuovi solo il filtro Da fatturare',
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(999),
+                                onTap: () {
+                                  setState(() {
+                                    _soloDaFatturare = false;
+                                  });
+
+                                  caricaDiario();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF7ED),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFFED7AA),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.receipt_long_rounded,
+                                        size: 15,
+                                        color: Color(0xFFF97316),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Filtro attivo: Da fatturare',
+                                        style: TextStyle(
+                                          color: Color(0xFFF97316),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Icon(
+                                        Icons.close_rounded,
+                                        size: 14,
+                                        color: Color(0xFFF97316),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          Tooltip(
+                            message:
+                                _cercaController.text.trim().isNotEmpty ||
+                                    _soloDaFatturare
+                                ? 'Mostra tutto il diario rimuovendo ricerca e filtro'
+                                : 'Tutto il diario è già visibile',
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                setState(() {
+                                  _cercaController.clear();
+                                  _soloDaFatturare = false;
+                                });
+
+                                caricaDiario();
+                              },
+                              icon: Icon(
+                                _cercaController.text.trim().isNotEmpty ||
+                                        _soloDaFatturare
+                                    ? Icons.filter_alt_off_rounded
+                                    : Icons.visibility_rounded,
+                                size: 18,
+                              ),
+                              label: Text(
+                                _cercaController.text.trim().isNotEmpty ||
+                                        _soloDaFatturare
+                                    ? 'Mostra tutto'
+                                    : 'Tutto visibile',
+                              ),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor:
+                                    _cercaController.text.trim().isNotEmpty ||
+                                        _soloDaFatturare
+                                    ? const Color(0xFF2563EB)
+                                    : const Color(0xFF64748B),
+                                side: BorderSide(
+                                  color:
+                                      _cercaController.text.trim().isNotEmpty ||
+                                          _soloDaFatturare
+                                      ? const Color(0xFF93C5FD)
+                                      : const Color(0xFFCBD5E1),
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
                           vertical: 7,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFEFF6FF),
+                          color: const Color(0xFFF8FAFC),
                           borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFBFDBFE)),
+                          border: Border.all(color: const Color(0xFFE2E8F0)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(
-                              Icons.manage_search_rounded,
+                              Icons.format_list_bulleted_rounded,
                               size: 15,
-                              color: Color(0xFF2563EB),
+                              color: Color(0xFF64748B),
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Ricerca attiva: ${_cercaController.text.trim()}',
-                              style: const TextStyle(
-                                color: Color(0xFF2563EB),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            const Icon(
-                              Icons.close_rounded,
-                              size: 14,
-                              color: Color(0xFF2563EB),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-
-                if (_soloDaFatturare) ...[
-                  if (_cercaController.text.trim().isNotEmpty)
-                    const SizedBox(width: 8),
-                  Tooltip(
-                    message: 'Rimuovi solo il filtro Da fatturare',
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(999),
-                      onTap: () {
-                        setState(() {
-                          _soloDaFatturare = false;
-                        });
-
-                        caricaDiario();
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFFFF7ED),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFFED7AA)),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.receipt_long_rounded,
-                              size: 15,
-                              color: Color(0xFFF97316),
-                            ),
-                            SizedBox(width: 6),
-                            Text(
-                              'Filtro attivo: Da fatturare',
-                              style: TextStyle(
-                                color: Color(0xFFF97316),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
-                            SizedBox(width: 6),
-                            Icon(
-                              Icons.close_rounded,
-                              size: 14,
-                              color: Color(0xFFF97316),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-
-                const SizedBox(width: 8),
-                Tooltip(
-                  message:
-                      _cercaController.text.trim().isNotEmpty ||
-                          _soloDaFatturare
-                      ? 'Mostra tutto il diario rimuovendo ricerca e filtro'
-                      : 'Tutto il diario è già visibile',
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      setState(() {
-                        _cercaController.clear();
-                        _soloDaFatturare = false;
-                      });
-
-                      caricaDiario();
-                    },
-                    icon: Icon(
-                      _cercaController.text.trim().isNotEmpty ||
-                              _soloDaFatturare
-                          ? Icons.filter_alt_off_rounded
-                          : Icons.visibility_rounded,
-                      size: 18,
-                    ),
-                    label: Text(
-                      _cercaController.text.trim().isNotEmpty ||
-                              _soloDaFatturare
-                          ? 'Mostra tutto'
-                          : 'Tutto visibile',
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor:
-                          _cercaController.text.trim().isNotEmpty ||
-                              _soloDaFatturare
-                          ? const Color(0xFF2563EB)
-                          : const Color(0xFF64748B),
-                      side: BorderSide(
-                        color:
-                            _cercaController.text.trim().isNotEmpty ||
-                                _soloDaFatturare
-                            ? const Color(0xFF93C5FD)
-                            : const Color(0xFFCBD5E1),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 10,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                    ),
-                  ),
-                ),
-
-                const Spacer(),
-
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 7,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8FAFC),
-                    borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.format_list_bulleted_rounded,
-                        size: 15,
-                        color: Color(0xFF64748B),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        _cercaController.text.trim().isNotEmpty
-                            ? _soloDaFatturare
+                              _cercaController.text.trim().isNotEmpty
+                                  ? _soloDaFatturare
+                                        ? _diario.length == 1
+                                              ? '1 corso da fatturare trovato'
+                                              : '${_diario.length} corsi da fatturare trovati'
+                                        : _diario.length == 1
+                                        ? '1 corso trovato'
+                                        : '${_diario.length} corsi trovati'
+                                  : _soloDaFatturare
                                   ? _diario.length == 1
-                                        ? '1 corso da fatturare trovato'
-                                        : '${_diario.length} corsi da fatturare trovati'
+                                        ? '1 corso da fatturare'
+                                        : '${_diario.length} corsi da fatturare'
                                   : _diario.length == 1
-                                  ? '1 corso trovato'
-                                  : '${_diario.length} corsi trovati'
-                            : _soloDaFatturare
-                            ? _diario.length == 1
-                                  ? '1 corso da fatturare'
-                                  : '${_diario.length} corsi da fatturare'
-                            : _diario.length == 1
-                            ? '1 corso visualizzato'
-                            : '${_diario.length} corsi visualizzati',
-                        style: const TextStyle(
-                          color: Color(0xFF64748B),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
+                                  ? '1 corso visualizzato'
+                                  : '${_diario.length} corsi visualizzati',
+                              style: const TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ],
                   ),
-                ),
-              ],
+                );
+              },
             ),
 
             const SizedBox(height: 10),

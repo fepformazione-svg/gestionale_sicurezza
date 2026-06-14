@@ -1255,6 +1255,10 @@ class _DiarioPageState extends State<DiarioPage> {
 
                                               if (nuovaFattura == null) return;
 
+                                              Tooltip.dismissAllToolTips();
+                                              FocusManager.instance.primaryFocus
+                                                  ?.unfocus();
+
                                               await DatabaseService.instance
                                                   .aggiornaFatturaDiario(
                                                     idDiario: idDiario,
@@ -1522,7 +1526,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                 content: Text(
                                                                   !attualmenteDaFatturare
                                                                       ? 'Corso segnato come Da fatturare.'
-                                                                      : 'Corso rimosso da Da fatturare.',
+                                                                      : 'Corso rimosso daR Da fatturare.',
                                                                 ),
                                                                 backgroundColor:
                                                                     !attualmenteDaFatturare

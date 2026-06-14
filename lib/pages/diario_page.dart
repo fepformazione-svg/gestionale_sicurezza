@@ -1162,6 +1162,16 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     fattura: nuovaFattura,
                                                   );
 
+                                              if (nuovaFattura
+                                                  .trim()
+                                                  .isNotEmpty) {
+                                                await DatabaseService.instance
+                                                    .aggiornaDaFatturareDiario(
+                                                      id: idDiario,
+                                                      valore: false,
+                                                    );
+                                              }
+
                                               await caricaDiario();
 
                                               if (!mounted) return;

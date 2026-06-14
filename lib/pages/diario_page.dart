@@ -1097,17 +1097,39 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         ),
                                                       ],
                                                     ),
-                                                    content: TextField(
-                                                      controller: controller,
-                                                      autofocus: true,
-                                                      decoration: const InputDecoration(
-                                                        labelText:
-                                                            'Numero o riferimento fattura',
-                                                        hintText:
-                                                            'Es. FPA 12/2026',
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                      ),
+                                                    content: Column(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        TextField(
+                                                          controller:
+                                                              controller,
+                                                          autofocus: true,
+                                                          decoration: const InputDecoration(
+                                                            labelText:
+                                                                'Numero o riferimento fattura',
+                                                            hintText:
+                                                                'Es. FPA 12/2026',
+                                                            border:
+                                                                OutlineInputBorder(),
+                                                          ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        const Text(
+                                                          'Salvando una fattura, il corso verrà rimosso automaticamente dai Da fatturare.',
+                                                          style: TextStyle(
+                                                            fontSize: 12.5,
+                                                            color: Color(
+                                                              0xFF64748B,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                     actions: [
                                                       TextButton(

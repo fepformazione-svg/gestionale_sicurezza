@@ -1559,10 +1559,10 @@ class _DiarioPageState extends State<DiarioPage> {
                                               child: Center(
                                                 child: IconButton(
                                                   tooltip: rinnovoQuestaRiga
-                                                      ? 'Rinnovo in corso...'
+                                                      ? 'Rinnovo corso in corso...'
                                                       : rinnovoInCorsoId != null
-                                                      ? 'Attendi il completamento del rinnovo in corso'
-                                                      : 'Rinnova corso',
+                                                      ? 'Attendi il completamento del rinnovo già avviato'
+                                                      : 'Crea rinnovo corso',
                                                   padding: EdgeInsets.zero,
                                                   constraints:
                                                       const BoxConstraints(

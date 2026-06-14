@@ -505,19 +505,27 @@ class _DiarioPageState extends State<DiarioPage> {
                               vertical: constraints.maxWidth < 520 ? 6 : 7,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: _soloDaFatturare
+                                  ? const Color(0xFFFFF7ED)
+                                  : const Color(0xFFF8FAFC),
                               borderRadius: BorderRadius.circular(999),
                               border: Border.all(
-                                color: const Color(0xFFE2E8F0),
+                                color: _soloDaFatturare
+                                    ? const Color(0xFFFED7AA)
+                                    : const Color(0xFFE2E8F0),
                               ),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Icon(
-                                  Icons.format_list_bulleted_rounded,
+                                Icon(
+                                  _soloDaFatturare
+                                      ? Icons.receipt_long_rounded
+                                      : Icons.format_list_bulleted_rounded,
                                   size: 15,
-                                  color: Color(0xFF64748B),
+                                  color: _soloDaFatturare
+                                      ? const Color(0xFFF97316)
+                                      : const Color(0xFF64748B),
                                 ),
                                 const SizedBox(width: 6),
                                 Flexible(
@@ -539,8 +547,10 @@ class _DiarioPageState extends State<DiarioPage> {
                                         : '${_diario.length} corsi visualizzati',
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Color(0xFF64748B),
+                                    style: TextStyle(
+                                      color: _soloDaFatturare
+                                          ? const Color(0xFFF97316)
+                                          : const Color(0xFF64748B),
                                       fontSize: 12,
                                       fontWeight: FontWeight.w700,
                                     ),

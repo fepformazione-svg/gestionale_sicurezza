@@ -1112,7 +1112,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                             labelText:
                                                                 'Numero o riferimento fattura',
                                                             hintText:
-                                                                'Es. FPA 12/2026',
+                                                                'Es. 18/26 oppure FT 123',
                                                             border:
                                                                 OutlineInputBorder(),
                                                           ),

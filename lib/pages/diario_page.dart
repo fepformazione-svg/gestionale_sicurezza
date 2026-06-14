@@ -562,129 +562,132 @@ class _DiarioPageState extends State<DiarioPage> {
                   ? const Center(child: CircularProgressIndicator())
                   : _diario.isEmpty
                   ? Center(
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 28,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(22),
-                          border: Border.all(
-                            color: const Color(0xFFE2E8F0),
-                            width: 1.2,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 520),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 32,
+                            vertical: 28,
                           ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(
-                                0xFF0F172A,
-                              ).withValues(alpha: 0.04),
-                              blurRadius: 18,
-                              offset: const Offset(0, 8),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(22),
+                            border: Border.all(
+                              color: const Color(0xFFE2E8F0),
+                              width: 1.2,
                             ),
-                          ],
-                        ),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              _soloDaFatturare
-                                  ? Icons.receipt_long_rounded
-                                  : _cercaController.text.trim().isNotEmpty
-                                  ? Icons.manage_search_rounded
-                                  : Icons.menu_book_rounded,
-                              size: 46,
-                              color: const Color(0xFF64748B),
-                            ),
-                            const SizedBox(height: 14),
-                            Builder(
-                              builder: (context) {
-                                final ricerca = _cercaController.text.trim();
-                                final ricercaAttiva = ricerca.isNotEmpty;
-                                final filtroAttivo = _soloDaFatturare;
-
-                                final titolo = ricercaAttiva && filtroAttivo
-                                    ? 'Nessun corso da fatturare trovato'
-                                    : ricercaAttiva
-                                    ? 'Nessun corso trovato'
-                                    : filtroAttivo
-                                    ? 'Nessun corso da fatturare'
-                                    : 'Nessun corso presente nel diario';
-
-                                return Text(
-                                  titolo,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w700,
-                                    color: Color(0xFF334155),
-                                  ),
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 8),
-                            Builder(
-                              builder: (context) {
-                                final ricerca = _cercaController.text.trim();
-                                final ricercaAttiva = ricerca.isNotEmpty;
-                                final filtroAttivo = _soloDaFatturare;
-
-                                final descrizione =
-                                    ricercaAttiva && filtroAttivo
-                                    ? 'La ricerca "$ricerca" non ha trovato corsi tra quelli da fatturare.'
-                                    : ricercaAttiva
-                                    ? 'Nessun risultato per "$ricerca". Prova a modificare o azzerare la ricerca.'
-                                    : filtroAttivo
-                                    ? 'Al momento non ci sono corsi segnati come da fatturare.'
-                                    : 'Quando saranno presenti corsi nel diario, verranno visualizzati qui.';
-
-                                return Text(
-                                  descrizione,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 13,
-                                    color: Color(0xFF64748B),
-                                  ),
-                                );
-                              },
-                            ),
-                            if (_cercaController.text.trim().isNotEmpty ||
-                                _soloDaFatturare) ...[
-                              const SizedBox(height: 16),
-                              OutlinedButton.icon(
-                                style: OutlinedButton.styleFrom(
-                                  foregroundColor: const Color(0xFF334155),
-                                  side: const BorderSide(
-                                    color: Color(0xFFCBD5E1),
-                                  ),
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  textStyle: const TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                onPressed: () {
-                                  setState(() {
-                                    _cercaController.clear();
-                                    _soloDaFatturare = false;
-                                  });
-
-                                  caricaDiario();
-                                },
-                                icon: const Icon(
-                                  Icons.filter_alt_off_rounded,
-                                  size: 18,
-                                ),
-                                label: const Text('Azzera ricerca e filtro'),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFF0F172A,
+                                ).withValues(alpha: 0.04),
+                                blurRadius: 18,
+                                offset: const Offset(0, 8),
                               ),
                             ],
-                          ],
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                _soloDaFatturare
+                                    ? Icons.receipt_long_rounded
+                                    : _cercaController.text.trim().isNotEmpty
+                                    ? Icons.manage_search_rounded
+                                    : Icons.menu_book_rounded,
+                                size: 46,
+                                color: const Color(0xFF64748B),
+                              ),
+                              const SizedBox(height: 14),
+                              Builder(
+                                builder: (context) {
+                                  final ricerca = _cercaController.text.trim();
+                                  final ricercaAttiva = ricerca.isNotEmpty;
+                                  final filtroAttivo = _soloDaFatturare;
+
+                                  final titolo = ricercaAttiva && filtroAttivo
+                                      ? 'Nessun corso da fatturare trovato'
+                                      : ricercaAttiva
+                                      ? 'Nessun corso trovato'
+                                      : filtroAttivo
+                                      ? 'Nessun corso da fatturare'
+                                      : 'Nessun corso presente nel diario';
+
+                                  return Text(
+                                    titolo,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF334155),
+                                    ),
+                                  );
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              Builder(
+                                builder: (context) {
+                                  final ricerca = _cercaController.text.trim();
+                                  final ricercaAttiva = ricerca.isNotEmpty;
+                                  final filtroAttivo = _soloDaFatturare;
+
+                                  final descrizione =
+                                      ricercaAttiva && filtroAttivo
+                                      ? 'La ricerca "$ricerca" non ha trovato corsi tra quelli da fatturare.'
+                                      : ricercaAttiva
+                                      ? 'Nessun risultato per "$ricerca". Prova a modificare o azzerare la ricerca.'
+                                      : filtroAttivo
+                                      ? 'Al momento non ci sono corsi segnati come da fatturare.'
+                                      : 'Quando saranno presenti corsi nel diario, verranno visualizzati qui.';
+
+                                  return Text(
+                                    descrizione,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  );
+                                },
+                              ),
+                              if (_cercaController.text.trim().isNotEmpty ||
+                                  _soloDaFatturare) ...[
+                                const SizedBox(height: 16),
+                                OutlinedButton.icon(
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: const Color(0xFF334155),
+                                    side: const BorderSide(
+                                      color: Color(0xFFCBD5E1),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(999),
+                                    ),
+                                    textStyle: const TextStyle(
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      _cercaController.clear();
+                                      _soloDaFatturare = false;
+                                    });
+
+                                    caricaDiario();
+                                  },
+                                  icon: const Icon(
+                                    Icons.filter_alt_off_rounded,
+                                    size: 18,
+                                  ),
+                                  label: const Text('Azzera ricerca e filtro'),
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
                       ),
                     )

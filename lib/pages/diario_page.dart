@@ -581,29 +581,59 @@ class _DiarioPageState extends State<DiarioPage> {
                               color: Color(0xFF94A3B8),
                             ),
                             const SizedBox(height: 12),
-                            Text(
-                              _cercaController.text.trim().isNotEmpty
-                                  ? _soloDaFatturare
-                                        ? 'Nessun corso da fatturare trovato'
-                                        : 'Nessun corso trovato'
-                                  : _soloDaFatturare
-                                  ? 'Nessun corso da fatturare'
-                                  : 'Nessun corso presente nel diario',
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF334155),
-                              ),
+                            Builder(
+                              builder: (context) {
+                                final ricerca = _cercaController.text.trim();
+                                final ricercaAttiva = ricerca.isNotEmpty;
+                                final filtroAttivo = _soloDaFatturare;
+
+                                final titolo = ricercaAttiva && filtroAttivo
+                                    ? 'Nessun corso da fatturare trovato'
+                                    : ricercaAttiva
+                                    ? 'Nessun corso trovato'
+                                    : filtroAttivo
+                                    ? 'Nessun corso da fatturare'
+                                    : 'Nessun corso presente nel diario';
+
+                                return Text(
+                                  titolo,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF334155),
+                                  ),
+                                );
+                              },
                             ),
-                            if (_cercaController.text.trim().isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Prova a modificare o azzerare la ricerca.',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF64748B),
-                                ),
-                              ),
+                            const SizedBox(height: 6),
+                            Builder(
+                              builder: (context) {
+                                final ricerca = _cercaController.text.trim();
+                                final ricercaAttiva = ricerca.isNotEmpty;
+                                final filtroAttivo = _soloDaFatturare;
+
+                                final descrizione =
+                                    ricercaAttiva && filtroAttivo
+                                    ? 'La ricerca "$ricerca" non ha trovato corsi tra quelli da fatturare.'
+                                    : ricercaAttiva
+                                    ? 'Nessun risultato per "$ricerca". Prova a modificare o azzerare la ricerca.'
+                                    : filtroAttivo
+                                    ? 'Al momento non ci sono corsi segnati come da fatturare.'
+                                    : 'Quando saranno presenti corsi nel diario, verranno visualizzati qui.';
+
+                                return Text(
+                                  descrizione,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 13,
+                                    color: Color(0xFF64748B),
+                                  ),
+                                );
+                              },
+                            ),
+                            if (_cercaController.text.trim().isNotEmpty ||
+                                _soloDaFatturare) ...[
                               const SizedBox(height: 14),
                               OutlinedButton.icon(
                                 onPressed: () {

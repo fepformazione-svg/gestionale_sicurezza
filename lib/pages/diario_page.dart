@@ -314,7 +314,7 @@ class _DiarioPageState extends State<DiarioPage> {
               children: [
                 if (_cercaController.text.trim().isNotEmpty)
                   Tooltip(
-                    message: 'Clicca per azzerare la ricerca',
+                    message: 'Rimuovi solo la ricerca attiva',
                     child: InkWell(
                       borderRadius: BorderRadius.circular(999),
                       onTap: () {
@@ -364,7 +364,7 @@ class _DiarioPageState extends State<DiarioPage> {
                   if (_cercaController.text.trim().isNotEmpty)
                     const SizedBox(width: 8),
                   Tooltip(
-                    message: 'Clicca per mostrare tutto il diario',
+                    message: 'Rimuovi solo il filtro Da fatturare',
                     child: InkWell(
                       borderRadius: BorderRadius.circular(999),
                       onTap: () {

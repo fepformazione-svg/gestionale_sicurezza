@@ -493,50 +493,62 @@ class _DiarioPageState extends State<DiarioPage> {
                         ],
                       ),
 
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 7,
-                        ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8FAFC),
-                          borderRadius: BorderRadius.circular(999),
-                          border: Border.all(color: const Color(0xFFE2E8F0)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.format_list_bulleted_rounded,
-                              size: 15,
-                              color: Color(0xFF64748B),
+                      if (constraints.maxWidth >= 430)
+                        ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: constraints.maxWidth < 520 ? 190 : 320,
+                          ),
+                          child: Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: constraints.maxWidth < 520 ? 9 : 12,
+                              vertical: constraints.maxWidth < 520 ? 6 : 7,
                             ),
-                            const SizedBox(width: 6),
-                            Text(
-                              _cercaController.text.trim().isNotEmpty
-                                  ? _soloDaFatturare
-                                        ? _diario.length == 1
-                                              ? '1 corso da fatturare trovato'
-                                              : '${_diario.length} corsi da fatturare trovati'
-                                        : _diario.length == 1
-                                        ? '1 corso trovato'
-                                        : '${_diario.length} corsi trovati'
-                                  : _soloDaFatturare
-                                  ? _diario.length == 1
-                                        ? '1 corso da fatturare'
-                                        : '${_diario.length} corsi da fatturare'
-                                  : _diario.length == 1
-                                  ? '1 corso visualizzato'
-                                  : '${_diario.length} corsi visualizzati',
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFF8FAFC),
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color: const Color(0xFFE2E8F0),
                               ),
                             ),
-                          ],
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.format_list_bulleted_rounded,
+                                  size: 15,
+                                  color: Color(0xFF64748B),
+                                ),
+                                const SizedBox(width: 6),
+                                Flexible(
+                                  child: Text(
+                                    _cercaController.text.trim().isNotEmpty
+                                        ? _soloDaFatturare
+                                              ? _diario.length == 1
+                                                    ? '1 corso da fatturare trovato'
+                                                    : '${_diario.length} corsi da fatturare trovati'
+                                              : _diario.length == 1
+                                              ? '1 corso trovato'
+                                              : '${_diario.length} corsi trovati'
+                                        : _soloDaFatturare
+                                        ? _diario.length == 1
+                                              ? '1 corso da fatturare'
+                                              : '${_diario.length} corsi da fatturare'
+                                        : _diario.length == 1
+                                        ? '1 corso visualizzato'
+                                        : '${_diario.length} corsi visualizzati',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      color: Color(0xFF64748B),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 );

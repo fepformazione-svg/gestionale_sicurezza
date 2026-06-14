@@ -1054,20 +1054,66 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       : rinnovoInCorsoId != null
                                                       ? 'Attendi il completamento del rinnovo in corso'
                                                       : 'Rinnova corso',
+                                                  padding: EdgeInsets.zero,
+                                                  constraints:
+                                                      const BoxConstraints(
+                                                        minWidth: 38,
+                                                        minHeight: 38,
+                                                      ),
+                                                  splashRadius: 22,
                                                   icon: rinnovoQuestaRiga
                                                       ? const SizedBox(
-                                                          width: 20,
-                                                          height: 20,
+                                                          width: 18,
+                                                          height: 18,
                                                           child:
                                                               CircularProgressIndicator(
                                                                 strokeWidth:
                                                                     2.2,
                                                               ),
                                                         )
-                                                      : const Icon(
-                                                          Icons.refresh,
-                                                          color:
-                                                              Colors.blueGrey,
+                                                      : Container(
+                                                          width: 34,
+                                                          height: 34,
+                                                          decoration: BoxDecoration(
+                                                            color:
+                                                                rinnovoInCorsoId !=
+                                                                    null
+                                                                ? const Color(
+                                                                    0xFFF1F5F9,
+                                                                  )
+                                                                : const Color(
+                                                                    0xFFEFF6FF,
+                                                                  ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
+                                                            border: Border.all(
+                                                              color:
+                                                                  rinnovoInCorsoId !=
+                                                                      null
+                                                                  ? const Color(
+                                                                      0xFFCBD5E1,
+                                                                    )
+                                                                  : const Color(
+                                                                      0xFFBFDBFE,
+                                                                    ),
+                                                            ),
+                                                          ),
+                                                          child: Icon(
+                                                            Icons
+                                                                .refresh_rounded,
+                                                            size: 19,
+                                                            color:
+                                                                rinnovoInCorsoId !=
+                                                                    null
+                                                                ? const Color(
+                                                                    0xFF94A3B8,
+                                                                  )
+                                                                : const Color(
+                                                                    0xFF2563EB,
+                                                                  ),
+                                                          ),
                                                         ),
                                                   onPressed:
                                                       rinnovoInCorsoId != null

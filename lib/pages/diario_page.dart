@@ -862,14 +862,15 @@ class _DiarioPageState extends State<DiarioPage> {
                                               child: Center(
                                                 child: riga['invio'] == 1
                                                     ? Container(
+                                                        width: 72,
                                                         padding:
                                                             const EdgeInsets.symmetric(
-                                                              horizontal: 9,
+                                                              horizontal: 8,
                                                               vertical: 5,
                                                             ),
                                                         decoration: BoxDecoration(
                                                           color: const Color(
-                                                            0xFFEFF6FF,
+                                                            0xFFE0F2FE,
                                                           ),
                                                           borderRadius:
                                                               BorderRadius.circular(
@@ -877,34 +878,70 @@ class _DiarioPageState extends State<DiarioPage> {
                                                               ),
                                                           border: Border.all(
                                                             color: const Color(
-                                                              0xFFBFDBFE,
+                                                              0xFF0284C7,
                                                             ),
                                                           ),
                                                         ),
                                                         child: const Text(
-                                                          'SÌ',
+                                                          'INVIATO',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style: TextStyle(
                                                             color: Color(
-                                                              0xFF2563EB,
+                                                              0xFF0369A1,
                                                             ),
-                                                            fontSize: 12,
+                                                            fontSize: 11,
                                                             fontWeight:
-                                                                FontWeight.w700,
+                                                                FontWeight.w800,
+                                                            letterSpacing: 0.2,
                                                           ),
                                                         ),
                                                       )
-                                                    : const Text(
-                                                        '-',
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF94A3B8,
+                                                    : Container(
+                                                        width: 72,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 5,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFF1F5F9,
                                                           ),
-                                                          fontWeight:
-                                                              FontWeight.w600,
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFFCBD5E1,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'NO',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                            color: Color(
+                                                              0xFF64748B,
+                                                            ),
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                            letterSpacing: 0.2,
+                                                          ),
                                                         ),
                                                       ),
                                               ),
                                             ),
+                                            onTap: () {},
                                           ),
                                           DataCell(
                                             SizedBox(

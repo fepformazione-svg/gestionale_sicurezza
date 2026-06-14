@@ -987,7 +987,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                               ),
                                                           decoration: BoxDecoration(
                                                             color: const Color(
-                                                              0xFFF1F5F9,
+                                                              0xFFFFF7ED,
                                                             ),
                                                             borderRadius:
                                                                 BorderRadius.circular(
@@ -996,12 +996,12 @@ class _DiarioPageState extends State<DiarioPage> {
                                                             border: Border.all(
                                                               color:
                                                                   const Color(
-                                                                    0xFFCBD5E1,
+                                                                    0xFFFDBA74,
                                                                   ),
                                                             ),
                                                           ),
                                                           child: const Text(
-                                                            'NO',
+                                                            'NO FATT.',
                                                             textAlign: TextAlign
                                                                 .center,
                                                             maxLines: 1,
@@ -1010,7 +1010,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                     .ellipsis,
                                                             style: TextStyle(
                                                               color: Color(
-                                                                0xFF64748B,
+                                                                0xFFC2410C,
                                                               ),
                                                               fontSize: 11,
                                                               fontWeight:

@@ -443,8 +443,8 @@ class _DiarioPageState extends State<DiarioPage> {
                             message:
                                 _cercaController.text.trim().isNotEmpty ||
                                     _soloDaFatturare
-                                ? 'Mostra tutto il diario rimuovendo ricerca e filtro'
-                                : 'Tutto il diario è già visibile',
+                                ? 'Rimuovi ricerca e filtro Da fatturare'
+                                : 'Nessuna ricerca o filtro attivo',
                             child: OutlinedButton.icon(
                               onPressed: () {
                                 setState(() {
@@ -462,8 +462,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                 size: 18,
                               ),
                               label: Text(
-                                _cercaController.text.trim().isNotEmpty ||
-                                        _soloDaFatturare
+                                _cercaController.text.trim().isNotEmpty
+                                    ? 'Mostra tutto'
+                                    : _soloDaFatturare
                                     ? 'Mostra tutto'
                                     : 'Tutto visibile',
                               ),

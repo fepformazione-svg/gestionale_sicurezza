@@ -1468,8 +1468,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
                                                       : riga['da_fatturare'] ==
                                                             1
-                                                      ? 'Rimuovi da elenco da fatturare'
-                                                      : 'Segna come da fatturare',
+                                                      ? 'Il corso è da fatturare. Clicca per rimuoverlo dai Da fatturare'
+                                                      : 'Il corso non è da fatturare. Clicca per segnarlo come Da fatturare',
                                                   child: InkWell(
                                                     borderRadius:
                                                         BorderRadius.circular(

@@ -575,12 +575,16 @@ class _DiarioPageState extends State<DiarioPage> {
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
-                              Icons.search_off_rounded,
-                              size: 52,
-                              color: Color(0xFF94A3B8),
+                            Icon(
+                              _soloDaFatturare
+                                  ? Icons.receipt_long_rounded
+                                  : _cercaController.text.trim().isNotEmpty
+                                  ? Icons.manage_search_rounded
+                                  : Icons.menu_book_rounded,
+                              size: 46,
+                              color: const Color(0xFF64748B),
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 14),
                             Builder(
                               builder: (context) {
                                 final ricerca = _cercaController.text.trim();
@@ -606,7 +610,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                 );
                               },
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: 8),
                             Builder(
                               builder: (context) {
                                 final ricerca = _cercaController.text.trim();

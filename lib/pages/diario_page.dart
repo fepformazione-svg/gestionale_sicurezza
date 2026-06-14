@@ -1684,7 +1684,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                       size: 18,
                                                                     ),
                                                                     label: const Text(
-                                                                      'Rinnova',
+                                                                      'Crea rinnovo',
                                                                     ),
                                                                   ),
                                                                 ],

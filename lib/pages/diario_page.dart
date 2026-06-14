@@ -156,7 +156,7 @@ class _DiarioPageState extends State<DiarioPage> {
   Widget badgeDaFatturare(bool valore, {bool bloccato = false}) {
     return Tooltip(
       message: bloccato
-          ? 'Bloccato: fattura già inserita'
+          ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
           : valore
           ? 'Da fatturare'
           : 'Non da fatturare',
@@ -1465,7 +1465,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                               child: Center(
                                                 child: Tooltip(
                                                   message: fatturaPresente
-                                                      ? 'Fattura già inserita: per modificare lo stato, svuota prima la fattura'
+                                                      ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
                                                       : riga['da_fatturare'] ==
                                                             1
                                                       ? 'Rimuovi da elenco da fatturare'

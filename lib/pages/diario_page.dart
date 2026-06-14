@@ -1190,6 +1190,15 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                         true,
                                                                       );
                                                                     },
+                                                                    style: FilledButton.styleFrom(
+                                                                      backgroundColor:
+                                                                          const Color(
+                                                                            0xFFDC2626,
+                                                                          ),
+                                                                      foregroundColor:
+                                                                          Colors
+                                                                              .white,
+                                                                    ),
                                                                     icon: const Icon(
                                                                       Icons
                                                                           .delete_outline_rounded,
@@ -1210,6 +1219,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                 .mounted) {
                                                               return;
                                                             }
+
                                                             Navigator.of(
                                                               dialogContext,
                                                             ).pop('');

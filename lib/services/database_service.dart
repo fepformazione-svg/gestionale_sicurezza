@@ -685,6 +685,20 @@ class DatabaseService {
     );
   }
 
+  Future<void> aggiornaFatturaDiario({
+    required int idDiario,
+    required String fattura,
+  }) async {
+    final db = await _db;
+
+    await db.update(
+      'diario',
+      {'fattura': fattura.trim()},
+      where: 'id = ?',
+      whereArgs: [idDiario],
+    );
+  }
+
   // =========================
   // SCADENZE
   // =========================

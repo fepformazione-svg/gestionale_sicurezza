@@ -892,7 +892,123 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       ),
                                               ),
                                             ),
-                                            onTap: () {},
+                                            onTap: () async {
+                                              final controller =
+                                                  TextEditingController(
+                                                    text: testo(
+                                                      riga['fattura'],
+                                                    ),
+                                                  );
+
+                                              final nuovaFattura = await showDialog<String>(
+                                                context: context,
+                                                builder: (dialogContext) {
+                                                  return AlertDialog(
+                                                    title: const Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons
+                                                              .receipt_long_rounded,
+                                                          color: Color(
+                                                            0xFF047857,
+                                                          ),
+                                                        ),
+                                                        SizedBox(width: 10),
+                                                        Text(
+                                                          'Riferimento fattura',
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    content: TextField(
+                                                      controller: controller,
+                                                      autofocus: true,
+                                                      decoration: const InputDecoration(
+                                                        labelText:
+                                                            'Numero o riferimento fattura',
+                                                        hintText:
+                                                            'Es. FPA 12/2026',
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                      ),
+                                                    ),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop(null);
+                                                        },
+                                                        child: const Text(
+                                                          'Annulla',
+                                                        ),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop('');
+                                                        },
+                                                        child: const Text(
+                                                          'Svuota',
+                                                        ),
+                                                      ),
+                                                      FilledButton.icon(
+                                                        onPressed: () {
+                                                          Navigator.of(
+                                                            dialogContext,
+                                                          ).pop(
+                                                            controller.text
+                                                                .trim(),
+                                                          );
+                                                        },
+                                                        icon: const Icon(
+                                                          Icons.save_rounded,
+                                                          size: 18,
+                                                        ),
+                                                        label: const Text(
+                                                          'Salva',
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  );
+                                                },
+                                              );
+
+                                              controller.dispose();
+
+                                              if (nuovaFattura == null) return;
+
+                                              await DatabaseService.instance
+                                                  .aggiornaFatturaDiario(
+                                                    idDiario: idDiario,
+                                                    fattura: nuovaFattura,
+                                                  );
+
+                                              await caricaDiario();
+
+                                              if (!mounted) return;
+
+                                              ScaffoldMessenger.of(
+                                                this.context,
+                                              ).showSnackBar(
+                                                SnackBar(
+                                                  content: Text(
+                                                    nuovaFattura.trim().isEmpty
+                                                        ? 'Riferimento fattura rimosso'
+                                                        : 'Riferimento fattura salvato',
+                                                  ),
+                                                  backgroundColor:
+                                                      nuovaFattura
+                                                          .trim()
+                                                          .isEmpty
+                                                      ? const Color(0xFF64748B)
+                                                      : const Color(0xFF047857),
+                                                  duration: const Duration(
+                                                    seconds: 3,
+                                                  ),
+                                                ),
+                                              );
+                                            },
                                           ),
                                           DataCell(
                                             SizedBox(

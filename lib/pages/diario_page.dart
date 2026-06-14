@@ -1521,8 +1521,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                               SnackBar(
                                                                 content: Text(
                                                                   !attualmenteDaFatturare
-                                                                      ? 'Corso segnato come da fatturare'
-                                                                      : 'Corso rimosso da fatturare',
+                                                                      ? 'Corso segnato come Da fatturare.'
+                                                                      : 'Corso rimosso da Da fatturare.',
                                                                 ),
                                                                 backgroundColor:
                                                                     !attualmenteDaFatturare

@@ -609,12 +609,16 @@ class _DiarioPageState extends State<DiarioPage> {
                                 onPressed: () {
                                   setState(() {
                                     _cercaController.clear();
+                                    _soloDaFatturare = false;
                                   });
 
                                   caricaDiario();
                                 },
-                                icon: const Icon(Icons.clear_rounded, size: 18),
-                                label: const Text('Azzera ricerca'),
+                                icon: const Icon(
+                                  Icons.filter_alt_off_rounded,
+                                  size: 18,
+                                ),
+                                label: const Text('Azzera ricerca e filtro'),
                               ),
                             ],
                           ],

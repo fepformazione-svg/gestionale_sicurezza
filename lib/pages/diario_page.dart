@@ -803,93 +803,107 @@ class _DiarioPageState extends State<DiarioPage> {
                                             SizedBox(
                                               width: 85,
                                               child: Center(
-                                                child:
-                                                    testo(
-                                                      riga['fattura'],
-                                                    ).trim().isEmpty
-                                                    ? Container(
-                                                        width: 72,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 5,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFFF1F5F9,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                999,
+                                                child: Tooltip(
+                                                  message:
+                                                      testo(
+                                                        riga['fattura'],
+                                                      ).trim().isEmpty
+                                                      ? 'Inserisci riferimento fattura'
+                                                      : 'Modifica o rimuovi fattura: ${testo(riga['fattura']).trim()}',
+                                                  child:
+                                                      testo(
+                                                        riga['fattura'],
+                                                      ).trim().isEmpty
+                                                      ? Container(
+                                                          width: 72,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 5,
                                                               ),
-                                                          border: Border.all(
+                                                          decoration: BoxDecoration(
                                                             color: const Color(
-                                                              0xFFCBD5E1,
+                                                              0xFFF1F5F9,
                                                             ),
-                                                          ),
-                                                        ),
-                                                        child: const Text(
-                                                          'NO',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: TextStyle(
-                                                            color: Color(
-                                                              0xFF64748B,
-                                                            ),
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.w800,
-                                                            letterSpacing: 0.2,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : Container(
-                                                        width: 72,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 5,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFFECFDF5,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                999,
-                                                              ),
-                                                          border: Border.all(
-                                                            color: const Color(
-                                                              0xFF10B981,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                        child: Text(
-                                                          testo(
-                                                            riga['fattura'],
-                                                          ),
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Color(
-                                                                  0xFF047857,
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
                                                                 ),
-                                                                fontSize: 11,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w800,
-                                                                letterSpacing:
-                                                                    0.2,
+                                                            border: Border.all(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFFCBD5E1,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          child: const Text(
+                                                            'NO',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF64748B,
                                                               ),
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              letterSpacing:
+                                                                  0.2,
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : Container(
+                                                          width: 72,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 5,
+                                                              ),
+                                                          decoration: BoxDecoration(
+                                                            color: const Color(
+                                                              0xFFECFDF5,
+                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
+                                                            border: Border.all(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFF10B981,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          child: Text(
+                                                            testo(
+                                                              riga['fattura'],
+                                                            ),
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Color(
+                                                                    0xFF047857,
+                                                                  ),
+                                                                  fontSize: 11,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w800,
+                                                                  letterSpacing:
+                                                                      0.2,
+                                                                ),
+                                                          ),
                                                         ),
-                                                      ),
+                                                ),
                                               ),
                                             ),
                                             onTap: () async {

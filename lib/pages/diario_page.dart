@@ -1167,7 +1167,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                   ],
                                                                 ),
                                                                 content: const Text(
-                                                                  'Vuoi rimuovere il riferimento fattura da questo corso?',
+                                                                  'Vuoi rimuovere il riferimento fattura da questo corso? Dopo la rimozione, il campo Da fatturare tornerà modificabile manualmente.',
                                                                 ),
                                                                 actions: [
                                                                   TextButton(

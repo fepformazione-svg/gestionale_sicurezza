@@ -1482,7 +1482,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                             ).showSnackBar(
                                                               const SnackBar(
                                                                 content: Text(
-                                                                  'Fattura già inserita: svuota prima la fattura per modificare lo stato da fatturare',
+                                                                  'Fattura già inserita. Per modificare Da fatturare, svuota prima il riferimento fattura.',
                                                                 ),
                                                                 backgroundColor:
                                                                     Color(

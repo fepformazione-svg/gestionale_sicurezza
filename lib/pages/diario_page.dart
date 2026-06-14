@@ -807,25 +807,16 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     testo(
                                                       riga['fattura'],
                                                     ).trim().isEmpty
-                                                    ? const Text(
-                                                        '-',
-                                                        style: TextStyle(
-                                                          color: Color(
-                                                            0xFF94A3B8,
-                                                          ),
-                                                          fontWeight:
-                                                              FontWeight.w600,
-                                                        ),
-                                                      )
-                                                    : Container(
+                                                    ? Container(
+                                                        width: 72,
                                                         padding:
                                                             const EdgeInsets.symmetric(
-                                                              horizontal: 9,
+                                                              horizontal: 8,
                                                               vertical: 5,
                                                             ),
                                                         decoration: BoxDecoration(
                                                           color: const Color(
-                                                            0xFFEFF6FF,
+                                                            0xFFF1F5F9,
                                                           ),
                                                           borderRadius:
                                                               BorderRadius.circular(
@@ -833,7 +824,46 @@ class _DiarioPageState extends State<DiarioPage> {
                                                               ),
                                                           border: Border.all(
                                                             color: const Color(
-                                                              0xFFBFDBFE,
+                                                              0xFFCBD5E1,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'NO',
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                          style: TextStyle(
+                                                            color: Color(
+                                                              0xFF64748B,
+                                                            ),
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w800,
+                                                            letterSpacing: 0.2,
+                                                          ),
+                                                        ),
+                                                      )
+                                                    : Container(
+                                                        width: 72,
+                                                        padding:
+                                                            const EdgeInsets.symmetric(
+                                                              horizontal: 8,
+                                                              vertical: 5,
+                                                            ),
+                                                        decoration: BoxDecoration(
+                                                          color: const Color(
+                                                            0xFFECFDF5,
+                                                          ),
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                999,
+                                                              ),
+                                                          border: Border.all(
+                                                            color: const Color(
+                                                              0xFF10B981,
                                                             ),
                                                           ),
                                                         ),
@@ -841,20 +871,28 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           testo(
                                                             riga['fattura'],
                                                           ),
+                                                          textAlign:
+                                                              TextAlign.center,
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
                                                           style:
                                                               const TextStyle(
                                                                 color: Color(
-                                                                  0xFF2563EB,
+                                                                  0xFF047857,
                                                                 ),
-                                                                fontSize: 12,
+                                                                fontSize: 11,
                                                                 fontWeight:
                                                                     FontWeight
-                                                                        .w700,
+                                                                        .w800,
+                                                                letterSpacing:
+                                                                    0.2,
                                                               ),
                                                         ),
                                                       ),
                                               ),
                                             ),
+                                            onTap: () {},
                                           ),
                                           DataCell(
                                             SizedBox(

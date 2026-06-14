@@ -1028,87 +1028,104 @@ class _DiarioPageState extends State<DiarioPage> {
                                             SizedBox(
                                               width: 75,
                                               child: Center(
-                                                child:
-                                                    riga['invio']?.toString() ==
-                                                        '1'
-                                                    ? Container(
-                                                        width: 72,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 5,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFFE0F2FE,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                999,
+                                                child: Tooltip(
+                                                  message:
+                                                      riga['invio']
+                                                              ?.toString() ==
+                                                          '1'
+                                                      ? 'Rimuovi invio'
+                                                      : 'Segna come inviato',
+                                                  child:
+                                                      riga['invio']
+                                                              ?.toString() ==
+                                                          '1'
+                                                      ? Container(
+                                                          width: 72,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 5,
                                                               ),
-                                                          border: Border.all(
+                                                          decoration: BoxDecoration(
                                                             color: const Color(
-                                                              0xFF0284C7,
+                                                              0xFFE0F2FE,
+                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
+                                                            border: Border.all(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFF0284C7,
+                                                                  ),
                                                             ),
                                                           ),
-                                                        ),
-                                                        child: const Text(
-                                                          'INVIATO',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: TextStyle(
-                                                            color: Color(
-                                                              0xFF0369A1,
-                                                            ),
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.w800,
-                                                            letterSpacing: 0.2,
-                                                          ),
-                                                        ),
-                                                      )
-                                                    : Container(
-                                                        width: 72,
-                                                        padding:
-                                                            const EdgeInsets.symmetric(
-                                                              horizontal: 8,
-                                                              vertical: 5,
-                                                            ),
-                                                        decoration: BoxDecoration(
-                                                          color: const Color(
-                                                            0xFFF1F5F9,
-                                                          ),
-                                                          borderRadius:
-                                                              BorderRadius.circular(
-                                                                999,
+                                                          child: const Text(
+                                                            'INVIATO',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF0369A1,
                                                               ),
-                                                          border: Border.all(
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              letterSpacing:
+                                                                  0.2,
+                                                            ),
+                                                          ),
+                                                        )
+                                                      : Container(
+                                                          width: 72,
+                                                          padding:
+                                                              const EdgeInsets.symmetric(
+                                                                horizontal: 8,
+                                                                vertical: 5,
+                                                              ),
+                                                          decoration: BoxDecoration(
                                                             color: const Color(
-                                                              0xFFCBD5E1,
+                                                              0xFFF1F5F9,
+                                                            ),
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  999,
+                                                                ),
+                                                            border: Border.all(
+                                                              color:
+                                                                  const Color(
+                                                                    0xFFCBD5E1,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          child: const Text(
+                                                            'NO',
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                            style: TextStyle(
+                                                              color: Color(
+                                                                0xFF64748B,
+                                                              ),
+                                                              fontSize: 11,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .w800,
+                                                              letterSpacing:
+                                                                  0.2,
                                                             ),
                                                           ),
                                                         ),
-                                                        child: const Text(
-                                                          'NO',
-                                                          textAlign:
-                                                              TextAlign.center,
-                                                          maxLines: 1,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                          style: TextStyle(
-                                                            color: Color(
-                                                              0xFF64748B,
-                                                            ),
-                                                            fontSize: 11,
-                                                            fontWeight:
-                                                                FontWeight.w800,
-                                                            letterSpacing: 0.2,
-                                                          ),
-                                                        ),
-                                                      ),
+                                                ),
                                               ),
                                             ),
                                             onTap: () async {

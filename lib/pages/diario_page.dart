@@ -153,17 +153,29 @@ class _DiarioPageState extends State<DiarioPage> {
     );
   }
 
-  Widget badgeDaFatturare(bool valore) {
+  Widget badgeDaFatturare(bool valore, {bool bloccato = false}) {
     return Tooltip(
-      message: valore ? 'Da fatturare' : 'Non da fatturare',
+      message: bloccato
+          ? 'Bloccato: fattura già inserita'
+          : valore
+          ? 'Da fatturare'
+          : 'Non da fatturare',
       child: Container(
         width: 98,
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
         decoration: BoxDecoration(
-          color: valore ? const Color(0xFFFFEDD5) : const Color(0xFFE5E7EB),
+          color: bloccato
+              ? const Color(0xFFF1F5F9)
+              : valore
+              ? const Color(0xFFFFEDD5)
+              : const Color(0xFFE5E7EB),
           borderRadius: BorderRadius.circular(999),
           border: Border.all(
-            color: valore ? const Color(0xFFF97316) : const Color(0xFFCBD5E1),
+            color: bloccato
+                ? const Color(0xFFCBD5E1)
+                : valore
+                ? const Color(0xFFF97316)
+                : const Color(0xFFCBD5E1),
           ),
         ),
         child: Row(
@@ -171,11 +183,17 @@ class _DiarioPageState extends State<DiarioPage> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              valore
+              bloccato
+                  ? Icons.lock_rounded
+                  : valore
                   ? Icons.receipt_long_rounded
                   : Icons.check_circle_outline_rounded,
               size: 15,
-              color: valore ? const Color(0xFFC2410C) : const Color(0xFF64748B),
+              color: bloccato
+                  ? const Color(0xFF94A3B8)
+                  : valore
+                  ? const Color(0xFFC2410C)
+                  : const Color(0xFF64748B),
             ),
             const SizedBox(width: 4),
             Text(
@@ -186,7 +204,9 @@ class _DiarioPageState extends State<DiarioPage> {
                 fontSize: 11,
                 fontWeight: FontWeight.w800,
                 letterSpacing: 0.2,
-                color: valore
+                color: bloccato
+                    ? const Color(0xFF94A3B8)
+                    : valore
                     ? const Color(0xFFC2410C)
                     : const Color(0xFF475569),
               ),
@@ -1413,6 +1433,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           },
                                                     child: badgeDaFatturare(
                                                       riga['da_fatturare'] == 1,
+                                                      bloccato: fatturaPresente,
                                                     ),
                                                   ),
                                                 ),

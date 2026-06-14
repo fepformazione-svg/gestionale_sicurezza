@@ -1143,10 +1143,77 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         ),
                                                       ),
                                                       TextButton(
-                                                        onPressed: () {
-                                                          Navigator.of(
-                                                            dialogContext,
-                                                          ).pop('');
+                                                        onPressed: () async {
+                                                          final confermaSvuota = await showDialog<bool>(
+                                                            context:
+                                                                dialogContext,
+                                                            builder: (confirmContext) {
+                                                              return AlertDialog(
+                                                                title: const Row(
+                                                                  children: [
+                                                                    Icon(
+                                                                      Icons
+                                                                          .warning_amber_rounded,
+                                                                      color: Color(
+                                                                        0xFFF97316,
+                                                                      ),
+                                                                    ),
+                                                                    SizedBox(
+                                                                      width: 10,
+                                                                    ),
+                                                                    Text(
+                                                                      'Svuotare fattura?',
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                content: const Text(
+                                                                  'Vuoi rimuovere il riferimento fattura da questo corso?',
+                                                                ),
+                                                                actions: [
+                                                                  TextButton(
+                                                                    onPressed: () {
+                                                                      Navigator.of(
+                                                                        confirmContext,
+                                                                      ).pop(
+                                                                        false,
+                                                                      );
+                                                                    },
+                                                                    child: const Text(
+                                                                      'Annulla',
+                                                                    ),
+                                                                  ),
+                                                                  FilledButton.icon(
+                                                                    onPressed: () {
+                                                                      Navigator.of(
+                                                                        confirmContext,
+                                                                      ).pop(
+                                                                        true,
+                                                                      );
+                                                                    },
+                                                                    icon: const Icon(
+                                                                      Icons
+                                                                          .delete_outline_rounded,
+                                                                      size: 18,
+                                                                    ),
+                                                                    label: const Text(
+                                                                      'Svuota',
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              );
+                                                            },
+                                                          );
+
+                                                          if (confermaSvuota ==
+                                                              true) {
+                                                            if (!dialogContext
+                                                                .mounted) {
+                                                              return;
+                                                            }
+                                                            Navigator.of(
+                                                              dialogContext,
+                                                            ).pop('');
+                                                          }
                                                         },
                                                         child: const Text(
                                                           'Svuota',

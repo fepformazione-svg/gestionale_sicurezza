@@ -898,7 +898,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                             SizedBox(
                                               width: 75,
                                               child: Center(
-                                                child: riga['invio'] == 1
+                                                child:
+                                                    riga['invio']?.toString() ==
+                                                        '1'
                                                     ? Container(
                                                         width: 72,
                                                         padding:
@@ -979,7 +981,63 @@ class _DiarioPageState extends State<DiarioPage> {
                                                       ),
                                               ),
                                             ),
-                                            onTap: () {},
+                                            onTap: () async {
+                                              final invioAttivo =
+                                                  riga['invio']?.toString() ==
+                                                  '1';
+                                              final nuovoValore = invioAttivo
+                                                  ? 0
+                                                  : 1;
+
+                                              try {
+                                                await DatabaseService.instance
+                                                    .aggiornaInvioDiario(
+                                                      idDiario: idDiario,
+                                                      invio: nuovoValore,
+                                                    );
+
+                                                await caricaDiario();
+
+                                                if (!mounted) return;
+
+                                                ScaffoldMessenger.of(
+                                                  this.context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      nuovoValore == 1
+                                                          ? 'Corso segnato come inviato'
+                                                          : 'Invio rimosso',
+                                                    ),
+                                                    backgroundColor:
+                                                        nuovoValore == 1
+                                                        ? const Color(
+                                                            0xFF2563EB,
+                                                          )
+                                                        : const Color(
+                                                            0xFF64748B,
+                                                          ),
+                                                    duration: const Duration(
+                                                      seconds: 3,
+                                                    ),
+                                                  ),
+                                                );
+                                              } catch (errore) {
+                                                if (!mounted) return;
+
+                                                ScaffoldMessenger.of(
+                                                  this.context,
+                                                ).showSnackBar(
+                                                  SnackBar(
+                                                    content: Text(
+                                                      'Errore aggiornamento invio: $errore',
+                                                    ),
+                                                    backgroundColor:
+                                                        const Color(0xFFDC2626),
+                                                  ),
+                                                );
+                                              }
+                                            },
                                           ),
                                           DataCell(
                                             SizedBox(

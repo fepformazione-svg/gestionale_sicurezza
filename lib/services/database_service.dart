@@ -671,6 +671,20 @@ class DatabaseService {
     );
   }
 
+  Future<void> aggiornaInvioDiario({
+    required int idDiario,
+    required int invio,
+  }) async {
+    final db = await _db;
+
+    await db.update(
+      'diario',
+      {'invio': invio},
+      where: 'id = ?',
+      whereArgs: [idDiario],
+    );
+  }
+
   // =========================
   // SCADENZE
   // =========================

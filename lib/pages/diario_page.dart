@@ -681,8 +681,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                       ),
                                       const DataColumn(
                                         label: Tooltip(
-                                          message:
-                                              'Attestato/documento inviato',
+                                          message: 'Stato invio documentazione',
                                           child: SizedBox(
                                             width: 75,
                                             child: Center(child: Text('Invio')),
@@ -691,7 +690,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                       ),
                                       const DataColumn(
                                         label: Tooltip(
-                                          message: 'Da fatturare',
+                                          message: 'Stato da fatturare',
                                           child: SizedBox(
                                             width: 85,
                                             child: Center(

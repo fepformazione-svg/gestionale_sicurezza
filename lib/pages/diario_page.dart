@@ -1654,7 +1654,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                 content: Text(
                                                                   'Vuoi creare un nuovo rinnovo per il corso '
                                                                   '"${testo(riga['corso'])}" di '
-                                                                  '${testo(riga['cognome'])} ${testo(riga['nome'])}?',
+                                                                  '${testo(riga['cognome'])} ${testo(riga['nome'])}?\n\n'
+                                                                  'Il rinnovo verrà aggiunto come nuovo record nel Diario.',
                                                                 ),
                                                                 actions: [
                                                                   TextButton(

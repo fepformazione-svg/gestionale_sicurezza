@@ -1183,7 +1183,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                   content: Text(
                                                     nuovaFattura.trim().isEmpty
                                                         ? 'Riferimento fattura rimosso'
-                                                        : 'Riferimento fattura salvato',
+                                                        : 'Riferimento fattura salvato. Il corso è stato rimosso dai Da fatturare.',
                                                   ),
                                                   backgroundColor:
                                                       nuovaFattura

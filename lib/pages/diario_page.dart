@@ -834,7 +834,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                           message:
                                               'Numero o riferimento fattura',
                                           child: SizedBox(
-                                            width: 85,
+                                            width: 95,
                                             child: Center(
                                               child: Text('Fattura'),
                                             ),
@@ -965,7 +965,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                           ),
                                           DataCell(
                                             SizedBox(
-                                              width: 85,
+                                              width: 95,
                                               child: Center(
                                                 child: Tooltip(
                                                   message:
@@ -979,7 +979,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         riga['fattura'],
                                                       ).trim().isEmpty
                                                       ? Container(
-                                                          width: 72,
+                                                          width: 82,
                                                           padding:
                                                               const EdgeInsets.symmetric(
                                                                 horizontal: 8,
@@ -1022,7 +1022,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           ),
                                                         )
                                                       : Container(
-                                                          width: 72,
+                                                          width: 82,
                                                           padding:
                                                               const EdgeInsets.symmetric(
                                                                 horizontal: 8,

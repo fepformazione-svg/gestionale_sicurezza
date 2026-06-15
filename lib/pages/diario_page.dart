@@ -130,24 +130,25 @@ class _DiarioPageState extends State<DiarioPage> {
     final colore = coloreStato(testo);
 
     return Container(
-      width: 78,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      width: 86,
+      height: 28,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
         color: colore.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(color: colore.withValues(alpha: 0.45)),
       ),
-      child: Center(
-        child: Text(
-          testo,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            color: colore,
-            fontSize: 12,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.2,
-          ),
+      child: Text(
+        testo,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          color: colore,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.2,
         ),
       ),
     );

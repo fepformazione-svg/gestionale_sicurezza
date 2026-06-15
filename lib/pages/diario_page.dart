@@ -191,14 +191,6 @@ class _DiarioPageState extends State<DiarioPage> {
               overflow: TextOverflow.ellipsis,
               style: stileHeader,
             ),
-            tooltip: 'Ordina per discente',
-            columnIndex: 0,
-            onTap: () {
-              ordinaDaHeader<String>(
-                0,
-                (riga) => '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-              );
-            },
           ),
           cellaHeaderDiario(
             width: wImpresa,
@@ -208,11 +200,6 @@ class _DiarioPageState extends State<DiarioPage> {
               overflow: TextOverflow.ellipsis,
               style: stileHeader,
             ),
-            tooltip: 'Ordina per impresa',
-            columnIndex: 1,
-            onTap: () {
-              ordinaDaHeader<String>(1, (riga) => testo(riga['impresa']));
-            },
           ),
           cellaHeaderDiario(
             width: wCorso,
@@ -222,11 +209,6 @@ class _DiarioPageState extends State<DiarioPage> {
               overflow: TextOverflow.ellipsis,
               style: stileHeader,
             ),
-            tooltip: 'Ordina per corso',
-            columnIndex: 2,
-            onTap: () {
-              ordinaDaHeader<String>(2, (riga) => testo(riga['corso']));
-            },
           ),
           cellaHeaderDiario(
             width: wDataCorso,
@@ -247,11 +229,6 @@ class _DiarioPageState extends State<DiarioPage> {
               overflow: TextOverflow.ellipsis,
               style: stileHeader,
             ),
-            tooltip: 'Ordina per scadenza',
-            columnIndex: 4,
-            onTap: () {
-              ordinaDaHeader<String>(4, (riga) => testo(riga['scadenza']));
-            },
           ),
           cellaHeaderDiario(
             width: wStato,

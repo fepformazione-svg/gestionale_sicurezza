@@ -141,8 +141,6 @@ class _DiarioPageState extends State<DiarioPage> {
     VoidCallback? onTap,
     int? columnIndex,
   }) {
-    final ordinata = columnIndex != null && _sortColumnIndex == columnIndex;
-
     Widget contenuto = SizedBox(
       width: width,
       height: 48,
@@ -153,23 +151,7 @@ class _DiarioPageState extends State<DiarioPage> {
               ? MainAxisAlignment.center
               : MainAxisAlignment.start,
           mainAxisSize: MainAxisSize.max,
-          children: [
-            Flexible(child: child),
-            if (columnIndex != null) ...[
-              const SizedBox(width: 4),
-              Icon(
-                ordinata
-                    ? (_sortAscending
-                          ? Icons.arrow_upward_rounded
-                          : Icons.arrow_downward_rounded)
-                    : Icons.unfold_more_rounded,
-                size: ordinata ? 16 : 15,
-                color: ordinata
-                    ? const Color(0xFF2563EB)
-                    : const Color(0xFF94A3B8),
-              ),
-            ],
-          ],
+          children: [Flexible(child: child)],
         ),
       ),
     );

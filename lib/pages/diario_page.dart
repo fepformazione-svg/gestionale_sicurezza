@@ -369,99 +369,6 @@ class _DiarioPageState extends State<DiarioPage> {
     }
   }
 
-  List<DataColumn> colonneDiario() {
-    return [
-      DataColumn(
-        label: const SizedBox(width: 150, child: Text('Discente')),
-        onSort: (columnIndex, ascending) {
-          ordina<String>(
-            (riga) => '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-            columnIndex,
-            ascending,
-          );
-        },
-      ),
-      DataColumn(
-        label: const SizedBox(width: 130, child: Text('Impresa')),
-        onSort: (columnIndex, ascending) {
-          ordina<String>(
-            (riga) => testo(riga['impresa']),
-            columnIndex,
-            ascending,
-          );
-        },
-      ),
-      DataColumn(
-        label: const SizedBox(width: 180, child: Text('Corso')),
-        onSort: (columnIndex, ascending) {
-          ordina<String>(
-            (riga) => testo(riga['corso']),
-            columnIndex,
-            ascending,
-          );
-        },
-      ),
-      const DataColumn(
-        label: SizedBox(width: 105, child: Center(child: Text('Data corso'))),
-      ),
-      DataColumn(
-        label: const SizedBox(
-          width: 105,
-          child: Center(child: Text('Scadenza')),
-        ),
-        onSort: (columnIndex, ascending) {
-          ordina<String>(
-            (riga) => testo(riga['scadenza']),
-            columnIndex,
-            ascending,
-          );
-        },
-      ),
-      const DataColumn(
-        label: SizedBox(width: 90, child: Center(child: Text('Stato'))),
-      ),
-      const DataColumn(
-        label: SizedBox(width: 70, child: Center(child: Text('Prot.'))),
-      ),
-      const DataColumn(
-        label: Tooltip(
-          message: 'Numero o riferimento fattura',
-          child: SizedBox(width: 95, child: Center(child: Text('Fattura'))),
-        ),
-      ),
-      const DataColumn(
-        label: Tooltip(
-          message: 'Stato invio documentazione',
-          child: SizedBox(width: 75, child: Center(child: Text('Invio'))),
-        ),
-      ),
-      const DataColumn(
-        label: Tooltip(
-          message: 'Stato da fatturare',
-          child: SizedBox(
-            width: 105,
-            child: Center(child: Text('Da fatturare')),
-          ),
-        ),
-      ),
-      const DataColumn(
-        label: Tooltip(
-          message: 'Rinnova corso',
-          child: SizedBox(
-            width: 60,
-            child: Center(
-              child: Icon(
-                Icons.refresh_rounded,
-                size: 22,
-                color: Color(0xFF334155),
-              ),
-            ),
-          ),
-        ),
-      ),
-    ];
-  }
-
   List<DataColumn> colonneDiarioRighe() {
     DataColumn colonnaVuota(double width) {
       return DataColumn(label: SizedBox(width: width, height: 0));
@@ -1866,7 +1773,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                           content: Text(
                                                                             !attualmenteDaFatturare
                                                                                 ? 'Corso segnato come Da fatturare.'
-                                                                                : 'Corso rimosso daR Da fatturare.',
+                                                                                : 'Corso rimosso dai Da fatturare.',
                                                                           ),
                                                                           backgroundColor:
                                                                               !attualmenteDaFatturare

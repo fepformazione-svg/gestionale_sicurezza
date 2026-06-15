@@ -27,6 +27,31 @@ class _DiarioPageState extends State<DiarioPage> {
   int? _sortColumnIndex;
   bool _sortAscending = true;
 
+  static const double wDiscente = 220;
+  static const double wImpresa = 225;
+  static const double wCorso = 190;
+  static const double wDataCorso = 105;
+  static const double wScadenza = 105;
+  static const double wStato = 90;
+  static const double wProt = 70;
+  static const double wFattura = 95;
+  static const double wInvio = 75;
+  static const double wDaFatturare = 108;
+  static const double wRinnova = 60;
+
+  static const double larghezzaDiarioTabella =
+      wDiscente +
+      wImpresa +
+      wCorso +
+      wDataCorso +
+      wScadenza +
+      wStato +
+      wProt +
+      wFattura +
+      wInvio +
+      wDaFatturare +
+      wRinnova;
+
   @override
   void initState() {
     super.initState();
@@ -95,6 +120,223 @@ class _DiarioPageState extends State<DiarioPage> {
       _sortColumnIndex = columnIndex;
       _sortAscending = ascending;
     });
+  }
+
+  void ordinaDaHeader<T>(
+    int columnIndex,
+    Comparable<T> Function(Map<String, dynamic> riga) getField,
+  ) {
+    final nuovaDirezione = _sortColumnIndex == columnIndex
+        ? !_sortAscending
+        : true;
+
+    ordina<T>(getField, columnIndex, nuovaDirezione);
+  }
+
+  Widget cellaHeaderDiario({
+    required double width,
+    required Widget child,
+    bool centrato = false,
+    String? tooltip,
+    VoidCallback? onTap,
+    int? columnIndex,
+  }) {
+    final ordinata = columnIndex != null && _sortColumnIndex == columnIndex;
+
+    Widget contenuto = SizedBox(
+      width: width,
+      height: 48,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: centrato
+              ? MainAxisAlignment.center
+              : MainAxisAlignment.start,
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            Flexible(child: child),
+            if (columnIndex != null) ...[
+              const SizedBox(width: 4),
+              Icon(
+                ordinata
+                    ? (_sortAscending
+                          ? Icons.arrow_upward_rounded
+                          : Icons.arrow_downward_rounded)
+                    : Icons.unfold_more_rounded,
+                size: ordinata ? 16 : 15,
+                color: ordinata
+                    ? const Color(0xFF2563EB)
+                    : const Color(0xFF94A3B8),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+
+    if (tooltip != null) {
+      contenuto = Tooltip(message: tooltip, child: contenuto);
+    }
+
+    if (onTap != null) {
+      contenuto = InkWell(onTap: onTap, child: contenuto);
+    }
+
+    return contenuto;
+  }
+
+  Widget headerDiarioManuale() {
+    const stileHeader = TextStyle(
+      fontSize: 13,
+      fontWeight: FontWeight.w800,
+      color: Color(0xFF334155),
+    );
+
+    return Container(
+      width: larghezzaDiarioTabella,
+      height: 48,
+      decoration: BoxDecoration(
+        color: Colors.grey.shade100,
+        border: Border(bottom: BorderSide(color: Colors.grey.shade300)),
+      ),
+      child: Row(
+        children: [
+          cellaHeaderDiario(
+            width: wDiscente,
+            child: const Text(
+              'Discente',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+            tooltip: 'Ordina per discente',
+            columnIndex: 0,
+            onTap: () {
+              ordinaDaHeader<String>(
+                0,
+                (riga) => '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+              );
+            },
+          ),
+          cellaHeaderDiario(
+            width: wImpresa,
+            child: const Text(
+              'Impresa',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+            tooltip: 'Ordina per impresa',
+            columnIndex: 1,
+            onTap: () {
+              ordinaDaHeader<String>(1, (riga) => testo(riga['impresa']));
+            },
+          ),
+          cellaHeaderDiario(
+            width: wCorso,
+            child: const Text(
+              'Corso',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+            tooltip: 'Ordina per corso',
+            columnIndex: 2,
+            onTap: () {
+              ordinaDaHeader<String>(2, (riga) => testo(riga['corso']));
+            },
+          ),
+          cellaHeaderDiario(
+            width: wDataCorso,
+            centrato: true,
+            child: const Text(
+              'Data corso',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wScadenza,
+            centrato: true,
+            child: const Text(
+              'Scadenza',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+            tooltip: 'Ordina per scadenza',
+            columnIndex: 4,
+            onTap: () {
+              ordinaDaHeader<String>(4, (riga) => testo(riga['scadenza']));
+            },
+          ),
+          cellaHeaderDiario(
+            width: wStato,
+            centrato: true,
+            child: const Text(
+              'Stato',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wProt,
+            centrato: true,
+            child: const Text(
+              'Prot.',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wFattura,
+            centrato: true,
+            tooltip: 'Numero o riferimento fattura',
+            child: const Text(
+              'Fattura',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wInvio,
+            centrato: true,
+            tooltip: 'Stato invio documentazione',
+            child: const Text(
+              'Invio',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wDaFatturare,
+            centrato: true,
+            tooltip: 'Stato da fatturare',
+            child: const Text(
+              'Da fatturare',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: stileHeader,
+            ),
+          ),
+          cellaHeaderDiario(
+            width: wRinnova,
+            centrato: true,
+            tooltip: 'Rinnova corso',
+            child: const Icon(
+              Icons.refresh_rounded,
+              size: 22,
+              color: Color(0xFF334155),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   String statoScadenza(String? dataScadenza) {
@@ -226,17 +468,17 @@ class _DiarioPageState extends State<DiarioPage> {
     }
 
     return [
-      colonnaVuota(150),
-      colonnaVuota(130),
-      colonnaVuota(180),
-      colonnaVuota(105),
-      colonnaVuota(105),
-      colonnaVuota(90),
-      colonnaVuota(70),
-      colonnaVuota(95),
-      colonnaVuota(75),
-      colonnaVuota(105),
-      colonnaVuota(60),
+      colonnaVuota(wDiscente),
+      colonnaVuota(wImpresa),
+      colonnaVuota(wCorso),
+      colonnaVuota(wDataCorso),
+      colonnaVuota(wScadenza),
+      colonnaVuota(wStato),
+      colonnaVuota(wProt),
+      colonnaVuota(wFattura),
+      colonnaVuota(wInvio),
+      colonnaVuota(wDaFatturare),
+      colonnaVuota(wRinnova),
     ];
   }
 
@@ -855,24 +1097,12 @@ class _DiarioPageState extends State<DiarioPage> {
                             child: SingleChildScrollView(
                               controller: diarioHorizontalController,
                               scrollDirection: Axis.horizontal,
-                              child: ConstrainedBox(
-                                constraints: BoxConstraints(
-                                  minWidth: constraints.maxWidth < 1600
-                                      ? 1600
-                                      : constraints.maxWidth,
-                                ),
+                              child: SizedBox(
+                                width: larghezzaDiarioTabella,
                                 child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    DataTable(
-                                      showCheckboxColumn: false,
-                                      sortColumnIndex: _sortColumnIndex,
-                                      sortAscending: _sortAscending,
-                                      headingRowColor: WidgetStateProperty.all(
-                                        Colors.grey.shade100,
-                                      ),
-                                      columns: colonneDiario(),
-                                      rows: const [],
-                                    ),
+                                    headerDiarioManuale(),
                                     Expanded(
                                       child: Scrollbar(
                                         controller: diarioVerticalController,
@@ -887,6 +1117,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                             ),
                                             child: DataTable(
                                               headingRowHeight: 0,
+                                              columnSpacing: 0,
+                                              horizontalMargin: 0,
                                               showCheckboxColumn: false,
                                               sortColumnIndex: _sortColumnIndex,
                                               sortAscending: _sortAscending,
@@ -927,17 +1159,27 @@ class _DiarioPageState extends State<DiarioPage> {
                                                   },
                                                   cells: [
                                                     DataCell(
-                                                      InkWell(
-                                                        onTap: () {
-                                                          apriSchedaDiscente(
-                                                            riga,
-                                                          );
-                                                        },
-                                                        child: Text(
-                                                          '${testo(riga['cognome'])} ${testo(riga['nome'])}'
-                                                              .trim(),
-                                                          style:
-                                                              const TextStyle(
+                                                      SizedBox(
+                                                        width: 150,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                left: 8,
+                                                              ),
+                                                          child: InkWell(
+                                                            onTap: () {
+                                                              apriSchedaDiscente(
+                                                                riga,
+                                                              );
+                                                            },
+                                                            child: Text(
+                                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+                                                                  .trim(),
+                                                              maxLines: 1,
+                                                              overflow:
+                                                                  TextOverflow
+                                                                      .ellipsis,
+                                                              style: const TextStyle(
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .w600,
@@ -945,17 +1187,40 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                   0xFF2563EB,
                                                                 ),
                                                               ),
+                                                            ),
+                                                          ),
                                                         ),
                                                       ),
                                                     ),
                                                     DataCell(
-                                                      Text(
-                                                        testo(riga['impresa']),
+                                                      SizedBox(
+                                                        width: wImpresa,
+                                                        child: Padding(
+                                                          padding:
+                                                              const EdgeInsets.only(
+                                                                left: 8,
+                                                              ),
+                                                          child: Text(
+                                                            testo(
+                                                              riga['impresa'],
+                                                            ),
+                                                            maxLines: 1,
+                                                            overflow:
+                                                                TextOverflow
+                                                                    .ellipsis,
+                                                          ),
+                                                        ),
                                                       ),
                                                     ),
                                                     DataCell(
-                                                      Text(
-                                                        testo(riga['corso']),
+                                                      SizedBox(
+                                                        width: 180,
+                                                        child: Text(
+                                                          testo(riga['corso']),
+                                                          maxLines: 1,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
                                                       ),
                                                     ),
                                                     DataCell(
@@ -1891,7 +2156,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                     ), // Expanded
                                   ],
                                 ), // Column
-                              ), // ConConstrainedBox
+                              ), // SizedBox larghezzaDiarioTabella
                             ), // SingleChildScrollView orizzontale
                           ); // Scrollbar orizzontale
                         },

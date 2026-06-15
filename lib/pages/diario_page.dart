@@ -1753,7 +1753,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                             ).showSnackBar(
                                                               SnackBar(
                                                                 content: Text(
-                                                                  'Rinnovo creato: ${testo(riga['corso'])} — '
+                                                                  'Rinnovo corso creato: ${testo(riga['corso'])} — '
                                                                   '${testo(riga['cognome'])} ${testo(riga['nome'])}',
                                                                 ),
                                                                 backgroundColor:

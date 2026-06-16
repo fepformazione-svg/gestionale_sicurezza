@@ -491,18 +491,33 @@ class _DiscentiPageState extends State<DiscentiPage> {
             const SizedBox(width: 16),
 
             OutlinedButton.icon(
-              onPressed: () async {
-                // test PDF
-                await PdfExportService.esportaTabella(
-                  titolo: 'Discenti',
-                  intestazioni: ['Nome', 'Cognome'],
-                  righe: discentiFiltrati.map((d) {
-                    return [d.nome, d.cognome];
-                  }).toList(),
-                );
-              },
+              onPressed: discentiFiltrati.isEmpty
+                  ? null
+                  : () async {
+                      await PdfExportService.esportaTabella(
+                        titolo: 'Discenti',
+                        intestazioni: [
+                          'Nome',
+                          'Cognome',
+                          'Luogo nascita',
+                          'Data nascita',
+                          'Codice fiscale',
+                          'Impresa',
+                        ],
+                        righe: discentiFiltrati.map((d) {
+                          return [
+                            testoVuoto(d.nome),
+                            testoVuoto(d.cognome),
+                            testoVuoto(d.luogoNascita),
+                            testoVuoto(d.dataNascita),
+                            testoVuoto(d.codiceFiscale),
+                            testoVuoto(d.nomeImpresa),
+                          ];
+                        }).toList(),
+                      );
+                    },
               icon: const Icon(Icons.picture_as_pdf),
-              label: const Text('Export PDF'),
+              label: Text('Export PDF (${discentiFiltrati.length})'),
             ),
 
             const SizedBox(width: 12),

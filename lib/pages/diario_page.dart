@@ -15,6 +15,7 @@ class DiarioPage extends StatefulWidget {
 
 class _DiarioPageState extends State<DiarioPage> {
   int? rinnovoInCorsoId;
+  int? invioInCorsoId;
 
   final TextEditingController _cercaController = TextEditingController();
   final ScrollController diarioHorizontalController = ScrollController();
@@ -1014,6 +1015,8 @@ class _DiarioPageState extends State<DiarioPage> {
                                                 final rinnovoQuestaRiga =
                                                     rinnovoInCorsoId ==
                                                     idDiario;
+                                                final invioQuestaRiga =
+                                                    invioInCorsoId == idDiario;
 
                                                 final stato = statoScadenza(
                                                   riga['scadenza']?.toString(),
@@ -1254,6 +1257,12 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         ),
                                                       ),
                                                       onTap: () async {
+                                                        Tooltip.dismissAllToolTips();
+                                                        FocusManager
+                                                            .instance
+                                                            .primaryFocus
+                                                            ?.unfocus();
+
                                                         final controller =
                                                             TextEditingController(
                                                               text: testo(
@@ -1514,15 +1523,58 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         child: Center(
                                                           child: Tooltip(
                                                             message:
-                                                                riga['invio']
-                                                                        ?.toString() ==
-                                                                    '1'
+                                                                invioQuestaRiga
+                                                                ? 'Salvataggio invio in corso...'
+                                                                : riga['invio']
+                                                                          ?.toString() ==
+                                                                      '1'
                                                                 ? 'Invio già registrato. Clicca per rimuovere lo stato inviato'
                                                                 : 'Nessun invio registrato. Clicca per segnare come inviato',
                                                             child:
-                                                                riga['invio']
-                                                                        ?.toString() ==
-                                                                    '1'
+                                                                invioQuestaRiga
+                                                                ? Container(
+                                                                    width: 72,
+                                                                    padding: const EdgeInsets.symmetric(
+                                                                      horizontal:
+                                                                          8,
+                                                                      vertical:
+                                                                          5,
+                                                                    ),
+                                                                    decoration: BoxDecoration(
+                                                                      color: const Color(
+                                                                        0xFFF1F5F9,
+                                                                      ),
+                                                                      borderRadius:
+                                                                          BorderRadius.circular(
+                                                                            999,
+                                                                          ),
+                                                                      border: Border.all(
+                                                                        color: const Color(
+                                                                          0xFFCBD5E1,
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                    child: const SizedBox(
+                                                                      width: 14,
+                                                                      height:
+                                                                          14,
+                                                                      child: Center(
+                                                                        child: SizedBox(
+                                                                          width:
+                                                                              13,
+                                                                          height:
+                                                                              13,
+                                                                          child: CircularProgressIndicator(
+                                                                            strokeWidth:
+                                                                                2,
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                    ),
+                                                                  )
+                                                                : riga['invio']
+                                                                          ?.toString() ==
+                                                                      '1'
                                                                 ? Container(
                                                                     width: 72,
                                                                     padding: const EdgeInsets.symmetric(
@@ -1624,6 +1676,11 @@ class _DiarioPageState extends State<DiarioPage> {
                                                         final nuovoValore =
                                                             invioAttivo ? 0 : 1;
 
+                                                        setState(() {
+                                                          invioInCorsoId =
+                                                              idDiario;
+                                                        });
+
                                                         try {
                                                           await DatabaseService
                                                               .instance
@@ -1678,6 +1735,13 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                   ),
                                                             ),
                                                           );
+                                                        } finally {
+                                                          if (mounted) {
+                                                            setState(() {
+                                                              invioInCorsoId =
+                                                                  null;
+                                                            });
+                                                          }
                                                         }
                                                       },
                                                     ),

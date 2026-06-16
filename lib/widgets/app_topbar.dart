@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../pages/impostazioni_page.dart';
 
 class AppTopbar extends StatelessWidget {
   final String userName;
@@ -18,9 +19,7 @@ class AppTopbar extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: const Color(0xFFE5E7EB),
-        ),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.03),
@@ -31,10 +30,7 @@ class AppTopbar extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
-            Icons.search,
-            color: Color(0xFF6B7280),
-          ),
+          const Icon(Icons.search, color: Color(0xFF6B7280)),
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
@@ -43,10 +39,7 @@ class AppTopbar extends StatelessWidget {
                 hintText: 'Ricerca globale...',
                 border: InputBorder.none,
                 isDense: true,
-                hintStyle: TextStyle(
-                  color: Color(0xFF9CA3AF),
-                  fontSize: 14,
-                ),
+                hintStyle: TextStyle(color: Color(0xFF9CA3AF), fontSize: 14),
               ),
             ),
           ),
@@ -61,11 +54,14 @@ class AppTopbar extends StatelessWidget {
           const SizedBox(width: 8),
           IconButton(
             tooltip: 'Impostazioni',
-            onPressed: () {},
-            icon: const Icon(
-              Icons.settings_outlined,
-              color: Color(0xFF374151),
-            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => const ImpostazioniPage(),
+                ),
+              );
+            },
+            icon: const Icon(Icons.settings_outlined, color: Color(0xFF374151)),
           ),
           const SizedBox(width: 14),
           Container(

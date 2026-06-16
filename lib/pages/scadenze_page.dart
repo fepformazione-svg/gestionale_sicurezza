@@ -1,9 +1,13 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../database/database_service.dart';
-import 'discente_scheda_page.dart';
-
 import '../dialogs/discente_dialog.dart';
+import 'discente_scheda_page.dart';
 
 class ScadenzePage extends StatefulWidget {
   final String filtro;
@@ -52,6 +56,136 @@ class _ScadenzePageState extends State<ScadenzePage> {
         ).showSnackBar(SnackBar(content: Text('Errore scadenze: $e')));
       }
     }
+  }
+
+  Future<void> esportaExcelScadenze() async {
+    final righe = scadenzeFiltrate;
+
+    if (righe.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna scadenza da esportare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Scadenze'];
+
+    excel.delete('Sheet1');
+
+    final adesso = DateTime.now();
+
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata =
+        filtroStato != 'Tutte' || _cercaController.text.trim().isNotEmpty;
+
+    sheet.appendRow([
+      xls.TextCellValue(
+        vistaFiltrata
+            ? 'Export scadenze filtrato - ${righe.length} record - $dataExport'
+            : 'Export scadenze completo - ${righe.length} record - $dataExport',
+      ),
+    ]);
+
+    final intestazioni = [
+      'Discente',
+      'Impresa',
+      'Corso',
+      'Data corso',
+      'Scadenza',
+      'Stato',
+    ];
+
+    sheet.appendRow(
+      intestazioni.map((testo) => xls.TextCellValue(testo)).toList(),
+    );
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 1),
+          )
+          .cellStyle = xls.CellStyle(
+        bold: true,
+      );
+    }
+
+    for (final riga in righe) {
+      final stato = calcolaStato(riga);
+
+      sheet.appendRow([
+        xls.TextCellValue(riga['discente']?.toString() ?? '-'),
+        xls.TextCellValue(riga['impresa']?.toString() ?? '-'),
+        xls.TextCellValue(riga['corso']?.toString() ?? '-'),
+        xls.TextCellValue(formattaData(riga['data_corso'])),
+        xls.TextCellValue(formattaData(riga['scadenza'])),
+        xls.TextCellValue(stato),
+      ]);
+    }
+
+    sheet.setColumnWidth(0, 32);
+    sheet.setColumnWidth(1, 28);
+    sheet.setColumnWidth(2, 36);
+    sheet.setColumnWidth(3, 16);
+    sheet.setColumnWidth(4, 16);
+    sheet.setColumnWidth(5, 18);
+
+    final timestamp =
+        '${adesso.year}_'
+        '${adesso.month.toString().padLeft(2, '0')}_'
+        '${adesso.day.toString().padLeft(2, '0')}_'
+        '${adesso.hour.toString().padLeft(2, '0')}h'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final nomeFile = vistaFiltrata
+        ? 'scadenze_export_filtrato_$timestamp.xlsx'
+        : 'scadenze_export_$timestamp.xlsx';
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$nomeFile');
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+
+      return;
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel completato: ${righe.length} scadenze esportate dalla vista filtrata'
+              : 'Export Excel completato: ${righe.length} scadenze esportate',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
   }
 
   String formattaData(dynamic valore) {
@@ -361,6 +495,17 @@ class _ScadenzePageState extends State<ScadenzePage> {
             decoration: InputDecoration(
               hintText: 'Cerca discente, impresa o corso',
               prefixIcon: const Icon(Icons.search),
+              suffixIcon: _cercaController.text.trim().isNotEmpty
+                  ? IconButton(
+                      tooltip: 'Pulisci ricerca',
+                      icon: const Icon(Icons.clear_rounded),
+                      onPressed: () {
+                        setState(() {
+                          _cercaController.clear();
+                        });
+                      },
+                    )
+                  : null,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
               ),
@@ -397,6 +542,26 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 label: 'Valide',
                 attivo: filtroStato == 'Valide',
                 onTap: () => setState(() => filtroStato = 'Valide'),
+              ),
+              ElevatedButton.icon(
+                onPressed: scadenzeFiltrate.isEmpty
+                    ? null
+                    : esportaExcelScadenze,
+                icon: const Icon(Icons.table_chart_rounded, size: 18),
+                label: Text('Esporta Excel (${scadenzeFiltrate.length})'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF16A34A),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFE5E7EB),
+                  disabledForegroundColor: const Color(0xFF9CA3AF),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
               ),
             ],
           ),

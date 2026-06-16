@@ -6,6 +6,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
@@ -835,6 +836,211 @@ class _DiarioPageState extends State<DiarioPage> {
     );
   }
 
+  Future<void> stampaDiario() async {
+    Tooltip.dismissAllToolTips();
+    FocusManager.instance.primaryFocus?.unfocus();
+
+    if (_diario.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun corso da stampare'),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+
+      return;
+    }
+
+    final adesso = DateTime.now();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    String formattaDataOra(DateTime data) {
+      return '${dueCifre(data.day)}/${dueCifre(data.month)}/${data.year} '
+          '${dueCifre(data.hour)}:${dueCifre(data.minute)}';
+    }
+
+    String valore(dynamic valore) {
+      if (valore == null) return '';
+      final testo = valore.toString().trim();
+      return testo.isEmpty ? '' : testo;
+    }
+
+    String dataItaliana(dynamic valoreData) {
+      final testo = valore(valoreData);
+      if (testo.isEmpty) return '';
+
+      try {
+        final data = DateTime.parse(testo);
+        return '${dueCifre(data.day)}/${dueCifre(data.month)}/${data.year}';
+      } catch (_) {
+        return testo;
+      }
+    }
+
+    final ricercaAttiva = _cercaController.text.trim().isNotEmpty;
+    final filtroAttivo = _soloDaFatturare;
+    final stampaFiltrata = ricercaAttiva || filtroAttivo;
+
+    final dettaglioFiltro = [
+      if (ricercaAttiva) 'ricerca "${_cercaController.text.trim()}"',
+      if (filtroAttivo) 'solo Da fatturare',
+    ].join(' · ');
+
+    final infoStampa = stampaFiltrata
+        ? 'Stampa diario filtrato - ${_diario.length} corsi - $dettaglioFiltro - ${formattaDataOra(adesso)}'
+        : 'Stampa diario completa - ${_diario.length} corsi - ${formattaDataOra(adesso)}';
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(22),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'DIARIO FORMAZIONE',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey900,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              infoStampa,
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Discente',
+                'Impresa',
+                'Corso',
+                'Data',
+                'Scadenza',
+                'Stato',
+                'Prot.',
+                'Fattura',
+                'Invio',
+                'Da fatt.',
+              ],
+              data: _diario.map((riga) {
+                final nome = valore(riga['nome']);
+                final cognome = valore(riga['cognome']);
+                final discente = '$cognome $nome'.trim();
+
+                final fattura = valore(riga['fattura']).isEmpty
+                    ? 'NO FATT.'
+                    : valore(riga['fattura']);
+
+                final invio = riga['invio'] == 1 ? 'INVIATO' : 'NO';
+                final daFatturare = riga['da_fatturare'] == 1
+                    ? 'DA FATT'
+                    : 'OK';
+
+                return [
+                  discente,
+                  valore(riga['impresa']),
+                  valore(riga['corso']),
+                  dataItaliana(riga['data']),
+                  dataItaliana(riga['scadenza']),
+                  valore(riga['stato']),
+                  valore(riga['prot']),
+                  fattura,
+                  invio,
+                  daFatturare,
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 7,
+                color: PdfColors.blueGrey900,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              rowDecoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: PdfColors.blueGrey100,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.7),
+                1: pw.FlexColumnWidth(1.6),
+                2: pw.FlexColumnWidth(2.1),
+                3: pw.FlexColumnWidth(0.8),
+                4: pw.FlexColumnWidth(0.8),
+                5: pw.FlexColumnWidth(0.8),
+                6: pw.FlexColumnWidth(0.8),
+                7: pw.FlexColumnWidth(1.0),
+                8: pw.FlexColumnWidth(0.8),
+                9: pw.FlexColumnWidth(0.8),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(
+      name: stampaFiltrata ? 'diario_stampa_filtrato.pdf' : 'diario_stampa.pdf',
+      onLayout: (format) async => pdf.save(),
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          stampaFiltrata
+              ? 'Stampa Diario avviata: ${_diario.length} corsi dalla vista filtrata'
+              : 'Stampa Diario avviata: ${_diario.length} corsi',
+        ),
+        backgroundColor: const Color(0xFF2563EB),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _cercaController.dispose();
@@ -1154,6 +1360,34 @@ class _DiarioPageState extends State<DiarioPage> {
                                 ),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Tooltip(
+                            message: _diario.isEmpty
+                                ? 'Nessun corso da stampare'
+                                : 'Stampa ${_diario.length} corsi visualizzati',
+                            child: FilledButton.icon(
+                              onPressed: _diario.isEmpty ? null : stampaDiario,
+                              icon: const Icon(Icons.print_rounded, size: 18),
+                              label: Text('Stampa Diario (${_diario.length})'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF334155),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                             ),

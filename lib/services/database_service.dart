@@ -964,6 +964,7 @@ class DatabaseService {
       ),
       'discenti': await count('SELECT COUNT(*) FROM discenti'),
       'imprese': await count('SELECT COUNT(*) FROM imprese'),
+      'corsi': await count('SELECT COUNT(*) FROM corsi'),
       'da_fatturare': await count(
         'SELECT COUNT(*) FROM diario WHERE da_fatturare = 1',
       ),

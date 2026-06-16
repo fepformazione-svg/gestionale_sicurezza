@@ -127,6 +127,7 @@ class _DashboardPageState extends State<DashboardPage> {
     'scaduti': 0,
     'discenti': 0,
     'imprese': 0,
+    'corsi': 0,
     'da_fatturare': 0,
   };
 
@@ -324,6 +325,15 @@ class _DashboardPageState extends State<DashboardPage> {
                   value: kpi['imprese'].toString(),
                   icon: Icons.business,
                   color: const Color(0xFFF59E0B),
+                ),
+              ),
+              GestureDetector(
+                onTap: () => apriPagina(context, 6),
+                child: KpiCard(
+                  title: 'Corsi',
+                  value: kpi['corsi'].toString(),
+                  icon: Icons.school,
+                  color: const Color(0xFF2563EB),
                 ),
               ),
               GestureDetector(

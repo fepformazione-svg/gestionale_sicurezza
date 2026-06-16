@@ -12,6 +12,8 @@ class PrezzarioPage extends StatefulWidget {
 class _PrezzarioPageState extends State<PrezzarioPage> {
   bool caricamento = true;
   List<Prezzario> vociPrezzario = [];
+  List<Map<String, dynamic>> impreseLookup = [];
+  List<Map<String, dynamic>> corsiLookup = [];
 
   @override
   void initState() {
@@ -25,17 +27,47 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
     });
 
     final dati = await DatabaseService.instance.getPrezzario();
+    final imprese = await DatabaseService.instance.getImpreseLookup();
+    final corsi = await DatabaseService.instance.getCorsiLookup();
 
     if (!mounted) return;
 
     setState(() {
       vociPrezzario = dati;
+      impreseLookup = imprese;
+      corsiLookup = corsi;
       caricamento = false;
     });
   }
 
   String formattaPrezzo(double valore) {
     return '€ ${valore.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  Future<void> apriDialogNuovaVoce() async {
+    final salvato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return _NuovaVocePrezzarioDialog(
+          impreseLookup: impreseLookup,
+          corsiLookup: corsiLookup,
+        );
+      },
+    );
+
+    if (salvato == true) {
+      await caricaPrezzario();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Voce prezzario salvata.'),
+          backgroundColor: Color(0xFF16A34A),
+        ),
+      );
+    }
   }
 
   @override
@@ -60,6 +92,12 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
               ),
             ),
             const Spacer(),
+            FilledButton.icon(
+              onPressed: apriDialogNuovaVoce,
+              icon: const Icon(Icons.add_rounded, size: 18),
+              label: const Text('Nuova voce'),
+            ),
+            const SizedBox(width: 8),
             OutlinedButton.icon(
               onPressed: caricaPrezzario,
               icon: const Icon(Icons.refresh_rounded, size: 18),
@@ -138,6 +176,224 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                     ),
                   ),
           ),
+        ),
+      ],
+    );
+  }
+}
+
+class _NuovaVocePrezzarioDialog extends StatefulWidget {
+  final List<Map<String, dynamic>> impreseLookup;
+  final List<Map<String, dynamic>> corsiLookup;
+
+  const _NuovaVocePrezzarioDialog({
+    required this.impreseLookup,
+    required this.corsiLookup,
+  });
+
+  @override
+  State<_NuovaVocePrezzarioDialog> createState() =>
+      _NuovaVocePrezzarioDialogState();
+}
+
+class _NuovaVocePrezzarioDialogState extends State<_NuovaVocePrezzarioDialog> {
+  int? impresaId;
+  int? corsoId;
+  bool salvataggioInCorso = false;
+  String? errore;
+
+  final prezzoController = TextEditingController();
+  final noteController = TextEditingController();
+
+  @override
+  void dispose() {
+    prezzoController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> salvaVoce() async {
+    if (salvataggioInCorso) return;
+
+    setState(() {
+      errore = null;
+    });
+
+    if (impresaId == null || corsoId == null) {
+      setState(() {
+        errore = 'Seleziona impresa e corso.';
+      });
+      return;
+    }
+
+    final prezzo = double.tryParse(
+      prezzoController.text.trim().replaceAll(',', '.'),
+    );
+
+    if (prezzo == null || prezzo < 0) {
+      setState(() {
+        errore = 'Inserisci un prezzo valido.';
+      });
+      return;
+    }
+
+    setState(() {
+      salvataggioInCorso = true;
+    });
+
+    try {
+      final esistente = await DatabaseService.instance
+          .getPrezzarioByImpresaCorso(impresaId: impresaId!, corsoId: corsoId!);
+
+      if (!mounted) return;
+
+      if (esistente != null) {
+        setState(() {
+          errore = 'Esiste già una voce per questa impresa e questo corso.';
+          salvataggioInCorso = false;
+        });
+        return;
+      }
+
+      await DatabaseService.instance.insertPrezzario(
+        Prezzario(
+          impresaId: impresaId!,
+          corsoId: corsoId!,
+          prezzo: prezzo,
+          note: noteController.text.trim(),
+        ),
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        errore = 'Errore durante il salvataggio della voce prezzario.';
+        salvataggioInCorso = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nuova voce prezzario'),
+      content: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<int>(
+              initialValue: impresaId,
+              decoration: const InputDecoration(
+                labelText: 'Impresa',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.impreseLookup.map((impresa) {
+                return DropdownMenuItem<int>(
+                  value: impresa['id'] as int,
+                  child: Text(
+                    (impresa['intestazione'] ?? '').toString(),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: salvataggioInCorso
+                  ? null
+                  : (value) {
+                      setState(() {
+                        impresaId = value;
+                        errore = null;
+                      });
+                    },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: corsoId,
+              decoration: const InputDecoration(
+                labelText: 'Corso',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.corsiLookup.map((corso) {
+                return DropdownMenuItem<int>(
+                  value: corso['id'] as int,
+                  child: Text(
+                    (corso['denominazione'] ?? '').toString(),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: salvataggioInCorso
+                  ? null
+                  : (value) {
+                      setState(() {
+                        corsoId = value;
+                        errore = null;
+                      });
+                    },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: prezzoController,
+              enabled: !salvataggioInCorso,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Prezzo',
+                hintText: 'Es. 120,00',
+                prefixText: '€ ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              enabled: !salvataggioInCorso,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Note',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (errore != null) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  errore!,
+                  style: const TextStyle(
+                    color: Color(0xFFDC2626),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: salvataggioInCorso
+              ? null
+              : () {
+                  Navigator.of(context).pop(false);
+                },
+          child: const Text('Annulla'),
+        ),
+        FilledButton.icon(
+          onPressed: salvataggioInCorso ? null : salvaVoce,
+          icon: salvataggioInCorso
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded, size: 18),
+          label: Text(salvataggioInCorso ? 'Salvataggio...' : 'Salva'),
         ),
       ],
     );

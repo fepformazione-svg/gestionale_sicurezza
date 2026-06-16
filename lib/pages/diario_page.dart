@@ -30,14 +30,14 @@ class _DiarioPageState extends State<DiarioPage> {
   static const double wDiscente = 220;
   static const double wImpresa = 225;
   static const double wCorso = 190;
-  static const double wDataCorso = 105;
-  static const double wScadenza = 105;
-  static const double wStato = 90;
-  static const double wProt = 70;
-  static const double wFattura = 95;
-  static const double wInvio = 75;
-  static const double wDaFatturare = 108;
-  static const double wRinnova = 60;
+  static const double wDataCorso = 130;
+  static const double wScadenza = 130;
+  static const double wStato = 115;
+  static const double wProt = 100;
+  static const double wFattura = 125;
+  static const double wInvio = 110;
+  static const double wDaFatturare = 155;
+  static const double wRinnova = 75;
 
   static const double larghezzaDiarioTabella =
       wDiscente +
@@ -146,12 +146,12 @@ class _DiarioPageState extends State<DiarioPage> {
       height: 48,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8),
-        child: Row(
-          mainAxisAlignment: centrato
-              ? MainAxisAlignment.center
-              : MainAxisAlignment.start,
-          mainAxisSize: MainAxisSize.max,
-          children: [Flexible(child: child)],
+        child: Align(
+          alignment: centrato ? Alignment.center : Alignment.centerLeft,
+          child: Transform.translate(
+            offset: Offset(centrato ? -10 : 0, 0),
+            child: child,
+          ),
         ),
       ),
     );
@@ -254,43 +254,55 @@ class _DiarioPageState extends State<DiarioPage> {
             width: wFattura,
             centrato: true,
             tooltip: 'Numero o riferimento fattura',
-            child: const Text(
-              'Fattura',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: stileHeader,
+            child: Transform.translate(
+              offset: const Offset(-3, 0),
+              child: const Text(
+                'Fattura',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: stileHeader,
+              ),
             ),
           ),
           cellaHeaderDiario(
             width: wInvio,
             centrato: true,
             tooltip: 'Stato invio documentazione',
-            child: const Text(
-              'Invio',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: stileHeader,
+            child: Transform.translate(
+              offset: const Offset(-5, 0),
+              child: const Text(
+                'Invio',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: stileHeader,
+              ),
             ),
           ),
           cellaHeaderDiario(
             width: wDaFatturare,
             centrato: true,
             tooltip: 'Stato da fatturare',
-            child: const Text(
-              'Da fatturare',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: stileHeader,
+            child: Transform.translate(
+              offset: const Offset(-12, 0),
+              child: const Text(
+                'Da fatturare',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: stileHeader,
+              ),
             ),
           ),
           cellaHeaderDiario(
             width: wRinnova,
             centrato: true,
             tooltip: 'Rinnova corso',
-            child: const Icon(
-              Icons.refresh_rounded,
-              size: 22,
-              color: Color(0xFF334155),
+            child: Transform.translate(
+              offset: const Offset(1, 0),
+              child: const Icon(
+                Icons.refresh_rounded,
+                size: 22,
+                color: Color(0xFF334155),
+              ),
             ),
           ),
         ],
@@ -1762,254 +1774,267 @@ class _DiarioPageState extends State<DiarioPage> {
                                                     ),
                                                     DataCell(
                                                       SizedBox(
-                                                        width: 60,
+                                                        width: wRinnova,
                                                         child: Center(
-                                                          child: IconButton(
-                                                            tooltip:
-                                                                rinnovoQuestaRiga
-                                                                ? 'Rinnovo corso in corso...'
-                                                                : rinnovoInCorsoId !=
-                                                                      null
-                                                                ? 'Attendi il completamento del rinnovo già avviato'
-                                                                : 'Crea rinnovo corso',
-                                                            padding:
-                                                                EdgeInsets.zero,
-                                                            constraints:
-                                                                const BoxConstraints(
-                                                                  minWidth: 38,
-                                                                  minHeight: 38,
+                                                          child: Transform.translate(
+                                                            offset:
+                                                                const Offset(
+                                                                  -8,
+                                                                  0,
                                                                 ),
-                                                            splashRadius: 22,
-                                                            icon:
-                                                                rinnovoQuestaRiga
-                                                                ? const SizedBox(
-                                                                    width: 18,
-                                                                    height: 18,
-                                                                    child: CircularProgressIndicator(
-                                                                      strokeWidth:
-                                                                          2.2,
-                                                                    ),
-                                                                  )
-                                                                : Container(
-                                                                    width: 34,
-                                                                    height: 34,
-                                                                    decoration: BoxDecoration(
-                                                                      color:
-                                                                          rinnovoInCorsoId !=
-                                                                              null
-                                                                          ? const Color(
-                                                                              0xFFF1F5F9,
-                                                                            )
-                                                                          : const Color(
-                                                                              0xFFEFF6FF,
-                                                                            ),
-                                                                      borderRadius:
-                                                                          BorderRadius.circular(
-                                                                            999,
-                                                                          ),
-                                                                      border: Border.all(
+                                                            child: IconButton(
+                                                              tooltip:
+                                                                  rinnovoQuestaRiga
+                                                                  ? 'Rinnovo corso in corso...'
+                                                                  : rinnovoInCorsoId !=
+                                                                        null
+                                                                  ? 'Attendi il completamento del rinnovo già avviato'
+                                                                  : 'Crea rinnovo corso',
+                                                              padding:
+                                                                  EdgeInsets
+                                                                      .zero,
+                                                              constraints:
+                                                                  const BoxConstraints(
+                                                                    minWidth:
+                                                                        38,
+                                                                    minHeight:
+                                                                        38,
+                                                                  ),
+                                                              splashRadius: 22,
+                                                              icon:
+                                                                  rinnovoQuestaRiga
+                                                                  ? const SizedBox(
+                                                                      width: 18,
+                                                                      height:
+                                                                          18,
+                                                                      child: CircularProgressIndicator(
+                                                                        strokeWidth:
+                                                                            2.2,
+                                                                      ),
+                                                                    )
+                                                                  : Container(
+                                                                      width: 34,
+                                                                      height:
+                                                                          34,
+                                                                      decoration: BoxDecoration(
                                                                         color:
                                                                             rinnovoInCorsoId !=
                                                                                 null
                                                                             ? const Color(
-                                                                                0xFFCBD5E1,
+                                                                                0xFFF1F5F9,
                                                                               )
                                                                             : const Color(
-                                                                                0xFFBFDBFE,
+                                                                                0xFFEFF6FF,
+                                                                              ),
+                                                                        borderRadius:
+                                                                            BorderRadius.circular(
+                                                                              999,
+                                                                            ),
+                                                                        border: Border.all(
+                                                                          color:
+                                                                              rinnovoInCorsoId !=
+                                                                                  null
+                                                                              ? const Color(
+                                                                                  0xFFCBD5E1,
+                                                                                )
+                                                                              : const Color(
+                                                                                  0xFFBFDBFE,
+                                                                                ),
+                                                                        ),
+                                                                      ),
+                                                                      child: Icon(
+                                                                        Icons
+                                                                            .refresh_rounded,
+                                                                        size:
+                                                                            19,
+                                                                        color:
+                                                                            rinnovoInCorsoId !=
+                                                                                null
+                                                                            ? const Color(
+                                                                                0xFF94A3B8,
+                                                                              )
+                                                                            : const Color(
+                                                                                0xFF2563EB,
                                                                               ),
                                                                       ),
                                                                     ),
-                                                                    child: Icon(
-                                                                      Icons
-                                                                          .refresh_rounded,
-                                                                      size: 19,
-                                                                      color:
-                                                                          rinnovoInCorsoId !=
-                                                                              null
-                                                                          ? const Color(
-                                                                              0xFF94A3B8,
-                                                                            )
-                                                                          : const Color(
-                                                                              0xFF2563EB,
-                                                                            ),
-                                                                    ),
-                                                                  ),
-                                                            onPressed:
-                                                                rinnovoInCorsoId !=
-                                                                    null
-                                                                ? null
-                                                                : () async {
-                                                                    final confermato = await showDialog<bool>(
-                                                                      context:
-                                                                          context,
-                                                                      barrierDismissible:
-                                                                          false,
-                                                                      builder:
-                                                                          (
-                                                                            dialogContext,
-                                                                          ) {
-                                                                            return AlertDialog(
-                                                                              title: const Row(
-                                                                                children: [
-                                                                                  Icon(
-                                                                                    Icons.refresh_rounded,
-                                                                                    color: Color(
-                                                                                      0xFF2563EB,
+                                                              onPressed:
+                                                                  rinnovoInCorsoId !=
+                                                                      null
+                                                                  ? null
+                                                                  : () async {
+                                                                      final confermato = await showDialog<bool>(
+                                                                        context:
+                                                                            context,
+                                                                        barrierDismissible:
+                                                                            false,
+                                                                        builder:
+                                                                            (
+                                                                              dialogContext,
+                                                                            ) {
+                                                                              return AlertDialog(
+                                                                                title: const Row(
+                                                                                  children: [
+                                                                                    Icon(
+                                                                                      Icons.refresh_rounded,
+                                                                                      color: Color(
+                                                                                        0xFF2563EB,
+                                                                                      ),
+                                                                                    ),
+                                                                                    SizedBox(
+                                                                                      width: 10,
+                                                                                    ),
+                                                                                    Text(
+                                                                                      'Conferma rinnovo corso',
+                                                                                    ),
+                                                                                  ],
+                                                                                ),
+                                                                                content: Text(
+                                                                                  'Vuoi creare un nuovo rinnovo per il corso '
+                                                                                  '"${testo(riga['corso'])}" di '
+                                                                                  '${testo(riga['cognome'])} ${testo(riga['nome'])}?\n\n'
+                                                                                  'Il rinnovo verrà aggiunto come nuovo record nel Diario.',
+                                                                                ),
+                                                                                actions: [
+                                                                                  TextButton(
+                                                                                    onPressed: () {
+                                                                                      Navigator.of(
+                                                                                        dialogContext,
+                                                                                      ).pop(
+                                                                                        false,
+                                                                                      );
+                                                                                    },
+                                                                                    child: const Text(
+                                                                                      'Annulla',
                                                                                     ),
                                                                                   ),
-                                                                                  SizedBox(
-                                                                                    width: 10,
-                                                                                  ),
-                                                                                  Text(
-                                                                                    'Conferma rinnovo corso',
+                                                                                  FilledButton.icon(
+                                                                                    onPressed: () {
+                                                                                      Navigator.of(
+                                                                                        dialogContext,
+                                                                                      ).pop(
+                                                                                        true,
+                                                                                      );
+                                                                                    },
+                                                                                    icon: const Icon(
+                                                                                      Icons.refresh_rounded,
+                                                                                      size: 18,
+                                                                                    ),
+                                                                                    label: const Text(
+                                                                                      'Crea rinnovo',
+                                                                                    ),
                                                                                   ),
                                                                                 ],
-                                                                              ),
-                                                                              content: Text(
-                                                                                'Vuoi creare un nuovo rinnovo per il corso '
-                                                                                '"${testo(riga['corso'])}" di '
-                                                                                '${testo(riga['cognome'])} ${testo(riga['nome'])}?\n\n'
-                                                                                'Il rinnovo verrà aggiunto come nuovo record nel Diario.',
-                                                                              ),
-                                                                              actions: [
-                                                                                TextButton(
-                                                                                  onPressed: () {
-                                                                                    Navigator.of(
-                                                                                      dialogContext,
-                                                                                    ).pop(
-                                                                                      false,
-                                                                                    );
-                                                                                  },
-                                                                                  child: const Text(
-                                                                                    'Annulla',
-                                                                                  ),
-                                                                                ),
-                                                                                FilledButton.icon(
-                                                                                  onPressed: () {
-                                                                                    Navigator.of(
-                                                                                      dialogContext,
-                                                                                    ).pop(
-                                                                                      true,
-                                                                                    );
-                                                                                  },
-                                                                                  icon: const Icon(
-                                                                                    Icons.refresh_rounded,
-                                                                                    size: 18,
-                                                                                  ),
-                                                                                  label: const Text(
-                                                                                    'Crea rinnovo',
-                                                                                  ),
-                                                                                ),
-                                                                              ],
-                                                                            );
-                                                                          },
-                                                                    );
-
-                                                                    if (!mounted) {
-                                                                      return;
-                                                                    }
-                                                                    if (confermato !=
-                                                                        true) {
-                                                                      return;
-                                                                    }
-
-                                                                    final discenteId =
-                                                                        riga['discente_id'];
-                                                                    final impresaId =
-                                                                        riga['impresa_id'];
-                                                                    final corsoId =
-                                                                        riga['corso_id'];
-
-                                                                    if (discenteId ==
-                                                                            null ||
-                                                                        impresaId ==
-                                                                            null ||
-                                                                        corsoId ==
-                                                                            null) {
-                                                                      ScaffoldMessenger.of(
-                                                                        this.context,
-                                                                      ).showSnackBar(
-                                                                        const SnackBar(
-                                                                          content: Text(
-                                                                            'Impossibile rinnovare: discente, impresa o corso mancanti.',
-                                                                          ),
-                                                                        ),
+                                                                              );
+                                                                            },
                                                                       );
-                                                                      return;
-                                                                    }
-
-                                                                    setState(() {
-                                                                      rinnovoInCorsoId =
-                                                                          idDiario;
-                                                                    });
-
-                                                                    try {
-                                                                      await DatabaseService.instance.rinnovaCorso(
-                                                                        idDiscente:
-                                                                            discenteId
-                                                                                as int,
-                                                                        idImpresa:
-                                                                            impresaId
-                                                                                as int,
-                                                                        idCorso:
-                                                                            corsoId
-                                                                                as int,
-                                                                      );
-
-                                                                      await caricaDiario();
 
                                                                       if (!mounted) {
                                                                         return;
                                                                       }
-
-                                                                      ScaffoldMessenger.of(
-                                                                        this.context,
-                                                                      ).showSnackBar(
-                                                                        SnackBar(
-                                                                          content: Text(
-                                                                            'Rinnovo corso creato: ${testo(riga['corso'])} — '
-                                                                            '${testo(riga['cognome'])} ${testo(riga['nome'])}',
-                                                                          ),
-                                                                          backgroundColor: const Color(
-                                                                            0xFF16A34A,
-                                                                          ),
-                                                                          duration: const Duration(
-                                                                            seconds:
-                                                                                4,
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    } catch (
-                                                                      errore
-                                                                    ) {
-                                                                      if (!mounted) {
+                                                                      if (confermato !=
+                                                                          true) {
                                                                         return;
                                                                       }
 
-                                                                      ScaffoldMessenger.of(
-                                                                        this.context,
-                                                                      ).showSnackBar(
-                                                                        SnackBar(
-                                                                          content: Text(
-                                                                            'Errore durante il rinnovo: $errore',
+                                                                      final discenteId =
+                                                                          riga['discente_id'];
+                                                                      final impresaId =
+                                                                          riga['impresa_id'];
+                                                                      final corsoId =
+                                                                          riga['corso_id'];
+
+                                                                      if (discenteId ==
+                                                                              null ||
+                                                                          impresaId ==
+                                                                              null ||
+                                                                          corsoId ==
+                                                                              null) {
+                                                                        ScaffoldMessenger.of(
+                                                                          this.context,
+                                                                        ).showSnackBar(
+                                                                          const SnackBar(
+                                                                            content: Text(
+                                                                              'Impossibile rinnovare: discente, impresa o corso mancanti.',
+                                                                            ),
                                                                           ),
-                                                                          backgroundColor: const Color(
-                                                                            0xFFDC2626,
-                                                                          ),
-                                                                        ),
-                                                                      );
-                                                                    } finally {
-                                                                      if (mounted) {
-                                                                        setState(() {
-                                                                          rinnovoInCorsoId =
-                                                                              null;
-                                                                        });
+                                                                        );
+                                                                        return;
                                                                       }
-                                                                    }
-                                                                  },
-                                                          ),
-                                                        ),
-                                                      ),
+
+                                                                      setState(() {
+                                                                        rinnovoInCorsoId =
+                                                                            idDiario;
+                                                                      });
+
+                                                                      try {
+                                                                        await DatabaseService.instance.rinnovaCorso(
+                                                                          idDiscente:
+                                                                              discenteId
+                                                                                  as int,
+                                                                          idImpresa:
+                                                                              impresaId
+                                                                                  as int,
+                                                                          idCorso:
+                                                                              corsoId
+                                                                                  as int,
+                                                                        );
+
+                                                                        await caricaDiario();
+
+                                                                        if (!mounted) {
+                                                                          return;
+                                                                        }
+
+                                                                        ScaffoldMessenger.of(
+                                                                          this.context,
+                                                                        ).showSnackBar(
+                                                                          SnackBar(
+                                                                            content: Text(
+                                                                              'Rinnovo corso creato: ${testo(riga['corso'])} — '
+                                                                              '${testo(riga['cognome'])} ${testo(riga['nome'])}',
+                                                                            ),
+                                                                            backgroundColor: const Color(
+                                                                              0xFF16A34A,
+                                                                            ),
+                                                                            duration: const Duration(
+                                                                              seconds: 4,
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      } catch (
+                                                                        errore
+                                                                      ) {
+                                                                        if (!mounted) {
+                                                                          return;
+                                                                        }
+
+                                                                        ScaffoldMessenger.of(
+                                                                          this.context,
+                                                                        ).showSnackBar(
+                                                                          SnackBar(
+                                                                            content: Text(
+                                                                              'Errore durante il rinnovo: $errore',
+                                                                            ),
+                                                                            backgroundColor: const Color(
+                                                                              0xFFDC2626,
+                                                                            ),
+                                                                          ),
+                                                                        );
+                                                                      } finally {
+                                                                        if (mounted) {
+                                                                          setState(
+                                                                            () {
+                                                                              rinnovoInCorsoId = null;
+                                                                            },
+                                                                          );
+                                                                        }
+                                                                      }
+                                                                    },
+                                                            ), // IconButton
+                                                          ), // Transform.translate
+                                                        ), // Center
+                                                      ), // SizedBox
                                                       onTap: () {},
                                                     ),
                                                   ],

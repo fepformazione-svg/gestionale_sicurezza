@@ -1,15 +1,19 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
+import '../services/pdf_export_service.dart';
 import '../widgets/app_search_bar.dart';
-
-import 'discente_scheda_page.dart';
-
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
-import '../services/pdf_export_service.dart';
+
+import 'discente_scheda_page.dart';
 
 const double discenteRowHeight = 48;
 
@@ -443,6 +447,133 @@ class _DiscentiPageState extends State<DiscentiPage> {
     return valore.trim();
   }
 
+  Future<void> esportaExcelDiscenti() async {
+    final righe = discentiFiltrati;
+
+    if (righe.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun discente da esportare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Discenti'];
+
+    excel.delete('Sheet1');
+
+    final adesso = DateTime.now();
+
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata = discentiFiltrati.length != discenti.length;
+
+    sheet.appendRow([
+      xls.TextCellValue(
+        vistaFiltrata
+            ? 'Export discenti filtrato - ${righe.length} record - $dataExport'
+            : 'Export discenti completo - ${righe.length} record - $dataExport',
+      ),
+    ]);
+
+    final intestazioni = [
+      'Nome',
+      'Cognome',
+      'Luogo nascita',
+      'Data nascita',
+      'Codice fiscale',
+      'Impresa',
+    ];
+
+    sheet.appendRow(
+      intestazioni.map((testo) => xls.TextCellValue(testo)).toList(),
+    );
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 1),
+          )
+          .cellStyle = xls.CellStyle(
+        bold: true,
+      );
+    }
+
+    for (final discente in righe) {
+      sheet.appendRow([
+        xls.TextCellValue(testoVuoto(discente.nome)),
+        xls.TextCellValue(testoVuoto(discente.cognome)),
+        xls.TextCellValue(testoVuoto(discente.luogoNascita)),
+        xls.TextCellValue(testoVuoto(discente.dataNascita)),
+        xls.TextCellValue(testoVuoto(discente.codiceFiscale)),
+        xls.TextCellValue(testoVuoto(discente.nomeImpresa)),
+      ]);
+    }
+
+    sheet.setColumnWidth(0, 24);
+    sheet.setColumnWidth(1, 26);
+    sheet.setColumnWidth(2, 28);
+    sheet.setColumnWidth(3, 16);
+    sheet.setColumnWidth(4, 24);
+    sheet.setColumnWidth(5, 34);
+
+    final timestamp =
+        '${adesso.year}_'
+        '${adesso.month.toString().padLeft(2, '0')}_'
+        '${adesso.day.toString().padLeft(2, '0')}_'
+        '${adesso.hour.toString().padLeft(2, '0')}h'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final nomeFile = vistaFiltrata
+        ? 'discenti_export_filtrato_$timestamp.xlsx'
+        : 'discenti_export_$timestamp.xlsx';
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$nomeFile');
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+
+      return;
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel completato: ${righe.length} discenti esportati dalla vista filtrata'
+              : 'Export Excel completato: ${righe.length} discenti esportati',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
   void ordinaDiscenti(String colonna) {
     setState(() {
       if (colonnaOrdinata == colonna) {
@@ -491,6 +622,14 @@ class _DiscentiPageState extends State<DiscentiPage> {
             const SizedBox(width: 16),
 
             OutlinedButton.icon(
+              onPressed: discentiFiltrati.isEmpty ? null : esportaExcelDiscenti,
+              icon: const Icon(Icons.table_chart_rounded),
+              label: Text('Export Excel (${discentiFiltrati.length})'),
+            ),
+
+            const SizedBox(width: 12),
+
+            OutlinedButton.icon(
               onPressed: discentiFiltrati.isEmpty
                   ? null
                   : () async {
@@ -519,8 +658,6 @@ class _DiscentiPageState extends State<DiscentiPage> {
               icon: const Icon(Icons.picture_as_pdf),
               label: Text('Export PDF (${discentiFiltrati.length})'),
             ),
-
-            const SizedBox(width: 12),
 
             ElevatedButton.icon(
               onPressed: () => apriDialogDiscente(),

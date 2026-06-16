@@ -304,6 +304,19 @@ class DatabaseService {
     );
   }
 
+  Future<void> updateCorso(Corso corso) async {
+    final db = await _db;
+
+    if (corso.id == null) return;
+
+    await db.update(
+      'corsi',
+      corso.toMap(),
+      where: 'id = ?',
+      whereArgs: [corso.id],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getCorsiLookup() async {
     final db = await _db;
 

@@ -613,6 +613,171 @@ class _CorsiPageState extends State<CorsiPage> {
     ).showSnackBar(const SnackBar(content: Text('Corso salvato nel database')));
   }
 
+  Future<void> apriDialogModificaCorso(Corso corso) async {
+    final nomeController = TextEditingController(text: corso.denominazione);
+    final durataController = TextEditingController(
+      text: corso.durataOre.toString(),
+    );
+    final validitaController = TextEditingController(
+      text: corso.validitaAnni.toString(),
+    );
+
+    final risultato = await showDialog<Corso>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: Container(
+            width: 560,
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Modifica corso',
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF111827),
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                const Text(
+                  'Modifica denominazione, durata o validità del corso.',
+                  style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
+                ),
+
+                const SizedBox(height: 24),
+
+                TextField(
+                  controller: nomeController,
+                  decoration: InputDecoration(
+                    labelText: 'Denominazione corso',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: durataController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Durata ore',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(width: 18),
+
+                    Expanded(
+                      child: TextField(
+                        controller: validitaController,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(
+                          labelText: 'Validità anni',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 28),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Annulla'),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        final nome = nomeController.text.trim();
+
+                        if (nome.isEmpty) return;
+
+                        final durata =
+                            int.tryParse(durataController.text.trim()) ?? 0;
+
+                        final validita =
+                            int.tryParse(validitaController.text.trim()) ?? 0;
+
+                        Navigator.pop(
+                          context,
+                          Corso(
+                            id: corso.id,
+                            denominazione: nome,
+                            durataOre: durata,
+                            validitaAnni: validita,
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.save),
+                      label: const Text('Salva modifiche'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF2563EB),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        elevation: 0,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    nomeController.dispose();
+    durataController.dispose();
+    validitaController.dispose();
+
+    if (risultato == null) return;
+
+    await DatabaseService.instance.updateCorso(risultato);
+
+    await caricaCorsi();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Corso aggiornato correttamente'),
+        backgroundColor: Color(0xFF16A34A),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final exportDisabilitato = loading || corsiFiltrati.isEmpty;
@@ -794,49 +959,55 @@ class _CorsiPageState extends State<CorsiPage> {
                                   itemBuilder: (context, index) {
                                     final item = corsiFiltrati[index];
 
-                                    return Container(
-                                      height: 72,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 14,
-                                      ),
-                                      child: Row(
-                                        children: [
-                                          const Icon(
-                                            Icons.school_outlined,
-                                            color: Color(0xFF2563EB),
-                                          ),
-
-                                          const SizedBox(width: 14),
-
-                                          Expanded(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  item.denominazione,
-                                                  style: const TextStyle(
-                                                    fontSize: 15,
-                                                    color: Color(0xFF111827),
-                                                    fontWeight: FontWeight.w600,
-                                                  ),
-                                                ),
-
-                                                const SizedBox(height: 4),
-
-                                                Text(
-                                                  'Durata: ${item.durataOre} h • Validità: ${item.validitaAnni} anni',
-                                                  style: const TextStyle(
-                                                    fontSize: 13,
-                                                    color: Color(0xFF6B7280),
-                                                  ),
-                                                ),
-                                              ],
+                                    return InkWell(
+                                      onDoubleTap: () =>
+                                          apriDialogModificaCorso(item),
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        height: 72,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            const Icon(
+                                              Icons.school_outlined,
+                                              color: Color(0xFF2563EB),
                                             ),
-                                          ),
-                                        ],
+
+                                            const SizedBox(width: 14),
+
+                                            Expanded(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.center,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    item.denominazione,
+                                                    style: const TextStyle(
+                                                      fontSize: 15,
+                                                      color: Color(0xFF111827),
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 4),
+
+                                                  Text(
+                                                    'Durata: ${item.durataOre} h • Validità: ${item.validitaAnni} anni',
+                                                    style: const TextStyle(
+                                                      fontSize: 13,
+                                                      color: Color(0xFF6B7280),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     );
                                   },

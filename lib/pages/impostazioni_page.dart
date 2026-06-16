@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'medici_strutture_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -16,7 +17,7 @@ class ImpostazioniPage extends StatelessWidget {
       ),
       body: ListView(
         padding: const EdgeInsets.all(24),
-        children: const [
+        children: [
           _SezioneImpostazioniCard(
             icona: Icons.business_rounded,
             titolo: 'Dati azienda',
@@ -29,6 +30,11 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Medici / Strutture mediche',
             descrizione:
                 'Anagrafica medici competenti e strutture per visite mediche del lavoro.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MediciStrutturePage()),
+              );
+            },
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(
@@ -68,11 +74,13 @@ class _SezioneImpostazioniCard extends StatelessWidget {
   final IconData icona;
   final String titolo;
   final String descrizione;
+  final VoidCallback? onTap;
 
   const _SezioneImpostazioniCard({
     required this.icona,
     required this.titolo,
     required this.descrizione,
+    this.onTap,
   });
 
   @override
@@ -85,6 +93,7 @@ class _SezioneImpostazioniCard extends StatelessWidget {
         side: const BorderSide(color: Color(0xFFE2E8F0)),
       ),
       child: ListTile(
+        onTap: onTap,
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
           vertical: 14,

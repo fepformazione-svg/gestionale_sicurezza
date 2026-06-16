@@ -1,4 +1,9 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'impresa_scheda_page.dart';
 
@@ -19,6 +24,8 @@ class ImpresePage extends StatefulWidget {
 class _ImpresePageState extends State<ImpresePage> {
   List<Impresa> imprese = [];
   List<Impresa> impreseFiltrate = [];
+
+  String ricercaAttiva = '';
 
   bool loading = true;
 
@@ -42,10 +49,149 @@ class _ImpresePageState extends State<ImpresePage> {
     final query = valore.toLowerCase().trim();
 
     setState(() {
+      ricercaAttiva = valore.trim();
+
       impreseFiltrate = imprese.where((i) {
-        return i.intestazione.toLowerCase().contains(query);
+        return i.intestazione.toLowerCase().contains(query) ||
+            (i.partitaIva ?? '').toLowerCase().contains(query) ||
+            (i.codiceFiscale ?? '').toLowerCase().contains(query) ||
+            (i.telefono ?? '').toLowerCase().contains(query) ||
+            (i.referente ?? '').toLowerCase().contains(query);
       }).toList();
     });
+  }
+
+  Future<void> esportaExcelImprese() async {
+    if (impreseFiltrate.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna impresa da esportare'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Imprese'];
+
+    excel.delete('Sheet1');
+
+    final ora = DateTime.now();
+    final vistaFiltrata = ricercaAttiva.trim().isNotEmpty;
+
+    final dataOra =
+        '${ora.day.toString().padLeft(2, '0')}/'
+        '${ora.month.toString().padLeft(2, '0')}/'
+        '${ora.year} '
+        '${ora.hour.toString().padLeft(2, '0')}:'
+        '${ora.minute.toString().padLeft(2, '0')}';
+
+    final infoExport = vistaFiltrata
+        ? 'Export imprese filtrato - ${impreseFiltrate.length} record - $dataOra'
+        : 'Export imprese - ${impreseFiltrate.length} record - $dataOra';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      infoExport,
+    );
+
+    final intestazioni = [
+      'Ragione sociale',
+      'Partita IVA',
+      'Codice fiscale',
+      'Indirizzo',
+      'Telefono',
+      'Referente',
+    ];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 2),
+      );
+
+      cella.value = xls.TextCellValue(intestazioni[colonna]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var indice = 0; indice < impreseFiltrate.length; indice++) {
+      final impresa = impreseFiltrate[indice];
+      final riga = indice + 3;
+
+      final valori = [
+        impresa.intestazione,
+        impresa.partitaIva ?? '',
+        impresa.codiceFiscale ?? '',
+        impresa.indirizzo ?? '',
+        impresa.telefono ?? '',
+        impresa.referente ?? '',
+      ];
+
+      for (var colonna = 0; colonna < valori.length; colonna++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: colonna,
+                rowIndex: riga,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[colonna],
+        );
+      }
+    }
+
+    sheet.setColumnWidth(0, 38);
+    sheet.setColumnWidth(1, 18);
+    sheet.setColumnWidth(2, 20);
+    sheet.setColumnWidth(3, 38);
+    sheet.setColumnWidth(4, 18);
+    sheet.setColumnWidth(5, 28);
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'imprese_export${vistaFiltrata ? '_filtrato' : ''}_'
+        '${ora.year}_'
+        '${ora.month.toString().padLeft(2, '0')}_'
+        '${ora.day.toString().padLeft(2, '0')}_'
+        '${ora.hour.toString().padLeft(2, '0')}'
+        '${ora.minute.toString().padLeft(2, '0')}.xlsx';
+
+    final file = File('${directory.path}/$nomeFile');
+
+    final bytes = excel.save();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel completato: ${impreseFiltrate.length} imprese esportate dalla vista filtrata'
+              : 'Export Excel completato: ${impreseFiltrate.length} imprese esportate',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
   }
 
   Future<void> apriDialogNuovaImpresa() async {
@@ -250,6 +396,25 @@ class _ImpresePageState extends State<ImpresePage> {
               ),
 
               const SizedBox(width: 16),
+
+              OutlinedButton.icon(
+                onPressed: impreseFiltrate.isEmpty ? null : esportaExcelImprese,
+                icon: const Icon(Icons.table_chart_outlined),
+                label: Text('Export Excel (${impreseFiltrate.length})'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF2563EB),
+                  side: const BorderSide(color: Color(0xFF2563EB)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
 
               ElevatedButton.icon(
                 onPressed: apriDialogNuovaImpresa,

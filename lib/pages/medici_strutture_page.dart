@@ -46,6 +46,27 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
     });
   }
 
+  Future<void> apriDialogNuovaVoce() async {
+    final risultato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _MedicoStrutturaDialog(),
+    );
+
+    if (risultato != true) return;
+
+    await caricaMediciStrutture();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Color(0xFF16A34A),
+        content: Text('Voce medico/struttura salvata.'),
+      ),
+    );
+  }
+
   Color coloreTipo(String tipo) {
     final tipoNormalizzato = tipo.toLowerCase().trim();
 
@@ -161,15 +182,7 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
                 ),
                 const SizedBox(width: 12),
                 FilledButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Nuova voce medici/strutture: funzione in arrivo.',
-                        ),
-                      ),
-                    );
-                  },
+                  onPressed: apriDialogNuovaVoce,
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Nuova voce'),
                 ),
@@ -273,6 +286,235 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _MedicoStrutturaDialog extends StatefulWidget {
+  const _MedicoStrutturaDialog();
+
+  @override
+  State<_MedicoStrutturaDialog> createState() => _MedicoStrutturaDialogState();
+}
+
+class _MedicoStrutturaDialogState extends State<_MedicoStrutturaDialog> {
+  final _formKey = GlobalKey<FormState>();
+
+  final _denominazioneController = TextEditingController();
+  final _referenteController = TextEditingController();
+  final _telefonoController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _indirizzoController = TextEditingController();
+  final _noteController = TextEditingController();
+
+  String tipo = 'Medico';
+  bool attivo = true;
+  bool salvataggio = false;
+
+  @override
+  void dispose() {
+    _denominazioneController.dispose();
+    _referenteController.dispose();
+    _telefonoController.dispose();
+    _emailController.dispose();
+    _indirizzoController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> salva() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      salvataggio = true;
+    });
+
+    try {
+      await AppDatabase.instance.inserisciMedicoStruttura(
+        tipo: tipo,
+        denominazione: _denominazioneController.text,
+        referente: _referenteController.text,
+        telefono: _telefonoController.text,
+        email: _emailController.text,
+        indirizzo: _indirizzoController.text,
+        note: _noteController.text,
+        attivo: attivo ? 1 : 0,
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(true);
+    } catch (errore) {
+      if (!mounted) return;
+
+      setState(() {
+        salvataggio = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text('Errore durante il salvataggio: $errore'),
+        ),
+      );
+    }
+  }
+
+  InputDecoration decorazioneCampo(String label, {String? hint}) {
+    return InputDecoration(
+      labelText: label,
+      hintText: hint,
+      filled: true,
+      fillColor: const Color(0xFFF8FAFC),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nuova voce medico/struttura'),
+      content: SizedBox(
+        width: 620,
+        child: Form(
+          key: _formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SegmentedButton<String>(
+                  segments: const [
+                    ButtonSegment(
+                      value: 'Medico',
+                      icon: Icon(Icons.person_rounded),
+                      label: Text('Medico'),
+                    ),
+                    ButtonSegment(
+                      value: 'Struttura',
+                      icon: Icon(Icons.local_hospital_rounded),
+                      label: Text('Struttura'),
+                    ),
+                  ],
+                  selected: {tipo},
+                  onSelectionChanged: salvataggio
+                      ? null
+                      : (valori) {
+                          setState(() {
+                            tipo = valori.first;
+                          });
+                        },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _denominazioneController,
+                  enabled: !salvataggio,
+                  decoration: decorazioneCampo(
+                    tipo == 'Medico'
+                        ? 'Nome medico / denominazione'
+                        : 'Denominazione struttura',
+                    hint: tipo == 'Medico'
+                        ? 'Es. Dott. Mario Rossi'
+                        : 'Es. Centro Medico Roma',
+                  ),
+                  validator: (valore) {
+                    if (valore == null || valore.trim().isEmpty) {
+                      return 'Inserisci la denominazione';
+                    }
+
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _referenteController,
+                  enabled: !salvataggio,
+                  decoration: decorazioneCampo(
+                    'Referente',
+                    hint: 'Nome referente o contatto interno',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _telefonoController,
+                        enabled: !salvataggio,
+                        decoration: decorazioneCampo('Telefono'),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _emailController,
+                        enabled: !salvataggio,
+                        decoration: decorazioneCampo('Email'),
+                        keyboardType: TextInputType.emailAddress,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _indirizzoController,
+                  enabled: !salvataggio,
+                  decoration: decorazioneCampo('Indirizzo'),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: _noteController,
+                  enabled: !salvataggio,
+                  minLines: 2,
+                  maxLines: 4,
+                  decoration: decorazioneCampo('Note'),
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  value: attivo,
+                  onChanged: salvataggio
+                      ? null
+                      : (valore) {
+                          setState(() {
+                            attivo = valore;
+                          });
+                        },
+                  title: const Text('Voce attiva'),
+                  subtitle: const Text(
+                    'Le voci non attive restano archiviate ma possono essere filtrate.',
+                  ),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: salvataggio
+              ? null
+              : () => Navigator.of(context).pop(false),
+          child: const Text('Annulla'),
+        ),
+        FilledButton.icon(
+          onPressed: salvataggio ? null : salva,
+          icon: salvataggio
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded),
+          label: Text(salvataggio ? 'Salvataggio...' : 'Salva'),
+        ),
+      ],
     );
   }
 }

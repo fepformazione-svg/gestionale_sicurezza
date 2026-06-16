@@ -4,6 +4,8 @@ import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../models/prezzario.dart';
 import '../services/database_service.dart';
@@ -199,6 +201,143 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
     );
   }
 
+  Future<void> esportaPdfPrezzario() async {
+    final vociDaEsportare = vociPrezzarioFiltrate;
+
+    if (vociDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna voce di prezzario da esportare.'),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      return;
+    }
+
+    final ricercaAttiva = cercaController.text.trim().isNotEmpty;
+    final adesso = DateTime.now();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final dataOra =
+        '${dueCifre(adesso.day)}/${dueCifre(adesso.month)}/${adesso.year} '
+        '${dueCifre(adesso.hour)}:${dueCifre(adesso.minute)}';
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Text(
+              'PREZZARIO',
+              style: pw.TextStyle(
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey900,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Text(
+              ricercaAttiva
+                  ? 'Export prezzario filtrato - ${vociDaEsportare.length} voci - $dataOra'
+                  : 'Export prezzario completo - ${vociDaEsportare.length} voci - $dataOra',
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            pw.TableHelper.fromTextArray(
+              headers: const ['Impresa', 'Corso', 'Prezzo', 'Note'],
+              data: vociDaEsportare.map((voce) {
+                return [
+                  voce.impresa ?? '-',
+                  voce.corso ?? '-',
+                  'EUR ${voce.prezzo.toStringAsFixed(2).replaceAll('.', ',')}',
+                  voce.note.isEmpty ? '-' : voce.note,
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 9,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey900,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              columnWidths: {
+                0: const pw.FlexColumnWidth(3),
+                1: const pw.FlexColumnWidth(3),
+                2: const pw.FlexColumnWidth(1.2),
+                3: const pw.FlexColumnWidth(3),
+              },
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'prezzario_export${ricercaAttiva ? '_filtrato' : ''}_'
+        '${adesso.year}_${dueCifre(adesso.month)}_${dueCifre(adesso.day)}_'
+        '${dueCifre(adesso.hour)}${dueCifre(adesso.minute)}.pdf';
+
+    final file = File('${directory.path}/$nomeFile');
+
+    await file.writeAsBytes(await pdf.save(), flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ricercaAttiva
+              ? 'Export PDF completato: ${vociDaEsportare.length} voci esportate dalla vista filtrata.'
+              : 'Export PDF completato: ${vociDaEsportare.length} voci esportate.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
   Future<void> apriDialogNuovaVoce() async {
     final salvato = await showDialog<bool>(
       context: context,
@@ -331,6 +470,14 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                   : esportaExcelPrezzario,
               icon: const Icon(Icons.table_view_rounded, size: 18),
               label: Text('Esporta Excel (${vociPrezzarioFiltrate.length})'),
+            ),
+            const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: vociPrezzarioFiltrate.isEmpty
+                  ? null
+                  : esportaPdfPrezzario,
+              icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
+              label: Text('Esporta PDF (${vociPrezzarioFiltrate.length})'),
             ),
             const SizedBox(width: 8),
             FilledButton.icon(

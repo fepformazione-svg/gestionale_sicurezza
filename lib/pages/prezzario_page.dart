@@ -70,6 +70,33 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
     }
   }
 
+  Future<void> apriDialogModificaVoce(Prezzario voce) async {
+    final salvato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return _ModificaVocePrezzarioDialog(
+          voce: voce,
+          impreseLookup: impreseLookup,
+          corsiLookup: corsiLookup,
+        );
+      },
+    );
+
+    if (salvato == true) {
+      await caricaPrezzario();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Voce prezzario aggiornata.'),
+          backgroundColor: Color(0xFF16A34A),
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -162,6 +189,7 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                         DataColumn(label: Text('Corso')),
                         DataColumn(label: Text('Prezzo')),
                         DataColumn(label: Text('Note')),
+                        DataColumn(label: Text('Azioni')),
                       ],
                       rows: vociPrezzario.map((voce) {
                         return DataRow(
@@ -170,6 +198,16 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                             DataCell(Text(voce.corso ?? '-')),
                             DataCell(Text(formattaPrezzo(voce.prezzo))),
                             DataCell(Text(voce.note.isEmpty ? '-' : voce.note)),
+                            DataCell(
+                              IconButton(
+                                tooltip: 'Modifica voce prezzario',
+                                icon: const Icon(Icons.edit_rounded, size: 18),
+                                color: const Color(0xFF475569),
+                                onPressed: () {
+                                  apriDialogModificaVoce(voce);
+                                },
+                              ),
+                            ),
                           ],
                         );
                       }).toList(),
@@ -281,6 +319,247 @@ class _NuovaVocePrezzarioDialogState extends State<_NuovaVocePrezzarioDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text('Nuova voce prezzario'),
+      content: SizedBox(
+        width: 460,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            DropdownButtonFormField<int>(
+              initialValue: impresaId,
+              decoration: const InputDecoration(
+                labelText: 'Impresa',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.impreseLookup.map((impresa) {
+                return DropdownMenuItem<int>(
+                  value: impresa['id'] as int,
+                  child: Text(
+                    (impresa['intestazione'] ?? '').toString(),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: salvataggioInCorso
+                  ? null
+                  : (value) {
+                      setState(() {
+                        impresaId = value;
+                        errore = null;
+                      });
+                    },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              initialValue: corsoId,
+              decoration: const InputDecoration(
+                labelText: 'Corso',
+                border: OutlineInputBorder(),
+              ),
+              items: widget.corsiLookup.map((corso) {
+                return DropdownMenuItem<int>(
+                  value: corso['id'] as int,
+                  child: Text(
+                    (corso['denominazione'] ?? '').toString(),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                );
+              }).toList(),
+              onChanged: salvataggioInCorso
+                  ? null
+                  : (value) {
+                      setState(() {
+                        corsoId = value;
+                        errore = null;
+                      });
+                    },
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: prezzoController,
+              enabled: !salvataggioInCorso,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: const InputDecoration(
+                labelText: 'Prezzo',
+                hintText: 'Es. 120,00',
+                prefixText: '€ ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: noteController,
+              enabled: !salvataggioInCorso,
+              maxLines: 3,
+              decoration: const InputDecoration(
+                labelText: 'Note',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (errore != null) ...[
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  errore!,
+                  style: const TextStyle(
+                    color: Color(0xFFDC2626),
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: salvataggioInCorso
+              ? null
+              : () {
+                  Navigator.of(context).pop(false);
+                },
+          child: const Text('Annulla'),
+        ),
+        FilledButton.icon(
+          onPressed: salvataggioInCorso ? null : salvaVoce,
+          icon: salvataggioInCorso
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded, size: 18),
+          label: Text(salvataggioInCorso ? 'Salvataggio...' : 'Salva'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ModificaVocePrezzarioDialog extends StatefulWidget {
+  final Prezzario voce;
+  final List<Map<String, dynamic>> impreseLookup;
+  final List<Map<String, dynamic>> corsiLookup;
+
+  const _ModificaVocePrezzarioDialog({
+    required this.voce,
+    required this.impreseLookup,
+    required this.corsiLookup,
+  });
+
+  @override
+  State<_ModificaVocePrezzarioDialog> createState() =>
+      _ModificaVocePrezzarioDialogState();
+}
+
+class _ModificaVocePrezzarioDialogState
+    extends State<_ModificaVocePrezzarioDialog> {
+  late int? impresaId;
+  late int? corsoId;
+  bool salvataggioInCorso = false;
+  String? errore;
+
+  late final TextEditingController prezzoController;
+  late final TextEditingController noteController;
+
+  @override
+  void initState() {
+    super.initState();
+
+    impresaId = widget.voce.impresaId;
+    corsoId = widget.voce.corsoId;
+    prezzoController = TextEditingController(
+      text: widget.voce.prezzo.toStringAsFixed(2).replaceAll('.', ','),
+    );
+    noteController = TextEditingController(text: widget.voce.note);
+  }
+
+  @override
+  void dispose() {
+    prezzoController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> salvaVoce() async {
+    if (salvataggioInCorso) return;
+
+    setState(() {
+      errore = null;
+    });
+
+    if (impresaId == null || corsoId == null) {
+      setState(() {
+        errore = 'Seleziona impresa e corso.';
+      });
+      return;
+    }
+
+    final prezzo = double.tryParse(
+      prezzoController.text.trim().replaceAll(',', '.'),
+    );
+
+    if (prezzo == null || prezzo < 0) {
+      setState(() {
+        errore = 'Inserisci un prezzo valido.';
+      });
+      return;
+    }
+
+    setState(() {
+      salvataggioInCorso = true;
+    });
+
+    try {
+      final combinazioneCambiata =
+          impresaId != widget.voce.impresaId || corsoId != widget.voce.corsoId;
+
+      if (combinazioneCambiata) {
+        final esistente = await DatabaseService.instance
+            .getPrezzarioByImpresaCorso(
+              impresaId: impresaId!,
+              corsoId: corsoId!,
+            );
+
+        if (!mounted) return;
+
+        if (esistente != null && esistente.id != widget.voce.id) {
+          setState(() {
+            errore = 'Esiste già una voce per questa impresa e questo corso.';
+            salvataggioInCorso = false;
+          });
+          return;
+        }
+      }
+
+      await DatabaseService.instance.updatePrezzario(
+        widget.voce.copyWith(
+          impresaId: impresaId,
+          corsoId: corsoId,
+          prezzo: prezzo,
+          note: noteController.text.trim(),
+        ),
+      );
+
+      if (!mounted) return;
+
+      Navigator.of(context).pop(true);
+    } catch (_) {
+      if (!mounted) return;
+
+      setState(() {
+        errore = 'Errore durante l’aggiornamento della voce prezzario.';
+        salvataggioInCorso = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Modifica voce prezzario'),
       content: SizedBox(
         width: 460,
         child: Column(

@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
@@ -649,6 +651,190 @@ class _DiarioPageState extends State<DiarioPage> {
     );
   }
 
+  Future<void> esportaPdfDiario() async {
+    if (_diario.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun corso da esportare in PDF'),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final adesso = DateTime.now();
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata =
+        _cercaController.text.trim().isNotEmpty || _soloDaFatturare;
+
+    final righe = _diario.map((riga) {
+      final discente = '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+          .trim();
+
+      final stato = statoScadenza(riga['scadenza']?.toString());
+
+      return [
+        discente,
+        testo(riga['impresa']),
+        testo(riga['corso']),
+        formattaData(riga['data']),
+        formattaData(riga['scadenza']),
+        stato,
+        testo(riga['prot']),
+        testo(riga['fattura']).trim().isEmpty
+            ? '-'
+            : testo(riga['fattura']).trim(),
+        riga['invio']?.toString() == '1' ? 'INVIATO' : 'NO',
+        riga['da_fatturare'] == 1 ? 'DA FATT.' : 'NO',
+      ];
+    }).toList();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(22),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'DIARIO FORMAZIONE',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              vistaFiltrata
+                  ? 'Export diario filtrato - ${_diario.length} record - $dataExport'
+                  : 'Export diario - ${_diario.length} record - $dataExport',
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Discente',
+                'Impresa',
+                'Corso',
+                'Data',
+                'Scadenza',
+                'Stato',
+                'Prot.',
+                'Fattura',
+                'Invio',
+                'Da fatt.',
+              ],
+              data: righe,
+              border: pw.TableBorder.all(
+                color: PdfColors.blueGrey200,
+                width: 0.4,
+              ),
+              headerStyle: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 7,
+                color: PdfColors.blueGrey900,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 3,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.7),
+                1: const pw.FlexColumnWidth(1.8),
+                2: const pw.FlexColumnWidth(1.9),
+                3: const pw.FlexColumnWidth(0.8),
+                4: const pw.FlexColumnWidth(0.8),
+                5: const pw.FlexColumnWidth(0.8),
+                6: const pw.FlexColumnWidth(0.7),
+                7: const pw.FlexColumnWidth(0.8),
+                8: const pw.FlexColumnWidth(0.8),
+                9: const pw.FlexColumnWidth(0.8),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'diario_export${vistaFiltrata ? '_filtrato' : ''}_'
+        '${adesso.year}_'
+        '${adesso.month.toString().padLeft(2, '0')}_'
+        '${adesso.day.toString().padLeft(2, '0')}_'
+        '${adesso.hour.toString().padLeft(2, '0')}'
+        '${adesso.minute.toString().padLeft(2, '0')}.pdf';
+
+    final file = File('${directory.path}\\$nomeFile');
+
+    await file.writeAsBytes(await pdf.save(), flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export PDF completato: ${_diario.length} corsi esportati dalla vista filtrata'
+              : 'Export PDF completato: ${_diario.length} corsi esportati',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _cercaController.dispose();
@@ -922,6 +1108,39 @@ class _DiarioPageState extends State<DiarioPage> {
                               label: Text('Esporta Excel (${_diario.length})'),
                               style: FilledButton.styleFrom(
                                 backgroundColor: const Color(0xFF16A34A),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Tooltip(
+                            message: _diario.isEmpty
+                                ? 'Nessun corso da esportare in PDF'
+                                : 'Esporta il diario visualizzato in PDF',
+                            child: FilledButton.icon(
+                              onPressed: _diario.isEmpty
+                                  ? null
+                                  : esportaPdfDiario,
+                              icon: const Icon(
+                                Icons.picture_as_pdf_rounded,
+                                size: 18,
+                              ),
+                              label: Text('Esporta PDF (${_diario.length})'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFFDC2626),
                                 foregroundColor: Colors.white,
                                 disabledBackgroundColor: const Color(
                                   0xFFE2E8F0,

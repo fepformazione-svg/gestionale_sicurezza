@@ -2,10 +2,12 @@ import 'dart:io';
 
 import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/prezzario.dart';
 import '../services/database_service.dart';
@@ -338,6 +340,115 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
     );
   }
 
+  Future<void> stampaPrezzario() async {
+    final vociDaStampare = vociPrezzarioFiltrate;
+
+    if (vociDaStampare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna voce prezzario da stampare.'),
+          backgroundColor: Color(0xFF64748B),
+        ),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final ricercaAttiva = cercaController.text.trim().isNotEmpty;
+    final dataStampa = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+
+    String formattaPrezzoPdf(dynamic valore) {
+      final numero = valore is num
+          ? valore
+          : num.tryParse(valore?.toString().replaceAll(',', '.') ?? '') ?? 0;
+
+      return 'EUR ${numero.toStringAsFixed(2).replaceAll('.', ',')}';
+    }
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+        ),
+        build: (context) => [
+          pw.Text(
+            'F&P Formazione e Prevenzione',
+            style: pw.TextStyle(
+              fontSize: 16,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blueGrey800,
+            ),
+          ),
+          pw.SizedBox(height: 8),
+          pw.Text(
+            'PREZZARIO',
+            style: pw.TextStyle(
+              fontSize: 22,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blueGrey900,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            ricercaAttiva
+                ? 'Stampa filtrata - ${vociDaStampare.length} voci - $dataStampa'
+                : 'Stampa completa - ${vociDaStampare.length} voci - $dataStampa',
+            style: const pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.blueGrey600,
+            ),
+          ),
+          pw.SizedBox(height: 16),
+          pw.TableHelper.fromTextArray(
+            headers: const ['Impresa', 'Corso', 'Prezzo', 'Note'],
+            data: vociDaStampare.map((voce) {
+              return [
+                voce.impresa,
+                voce.corso,
+                formattaPrezzoPdf(voce.prezzo),
+                voce.note,
+              ];
+            }).toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+              fontSize: 9,
+            ),
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColors.blueGrey700,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 8),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerAlignment: pw.Alignment.centerLeft,
+            rowDecoration: const pw.BoxDecoration(
+              border: pw.Border(
+                bottom: pw.BorderSide(color: PdfColors.blueGrey100, width: 0.5),
+              ),
+            ),
+            oddRowDecoration: const pw.BoxDecoration(
+              color: PdfColors.blueGrey50,
+            ),
+            columnWidths: {
+              0: const pw.FlexColumnWidth(3),
+              1: const pw.FlexColumnWidth(3),
+              2: const pw.FlexColumnWidth(1.2),
+              3: const pw.FlexColumnWidth(3),
+            },
+          ),
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+  }
+
   Future<void> apriDialogNuovaVoce() async {
     final salvato = await showDialog<bool>(
       context: context,
@@ -480,6 +591,11 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
               label: Text('Esporta PDF (${vociPrezzarioFiltrate.length})'),
             ),
             const SizedBox(width: 8),
+            OutlinedButton.icon(
+              onPressed: vociPrezzarioFiltrate.isEmpty ? null : stampaPrezzario,
+              icon: const Icon(Icons.print_rounded, size: 18),
+              label: Text('Stampa (${vociPrezzarioFiltrate.length})'),
+            ),
             FilledButton.icon(
               onPressed: apriDialogNuovaVoce,
               icon: const Icon(Icons.add_rounded, size: 18),

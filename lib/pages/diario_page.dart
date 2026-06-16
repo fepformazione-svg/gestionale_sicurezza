@@ -269,7 +269,7 @@ class _DiarioPageState extends State<DiarioPage> {
             centrato: true,
             tooltip: 'Stato invio documentazione',
             child: Transform.translate(
-              offset: const Offset(-5, 0),
+              offset: const Offset(-6, 0),
               child: const Text(
                 'Invio',
                 maxLines: 1,
@@ -1045,6 +1045,9 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                 left: 8,
                                                               ),
                                                           child: InkWell(
+                                                            mouseCursor:
+                                                                SystemMouseCursors
+                                                                    .click,
                                                             onTap: () {
                                                               apriSchedaDiscente(
                                                                 riga,

@@ -449,6 +449,130 @@ class AppDatabase {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getMediciStrutture({
+    String ricerca = '',
+    bool soloAttivi = false,
+  }) async {
+    final db = await database;
+    final filtri = <String>[];
+    final argomenti = <Object?>[];
+
+    if (soloAttivi) {
+      filtri.add('attivo = ?');
+      argomenti.add(1);
+    }
+
+    final ricercaPulita = ricerca.trim();
+
+    if (ricercaPulita.isNotEmpty) {
+      filtri.add('''
+        (
+          denominazione LIKE ?
+          OR tipo LIKE ?
+          OR referente LIKE ?
+          OR telefono LIKE ?
+          OR email LIKE ?
+          OR indirizzo LIKE ?
+          OR note LIKE ?
+        )
+      ''');
+
+      final valoreRicerca = '%$ricercaPulita%';
+
+      argomenti.addAll([
+        valoreRicerca,
+        valoreRicerca,
+        valoreRicerca,
+        valoreRicerca,
+        valoreRicerca,
+        valoreRicerca,
+        valoreRicerca,
+      ]);
+    }
+
+    final where = filtri.isEmpty ? '' : 'WHERE ${filtri.join(' AND ')}';
+
+    return db.rawQuery('''
+      SELECT
+        id,
+        tipo,
+        denominazione,
+        referente,
+        telefono,
+        email,
+        indirizzo,
+        note,
+        attivo,
+        created_at,
+        updated_at
+      FROM medici_strutture
+      $where
+      ORDER BY attivo DESC, denominazione COLLATE NOCASE ASC
+      ''', argomenti);
+  }
+
+  Future<int> inserisciMedicoStruttura({
+    required String tipo,
+    required String denominazione,
+    String? referente,
+    String? telefono,
+    String? email,
+    String? indirizzo,
+    String? note,
+    int attivo = 1,
+  }) async {
+    final db = await database;
+
+    return db.insert('medici_strutture', {
+      'tipo': tipo.trim().isEmpty ? 'Medico' : tipo.trim(),
+      'denominazione': denominazione.trim(),
+      'referente': referente?.trim(),
+      'telefono': telefono?.trim(),
+      'email': email?.trim(),
+      'indirizzo': indirizzo?.trim(),
+      'note': note?.trim(),
+      'attivo': attivo,
+      'updated_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<int> aggiornaMedicoStruttura({
+    required int id,
+    required String tipo,
+    required String denominazione,
+    String? referente,
+    String? telefono,
+    String? email,
+    String? indirizzo,
+    String? note,
+    required int attivo,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'medici_strutture',
+      {
+        'tipo': tipo.trim().isEmpty ? 'Medico' : tipo.trim(),
+        'denominazione': denominazione.trim(),
+        'referente': referente?.trim(),
+        'telefono': telefono?.trim(),
+        'email': email?.trim(),
+        'indirizzo': indirizzo?.trim(),
+        'note': note?.trim(),
+        'attivo': attivo,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> eliminaMedicoStruttura(int id) async {
+    final db = await database;
+
+    return db.delete('medici_strutture', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<Map<String, dynamic>?> getDiscenteConImpresa(int idDiscente) async {
     final db = await database;
 

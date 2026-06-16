@@ -201,6 +201,22 @@ class AppDatabase {
         FOREIGN KEY (corso_id) REFERENCES corsi(id)
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS medici_strutture (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        tipo TEXT DEFAULT 'Medico',
+        denominazione TEXT NOT NULL,
+        referente TEXT,
+        telefono TEXT,
+        email TEXT,
+        indirizzo TEXT,
+        note TEXT,
+        attivo INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      )
+    ''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -293,6 +309,19 @@ class AppDatabase {
       'corso_id': 'INTEGER',
       'prezzo': 'REAL DEFAULT 0',
       'note': 'TEXT',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'medici_strutture', {
+      'tipo': "TEXT DEFAULT 'Medico'",
+      'denominazione': 'TEXT',
+      'referente': 'TEXT',
+      'telefono': 'TEXT',
+      'email': 'TEXT',
+      'indirizzo': 'TEXT',
+      'note': 'TEXT',
+      'attivo': 'INTEGER DEFAULT 1',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });
@@ -405,6 +434,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_prezzario_impresa_corso ON prezzario(impresa_id, corso_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_medici_strutture_tipo ON medici_strutture(tipo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_medici_strutture_denominazione ON medici_strutture(denominazione)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_medici_strutture_attivo ON medici_strutture(attivo)',
     );
   }
 

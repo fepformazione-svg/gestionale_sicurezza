@@ -187,6 +187,20 @@ class AppDatabase {
         FOREIGN KEY (diario_id) REFERENCES diario(id)
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS prezzario (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        impresa_id INTEGER,
+        corso_id INTEGER,
+        prezzo REAL DEFAULT 0,
+        note TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
+        FOREIGN KEY (impresa_id) REFERENCES imprese(id),
+        FOREIGN KEY (corso_id) REFERENCES corsi(id)
+      )
+    ''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -270,6 +284,15 @@ class AppDatabase {
       'tipo_documento': 'TEXT',
       'percorso_pdf': 'TEXT',
       'attivo': 'INTEGER DEFAULT 1',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'prezzario', {
+      'impresa_id': 'INTEGER',
+      'corso_id': 'INTEGER',
+      'prezzo': 'REAL DEFAULT 0',
+      'note': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });
@@ -370,6 +393,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_pdf_diario ON pdf_documenti(diario_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prezzario_impresa ON prezzario(impresa_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prezzario_corso ON prezzario(corso_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prezzario_impresa_corso ON prezzario(impresa_id, corso_id)',
     );
   }
 

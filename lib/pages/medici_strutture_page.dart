@@ -88,6 +88,42 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
     );
   }
 
+  Future<void> cambiaStatoVoce(Map<String, dynamic> voce) async {
+    final id = int.parse(voce['id'].toString());
+    final attivoAttuale =
+        (int.tryParse(voce['attivo']?.toString() ?? '1') ?? 1) == 1;
+    final nuovoAttivo = attivoAttuale ? 0 : 1;
+
+    await AppDatabase.instance.aggiornaMedicoStruttura(
+      id: id,
+      tipo: voce['tipo']?.toString() ?? 'Medico',
+      denominazione: voce['denominazione']?.toString() ?? '',
+      referente: voce['referente']?.toString(),
+      telefono: voce['telefono']?.toString(),
+      email: voce['email']?.toString(),
+      indirizzo: voce['indirizzo']?.toString(),
+      note: voce['note']?.toString(),
+      attivo: nuovoAttivo,
+    );
+
+    await caricaMediciStrutture();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: nuovoAttivo == 1
+            ? const Color(0xFF16A34A)
+            : const Color(0xFF64748B),
+        content: Text(
+          nuovoAttivo == 1
+              ? 'Voce medico/struttura riattivata.'
+              : 'Voce medico/struttura disattivata.',
+        ),
+      ),
+    );
+  }
+
   Color coloreTipo(String tipo) {
     final tipoNormalizzato = tipo.toLowerCase().trim();
 
@@ -310,12 +346,31 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
                                 ),
                                 DataCell(badgeAttivo(attivo)),
                                 DataCell(
-                                  IconButton(
-                                    tooltip: 'Modifica voce',
-                                    icon: const Icon(Icons.edit_rounded),
-                                    color: const Color(0xFF2563EB),
-                                    onPressed: () =>
-                                        apriDialogModificaVoce(voce),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Modifica voce',
+                                        icon: const Icon(Icons.edit_rounded),
+                                        color: const Color(0xFF2563EB),
+                                        onPressed: () =>
+                                            apriDialogModificaVoce(voce),
+                                      ),
+                                      IconButton(
+                                        tooltip: attivo == 1
+                                            ? 'Disattiva voce'
+                                            : 'Riattiva voce',
+                                        icon: Icon(
+                                          attivo == 1
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                        ),
+                                        color: attivo == 1
+                                            ? const Color(0xFF64748B)
+                                            : const Color(0xFF16A34A),
+                                        onPressed: () => cambiaStatoVoce(voce),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

@@ -1006,6 +1006,21 @@ class _CorsiPageState extends State<CorsiPage> {
                                                 ],
                                               ),
                                             ),
+                                            const SizedBox(width: 12),
+
+                                            Tooltip(
+                                              message: 'Modifica corso',
+                                              child: IconButton(
+                                                onPressed: () =>
+                                                    apriDialogModificaCorso(
+                                                      item,
+                                                    ),
+                                                icon: const Icon(
+                                                  Icons.edit_rounded,
+                                                ),
+                                                color: const Color(0xFF2563EB),
+                                              ),
+                                            ),
                                           ],
                                         ),
                                       ),

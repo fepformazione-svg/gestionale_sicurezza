@@ -6,6 +6,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
@@ -349,6 +350,147 @@ class _ScadenzePageState extends State<ScadenzePage> {
         ),
         backgroundColor: const Color(0xFF16A34A),
       ),
+    );
+  }
+
+  Future<void> stampaScadenze() async {
+    final righe = scadenzeFiltrate;
+
+    if (righe.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna scadenza da stampare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+
+      return;
+    }
+
+    final adesso = DateTime.now();
+
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata =
+        filtroStato != 'Tutte' || _cercaController.text.trim().isNotEmpty;
+
+    final titoloVista = vistaFiltrata
+        ? 'Stampa scadenze filtrata'
+        : 'Stampa scadenze completa';
+
+    await Printing.layoutPdf(
+      name: 'scadenze_stampa',
+      format: PdfPageFormat.a4.landscape,
+      onLayout: (format) async {
+        final pdf = pw.Document();
+
+        pdf.addPage(
+          pw.MultiPage(
+            pageFormat: PdfPageFormat.a4.landscape,
+            margin: const pw.EdgeInsets.all(24),
+            footer: (context) {
+              return pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              );
+            },
+            build: (context) {
+              return [
+                pw.Text(
+                  'F&P Formazione e Prevenzione',
+                  style: pw.TextStyle(
+                    fontSize: 13,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blueGrey700,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'SCADENZE CORSI',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blue700,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  '$titoloVista - ${righe.length} record - $dataExport',
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.blueGrey700,
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+                pw.TableHelper.fromTextArray(
+                  headers: const [
+                    'Discente',
+                    'Impresa',
+                    'Corso',
+                    'Data corso',
+                    'Scadenza',
+                    'Stato',
+                  ],
+                  data: righe.map((riga) {
+                    final stato = calcolaStato(riga);
+
+                    return [
+                      riga['discente']?.toString() ?? '-',
+                      riga['impresa']?.toString() ?? '-',
+                      riga['corso']?.toString() ?? '-',
+                      formattaData(riga['data_corso']),
+                      formattaData(riga['scadenza']),
+                      stato,
+                    ];
+                  }).toList(),
+                  headerStyle: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                  headerDecoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey700,
+                  ),
+                  cellStyle: const pw.TextStyle(fontSize: 8),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  headerAlignment: pw.Alignment.centerLeft,
+                  rowDecoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      bottom: pw.BorderSide(
+                        color: PdfColors.blueGrey100,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  oddRowDecoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey50,
+                  ),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(2.2),
+                    1: const pw.FlexColumnWidth(2),
+                    2: const pw.FlexColumnWidth(2.4),
+                    3: const pw.FlexColumnWidth(1.2),
+                    4: const pw.FlexColumnWidth(1.2),
+                    5: const pw.FlexColumnWidth(1.2),
+                  },
+                ),
+              ];
+            },
+          ),
+        );
+
+        return pdf.save();
+      },
     );
   }
 
@@ -733,6 +875,24 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 label: Text('Esporta PDF (${scadenzeFiltrate.length})'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFFDC2626),
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: const Color(0xFFE5E7EB),
+                  disabledForegroundColor: const Color(0xFF9CA3AF),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: scadenzeFiltrate.isEmpty ? null : stampaScadenze,
+                icon: const Icon(Icons.print_rounded, size: 18),
+                label: Text('Stampa (${scadenzeFiltrate.length})'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF475569),
                   foregroundColor: Colors.white,
                   disabledBackgroundColor: const Color(0xFFE5E7EB),
                   disabledForegroundColor: const Color(0xFF9CA3AF),

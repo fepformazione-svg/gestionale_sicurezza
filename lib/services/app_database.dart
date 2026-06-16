@@ -498,6 +498,65 @@ class AppDatabase {
     );
   }
 
+  Future<Map<String, dynamic>?> getDatiAzienda() async {
+    final db = await database;
+
+    final result = await db.query('dati_azienda', orderBy: 'id ASC', limit: 1);
+
+    if (result.isEmpty) return null;
+
+    return result.first;
+  }
+
+  Future<int> salvaDatiAzienda({
+    required String ragioneSociale,
+    required String nomeCommerciale,
+    String? partitaIva,
+    String? codiceFiscale,
+    String? indirizzo,
+    String? cap,
+    String? comune,
+    String? provincia,
+    String? telefono,
+    String? email,
+    String? pec,
+    String? sitoWeb,
+    String? logoPath,
+    String? note,
+  }) async {
+    final db = await database;
+    final datiEsistenti = await getDatiAzienda();
+
+    final valori = {
+      'ragione_sociale': ragioneSociale.trim(),
+      'nome_commerciale': nomeCommerciale.trim(),
+      'partita_iva': partitaIva?.trim(),
+      'codice_fiscale': codiceFiscale?.trim(),
+      'indirizzo': indirizzo?.trim(),
+      'cap': cap?.trim(),
+      'comune': comune?.trim(),
+      'provincia': provincia?.trim(),
+      'telefono': telefono?.trim(),
+      'email': email?.trim(),
+      'pec': pec?.trim(),
+      'sito_web': sitoWeb?.trim(),
+      'logo_path': logoPath?.trim(),
+      'note': note?.trim(),
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    if (datiEsistenti == null) {
+      return db.insert('dati_azienda', valori);
+    }
+
+    return db.update(
+      'dati_azienda',
+      valori,
+      where: 'id = ?',
+      whereArgs: [datiEsistenti['id']],
+    );
+  }
+
   Future<List<Map<String, dynamic>>> getMediciStrutture({
     String ricerca = '',
     bool soloAttivi = false,

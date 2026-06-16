@@ -67,6 +67,27 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
     );
   }
 
+  Future<void> apriDialogModificaVoce(Map<String, dynamic> voce) async {
+    final risultato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _MedicoStrutturaDialog(voce: voce),
+    );
+
+    if (risultato != true) return;
+
+    await caricaMediciStrutture();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Color(0xFF16A34A),
+        content: Text('Voce medico/struttura aggiornata.'),
+      ),
+    );
+  }
+
   Color coloreTipo(String tipo) {
     final tipoNormalizzato = tipo.toLowerCase().trim();
 
@@ -247,7 +268,9 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
                             DataColumn(label: Text('Referente')),
                             DataColumn(label: Text('Telefono')),
                             DataColumn(label: Text('Email')),
+                            DataColumn(label: Text('Note')),
                             DataColumn(label: Text('Stato')),
+                            DataColumn(label: Text('Azioni')),
                           ],
                           rows: mediciStrutture.map((voce) {
                             final tipo = voce['tipo']?.toString() ?? 'Medico';
@@ -275,7 +298,26 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
                                   Text(voce['telefono']?.toString() ?? ''),
                                 ),
                                 DataCell(Text(voce['email']?.toString() ?? '')),
+                                DataCell(
+                                  SizedBox(
+                                    width: 220,
+                                    child: Text(
+                                      voce['note']?.toString() ?? '',
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 1,
+                                    ),
+                                  ),
+                                ),
                                 DataCell(badgeAttivo(attivo)),
+                                DataCell(
+                                  IconButton(
+                                    tooltip: 'Modifica voce',
+                                    icon: const Icon(Icons.edit_rounded),
+                                    color: const Color(0xFF2563EB),
+                                    onPressed: () =>
+                                        apriDialogModificaVoce(voce),
+                                  ),
+                                ),
                               ],
                             );
                           }).toList(),
@@ -291,7 +333,9 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
 }
 
 class _MedicoStrutturaDialog extends StatefulWidget {
-  const _MedicoStrutturaDialog();
+  final Map<String, dynamic>? voce;
+
+  const _MedicoStrutturaDialog({this.voce});
 
   @override
   State<_MedicoStrutturaDialog> createState() => _MedicoStrutturaDialogState();
@@ -312,6 +356,24 @@ class _MedicoStrutturaDialogState extends State<_MedicoStrutturaDialog> {
   bool salvataggio = false;
 
   @override
+  void initState() {
+    super.initState();
+
+    final voce = widget.voce;
+    if (voce == null) return;
+
+    tipo = voce['tipo']?.toString() ?? 'Medico';
+    attivo = (int.tryParse(voce['attivo']?.toString() ?? '1') ?? 1) == 1;
+
+    _denominazioneController.text = voce['denominazione']?.toString() ?? '';
+    _referenteController.text = voce['referente']?.toString() ?? '';
+    _telefonoController.text = voce['telefono']?.toString() ?? '';
+    _emailController.text = voce['email']?.toString() ?? '';
+    _indirizzoController.text = voce['indirizzo']?.toString() ?? '';
+    _noteController.text = voce['note']?.toString() ?? '';
+  }
+
+  @override
   void dispose() {
     _denominazioneController.dispose();
     _referenteController.dispose();
@@ -330,16 +392,32 @@ class _MedicoStrutturaDialogState extends State<_MedicoStrutturaDialog> {
     });
 
     try {
-      await AppDatabase.instance.inserisciMedicoStruttura(
-        tipo: tipo,
-        denominazione: _denominazioneController.text,
-        referente: _referenteController.text,
-        telefono: _telefonoController.text,
-        email: _emailController.text,
-        indirizzo: _indirizzoController.text,
-        note: _noteController.text,
-        attivo: attivo ? 1 : 0,
-      );
+      final voce = widget.voce;
+
+      if (voce == null) {
+        await AppDatabase.instance.inserisciMedicoStruttura(
+          tipo: tipo,
+          denominazione: _denominazioneController.text,
+          referente: _referenteController.text,
+          telefono: _telefonoController.text,
+          email: _emailController.text,
+          indirizzo: _indirizzoController.text,
+          note: _noteController.text,
+          attivo: attivo ? 1 : 0,
+        );
+      } else {
+        await AppDatabase.instance.aggiornaMedicoStruttura(
+          id: int.parse(voce['id'].toString()),
+          tipo: tipo,
+          denominazione: _denominazioneController.text,
+          referente: _referenteController.text,
+          telefono: _telefonoController.text,
+          email: _emailController.text,
+          indirizzo: _indirizzoController.text,
+          note: _noteController.text,
+          attivo: attivo ? 1 : 0,
+        );
+      }
 
       if (!mounted) return;
 
@@ -380,7 +458,11 @@ class _MedicoStrutturaDialogState extends State<_MedicoStrutturaDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nuova voce medico/struttura'),
+      title: Text(
+        widget.voce == null
+            ? 'Nuova voce medico/struttura'
+            : 'Modifica voce medico/struttura',
+      ),
       content: SizedBox(
         width: 620,
         child: Form(

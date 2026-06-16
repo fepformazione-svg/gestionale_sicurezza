@@ -15,10 +15,38 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
   List<Map<String, dynamic>> impreseLookup = [];
   List<Map<String, dynamic>> corsiLookup = [];
 
+  final TextEditingController cercaController = TextEditingController();
+
+  List<Prezzario> get vociPrezzarioFiltrate {
+    final ricerca = cercaController.text.trim().toLowerCase();
+
+    if (ricerca.isEmpty) {
+      return vociPrezzario;
+    }
+
+    return vociPrezzario.where((voce) {
+      final impresa = (voce.impresa ?? '').toLowerCase();
+      final corso = (voce.corso ?? '').toLowerCase();
+      final prezzo = formattaPrezzo(voce.prezzo).toLowerCase();
+      final note = voce.note.toLowerCase();
+
+      return impresa.contains(ricerca) ||
+          corso.contains(ricerca) ||
+          prezzo.contains(ricerca) ||
+          note.contains(ricerca);
+    }).toList();
+  }
+
   @override
   void initState() {
     super.initState();
     caricaPrezzario();
+  }
+
+  @override
+  void dispose() {
+    cercaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaPrezzario() async {
@@ -231,136 +259,258 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                   )
                 : SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
-                    child: DataTable(
-                      headingRowColor: WidgetStateProperty.all(
-                        const Color(0xFFF1F5F9),
-                      ),
-                      columnSpacing: 18,
-                      horizontalMargin: 16,
-                      headingTextStyle: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF334155),
-                      ),
-                      dataTextStyle: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF334155),
-                      ),
-                      columns: const [
-                        DataColumn(
-                          label: SizedBox(width: 260, child: Text('Impresa')),
-                        ),
-                        DataColumn(
-                          label: SizedBox(width: 300, child: Text('Corso')),
-                        ),
-                        DataColumn(
-                          label: SizedBox(
-                            width: 95,
-                            child: Center(child: Text('Prezzo')),
-                          ),
-                        ),
-                        DataColumn(
-                          label: SizedBox(width: 260, child: Text('Note')),
-                        ),
-                        DataColumn(
-                          label: SizedBox(
-                            width: 95,
-                            child: Center(child: Text('Azioni')),
-                          ),
-                        ),
-                      ],
-                      rows: vociPrezzario.map((voce) {
-                        return DataRow(
-                          cells: [
-                            DataCell(
-                              SizedBox(
-                                width: 260,
-                                child: Text(
-                                  voce.impresa ?? '-',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        TextField(
+                          controller: cercaController,
+                          decoration: InputDecoration(
+                            hintText: 'Cerca impresa, corso, prezzo o note...',
+                            prefixIcon: const Icon(Icons.search_rounded),
+                            suffixIcon: cercaController.text.trim().isEmpty
+                                ? null
+                                : IconButton(
+                                    tooltip: 'Azzera ricerca',
+                                    icon: const Icon(Icons.clear_rounded),
+                                    onPressed: () {
+                                      setState(() {
+                                        cercaController.clear();
+                                      });
+                                    },
+                                  ),
+                            filled: true,
+                            fillColor: Colors.white,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 12,
+                            ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
                               ),
                             ),
-                            DataCell(
-                              SizedBox(
-                                width: 300,
-                                child: Text(
-                                  voce.corso ?? '-',
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFFE2E8F0),
                               ),
                             ),
-                            DataCell(
-                              SizedBox(
-                                width: 95,
-                                child: Center(
-                                  child: Text(
-                                    formattaPrezzo(voce.prezzo),
-                                    style: const TextStyle(
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                              borderSide: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                            ),
+                          ),
+                          onChanged: (_) {
+                            setState(() {});
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          cercaController.text.trim().isEmpty
+                              ? '${vociPrezzario.length} voci di prezzario'
+                              : '${vociPrezzarioFiltrate.length} voci trovate',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        if (vociPrezzarioFiltrate.isEmpty)
+                          Center(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 48),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  const Icon(
+                                    Icons.search_off_rounded,
+                                    size: 46,
+                                    color: Color(0xFF94A3B8),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  const Text(
+                                    'Nessuna voce di prezzario trovata',
+                                    style: TextStyle(
+                                      fontSize: 18,
                                       fontWeight: FontWeight.w700,
-                                      color: Color(0xFF047857),
+                                      color: Color(0xFF334155),
                                     ),
                                   ),
-                                ),
-                              ),
-                            ),
-                            DataCell(
-                              SizedBox(
-                                width: 260,
-                                child: Text(
-                                  voce.note.isEmpty ? '-' : voce.note,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ),
-                            DataCell(
-                              SizedBox(
-                                width: 95,
-                                child: Center(
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'Modifica voce prezzario',
-                                        icon: const Icon(
-                                          Icons.edit_rounded,
-                                          size: 18,
-                                        ),
-                                        color: const Color(0xFF475569),
-                                        visualDensity: VisualDensity.compact,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 34,
-                                          minHeight: 34,
-                                        ),
-                                        onPressed: () {
-                                          apriDialogModificaVoce(voce);
-                                        },
-                                      ),
-                                      IconButton(
-                                        tooltip: 'Elimina voce prezzario',
-                                        icon: const Icon(
-                                          Icons.delete_rounded,
-                                          size: 18,
-                                        ),
-                                        color: const Color(0xFFDC2626),
-                                        visualDensity: VisualDensity.compact,
-                                        padding: EdgeInsets.zero,
-                                        constraints: const BoxConstraints(
-                                          minWidth: 34,
-                                          minHeight: 34,
-                                        ),
-                                        onPressed: () {
-                                          confermaEliminaVoce(voce);
-                                        },
-                                      ),
-                                    ],
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    'Prova a modificare o azzerare la ricerca.',
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
                                   ),
-                                ),
+                                  const SizedBox(height: 14),
+                                  OutlinedButton.icon(
+                                    onPressed: () {
+                                      setState(() {
+                                        cercaController.clear();
+                                      });
+                                    },
+                                    icon: const Icon(
+                                      Icons.clear_rounded,
+                                      size: 18,
+                                    ),
+                                    label: const Text('Azzera ricerca'),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        );
-                      }).toList(),
+                          )
+                        else
+                          DataTable(
+                            headingRowColor: WidgetStateProperty.all(
+                              const Color(0xFFF1F5F9),
+                            ),
+                            columnSpacing: 18,
+                            horizontalMargin: 16,
+                            headingTextStyle: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF334155),
+                            ),
+                            dataTextStyle: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF334155),
+                            ),
+                            columns: const [
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 260,
+                                  child: Text('Impresa'),
+                                ),
+                              ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 300,
+                                  child: Text('Corso'),
+                                ),
+                              ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 95,
+                                  child: Center(child: Text('Prezzo')),
+                                ),
+                              ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 260,
+                                  child: Text('Note'),
+                                ),
+                              ),
+                              DataColumn(
+                                label: SizedBox(
+                                  width: 95,
+                                  child: Center(child: Text('Azioni')),
+                                ),
+                              ),
+                            ],
+                            rows: vociPrezzarioFiltrate.map((voce) {
+                              return DataRow(
+                                cells: [
+                                  DataCell(
+                                    SizedBox(
+                                      width: 260,
+                                      child: Text(
+                                        voce.impresa ?? '-',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 300,
+                                      child: Text(
+                                        voce.corso ?? '-',
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 95,
+                                      child: Center(
+                                        child: Text(
+                                          formattaPrezzo(voce.prezzo),
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            color: Color(0xFF047857),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 260,
+                                      child: Text(
+                                        voce.note.isEmpty ? '-' : voce.note,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 95,
+                                      child: Center(
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            IconButton(
+                                              tooltip:
+                                                  'Modifica voce prezzario',
+                                              icon: const Icon(
+                                                Icons.edit_rounded,
+                                                size: 18,
+                                              ),
+                                              color: const Color(0xFF475569),
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 34,
+                                                minHeight: 34,
+                                              ),
+                                              onPressed: () {
+                                                apriDialogModificaVoce(voce);
+                                              },
+                                            ),
+                                            IconButton(
+                                              tooltip: 'Elimina voce prezzario',
+                                              icon: const Icon(
+                                                Icons.delete_rounded,
+                                                size: 18,
+                                              ),
+                                              color: const Color(0xFFDC2626),
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              padding: EdgeInsets.zero,
+                                              constraints: const BoxConstraints(
+                                                minWidth: 34,
+                                                minHeight: 34,
+                                              ),
+                                              onPressed: () {
+                                                confermaEliminaVoce(voce);
+                                              },
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              );
+                            }).toList(),
+                          ),
+                      ],
                     ),
                   ),
           ),

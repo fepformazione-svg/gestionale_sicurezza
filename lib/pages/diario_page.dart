@@ -1032,9 +1032,6 @@ class _DiarioPageState extends State<DiarioPage> {
 
                                                         return null;
                                                       }),
-                                                  onSelectChanged: (_) {
-                                                    apriSchedaDiscente(riga);
-                                                  },
                                                   cells: [
                                                     DataCell(
                                                       SizedBox(

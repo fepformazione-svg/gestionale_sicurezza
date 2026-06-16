@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dati_azienda_page.dart';
 import 'medici_strutture_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
@@ -23,6 +24,11 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Dati azienda',
             descrizione:
                 'Gestione intestazione aziendale, recapiti, riferimenti fiscali e dati usati negli export.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DatiAziendaPage()),
+              );
+            },
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(

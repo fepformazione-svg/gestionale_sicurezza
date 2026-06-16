@@ -7,6 +7,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/corso.dart';
 import '../services/database_service.dart';
@@ -321,6 +322,140 @@ class _CorsiPageState extends State<CorsiPage> {
     );
   }
 
+  Future<void> stampaCorsi() async {
+    if (corsiFiltrati.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun corso da stampare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+      return;
+    }
+
+    final ora = DateTime.now();
+    final dataOraLeggibile = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+    final vistaFiltrata = ricercaCorrente.trim().isNotEmpty;
+
+    final titoloInfo = vistaFiltrata
+        ? 'Stampa corsi filtrata - ${corsiFiltrati.length} record - $dataOraLeggibile'
+        : 'Stampa corsi completa - ${corsiFiltrati.length} record - $dataOraLeggibile';
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 12,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
+
+            pw.SizedBox(height: 10),
+
+            pw.Text(
+              'CORSI',
+              style: pw.TextStyle(
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue800,
+              ),
+            ),
+
+            pw.SizedBox(height: 6),
+
+            pw.Text(
+              titoloInfo,
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+
+            pw.SizedBox(height: 18),
+
+            pw.TableHelper.fromTextArray(
+              headers: const ['Denominazione', 'Durata ore', 'Validità anni'],
+              data: corsiFiltrati.map((corso) {
+                return [
+                  corso.denominazione,
+                  corso.durataOre.toString(),
+                  corso.validitaAnni.toString(),
+                ];
+              }).toList(),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blue800,
+              ),
+              headerStyle: pw.TextStyle(
+                color: PdfColors.white,
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 10,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey900,
+              ),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              rowDecoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: PdfColors.blueGrey100,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(5),
+                1: pw.FlexColumnWidth(1.4),
+                2: pw.FlexColumnWidth(1.6),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (_) async => pdf.save());
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Stampa corsi avviata: ${corsiFiltrati.length} corsi dalla vista filtrata'
+              : 'Stampa corsi avviata: ${corsiFiltrati.length} corsi',
+        ),
+        backgroundColor: const Color(0xFF2563EB),
+      ),
+    );
+  }
+
   Future<void> apriDialogNuovoCorso() async {
     final nomeController = TextEditingController();
     final durataController = TextEditingController();
@@ -542,6 +677,33 @@ class _CorsiPageState extends State<CorsiPage> {
                   label: Text('Export PDF (${corsiFiltrati.length})'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFDC2626),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFE5E7EB),
+                    disabledForegroundColor: const Color(0xFF94A3B8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessun corso da stampare'
+                    : 'Stampa ${corsiFiltrati.length} corsi',
+                child: ElevatedButton.icon(
+                  onPressed: exportDisabilitato ? null : stampaCorsi,
+                  icon: const Icon(Icons.print_rounded),
+                  label: Text('Stampa (${corsiFiltrati.length})'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF475569),
                     foregroundColor: Colors.white,
                     disabledBackgroundColor: const Color(0xFFE5E7EB),
                     disabledForegroundColor: const Color(0xFF94A3B8),

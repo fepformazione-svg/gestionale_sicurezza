@@ -4,6 +4,9 @@ import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
@@ -574,6 +577,142 @@ class _DiscentiPageState extends State<DiscentiPage> {
     );
   }
 
+  Future<void> stampaDiscenti() async {
+    final righe = discentiFiltrati;
+
+    if (righe.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun discente da stampare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+
+      return;
+    }
+
+    final adesso = DateTime.now();
+
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata = discentiFiltrati.length != discenti.length;
+
+    await Printing.layoutPdf(
+      name: 'discenti_stampa',
+      format: PdfPageFormat.a4.landscape,
+      onLayout: (format) async {
+        final pdf = pw.Document();
+
+        pdf.addPage(
+          pw.MultiPage(
+            pageFormat: PdfPageFormat.a4.landscape,
+            margin: const pw.EdgeInsets.all(24),
+            footer: (context) {
+              return pw.Align(
+                alignment: pw.Alignment.centerRight,
+                child: pw.Text(
+                  'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                  style: const pw.TextStyle(fontSize: 9),
+                ),
+              );
+            },
+            build: (context) {
+              return [
+                pw.Text(
+                  'F&P Formazione e Prevenzione',
+                  style: pw.TextStyle(
+                    fontSize: 13,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blueGrey700,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text(
+                  'DISCENTI',
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blue700,
+                  ),
+                ),
+                pw.SizedBox(height: 6),
+                pw.Text(
+                  vistaFiltrata
+                      ? 'Stampa discenti filtrata - ${righe.length} record - $dataExport'
+                      : 'Stampa discenti completa - ${righe.length} record - $dataExport',
+                  style: const pw.TextStyle(
+                    fontSize: 10,
+                    color: PdfColors.blueGrey700,
+                  ),
+                ),
+                pw.SizedBox(height: 16),
+                pw.TableHelper.fromTextArray(
+                  headers: const [
+                    'Nome',
+                    'Cognome',
+                    'Luogo nascita',
+                    'Data nascita',
+                    'Codice fiscale',
+                    'Impresa',
+                  ],
+                  data: righe.map((d) {
+                    return [
+                      testoVuoto(d.nome),
+                      testoVuoto(d.cognome),
+                      testoVuoto(d.luogoNascita),
+                      testoVuoto(d.dataNascita),
+                      testoVuoto(d.codiceFiscale),
+                      testoVuoto(d.nomeImpresa),
+                    ];
+                  }).toList(),
+                  headerStyle: pw.TextStyle(
+                    fontSize: 9,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.white,
+                  ),
+                  headerDecoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey700,
+                  ),
+                  cellStyle: const pw.TextStyle(fontSize: 8),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  headerAlignment: pw.Alignment.centerLeft,
+                  rowDecoration: const pw.BoxDecoration(
+                    border: pw.Border(
+                      bottom: pw.BorderSide(
+                        color: PdfColors.blueGrey100,
+                        width: 0.5,
+                      ),
+                    ),
+                  ),
+                  oddRowDecoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey50,
+                  ),
+                  columnWidths: {
+                    0: const pw.FlexColumnWidth(1.3),
+                    1: const pw.FlexColumnWidth(1.5),
+                    2: const pw.FlexColumnWidth(2),
+                    3: const pw.FlexColumnWidth(1.4),
+                    4: const pw.FlexColumnWidth(2),
+                    5: const pw.FlexColumnWidth(2),
+                  },
+                ),
+              ];
+            },
+          ),
+        );
+
+        return pdf.save();
+      },
+    );
+  }
+
   void ordinaDiscenti(String colonna) {
     setState(() {
       if (colonnaOrdinata == colonna) {
@@ -658,6 +797,14 @@ class _DiscentiPageState extends State<DiscentiPage> {
               icon: const Icon(Icons.picture_as_pdf),
               label: Text('Export PDF (${discentiFiltrati.length})'),
             ),
+
+            OutlinedButton.icon(
+              onPressed: discentiFiltrati.isEmpty ? null : stampaDiscenti,
+              icon: const Icon(Icons.print_rounded),
+              label: Text('Stampa (${discentiFiltrati.length})'),
+            ),
+
+            const SizedBox(width: 12),
 
             ElevatedButton.icon(
               onPressed: () => apriDialogDiscente(),

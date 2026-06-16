@@ -97,6 +97,57 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
     }
   }
 
+  Future<void> confermaEliminaVoce(Prezzario voce) async {
+    if (voce.id == null) return;
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminare voce prezzario?'),
+          content: Text(
+            'Vuoi eliminare la voce per "${voce.impresa ?? '-'}" - "${voce.corso ?? '-'}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(false);
+              },
+              child: const Text('Annulla'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(dialogContext).pop(true);
+              },
+              icon: const Icon(Icons.delete_rounded, size: 18),
+              label: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await DatabaseService.instance.deletePrezzario(voce.id!);
+
+    await caricaPrezzario();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Voce prezzario eliminata.'),
+        backgroundColor: Color(0xFF475569),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -199,13 +250,32 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
                             DataCell(Text(formattaPrezzo(voce.prezzo))),
                             DataCell(Text(voce.note.isEmpty ? '-' : voce.note)),
                             DataCell(
-                              IconButton(
-                                tooltip: 'Modifica voce prezzario',
-                                icon: const Icon(Icons.edit_rounded, size: 18),
-                                color: const Color(0xFF475569),
-                                onPressed: () {
-                                  apriDialogModificaVoce(voce);
-                                },
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  IconButton(
+                                    tooltip: 'Modifica voce prezzario',
+                                    icon: const Icon(
+                                      Icons.edit_rounded,
+                                      size: 18,
+                                    ),
+                                    color: const Color(0xFF475569),
+                                    onPressed: () {
+                                      apriDialogModificaVoce(voce);
+                                    },
+                                  ),
+                                  IconButton(
+                                    tooltip: 'Elimina voce prezzario',
+                                    icon: const Icon(
+                                      Icons.delete_rounded,
+                                      size: 18,
+                                    ),
+                                    color: const Color(0xFFDC2626),
+                                    onPressed: () {
+                                      confermaEliminaVoce(voce);
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           ],

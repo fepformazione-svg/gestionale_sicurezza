@@ -4,6 +4,8 @@ import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import 'impresa_scheda_page.dart';
 
@@ -188,6 +190,165 @@ class _ImpresePageState extends State<ImpresePage> {
           vistaFiltrata
               ? 'Export Excel completato: ${impreseFiltrate.length} imprese esportate dalla vista filtrata'
               : 'Export Excel completato: ${impreseFiltrate.length} imprese esportate',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
+  Future<void> esportaPdfImprese() async {
+    if (impreseFiltrate.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna impresa da esportare'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+    final ora = DateTime.now();
+    final vistaFiltrata = ricercaAttiva.trim().isNotEmpty;
+
+    final dataOra =
+        '${ora.day.toString().padLeft(2, '0')}/'
+        '${ora.month.toString().padLeft(2, '0')}/'
+        '${ora.year} '
+        '${ora.hour.toString().padLeft(2, '0')}:'
+        '${ora.minute.toString().padLeft(2, '0')}';
+
+    final infoExport = vistaFiltrata
+        ? 'Export imprese filtrato - ${impreseFiltrate.length} record - $dataOra'
+        : 'Export imprese - ${impreseFiltrate.length} record - $dataOra';
+
+    final datiTabella = impreseFiltrate.map((impresa) {
+      return [
+        impresa.intestazione,
+        impresa.partitaIva ?? '',
+        impresa.codiceFiscale ?? '',
+        impresa.indirizzo ?? '',
+        impresa.telefono ?? '',
+        impresa.referente ?? '',
+      ];
+    }).toList();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'F&P Formazione e Prevenzione',
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.Text(
+              'IMPRESE',
+              style: pw.TextStyle(
+                fontSize: 22,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blue900,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              infoExport,
+              style: const pw.TextStyle(
+                fontSize: 10,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+            pw.SizedBox(height: 18),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Ragione sociale',
+                'Partita IVA',
+                'Codice fiscale',
+                'Indirizzo',
+                'Telefono',
+                'Referente',
+              ],
+              data: datiTabella,
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 9,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey800,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey900,
+              ),
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 5,
+                vertical: 5,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              border: pw.TableBorder.all(
+                color: PdfColors.blueGrey200,
+                width: 0.4,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2.2),
+                1: const pw.FlexColumnWidth(1.1),
+                2: const pw.FlexColumnWidth(1.2),
+                3: const pw.FlexColumnWidth(2.4),
+                4: const pw.FlexColumnWidth(1.1),
+                5: const pw.FlexColumnWidth(1.4),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'imprese_export${vistaFiltrata ? '_filtrato' : ''}_'
+        '${ora.year}_'
+        '${ora.month.toString().padLeft(2, '0')}_'
+        '${ora.day.toString().padLeft(2, '0')}_'
+        '${ora.hour.toString().padLeft(2, '0')}'
+        '${ora.minute.toString().padLeft(2, '0')}.pdf';
+
+    final file = File('${directory.path}/$nomeFile');
+
+    await file.writeAsBytes(await pdf.save(), flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export PDF completato: ${impreseFiltrate.length} imprese esportate dalla vista filtrata'
+              : 'Export PDF completato: ${impreseFiltrate.length} imprese esportate',
         ),
         backgroundColor: const Color(0xFF16A34A),
       ),
@@ -404,6 +565,25 @@ class _ImpresePageState extends State<ImpresePage> {
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF2563EB),
                   side: const BorderSide(color: Color(0xFF2563EB)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              OutlinedButton.icon(
+                onPressed: impreseFiltrate.isEmpty ? null : esportaPdfImprese,
+                icon: const Icon(Icons.picture_as_pdf_outlined),
+                label: Text('PDF (${impreseFiltrate.length})'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFDC2626),
+                  side: const BorderSide(color: Color(0xFFDC2626)),
                   padding: const EdgeInsets.symmetric(
                     horizontal: 18,
                     vertical: 18,

@@ -11,15 +11,15 @@ import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 import '../services/pdf_export_service.dart';
 
-const double colNome = 220;
-const double colCognome = 220;
-const double colLuogoNascita = 180;
-const double colDataNascita = 130;
-const double colCodiceFiscale = 170;
-const double colImpresa = 240;
-const double colAzioni = 110;
-
 const double discenteRowHeight = 48;
+
+const double colNome = 220;
+const double colCognome = 240;
+const double colLuogoNascita = 230;
+const double colDataNascita = 150;
+const double colCodiceFiscale = 250;
+const double colImpresa = 300;
+const double colAzioni = 130;
 
 const double discentiTableWidth =
     colNome +

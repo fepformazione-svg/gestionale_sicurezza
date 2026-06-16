@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart' as xls;
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
@@ -491,6 +496,159 @@ class _DiarioPageState extends State<DiarioPage> {
     }
   }
 
+  Future<void> esportaExcelDiario() async {
+    if (_diario.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun corso da esportare'),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Diario'];
+
+    excel.delete('Sheet1');
+
+    final adesso = DateTime.now();
+    final dataExport =
+        '${adesso.day.toString().padLeft(2, '0')}/'
+        '${adesso.month.toString().padLeft(2, '0')}/'
+        '${adesso.year} '
+        '${adesso.hour.toString().padLeft(2, '0')}:'
+        '${adesso.minute.toString().padLeft(2, '0')}';
+
+    final vistaFiltrata =
+        _cercaController.text.trim().isNotEmpty || _soloDaFatturare;
+
+    sheet.appendRow([
+      xls.TextCellValue(
+        vistaFiltrata
+            ? 'Export diario filtrato - ${_diario.length} record - $dataExport'
+            : 'Export diario - ${_diario.length} record - $dataExport',
+      ),
+    ]);
+
+    sheet.appendRow([]);
+
+    final intestazioni = [
+      'Discente',
+      'Impresa',
+      'Corso',
+      'Data corso',
+      'Scadenza',
+      'Stato',
+      'Prot.',
+      'Fattura',
+      'Invio',
+      'Da fatturare',
+      'Rinnovo',
+    ];
+
+    sheet.appendRow(
+      intestazioni.map((testo) => xls.TextCellValue(testo)).toList(),
+    );
+
+    for (final riga in _diario) {
+      final discente = '${testo(riga['cognome'])} ${testo(riga['nome'])}'
+          .trim();
+
+      final stato = statoScadenza(riga['scadenza']?.toString());
+
+      sheet.appendRow([
+        xls.TextCellValue(discente),
+        xls.TextCellValue(testo(riga['impresa'])),
+        xls.TextCellValue(testo(riga['corso'])),
+        xls.TextCellValue(formattaData(riga['data'])),
+        xls.TextCellValue(formattaData(riga['scadenza'])),
+        xls.TextCellValue(stato),
+        xls.TextCellValue(testo(riga['prot'])),
+        xls.TextCellValue(
+          testo(riga['fattura']).trim().isEmpty
+              ? ''
+              : testo(riga['fattura']).trim(),
+        ),
+        xls.TextCellValue(riga['invio']?.toString() == '1' ? 'INVIATO' : 'NO'),
+        xls.TextCellValue(riga['da_fatturare'] == 1 ? 'DA FATTURARE' : 'NO'),
+        xls.TextCellValue(riga['rinnovo'] == 1 ? 'RINNOVATO' : ''),
+      ]);
+    }
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(
+            xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 2),
+          )
+          .cellStyle = xls.CellStyle(
+        bold: true,
+      );
+    }
+
+    sheet.setColumnWidth(0, 28);
+    sheet.setColumnWidth(1, 30);
+    sheet.setColumnWidth(2, 34);
+    sheet.setColumnWidth(3, 14);
+    sheet.setColumnWidth(4, 14);
+    sheet.setColumnWidth(5, 14);
+    sheet.setColumnWidth(6, 14);
+    sheet.setColumnWidth(7, 18);
+    sheet.setColumnWidth(8, 14);
+    sheet.setColumnWidth(9, 18);
+    sheet.setColumnWidth(10, 14);
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel'),
+          backgroundColor: Color(0xFFDC2626),
+          duration: Duration(seconds: 3),
+        ),
+      );
+
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'diario_export${vistaFiltrata ? '_filtrato' : ''}_'
+        '${adesso.year}_'
+        '${adesso.month.toString().padLeft(2, '0')}_'
+        '${adesso.day.toString().padLeft(2, '0')}_'
+        '${adesso.hour.toString().padLeft(2, '0')}'
+        '${adesso.minute.toString().padLeft(2, '0')}.xlsx';
+
+    final file = File('${directory.path}\\$nomeFile');
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel completato: ${_diario.length} corsi esportati dalla vista filtrata'
+              : 'Export Excel completato: ${_diario.length} corsi esportati',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+        duration: const Duration(seconds: 4),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _cercaController.dispose();
@@ -740,6 +898,39 @@ class _DiarioPageState extends State<DiarioPage> {
                                 ),
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          Tooltip(
+                            message: _diario.isEmpty
+                                ? 'Nessun corso da esportare'
+                                : 'Esporta il diario visualizzato in Excel',
+                            child: FilledButton.icon(
+                              onPressed: _diario.isEmpty
+                                  ? null
+                                  : esportaExcelDiario,
+                              icon: const Icon(
+                                Icons.table_chart_rounded,
+                                size: 18,
+                              ),
+                              label: Text('Esporta Excel (${_diario.length})'),
+                              style: FilledButton.styleFrom(
+                                backgroundColor: const Color(0xFF16A34A),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: const Color(
+                                  0xFFE2E8F0,
+                                ),
+                                disabledForegroundColor: const Color(
+                                  0xFF94A3B8,
+                                ),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
                                   vertical: 10,
                                 ),
                                 shape: RoundedRectangleBorder(

@@ -217,6 +217,28 @@ class AppDatabase {
         updated_at TEXT
       )
     ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS dati_azienda (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ragione_sociale TEXT,
+        nome_commerciale TEXT,
+        partita_iva TEXT,
+        codice_fiscale TEXT,
+        indirizzo TEXT,
+        cap TEXT,
+        comune TEXT,
+        provincia TEXT,
+        telefono TEXT,
+        email TEXT,
+        pec TEXT,
+        sito_web TEXT,
+        logo_path TEXT,
+        note TEXT,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      )
+    ''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -322,6 +344,25 @@ class AppDatabase {
       'indirizzo': 'TEXT',
       'note': 'TEXT',
       'attivo': 'INTEGER DEFAULT 1',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'dati_azienda', {
+      'ragione_sociale': 'TEXT',
+      'nome_commerciale': 'TEXT',
+      'partita_iva': 'TEXT',
+      'codice_fiscale': 'TEXT',
+      'indirizzo': 'TEXT',
+      'cap': 'TEXT',
+      'comune': 'TEXT',
+      'provincia': 'TEXT',
+      'telefono': 'TEXT',
+      'email': 'TEXT',
+      'pec': 'TEXT',
+      'sito_web': 'TEXT',
+      'logo_path': 'TEXT',
+      'note': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });
@@ -446,6 +487,14 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_medici_strutture_attivo ON medici_strutture(attivo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_dati_azienda_ragione_sociale ON dati_azienda(ragione_sociale)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_dati_azienda_nome_commerciale ON dati_azienda(nome_commerciale)',
     );
   }
 

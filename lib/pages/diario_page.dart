@@ -586,7 +586,7 @@ class _DiarioPageState extends State<DiarioPage> {
     for (var colonna = 0; colonna < intestazioni.length; colonna++) {
       sheet
           .cell(
-            xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 2),
+            xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 1),
           )
           .cellStyle = xls.CellStyle(
         bold: true,

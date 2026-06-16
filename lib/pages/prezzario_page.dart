@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../models/prezzario.dart';
 import '../services/database_service.dart';
 
@@ -70,6 +76,127 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
 
   String formattaPrezzo(double valore) {
     return '€ ${valore.toStringAsFixed(2).replaceAll('.', ',')}';
+  }
+
+  Future<void> esportaExcelPrezzario() async {
+    final vociDaEsportare = vociPrezzarioFiltrate;
+
+    if (vociDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna voce di prezzario da esportare.'),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Prezzario'];
+
+    excel.delete('Sheet1');
+
+    final ricercaAttiva = cercaController.text.trim().isNotEmpty;
+    final adesso = DateTime.now();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final dataOra =
+        '${dueCifre(adesso.day)}/${dueCifre(adesso.month)}/${adesso.year} '
+        '${dueCifre(adesso.hour)}:${dueCifre(adesso.minute)}';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      ricercaAttiva
+          ? 'Export prezzario filtrato - ${vociDaEsportare.length} voci - $dataOra'
+          : 'Export prezzario completo - ${vociDaEsportare.length} voci - $dataOra',
+    );
+
+    final intestazioni = ['Impresa', 'Corso', 'Prezzo', 'Note'];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 1),
+      );
+
+      cella.value = xls.TextCellValue(intestazioni[colonna]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var indice = 0; indice < vociDaEsportare.length; indice++) {
+      final voce = vociDaEsportare[indice];
+      final riga = indice + 2;
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: riga))
+          .value = xls.TextCellValue(
+        voce.impresa ?? '-',
+      );
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: riga))
+          .value = xls.TextCellValue(
+        voce.corso ?? '-',
+      );
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: riga))
+          .value = xls.TextCellValue(
+        formattaPrezzo(voce.prezzo),
+      );
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 3, rowIndex: riga))
+          .value = xls.TextCellValue(
+        voce.note.isEmpty ? '-' : voce.note,
+      );
+    }
+
+    sheet.setColumnWidth(0, 36);
+    sheet.setColumnWidth(1, 42);
+    sheet.setColumnWidth(2, 16);
+    sheet.setColumnWidth(3, 40);
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile =
+        'prezzario_export${ricercaAttiva ? '_filtrato' : ''}_'
+        '${adesso.year}_${dueCifre(adesso.month)}_${dueCifre(adesso.day)}_'
+        '${dueCifre(adesso.hour)}${dueCifre(adesso.minute)}.xlsx';
+
+    final file = File('${directory.path}/$nomeFile');
+
+    final bytes = excel.save();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          ricercaAttiva
+              ? 'Export Excel completato: ${vociDaEsportare.length} voci esportate dalla vista filtrata.'
+              : 'Export Excel completato: ${vociDaEsportare.length} voci esportate.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
   }
 
   Future<void> apriDialogNuovaVoce() async {
@@ -198,6 +325,14 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
               ),
             ),
             const Spacer(),
+            OutlinedButton.icon(
+              onPressed: vociPrezzarioFiltrate.isEmpty
+                  ? null
+                  : esportaExcelPrezzario,
+              icon: const Icon(Icons.table_view_rounded, size: 18),
+              label: Text('Esporta Excel (${vociPrezzarioFiltrate.length})'),
+            ),
+            const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: apriDialogNuovaVoce,
               icon: const Icon(Icons.add_rounded, size: 18),

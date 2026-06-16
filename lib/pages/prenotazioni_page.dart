@@ -3634,13 +3634,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 }
 
-const double colDiscente = 240;
-const double colImpresa = 180;
-const double colCorso = 320;
-const double colData = 110;
-const double colProt = 80;
-const double colStato = 110;
-const double colAzioni = 90;
+const double colDiscente = 300;
+const double colImpresa = 230;
+const double colCorso = 430;
+const double colData = 125;
+const double colProt = 90;
+const double colStato = 125;
+const double colAzioni = 85;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -3741,26 +3741,32 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
 
                         SizedBox(
                           width: colImpresa,
-                          child: Text(
-                            widget.testo(widget.prenotazione['impresa_nome']),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF111827),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              widget.testo(widget.prenotazione['impresa_nome']),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
                             ),
                           ),
                         ),
 
                         SizedBox(
                           width: colCorso,
-                          child: Text(
-                            widget.testo(widget.prenotazione['corso_nome']),
-                            overflow: TextOverflow.ellipsis,
-                            maxLines: 1,
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF111827),
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              widget.testo(widget.prenotazione['corso_nome']),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
                             ),
                           ),
                         ),
@@ -3793,7 +3799,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
 
                         SizedBox(
                           width: colStato,
-                          child: TableStatusBadge(status: stato),
+                          child: Center(child: TableStatusBadge(status: stato)),
                         ),
 
                         SizedBox(
@@ -3845,7 +3851,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         width: colDiscente,
                         color: effectiveColor ?? Colors.white,
                         alignment: Alignment.centerLeft,
-                        padding: const EdgeInsets.only(left: 2, right: 14),
+                        padding: const EdgeInsets.only(left: 16, right: 14),
                         child: Text(
                           widget.nomeDiscente(widget.prenotazione),
                           overflow: TextOverflow.ellipsis,
@@ -3858,16 +3864,6 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                             color: const Color(0xFF111827),
                           ),
                         ),
-                      ),
-                    ),
-
-                    Positioned(
-                      left: offset + colDiscente - 1,
-                      top: 0,
-                      bottom: 0,
-                      child: Container(
-                        width: 1,
-                        color: const Color(0xFFF1F5F9),
                       ),
                     ),
                   ],
@@ -3926,13 +3922,25 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                   headerBuilder('Corso', colCorso, 'corso'),
                   headerBuilder('Data', colData, 'data'),
                   headerBuilder('Prot.', colProt, 'prot'),
-                  headerBuilder('Stato', colStato, 'stato'),
+                  SizedBox(
+                    width: colStato,
+                    child: Center(
+                      child: SizedBox(
+                        width: colStato,
+                        child: Center(
+                          child: headerBuilder('Stato', 72, 'stato'),
+                        ),
+                      ),
+                    ),
+                  ),
 
                   SizedBox(
                     width: colAzioni,
-                    child: const Text(
-                      'Azioni',
-                      style: TextStyle(fontWeight: FontWeight.w600),
+                    child: const Center(
+                      child: Text(
+                        'Azioni',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
                     ),
                   ),
                 ],
@@ -3944,7 +3952,7 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                 bottom: 0,
                 child: Container(
                   width: colDiscente,
-                  color: const Color(0xFFF3F4F6),
+                  color: const Color(0xFFF8FAFC),
                   padding: const EdgeInsets.only(right: 12),
                   child: Row(
                     children: [
@@ -3975,13 +3983,6 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                     ],
                   ),
                 ),
-              ),
-
-              Positioned(
-                left: offset + colDiscente - 1,
-                top: 0,
-                bottom: 0,
-                child: Container(width: 1, color: const Color(0xFFD1D5DB)),
               ),
             ],
           );

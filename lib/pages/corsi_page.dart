@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/corso.dart';
 import '../services/database_service.dart';
@@ -19,6 +25,7 @@ class _CorsiPageState extends State<CorsiPage> {
   List<Corso> corsiFiltrati = [];
 
   bool loading = true;
+  String ricercaCorrente = '';
 
   @override
   void initState() {
@@ -40,10 +47,120 @@ class _CorsiPageState extends State<CorsiPage> {
     final query = valore.toLowerCase().trim();
 
     setState(() {
+      ricercaCorrente = valore.trim();
+
       corsiFiltrati = corsi.where((c) {
         return c.denominazione.toLowerCase().contains(query);
       }).toList();
     });
+  }
+
+  Future<void> esportaExcelCorsi() async {
+    if (corsiFiltrati.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun corso da esportare'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Corsi'];
+
+    excel.delete('Sheet1');
+
+    final ora = DateTime.now();
+    final dataOraLeggibile = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+    final timestampFile = DateFormat('yyyy_MM_dd_HH\'h\'mm').format(ora);
+
+    final vistaFiltrata = ricercaCorrente.trim().isNotEmpty;
+
+    final nomeFile = vistaFiltrata
+        ? 'corsi_export_filtrato_$timestampFile.xlsx'
+        : 'corsi_export_$timestampFile.xlsx';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      vistaFiltrata
+          ? 'Export corsi filtrato - ${corsiFiltrati.length} record - $dataOraLeggibile'
+          : 'Export corsi completo - ${corsiFiltrati.length} record - $dataOraLeggibile',
+    );
+
+    final intestazioni = ['Denominazione', 'Durata ore', 'Validità anni'];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 1),
+      );
+
+      cella.value = xls.TextCellValue(intestazioni[colonna]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var indice = 0; indice < corsiFiltrati.length; indice++) {
+      final corso = corsiFiltrati[indice];
+      final riga = indice + 2;
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: riga))
+          .value = xls.TextCellValue(
+        corso.denominazione,
+      );
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: riga))
+          .value = xls.IntCellValue(
+        corso.durataOre,
+      );
+
+      sheet
+          .cell(xls.CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: riga))
+          .value = xls.IntCellValue(
+        corso.validitaAnni,
+      );
+    }
+
+    sheet.setColumnWidth(0, 48);
+    sheet.setColumnWidth(1, 16);
+    sheet.setColumnWidth(2, 18);
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final exportDirectory = Directory(
+      '${directory.path}${Platform.pathSeparator}Export',
+    );
+
+    if (!await exportDirectory.exists()) {
+      await exportDirectory.create(recursive: true);
+    }
+
+    final bytes = excel.encode();
+
+    if (bytes == null) return;
+
+    final file = File(
+      '${exportDirectory.path}${Platform.pathSeparator}$nomeFile',
+    );
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel completato: ${corsiFiltrati.length} corsi esportati dalla vista filtrata'
+              : 'Export Excel completato: ${corsiFiltrati.length} corsi esportati',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
   }
 
   Future<void> apriDialogNuovoCorso() async {
@@ -205,6 +322,8 @@ class _CorsiPageState extends State<CorsiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final exportDisabilitato = loading || corsiFiltrati.isEmpty;
+
     return Padding(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -223,6 +342,33 @@ class _CorsiPageState extends State<CorsiPage> {
                 child: AppSearchBar(
                   hintText: 'Cerca corso...',
                   onChanged: cercaCorsi,
+                ),
+              ),
+
+              const SizedBox(width: 16),
+
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessun corso da esportare'
+                    : 'Esporta ${corsiFiltrati.length} corsi in Excel',
+                child: ElevatedButton.icon(
+                  onPressed: exportDisabilitato ? null : esportaExcelCorsi,
+                  icon: const Icon(Icons.table_view_rounded),
+                  label: Text('Export Excel (${corsiFiltrati.length})'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF16A34A),
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: const Color(0xFFE5E7EB),
+                    disabledForegroundColor: const Color(0xFF94A3B8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 22,
+                      vertical: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
                 ),
               ),
 

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
+import '../models/prezzario.dart';
 import 'app_database.dart';
 
 class DatabaseService {
@@ -321,6 +322,96 @@ class DatabaseService {
     final db = await _db;
 
     return await db.query('corsi', orderBy: 'denominazione ASC');
+  }
+
+  // =========================
+  // PREZZARIO
+  // ======
+
+  Future<List<Prezzario>> getPrezzario() async {
+    final db = await _db;
+
+    final result = await db.rawQuery('''
+      SELECT
+        p.id,
+        p.impresa_id,
+        p.corso_id,
+        p.prezzo,
+        p.note,
+        p.created_at,
+        p.updated_at,
+        i.intestazione AS impresa,
+        c.denominazione AS corso
+      FROM prezzario p
+      LEFT JOIN imprese i ON i.id = p.impresa_id
+      LEFT JOIN corsi c ON c.id = p.corso_id
+      ORDER BY i.intestazione COLLATE NOCASE ASC,
+               c.denominazione COLLATE NOCASE ASC
+    ''');
+
+    return result.map((map) => Prezzario.fromMap(map)).toList();
+  }
+
+  Future<Prezzario?> getPrezzarioByImpresaCorso({
+    required int impresaId,
+    required int corsoId,
+  }) async {
+    final db = await _db;
+
+    final result = await db.rawQuery(
+      '''
+      SELECT
+        p.id,
+        p.impresa_id,
+        p.corso_id,
+        p.prezzo,
+        p.note,
+        p.created_at,
+        p.updated_at,
+        i.intestazione AS impresa,
+        c.denominazione AS corso
+      FROM prezzario p
+      LEFT JOIN imprese i ON i.id = p.impresa_id
+      LEFT JOIN corsi c ON c.id = p.corso_id
+      WHERE p.impresa_id = ?
+        AND p.corso_id = ?
+      LIMIT 1
+      ''',
+      [impresaId, corsoId],
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return Prezzario.fromMap(result.first);
+  }
+
+  Future<int> insertPrezzario(Prezzario prezzario) async {
+    final db = await _db;
+
+    return db.insert('prezzario', prezzario.toInsertMap());
+  }
+
+  Future<int> updatePrezzario(Prezzario prezzario) async {
+    final db = await _db;
+
+    if (prezzario.id == null) {
+      throw ArgumentError('ID prezzario mancante per aggiornamento');
+    }
+
+    return db.update(
+      'prezzario',
+      prezzario.toUpdateMap(),
+      where: 'id = ?',
+      whereArgs: [prezzario.id],
+    );
+  }
+
+  Future<int> deletePrezzario(int id) async {
+    final db = await _db;
+
+    return db.delete('prezzario', where: 'id = ?', whereArgs: [id]);
   }
 
   // =========================

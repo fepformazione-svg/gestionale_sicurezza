@@ -505,6 +505,52 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     noteController.dispose();
   }
 
+  Future<void> confermaEliminaVisita(Map<String, dynamic> visita) async {
+    final visitaId = visita['id'] as int;
+    final nome = testoValore(visita['discente_nome']);
+    final cognome = testoValore(visita['discente_cognome']);
+    final dataVisita = testoValore(visita['data_visita']);
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Eliminare visita medica?'),
+          content: Text(
+            'Vuoi eliminare la visita medica di $cognome $nome'
+            '${dataVisita.isEmpty ? '' : ' del $dataVisita'}?\n\n'
+            'Questa operazione non può essere annullata.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton.icon(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              icon: const Icon(Icons.delete_rounded),
+              label: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await AppDatabase.instance.eliminaVisitaMedica(visitaId);
+    await caricaVisite();
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Visita medica eliminata.')));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -640,15 +686,30 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                 DataCell(Text(testoValore(visita['giudizio']))),
                                 DataCell(Text(testoValore(visita['note']))),
                                 DataCell(
-                                  IconButton(
-                                    tooltip: 'Modifica visita medica',
-                                    icon: const Icon(
-                                      Icons.edit_rounded,
-                                      color: Color(0xFF2563EB),
-                                    ),
-                                    onPressed: () {
-                                      apriDialogModificaVisita(visita);
-                                    },
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Modifica visita medica',
+                                        icon: const Icon(
+                                          Icons.edit_rounded,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        onPressed: () {
+                                          apriDialogModificaVisita(visita);
+                                        },
+                                      ),
+                                      IconButton(
+                                        tooltip: 'Elimina visita medica',
+                                        icon: const Icon(
+                                          Icons.delete_rounded,
+                                          color: Color(0xFFDC2626),
+                                        ),
+                                        onPressed: () {
+                                          confermaEliminaVisita(visita);
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

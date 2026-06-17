@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+import '../utils/pdf_azienda_helper.dart';
+
 class PdfExportService {
   static Future<void> esportaTabella({
     required String titolo,
@@ -14,6 +16,9 @@ class PdfExportService {
   }) async {
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+    final dataExport = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -21,21 +26,21 @@ class PdfExportService {
 
         build: (context) => [
           pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
+              intestazioneAziendaPdfWidget(intestazioneAzienda),
               pw.Text(
-                'GESTIONALE SICUREZZA',
-                style: pw.TextStyle(
-                  fontSize: 20,
-                  fontWeight: pw.FontWeight.bold,
+                dataExport,
+                style: const pw.TextStyle(
+                  fontSize: 9,
+                  color: PdfColors.blueGrey600,
                 ),
               ),
-
-              pw.Text(DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())),
             ],
           ),
 
-          pw.SizedBox(height: 20),
+          pw.SizedBox(height: 16),
 
           pw.Text(
             titolo,

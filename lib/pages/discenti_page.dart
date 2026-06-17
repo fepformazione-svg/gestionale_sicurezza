@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
@@ -604,6 +605,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
     final vistaFiltrata = discentiFiltrati.length != discenti.length;
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     await Printing.layoutPdf(
       name: 'discenti_stampa',
       format: PdfPageFormat.a4.landscape,
@@ -625,14 +628,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
             },
             build: (context) {
               return [
-                pw.Text(
-                  'F&P Formazione e Prevenzione',
-                  style: pw.TextStyle(
-                    fontSize: 13,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.blueGrey700,
-                  ),
-                ),
+                intestazioneAziendaPdfWidget(intestazioneAzienda),
                 pw.SizedBox(height: 8),
                 pw.Text(
                   'DISCENTI',

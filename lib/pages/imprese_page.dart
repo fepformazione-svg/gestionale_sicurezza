@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import 'impresa_scheda_page.dart';
 
@@ -211,6 +212,7 @@ class _ImpresePageState extends State<ImpresePage> {
     }
 
     final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
     final ora = DateTime.now();
     final vistaFiltrata = ricercaAttiva.trim().isNotEmpty;
 
@@ -254,14 +256,7 @@ class _ImpresePageState extends State<ImpresePage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey700,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 8),
             pw.Text(
               'IMPRESE',
@@ -395,6 +390,7 @@ class _ImpresePageState extends State<ImpresePage> {
     }).toList();
 
     final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
     pdf.addPage(
       pw.MultiPage(
@@ -414,14 +410,7 @@ class _ImpresePageState extends State<ImpresePage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey700,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 8),
             pw.Text(
               'IMPRESE',

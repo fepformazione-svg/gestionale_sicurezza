@@ -219,6 +219,22 @@ class AppDatabase {
     ''');
 
     await db.execute('''
+      CREATE TABLE IF NOT EXISTS visite_mediche (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        discente_id INTEGER NOT NULL,
+        medico_struttura_id INTEGER,
+        data_visita TEXT,
+        data_scadenza TEXT,
+        esito TEXT,
+        giudizio TEXT,
+        note TEXT,
+        documento_path TEXT,
+        created_at TEXT,
+        updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS dati_azienda (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         ragione_sociale TEXT,
@@ -345,6 +361,19 @@ class AppDatabase {
       'note': 'TEXT',
       'attivo': 'INTEGER DEFAULT 1',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'visite_mediche', {
+      'discente_id': 'INTEGER NOT NULL DEFAULT 0',
+      'medico_struttura_id': 'INTEGER',
+      'data_visita': 'TEXT',
+      'data_scadenza': 'TEXT',
+      'esito': 'TEXT',
+      'giudizio': 'TEXT',
+      'note': 'TEXT',
+      'documento_path': 'TEXT',
+      'created_at': 'TEXT',
       'updated_at': 'TEXT',
     });
 
@@ -487,6 +516,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_medici_strutture_attivo ON medici_strutture(attivo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visite_mediche_discente ON visite_mediche(discente_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visite_mediche_medico_struttura ON visite_mediche(medico_struttura_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_visite_mediche_data_scadenza ON visite_mediche(data_scadenza)',
     );
 
     await db.execute(

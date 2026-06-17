@@ -8,6 +8,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../utils/pdf_azienda_helper.dart';
+
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
 import 'discente_scheda_page.dart';
@@ -668,6 +670,7 @@ class _DiarioPageState extends State<DiarioPage> {
     }
 
     final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
     final adesso = DateTime.now();
     final dataExport =
@@ -720,14 +723,7 @@ class _DiarioPageState extends State<DiarioPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey800,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 4),
             pw.Text(
               'DIARIO FORMAZIONE',
@@ -895,6 +891,8 @@ class _DiarioPageState extends State<DiarioPage> {
 
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -913,14 +911,7 @@ class _DiarioPageState extends State<DiarioPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey800,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 6),
             pw.Text(
               'DIARIO FORMAZIONE',

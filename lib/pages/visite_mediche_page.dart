@@ -12,6 +12,9 @@ class VisiteMedichePage extends StatefulWidget {
 class _VisiteMedichePageState extends State<VisiteMedichePage> {
   final TextEditingController _cercaController = TextEditingController();
 
+  final ScrollController visiteHorizontalController = ScrollController();
+  final ScrollController visiteVerticalController = ScrollController();
+
   List<Map<String, dynamic>> visite = [];
   List<Map<String, dynamic>> visiteFiltrate = [];
   List<Map<String, dynamic>> discenti = [];
@@ -27,6 +30,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   @override
   void dispose() {
     _cercaController.dispose();
+    visiteHorizontalController.dispose();
+    visiteVerticalController.dispose();
     super.dispose();
   }
 
@@ -86,6 +91,28 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   String testoValore(dynamic valore) {
     final testo = valore?.toString().trim() ?? '';
     return testo.isEmpty ? '-' : testo;
+  }
+
+  Widget cellaHeaderVisite(
+    String testo,
+    double larghezza, {
+    bool centro = false,
+  }) {
+    return SizedBox(
+      width: larghezza,
+      child: Align(
+        alignment: centro ? Alignment.center : Alignment.centerLeft,
+        child: Text(
+          testo,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF334155),
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> apriDialogNuovaVisita() async {
@@ -636,85 +663,270 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           ),
                         ),
                       )
-                    : SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: DataTable(
-                          headingRowColor: WidgetStateProperty.all(
-                            const Color(0xFFF1F5F9),
-                          ),
-                          columns: const [
-                            DataColumn(label: Text('Discente')),
-                            DataColumn(label: Text('Medico / Struttura')),
-                            DataColumn(label: Text('Tipo')),
-                            DataColumn(label: Text('Data visita')),
-                            DataColumn(label: Text('Scadenza')),
-                            DataColumn(label: Text('Esito')),
-                            DataColumn(label: Text('Giudizio')),
-                            DataColumn(label: Text('Note')),
-                            DataColumn(label: Text('Azioni')),
-                          ],
-                          rows: visiteFiltrate.map((visita) {
-                            final nome = testoValore(visita['discente_nome']);
-                            final cognome = testoValore(
-                              visita['discente_cognome'],
-                            );
-
-                            return DataRow(
-                              cells: [
-                                DataCell(Text('$cognome $nome')),
-                                DataCell(
-                                  Text(
-                                    testoValore(
-                                      visita['medico_struttura_denominazione'],
-                                    ),
+                    : Scrollbar(
+                        controller: visiteHorizontalController,
+                        thumbVisibility: true,
+                        trackVisibility: true,
+                        interactive: true,
+                        notificationPredicate: (notification) {
+                          return notification.metrics.axis == Axis.horizontal;
+                        },
+                        child: SingleChildScrollView(
+                          controller: visiteHorizontalController,
+                          scrollDirection: Axis.horizontal,
+                          child: SizedBox(
+                            width: 1500,
+                            child: Column(
+                              children: [
+                                Container(
+                                  height: 44,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
                                   ),
-                                ),
-                                DataCell(
-                                  Text(
-                                    testoValore(
-                                      visita['medico_struttura_tipo'],
-                                    ),
-                                  ),
-                                ),
-                                DataCell(
-                                  Text(testoValore(visita['data_visita'])),
-                                ),
-                                DataCell(
-                                  Text(testoValore(visita['data_scadenza'])),
-                                ),
-                                DataCell(Text(testoValore(visita['esito']))),
-                                DataCell(Text(testoValore(visita['giudizio']))),
-                                DataCell(Text(testoValore(visita['note']))),
-                                DataCell(
-                                  Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        tooltip: 'Modifica visita medica',
-                                        icon: const Icon(
-                                          Icons.edit_rounded,
-                                          color: Color(0xFF2563EB),
-                                        ),
-                                        onPressed: () {
-                                          apriDialogModificaVisita(visita);
-                                        },
+                                  decoration: const BoxDecoration(
+                                    color: Color(0xFFF1F5F9),
+                                    border: Border(
+                                      bottom: BorderSide(
+                                        color: Color(0xFFE2E8F0),
                                       ),
-                                      IconButton(
-                                        tooltip: 'Elimina visita medica',
-                                        icon: const Icon(
-                                          Icons.delete_rounded,
-                                          color: Color(0xFFDC2626),
-                                        ),
-                                        onPressed: () {
-                                          confermaEliminaVisita(visita);
-                                        },
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      cellaHeaderVisite('Discente', 170),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite(
+                                        'Medico / Struttura',
+                                        210,
+                                      ),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Tipo', 80),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Data visita', 105),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Scadenza', 105),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Esito', 110),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Giudizio', 170),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite('Note', 220),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite(
+                                        'Azioni',
+                                        86,
+                                        centro: true,
                                       ),
                                     ],
                                   ),
                                 ),
+                                Expanded(
+                                  child: Scrollbar(
+                                    controller: visiteVerticalController,
+                                    thumbVisibility: true,
+                                    trackVisibility: true,
+                                    interactive: true,
+                                    child: SingleChildScrollView(
+                                      controller: visiteVerticalController,
+                                      child: DataTable(
+                                        headingRowHeight: 0,
+                                        columnSpacing: 18,
+                                        horizontalMargin: 14,
+                                        columns: const [
+                                          DataColumn(
+                                            label: SizedBox(width: 170),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 210),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 80),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 105),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 105),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 110),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 170),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 220),
+                                          ),
+                                          DataColumn(
+                                            label: SizedBox(width: 86),
+                                          ),
+                                        ],
+                                        rows: visiteFiltrate.map((visita) {
+                                          final nome = testoValore(
+                                            visita['discente_nome'],
+                                          );
+                                          final cognome = testoValore(
+                                            visita['discente_cognome'],
+                                          );
+
+                                          return DataRow(
+                                            cells: [
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 170,
+                                                  child: Text(
+                                                    '$cognome $nome',
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 210,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['medico_struttura_denominazione'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 80,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['medico_struttura_tipo'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 105,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['data_visita'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 105,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['data_scadenza'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 110,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['esito'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 170,
+                                                  child: Text(
+                                                    testoValore(
+                                                      visita['giudizio'],
+                                                    ),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 220,
+                                                  child: Text(
+                                                    testoValore(visita['note']),
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 86,
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .center,
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      IconButton(
+                                                        tooltip:
+                                                            'Modifica visita medica',
+                                                        constraints:
+                                                            const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                        icon: const Icon(
+                                                          Icons.edit_rounded,
+                                                          color: Color(
+                                                            0xFF2563EB,
+                                                          ),
+                                                        ),
+                                                        onPressed: () {
+                                                          apriDialogModificaVisita(
+                                                            visita,
+                                                          );
+                                                        },
+                                                      ),
+                                                      IconButton(
+                                                        tooltip:
+                                                            'Elimina visita medica',
+                                                        constraints:
+                                                            const BoxConstraints(
+                                                              minWidth: 36,
+                                                              minHeight: 36,
+                                                            ),
+                                                        icon: const Icon(
+                                                          Icons.delete_rounded,
+                                                          color: Color(
+                                                            0xFFDC2626,
+                                                          ),
+                                                        ),
+                                                        onPressed: () {
+                                                          confermaEliminaVisita(
+                                                            visita,
+                                                          );
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          );
+                                        }).toList(),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
-                            );
-                          }).toList(),
+                            ),
+                          ),
                         ),
                       ),
               ),

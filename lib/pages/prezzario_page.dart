@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import '../models/prezzario.dart';
 import '../services/database_service.dart';
@@ -227,6 +228,8 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
 
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4.landscape,
@@ -242,14 +245,7 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 14,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey800,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 8),
             pw.Text(
               'PREZZARIO',
@@ -355,6 +351,8 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
 
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     final ricercaAttiva = cercaController.text.trim().isNotEmpty;
     final dataStampa = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
 
@@ -378,14 +376,7 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
           ),
         ),
         build: (context) => [
-          pw.Text(
-            'F&P Formazione e Prevenzione',
-            style: pw.TextStyle(
-              fontSize: 16,
-              fontWeight: pw.FontWeight.bold,
-              color: PdfColors.blueGrey800,
-            ),
-          ),
+          intestazioneAziendaPdfWidget(intestazioneAzienda),
           pw.SizedBox(height: 8),
           pw.Text(
             'PREZZARIO',

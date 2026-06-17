@@ -25,22 +25,20 @@ class PdfExportService {
         margin: const pw.EdgeInsets.all(24),
 
         build: (context) => [
-          pw.Row(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-            children: [
-              intestazioneAziendaPdfWidget(intestazioneAzienda),
-              pw.Text(
-                dataExport,
-                style: const pw.TextStyle(
-                  fontSize: 9,
-                  color: PdfColors.blueGrey600,
-                ),
+          intestazioneAziendaPdfWidget(intestazioneAzienda),
+          pw.SizedBox(height: 6),
+          pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              dataExport,
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey600,
               ),
-            ],
+            ),
           ),
 
-          pw.SizedBox(height: 16),
+          pw.SizedBox(height: 18),
 
           pw.Text(
             titolo,

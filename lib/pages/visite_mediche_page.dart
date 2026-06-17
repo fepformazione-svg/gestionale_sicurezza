@@ -288,6 +288,223 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     noteController.dispose();
   }
 
+  Future<void> apriDialogModificaVisita(Map<String, dynamic> visita) async {
+    if (discenti.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nessun discente disponibile per modificare la visita.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    if (mediciStrutture.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nessun medico o struttura attiva disponibile. Aggiungine una da Impostazioni.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final visitaId = visita['id'] as int;
+
+    int? discenteSelezionatoId = visita['discente_id'] as int?;
+    int? medicoStrutturaSelezionatoId = visita['medico_struttura_id'] as int?;
+
+    final dataVisitaController = TextEditingController(
+      text: testoValore(visita['data_visita']),
+    );
+    final dataScadenzaController = TextEditingController(
+      text: testoValore(visita['data_scadenza']),
+    );
+    final esitoController = TextEditingController(
+      text: testoValore(visita['esito']),
+    );
+    final giudizioController = TextEditingController(
+      text: testoValore(visita['giudizio']),
+    );
+    final noteController = TextEditingController(
+      text: testoValore(visita['note']),
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Modifica visita medica'),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<int>(
+                        initialValue: discenteSelezionatoId,
+                        decoration: const InputDecoration(
+                          labelText: 'Discente',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: discenti.map((discente) {
+                          final id = discente['id'] as int;
+                          final nome = discente['nome']?.toString() ?? '';
+                          final cognome = discente['cognome']?.toString() ?? '';
+
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text('$cognome $nome'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            discenteSelezionatoId = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        initialValue: medicoStrutturaSelezionatoId,
+                        decoration: const InputDecoration(
+                          labelText: 'Medico / Struttura',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: mediciStrutture.map((voce) {
+                          final id = voce['id'] as int;
+                          final tipo = voce['tipo']?.toString() ?? '';
+                          final denominazione =
+                              voce['denominazione']?.toString() ?? '';
+
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text('$tipo - $denominazione'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            medicoStrutturaSelezionatoId = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: dataVisitaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data visita',
+                          hintText: 'Es. 17/06/2026',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: dataScadenzaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data scadenza',
+                          hintText: 'Es. 17/06/2027',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: esitoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Esito',
+                          hintText: 'Es. Idoneo',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: giudizioController,
+                        decoration: const InputDecoration(
+                          labelText: 'Giudizio',
+                          hintText: 'Es. Idoneità alla mansione',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: noteController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Note',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    if (discenteSelezionatoId == null) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Seleziona un discente.')),
+                      );
+                      return;
+                    }
+
+                    if (medicoStrutturaSelezionatoId == null) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Seleziona un medico o una struttura.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await AppDatabase.instance.aggiornaVisitaMedica(
+                      id: visitaId,
+                      discenteId: discenteSelezionatoId!,
+                      medicoStrutturaId: medicoStrutturaSelezionatoId,
+                      dataVisita: dataVisitaController.text.trim(),
+                      dataScadenza: dataScadenzaController.text.trim(),
+                      esito: esitoController.text.trim(),
+                      giudizio: giudizioController.text.trim(),
+                      note: noteController.text.trim(),
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
+
+                    await caricaVisite();
+
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(
+                        content: Text('Visita medica aggiornata.'),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.save_rounded),
+                  label: const Text('Salva modifiche'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    dataVisitaController.dispose();
+    dataScadenzaController.dispose();
+    esitoController.dispose();
+    giudizioController.dispose();
+    noteController.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -388,6 +605,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                             DataColumn(label: Text('Esito')),
                             DataColumn(label: Text('Giudizio')),
                             DataColumn(label: Text('Note')),
+                            DataColumn(label: Text('Azioni')),
                           ],
                           rows: visiteFiltrate.map((visita) {
                             final nome = testoValore(visita['discente_nome']);
@@ -421,6 +639,18 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                 DataCell(Text(testoValore(visita['esito']))),
                                 DataCell(Text(testoValore(visita['giudizio']))),
                                 DataCell(Text(testoValore(visita['note']))),
+                                DataCell(
+                                  IconButton(
+                                    tooltip: 'Modifica visita medica',
+                                    icon: const Icon(
+                                      Icons.edit_rounded,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                    onPressed: () {
+                                      apriDialogModificaVisita(visita);
+                                    },
+                                  ),
+                                ),
                               ],
                             );
                           }).toList(),

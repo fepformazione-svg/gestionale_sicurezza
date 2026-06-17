@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import '../models/corso.dart';
 import '../services/database_service.dart';
@@ -178,7 +179,7 @@ class _CorsiPageState extends State<CorsiPage> {
     }
 
     final pdf = pw.Document();
-
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
     final ora = DateTime.now();
     final dataOraLeggibile = DateFormat('dd/MM/yyyy HH:mm').format(ora);
     final timestampFile = DateFormat('yyyy_MM_dd_HH\'h\'mm').format(ora);
@@ -211,15 +212,7 @@ class _CorsiPageState extends State<CorsiPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 12,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey700,
-              ),
-            ),
-
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 10),
 
             pw.Text(
@@ -342,6 +335,7 @@ class _CorsiPageState extends State<CorsiPage> {
         : 'Stampa corsi completa - ${corsiFiltrati.length} record - $dataOraLeggibile';
 
     final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
     pdf.addPage(
       pw.MultiPage(
@@ -361,14 +355,7 @@ class _CorsiPageState extends State<CorsiPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 12,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey700,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
 
             pw.SizedBox(height: 10),
 

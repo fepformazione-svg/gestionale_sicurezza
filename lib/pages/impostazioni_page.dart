@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dati_azienda_page.dart';
 import 'medici_strutture_page.dart';
+import 'visite_mediche_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -39,6 +40,18 @@ class ImpostazioniPage extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const MediciStrutturePage()),
+              );
+            },
+          ),
+          SizedBox(height: 12),
+          _SezioneImpostazioniCard(
+            icona: Icons.health_and_safety_rounded,
+            titolo: 'Visite mediche',
+            descrizione:
+                'Gestione visite mediche, idoneità, scadenze e storico sanitario dei discenti.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const VisiteMedichePage()),
               );
             },
           ),

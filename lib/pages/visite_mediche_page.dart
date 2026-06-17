@@ -21,6 +21,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   List<Map<String, dynamic>> mediciStrutture = [];
   bool caricamento = true;
 
+  String filtroStatoVisita = 'Tutte';
+
   @override
   void initState() {
     super.initState();
@@ -62,11 +64,6 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   void applicaFiltro() {
     final ricerca = _cercaController.text.trim().toLowerCase();
 
-    if (ricerca.isEmpty) {
-      visiteFiltrate = List<Map<String, dynamic>>.from(visite);
-      return;
-    }
-
     visiteFiltrate = visite.where((visita) {
       final nome = visita['discente_nome']?.toString().toLowerCase() ?? '';
       final cognome =
@@ -80,11 +77,17 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
       final esito = visita['esito']?.toString().toLowerCase() ?? '';
       final giudizio = visita['giudizio']?.toString().toLowerCase() ?? '';
 
-      return discente.contains(ricerca) ||
+      final passaRicerca =
+          ricerca.isEmpty ||
+          discente.contains(ricerca) ||
           medico.contains(ricerca) ||
           tipo.contains(ricerca) ||
           esito.contains(ricerca) ||
           giudizio.contains(ricerca);
+
+      final passaStato = passaFiltroStatoVisita(visita);
+
+      return passaRicerca && passaStato;
     }).toList();
   }
 
@@ -163,6 +166,28 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
       default:
         return const Color(0xFF64748B);
     }
+  }
+
+  bool passaFiltroStatoVisita(Map<String, dynamic> visita) {
+    if (filtroStatoVisita == 'Tutte') {
+      return true;
+    }
+
+    final stato = statoVisitaMedica(visita['data_scadenza']);
+
+    if (filtroStatoVisita == 'Valide') {
+      return stato == 'VALIDA';
+    }
+
+    if (filtroStatoVisita == 'In scadenza') {
+      return stato == 'IN SCADENZA';
+    }
+
+    if (filtroStatoVisita == 'Scadute') {
+      return stato == 'SCADUTA';
+    }
+
+    return true;
   }
 
   Widget badgeStatoVisita(String stato) {
@@ -714,7 +739,77 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                 ),
               ],
             ),
+
+            const SizedBox(height: 12),
+
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Tutte'),
+                  selected: filtroStatoVisita == 'Tutte',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStatoVisita = 'Tutte';
+                      applicaFiltro();
+                    });
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Valide'),
+                  selected: filtroStatoVisita == 'Valide',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStatoVisita = 'Valide';
+                      applicaFiltro();
+                    });
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('In scadenza'),
+                  selected: filtroStatoVisita == 'In scadenza',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStatoVisita = 'In scadenza';
+                      applicaFiltro();
+                    });
+                  },
+                ),
+                ChoiceChip(
+                  label: const Text('Scadute'),
+                  selected: filtroStatoVisita == 'Scadute',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStatoVisita = 'Scadute';
+                      applicaFiltro();
+                    });
+                  },
+                ),
+              ],
+            ),
+
+            if (filtroStatoVisita != 'Tutte') ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                children: [
+                  Chip(
+                    label: Text('Filtro stato: $filtroStatoVisita'),
+                    deleteIcon: const Icon(Icons.close_rounded, size: 18),
+                    onDeleted: () {
+                      setState(() {
+                        filtroStatoVisita = 'Tutte';
+                        applicaFiltro();
+                      });
+                    },
+                  ),
+                ],
+              ),
+            ],
+
             const SizedBox(height: 16),
+
             Expanded(
               child: Card(
                 elevation: 0,

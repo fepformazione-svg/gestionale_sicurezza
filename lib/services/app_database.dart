@@ -539,6 +539,108 @@ class AppDatabase {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getVisiteMediche() async {
+    final db = await database;
+
+    return db.rawQuery('''
+      SELECT
+        vm.*,
+        dis.nome AS discente_nome,
+        dis.cognome AS discente_cognome,
+        ms.denominazione AS medico_struttura_denominazione,
+        ms.tipo AS medico_struttura_tipo
+      FROM visite_mediche vm
+      LEFT JOIN discenti dis ON dis.id = vm.discente_id
+      LEFT JOIN medici_strutture ms ON ms.id = vm.medico_struttura_id
+      ORDER BY vm.data_scadenza ASC, vm.id DESC
+    ''');
+  }
+
+  Future<List<Map<String, dynamic>>> getVisiteMedicheByDiscente(
+    int discenteId,
+  ) async {
+    final db = await database;
+
+    return db.rawQuery(
+      '''
+      SELECT
+        vm.*,
+        ms.denominazione AS medico_struttura_denominazione,
+        ms.tipo AS medico_struttura_tipo
+      FROM visite_mediche vm
+      LEFT JOIN medici_strutture ms ON ms.id = vm.medico_struttura_id
+      WHERE vm.discente_id = ?
+      ORDER BY vm.data_scadenza DESC, vm.id DESC
+      ''',
+      [discenteId],
+    );
+  }
+
+  Future<int> inserisciVisitaMedica({
+    required int discenteId,
+    int? medicoStrutturaId,
+    String? dataVisita,
+    String? dataScadenza,
+    String? esito,
+    String? giudizio,
+    String? note,
+    String? documentoPath,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.insert('visite_mediche', {
+      'discente_id': discenteId,
+      'medico_struttura_id': medicoStrutturaId,
+      'data_visita': dataVisita,
+      'data_scadenza': dataScadenza,
+      'esito': esito,
+      'giudizio': giudizio,
+      'note': note,
+      'documento_path': documentoPath,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  Future<int> aggiornaVisitaMedica({
+    required int id,
+    required int discenteId,
+    int? medicoStrutturaId,
+    String? dataVisita,
+    String? dataScadenza,
+    String? esito,
+    String? giudizio,
+    String? note,
+    String? documentoPath,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'visite_mediche',
+      {
+        'discente_id': discenteId,
+        'medico_struttura_id': medicoStrutturaId,
+        'data_visita': dataVisita,
+        'data_scadenza': dataScadenza,
+        'esito': esito,
+        'giudizio': giudizio,
+        'note': note,
+        'documento_path': documentoPath,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> eliminaVisitaMedica(int id) async {
+    final db = await database;
+
+    return db.delete('visite_mediche', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<Map<String, dynamic>?> getDatiAzienda() async {
     final db = await database;
 

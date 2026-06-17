@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../services/app_database.dart';
@@ -28,6 +31,8 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
 
   bool caricamento = true;
   bool salvataggio = false;
+
+  String? logoPath;
 
   @override
   void initState() {
@@ -74,6 +79,11 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
       _pecController.text = dati['pec']?.toString() ?? '';
       _sitoWebController.text = dati['sito_web']?.toString() ?? '';
       _noteController.text = dati['note']?.toString() ?? '';
+
+      logoPath = dati['logo_path']?.toString();
+      if (logoPath != null && logoPath!.trim().isEmpty) {
+        logoPath = null;
+      }
     }
 
     setState(() {
@@ -102,6 +112,7 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
         email: _emailController.text,
         pec: _pecController.text,
         sitoWeb: _sitoWebController.text,
+        logoPath: logoPath,
         note: _noteController.text,
       );
 
@@ -129,6 +140,26 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
         });
       }
     }
+  }
+
+  Future<void> selezionaLogo() async {
+    final risultato = await FilePickerWindows().pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['png', 'jpg', 'jpeg'],
+      allowMultiple: false,
+    );
+
+    if (risultato == null || risultato.files.single.path == null) return;
+
+    setState(() {
+      logoPath = risultato.files.single.path;
+    });
+  }
+
+  void rimuoviLogo() {
+    setState(() {
+      logoPath = null;
+    });
   }
 
   InputDecoration decorazioneCampo(String label, {String? hint}) {
@@ -320,6 +351,106 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
                             ),
                             const SizedBox(height: 14),
                             campoTesto(_noteController, 'Note', maxLines: 3),
+                            const SizedBox(height: 18),
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFF8FAFC),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: const Color(0xFFE2E8F0),
+                                ),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Logo aziendale / marchio',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF0F172A),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  const Text(
+                                    'Il logo verrà usato progressivamente in PDF, stampe e intestazioni. Può essere rimosso per usare il gestionale senza marchio.',
+                                    style: TextStyle(
+                                      color: Color(0xFF64748B),
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  if (logoPath != null &&
+                                      File(logoPath!).existsSync()) ...[
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(12),
+                                      child: Container(
+                                        color: Colors.white,
+                                        padding: const EdgeInsets.all(12),
+                                        child: Image.file(
+                                          File(logoPath!),
+                                          height: 90,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      logoPath!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF64748B),
+                                      ),
+                                    ),
+                                  ] else ...[
+                                    Container(
+                                      height: 90,
+                                      width: double.infinity,
+                                      alignment: Alignment.center,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(
+                                          color: const Color(0xFFE2E8F0),
+                                        ),
+                                      ),
+                                      child: const Text(
+                                        'Nessun logo selezionato',
+                                        style: TextStyle(
+                                          color: Color(0xFF64748B),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                  const SizedBox(height: 14),
+                                  Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: salvataggio
+                                            ? null
+                                            : selezionaLogo,
+                                        icon: const Icon(Icons.image_rounded),
+                                        label: const Text('Seleziona logo'),
+                                      ),
+                                      if (logoPath != null)
+                                        OutlinedButton.icon(
+                                          onPressed: salvataggio
+                                              ? null
+                                              : rimuoviLogo,
+                                          icon: const Icon(
+                                            Icons.delete_outline_rounded,
+                                          ),
+                                          label: const Text('Rimuovi logo'),
+                                        ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
                             const SizedBox(height: 22),
                             Align(
                               alignment: Alignment.centerRight,

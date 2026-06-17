@@ -1,3 +1,6 @@
+import 'dart:io';
+import 'dart:typed_data';
+
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
@@ -7,11 +10,13 @@ class IntestazioneAziendaPdf {
   final String titolo;
   final String sottotitolo;
   final String dettaglio;
+  final Uint8List? logoBytes;
 
   const IntestazioneAziendaPdf({
     required this.titolo,
     required this.sottotitolo,
     required this.dettaglio,
+    this.logoBytes,
   });
 }
 
@@ -21,6 +26,22 @@ String _testoPulito(dynamic valore) {
 
 String _unisciParti(List<String> parti, {String separatore = ' - '}) {
   return parti.where((parte) => parte.trim().isNotEmpty).join(separatore);
+}
+
+Future<Uint8List?> _caricaLogoBytes(String logoPath) async {
+  final percorso = logoPath.trim();
+
+  if (percorso.isEmpty) return null;
+
+  try {
+    final file = File(percorso);
+
+    if (!file.existsSync()) return null;
+
+    return await file.readAsBytes();
+  } catch (_) {
+    return null;
+  }
 }
 
 Future<IntestazioneAziendaPdf> caricaIntestazioneAziendaPdf() async {
@@ -46,6 +67,7 @@ Future<IntestazioneAziendaPdf> caricaIntestazioneAziendaPdf() async {
   final email = _testoPulito(dati['email']);
   final pec = _testoPulito(dati['pec']);
   final sitoWeb = _testoPulito(dati['sito_web']);
+  final logoPath = _testoPulito(dati['logo_path']);
 
   final titolo = nomeCommerciale.isNotEmpty
       ? nomeCommerciale
@@ -74,11 +96,12 @@ Future<IntestazioneAziendaPdf> caricaIntestazioneAziendaPdf() async {
     titolo: titolo,
     sottotitolo: _unisciParti([ragioneSociale, datiFiscali]),
     dettaglio: _unisciParti([sede, contatti]),
+    logoBytes: await _caricaLogoBytes(logoPath),
   );
 }
 
 pw.Widget intestazioneAziendaPdfWidget(IntestazioneAziendaPdf intestazione) {
-  return pw.Column(
+  final testoIntestazione = pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
@@ -103,6 +126,31 @@ pw.Widget intestazioneAziendaPdfWidget(IntestazioneAziendaPdf intestazione) {
           style: const pw.TextStyle(fontSize: 8, color: PdfColors.blueGrey600),
         ),
       ],
+    ],
+  );
+
+  if (intestazione.logoBytes == null) {
+    return testoIntestazione;
+  }
+
+  return pw.Row(
+    crossAxisAlignment: pw.CrossAxisAlignment.start,
+    children: [
+      pw.Container(
+        width: 56,
+        height: 56,
+        padding: const pw.EdgeInsets.all(3),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.blueGrey100),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Image(
+          pw.MemoryImage(intestazione.logoBytes!),
+          fit: pw.BoxFit.contain,
+        ),
+      ),
+      pw.SizedBox(width: 10),
+      pw.Expanded(child: testoIntestazione),
     ],
   );
 }

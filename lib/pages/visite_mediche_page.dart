@@ -115,6 +115,81 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     );
   }
 
+  DateTime? parseDataItaliana(String valore) {
+    final testo = valore.trim();
+
+    if (testo.isEmpty || testo == '-') return null;
+
+    final parti = testo.split('/');
+    if (parti.length != 3) return null;
+
+    final giorno = int.tryParse(parti[0]);
+    final mese = int.tryParse(parti[1]);
+    final anno = int.tryParse(parti[2]);
+
+    if (giorno == null || mese == null || anno == null) return null;
+
+    return DateTime(anno, mese, giorno);
+  }
+
+  String statoVisitaMedica(dynamic dataScadenza) {
+    final scadenza = parseDataItaliana(testoValore(dataScadenza));
+
+    if (scadenza == null) return 'NON DISP.';
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final scadenzaPulita = DateTime(
+      scadenza.year,
+      scadenza.month,
+      scadenza.day,
+    );
+
+    final giorniRimanenti = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (giorniRimanenti < 0) return 'SCADUTA';
+    if (giorniRimanenti <= 60) return 'IN SCADENZA';
+    return 'VALIDA';
+  }
+
+  Color coloreStatoVisita(String stato) {
+    switch (stato) {
+      case 'SCADUTA':
+        return const Color(0xFFDC2626);
+      case 'IN SCADENZA':
+        return const Color(0xFFF59E0B);
+      case 'VALIDA':
+        return const Color(0xFF16A34A);
+      default:
+        return const Color(0xFF64748B);
+    }
+  }
+
+  Widget badgeStatoVisita(String stato) {
+    return Container(
+      width: 104,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: coloreStatoVisita(stato).withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(
+          color: coloreStatoVisita(stato).withValues(alpha: 0.35),
+        ),
+      ),
+      child: Text(
+        stato,
+        textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w800,
+          color: coloreStatoVisita(stato),
+        ),
+      ),
+    );
+  }
+
   Future<void> apriDialogNuovaVisita() async {
     if (discenti.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -675,7 +750,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           controller: visiteHorizontalController,
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(
-                            width: 1500,
+                            width: 1580,
                             child: Column(
                               children: [
                                 Container(
@@ -705,6 +780,12 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                       cellaHeaderVisite('Data visita', 105),
                                       const SizedBox(width: 18),
                                       cellaHeaderVisite('Scadenza', 105),
+                                      const SizedBox(width: 18),
+                                      cellaHeaderVisite(
+                                        'Stato',
+                                        104,
+                                        centro: true,
+                                      ),
                                       const SizedBox(width: 18),
                                       cellaHeaderVisite('Esito', 110),
                                       const SizedBox(width: 18),
@@ -749,6 +830,9 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                             label: SizedBox(width: 105),
                                           ),
                                           DataColumn(
+                                            label: SizedBox(width: 104),
+                                          ),
+                                          DataColumn(
                                             label: SizedBox(width: 110),
                                           ),
                                           DataColumn(
@@ -767,6 +851,9 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                           );
                                           final cognome = testoValore(
                                             visita['discente_cognome'],
+                                          );
+                                          final stato = statoVisitaMedica(
+                                            visita['data_scadenza'],
                                           );
 
                                           return DataRow(
@@ -826,6 +913,16 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                                     ),
                                                     overflow:
                                                         TextOverflow.ellipsis,
+                                                  ),
+                                                ),
+                                              ),
+                                              DataCell(
+                                                SizedBox(
+                                                  width: 104,
+                                                  child: Center(
+                                                    child: badgeStatoVisita(
+                                                      stato,
+                                                    ),
                                                   ),
                                                 ),
                                               ),

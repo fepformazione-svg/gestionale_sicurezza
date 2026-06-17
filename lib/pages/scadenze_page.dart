@@ -8,6 +8,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
+import '../utils/pdf_azienda_helper.dart';
+
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
 import 'discente_scheda_page.dart';
@@ -208,6 +210,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
     }
 
     final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
     final adesso = DateTime.now();
 
     final dataExport =
@@ -239,14 +242,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey700,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 8),
             pw.Text(
               'SCADENZE CORSI',
@@ -385,6 +381,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
         ? 'Stampa scadenze filtrata'
         : 'Stampa scadenze completa';
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     await Printing.layoutPdf(
       name: 'scadenze_stampa',
       format: PdfPageFormat.a4.landscape,
@@ -406,14 +404,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
             },
             build: (context) {
               return [
-                pw.Text(
-                  'F&P Formazione e Prevenzione',
-                  style: pw.TextStyle(
-                    fontSize: 13,
-                    fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.blueGrey700,
-                  ),
-                ),
+                intestazioneAziendaPdfWidget(intestazioneAzienda),
                 pw.SizedBox(height: 8),
                 pw.Text(
                   'SCADENZE CORSI',

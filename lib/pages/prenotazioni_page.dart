@@ -8,6 +8,8 @@ import '../widgets/prenotazione_dialog.dart';
 import '../widgets/section_card.dart';
 import '../widgets/table_status_badge.dart';
 
+import '../utils/pdf_azienda_helper.dart';
+
 import 'dart:io';
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
@@ -114,6 +116,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     String testo(dynamic valore) {
       if (valore == null) return '';
       return valore.toString();
@@ -136,10 +140,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         margin: const pw.EdgeInsets.all(24),
         build: (context) {
           return [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
             pw.SizedBox(height: 6),
             pw.Text(
               'Stampa prenotazioni selezionate',
@@ -1835,6 +1836,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final pdf = pw.Document();
 
+      final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
       pdf.addPage(
         pw.MultiPage(
           pageFormat: PdfPageFormat.a4.landscape,
@@ -1845,7 +1848,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
               mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
               children: [
                 pw.Text(
-                  'F&P Formazione e Prevenzione',
+                  intestazioneAzienda.titolo,
                   style: const pw.TextStyle(
                     fontSize: 8,
                     color: PdfColors.blueGrey800,
@@ -1862,14 +1865,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             ),
           ),
           build: (context) => [
-            pw.Text(
-              'F&P Formazione e Prevenzione',
-              style: pw.TextStyle(
-                fontSize: 13,
-                fontWeight: pw.FontWeight.bold,
-                color: PdfColors.blueGrey800,
-              ),
-            ),
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
 
             pw.SizedBox(height: 4),
 

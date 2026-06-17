@@ -576,6 +576,12 @@ class AppDatabase {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getDiscentiPerVisiteMediche() async {
+    final db = await database;
+
+    return db.query('discenti', orderBy: 'cognome ASC, nome ASC');
+  }
+
   Future<int> inserisciVisitaMedica({
     required int discenteId,
     int? medicoStrutturaId,

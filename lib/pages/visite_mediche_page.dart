@@ -14,6 +14,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
 
   List<Map<String, dynamic>> visite = [];
   List<Map<String, dynamic>> visiteFiltrate = [];
+  List<Map<String, dynamic>> discenti = [];
+  List<Map<String, dynamic>> mediciStrutture = [];
   bool caricamento = true;
 
   @override
@@ -34,11 +36,19 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     });
 
     final dati = await AppDatabase.instance.getVisiteMediche();
+    final elencoDiscenti = await AppDatabase.instance
+        .getDiscentiPerVisiteMediche();
+    final elencoMediciStrutture = await AppDatabase.instance
+        .getMediciStrutture();
 
     if (!mounted) return;
 
     setState(() {
       visite = dati;
+      discenti = elencoDiscenti;
+      mediciStrutture = elencoMediciStrutture
+          .where((voce) => voce['attivo']?.toString() != '0')
+          .toList();
       applicaFiltro();
       caricamento = false;
     });
@@ -76,6 +86,206 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   String testoValore(dynamic valore) {
     final testo = valore?.toString().trim() ?? '';
     return testo.isEmpty ? '-' : testo;
+  }
+
+  Future<void> apriDialogNuovaVisita() async {
+    if (discenti.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun discente disponibile per creare una visita.'),
+        ),
+      );
+      return;
+    }
+
+    if (mediciStrutture.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Nessun medico o struttura attiva disponibile. Aggiungine una da Impostazioni.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    int? discenteSelezionatoId;
+    int? medicoStrutturaSelezionatoId;
+
+    final dataVisitaController = TextEditingController();
+    final dataScadenzaController = TextEditingController();
+    final esitoController = TextEditingController();
+    final giudizioController = TextEditingController();
+    final noteController = TextEditingController();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Nuova visita medica'),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      DropdownButtonFormField<int>(
+                        initialValue: discenteSelezionatoId,
+                        decoration: const InputDecoration(
+                          labelText: 'Discente',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: discenti.map((discente) {
+                          final id = discente['id'] as int;
+                          final nome = discente['nome']?.toString() ?? '';
+                          final cognome = discente['cognome']?.toString() ?? '';
+
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text('$cognome $nome'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            discenteSelezionatoId = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        initialValue: medicoStrutturaSelezionatoId,
+                        decoration: const InputDecoration(
+                          labelText: 'Medico / Struttura',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: mediciStrutture.map((voce) {
+                          final id = voce['id'] as int;
+                          final tipo = voce['tipo']?.toString() ?? '';
+                          final denominazione =
+                              voce['denominazione']?.toString() ?? '';
+
+                          return DropdownMenuItem<int>(
+                            value: id,
+                            child: Text('$tipo - $denominazione'),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            medicoStrutturaSelezionatoId = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: dataVisitaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data visita',
+                          hintText: 'Es. 17/06/2026',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: dataScadenzaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data scadenza',
+                          hintText: 'Es. 17/06/2027',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: esitoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Esito',
+                          hintText: 'Es. Idoneo',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: giudizioController,
+                        decoration: const InputDecoration(
+                          labelText: 'Giudizio',
+                          hintText: 'Es. Idoneità alla mansione',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: noteController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(
+                          labelText: 'Note',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+
+                    if (discenteSelezionatoId == null) {
+                      messenger.showSnackBar(
+                        const SnackBar(content: Text('Seleziona un discente.')),
+                      );
+                      return;
+                    }
+
+                    if (medicoStrutturaSelezionatoId == null) {
+                      messenger.showSnackBar(
+                        const SnackBar(
+                          content: Text('Seleziona un medico o una struttura.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await AppDatabase.instance.inserisciVisitaMedica(
+                      discenteId: discenteSelezionatoId!,
+                      medicoStrutturaId: medicoStrutturaSelezionatoId,
+                      dataVisita: dataVisitaController.text.trim(),
+                      dataScadenza: dataScadenzaController.text.trim(),
+                      esito: esitoController.text.trim(),
+                      giudizio: giudizioController.text.trim(),
+                      note: noteController.text.trim(),
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
+
+                    await caricaVisite();
+
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      const SnackBar(content: Text('Visita medica salvata.')),
+                    );
+                  },
+                  icon: const Icon(Icons.save_rounded),
+                  label: const Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    dataVisitaController.dispose();
+    dataScadenzaController.dispose();
+    esitoController.dispose();
+    giudizioController.dispose();
+    noteController.dispose();
   }
 
   @override
@@ -133,13 +343,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Funzione Nuova visita in arrivo.'),
-                      ),
-                    );
-                  },
+                  onPressed: apriDialogNuovaVisita,
                   icon: const Icon(Icons.add_rounded),
                   label: const Text('Nuova visita'),
                 ),

@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../services/app_database.dart';
 
@@ -678,6 +684,140 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     ).showSnackBar(const SnackBar(content: Text('Visita medica eliminata.')));
   }
 
+  Future<void> esportaExcelVisiteMediche() async {
+    if (visiteFiltrate.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessuna visita medica da esportare.')),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Visite mediche'];
+
+    final ora = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+    final timestampFile = DateFormat('yyyy_MM_dd_HHmm').format(ora);
+
+    final ricercaAttiva = _cercaController.text.trim().isNotEmpty;
+    final filtroAttivo = filtroStatoVisita != 'Tutte';
+    final vistaFiltrata = ricercaAttiva || filtroAttivo;
+
+    final infoExport = vistaFiltrata
+        ? 'Export visite mediche filtrato - ${visiteFiltrate.length} record - $dataOra'
+        : 'Export visite mediche - ${visiteFiltrate.length} record - $dataOra';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      infoExport,
+    );
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .cellStyle = xls.CellStyle(
+      bold: true,
+    );
+
+    final intestazioni = [
+      'Discente',
+      'Medico / Struttura',
+      'Tipo',
+      'Data visita',
+      'Scadenza',
+      'Stato',
+      'Esito',
+      'Giudizio',
+      'Note',
+    ];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 2),
+      );
+
+      cella.value = xls.TextCellValue(intestazioni[colonna]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var indice = 0; indice < visiteFiltrate.length; indice++) {
+      final visita = visiteFiltrate[indice];
+      final riga = indice + 3;
+
+      final nome = testoValore(visita['discente_nome']);
+      final cognome = testoValore(visita['discente_cognome']);
+      final discente = '$cognome $nome'.trim();
+      final stato = statoVisitaMedica(visita['data_scadenza']);
+
+      final valori = [
+        discente,
+        testoValore(visita['medico_struttura_denominazione']),
+        testoValore(visita['medico_struttura_tipo']),
+        testoValore(visita['data_visita']),
+        testoValore(visita['data_scadenza']),
+        stato,
+        testoValore(visita['esito']),
+        testoValore(visita['giudizio']),
+        testoValore(visita['note']),
+      ];
+
+      for (var colonna = 0; colonna < valori.length; colonna++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: colonna,
+                rowIndex: riga,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[colonna],
+        );
+      }
+    }
+
+    sheet.setColumnWidth(0, 28);
+    sheet.setColumnWidth(1, 34);
+    sheet.setColumnWidth(2, 16);
+    sheet.setColumnWidth(3, 16);
+    sheet.setColumnWidth(4, 16);
+    sheet.setColumnWidth(5, 18);
+    sheet.setColumnWidth(6, 18);
+    sheet.setColumnWidth(7, 34);
+    sheet.setColumnWidth(8, 42);
+
+    final directory = await getApplicationDocumentsDirectory();
+    final nomeFile = vistaFiltrata
+        ? 'visite_mediche_export_filtrato_$timestampFile.xlsx'
+        : 'visite_mediche_export_$timestampFile.xlsx';
+
+    final file = File('${directory.path}/$nomeFile');
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la creazione del file Excel.'),
+        ),
+      );
+      return;
+    }
+
+    await file.writeAsBytes(bytes, flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export Excel filtrato creato: ${visiteFiltrate.length} visite.'
+              : 'Export Excel creato: ${visiteFiltrate.length} visite.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -730,6 +870,14 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                       });
                     },
                   ),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: visiteFiltrate.isEmpty
+                      ? null
+                      : esportaExcelVisiteMediche,
+                  icon: const Icon(Icons.table_chart_rounded),
+                  label: Text('Export Excel (${visiteFiltrate.length})'),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(

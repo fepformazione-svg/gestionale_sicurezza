@@ -1814,7 +1814,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               discente: d,
               visiteMediche: visiteMediche,
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 10),
             const Text(
               'Storico formativo',
               style: TextStyle(
@@ -1823,10 +1823,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 color: Color(0xFF111827),
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Wrap(
               spacing: 14,
-              runSpacing: 14,
+              runSpacing: 10,
               children: [
                 Tooltip(
                   message: eliminazioneCorsiInCorso
@@ -1945,7 +1945,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Row(
               children: [
@@ -2091,7 +2091,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ],
             ),
 
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -2466,7 +2466,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
               ],
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
 
             Expanded(
               child: Container(
@@ -3505,9 +3505,13 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
   }
 
   void _apriGestioneVisiteMediche(BuildContext context) {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const VisiteMedichePage()));
+    final ricercaDiscente = '${discente.cognome} ${discente.nome}'.trim();
+
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => VisiteMedichePage(ricercaIniziale: ricercaDiscente),
+      ),
+    );
   }
 
   @override
@@ -3699,8 +3703,8 @@ class _StoricoKpiCard extends StatelessWidget {
       opacity: disabilitato ? 0.45 : 1,
       child: Container(
         width: 170,
-        height: 120,
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        height: 96,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: disabilitato
               ? Colors.white
@@ -3736,11 +3740,11 @@ class _StoricoKpiCard extends StatelessWidget {
                 letterSpacing: 0.6,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 8),
             Text(
               valore,
               style: TextStyle(
-                fontSize: 28,
+                fontSize: 26,
                 fontWeight: FontWeight.w900,
                 color: colore,
               ),

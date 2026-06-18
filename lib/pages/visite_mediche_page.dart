@@ -13,7 +13,9 @@ import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
 
 class VisiteMedichePage extends StatefulWidget {
-  const VisiteMedichePage({super.key});
+  final String? ricercaIniziale;
+
+  const VisiteMedichePage({super.key, this.ricercaIniziale});
 
   @override
   State<VisiteMedichePage> createState() => _VisiteMedichePageState();
@@ -36,6 +38,12 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
   @override
   void initState() {
     super.initState();
+
+    final ricercaIniziale = widget.ricercaIniziale?.trim() ?? '';
+    if (ricercaIniziale.isNotEmpty) {
+      _cercaController.text = ricercaIniziale;
+    }
+
     caricaVisite();
   }
 

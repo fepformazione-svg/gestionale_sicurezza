@@ -3363,6 +3363,146 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
     }
   }
 
+  void _apriElencoVisiteMediche(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(
+                Icons.medical_information_outlined,
+                color: Color(0xFF2563EB),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Visite mediche - ${discente.nome} ${discente.cognome}',
+                  style: const TextStyle(fontWeight: FontWeight.w800),
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: 820,
+            child: visiteMediche.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 18),
+                    child: Text(
+                      'Nessuna visita medica registrata per questo discente.',
+                      style: TextStyle(
+                        fontSize: 15,
+                        color: Color(0xFF6B7280),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  )
+                : SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: visiteMediche.map((visita) {
+                        final stato = _statoVisitaMedica(
+                          true,
+                          visita['data_scadenza']?.toString(),
+                        );
+
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: const Color(0xFFE5E7EB)),
+                          ),
+                          child: Wrap(
+                            runSpacing: 12,
+                            spacing: 22,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              _InfoItem(
+                                label: 'Data visita',
+                                value: valore(
+                                  visita['data_visita']?.toString(),
+                                ),
+                              ),
+                              _InfoItem(
+                                label: 'Scadenza',
+                                value: valore(
+                                  visita['data_scadenza']?.toString(),
+                                ),
+                              ),
+                              _InfoItem(
+                                label: 'Medico/struttura',
+                                value: valore(
+                                  visita['medico_struttura_denominazione']
+                                      ?.toString(),
+                                ),
+                              ),
+                              _InfoItem(
+                                label: 'Esito',
+                                value: valore(visita['esito']?.toString()),
+                              ),
+                              _InfoItem(
+                                label: 'Note',
+                                value: valore(visita['note']?.toString()),
+                              ),
+                              SizedBox(
+                                width: 160,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'STATO',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF6B7280),
+                                        letterSpacing: 0.6,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: _sfondoStato(stato),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        stato,
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                          color: _coloreStato(stato),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final ultimaVisita = visiteMediche.isNotEmpty ? visiteMediche.first : null;
@@ -3431,6 +3571,38 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
                       fontWeight: FontWeight.w800,
                       color: _coloreStato(statoVisita),
                     ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          SizedBox(
+            width: 220,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'AZIONI',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6B7280),
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                OutlinedButton.icon(
+                  onPressed: () => _apriElencoVisiteMediche(context),
+                  icon: const Icon(Icons.list_alt_outlined, size: 18),
+                  label: Text('Vedi visite (${visiteMediche.length})'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: const Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFFBFDBFE)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 12,
+                    ),
+                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
                   ),
                 ),
               ],

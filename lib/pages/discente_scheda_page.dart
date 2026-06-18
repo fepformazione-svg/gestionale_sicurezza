@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'visite_mediche_page.dart';
 
 import '../models/discente.dart';
 import '../services/database_service.dart';
@@ -3263,14 +3264,14 @@ class _AnagraficaCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE5E7EB)),
       ),
       child: Wrap(
-        runSpacing: 14,
+        runSpacing: 10,
         spacing: 28,
         children: [
           _InfoItem(label: 'Nome', value: valore(discente.nome)),
@@ -3503,6 +3504,12 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
     );
   }
 
+  void _apriGestioneVisiteMediche(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const VisiteMedichePage()));
+  }
+
   @override
   Widget build(BuildContext context) {
     final ultimaVisita = visiteMediche.isNotEmpty ? visiteMediche.first : null;
@@ -3577,7 +3584,7 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
             ),
           ),
           SizedBox(
-            width: 220,
+            width: 390,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -3591,19 +3598,39 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 6),
-                OutlinedButton.icon(
-                  onPressed: () => _apriElencoVisiteMediche(context),
-                  icon: const Icon(Icons.list_alt_outlined, size: 18),
-                  label: Text('Vedi visite (${visiteMediche.length})'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF2563EB),
-                    side: const BorderSide(color: Color(0xFFBFDBFE)),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  children: [
+                    OutlinedButton.icon(
+                      onPressed: () => _apriElencoVisiteMediche(context),
+                      icon: const Icon(Icons.list_alt_outlined, size: 18),
+                      label: Text('Vedi visite (${visiteMediche.length})'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF2563EB),
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
                     ),
-                    textStyle: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
+                    OutlinedButton.icon(
+                      onPressed: () => _apriGestioneVisiteMediche(context),
+                      icon: const Icon(Icons.open_in_new_outlined, size: 18),
+                      label: const Text('Gestisci visite'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF0F766E),
+                        side: const BorderSide(color: Color(0xFF99F6E4)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 9,
+                        ),
+                        textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

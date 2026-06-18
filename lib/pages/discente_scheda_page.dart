@@ -1682,8 +1682,6 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
       await DatabaseService.instance.deleteStoriciByIds(idsDaEliminare);
 
-      await caricaStorico();
-
       applicaFiltroStorico();
 
       if (!mounted) return;
@@ -1813,6 +1811,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             _SorveglianzaSanitariaCard(
               discente: d,
               visiteMediche: visiteMediche,
+              onAggiornaDati: caricaStorico,
             ),
             const SizedBox(height: 10),
             const Text(
@@ -3295,10 +3294,12 @@ class _AnagraficaCard extends StatelessWidget {
 class _SorveglianzaSanitariaCard extends StatelessWidget {
   final Discente discente;
   final List<Map<String, dynamic>> visiteMediche;
+  final Future<void> Function()? onAggiornaDati;
 
   const _SorveglianzaSanitariaCard({
     required this.discente,
     required this.visiteMediche,
+    this.onAggiornaDati,
   });
 
   String valore(String? v) {
@@ -3504,14 +3505,16 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
     );
   }
 
-  void _apriGestioneVisiteMediche(BuildContext context) {
+  Future<void> _apriGestioneVisiteMediche(BuildContext context) async {
     final ricercaDiscente = '${discente.cognome} ${discente.nome}'.trim();
 
-    Navigator.of(context).push(
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => VisiteMedichePage(ricercaIniziale: ricercaDiscente),
       ),
     );
+
+    await onAggiornaDati?.call();
   }
 
   @override

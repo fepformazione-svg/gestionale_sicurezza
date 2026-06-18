@@ -136,6 +136,24 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     );
   }
 
+  Widget cellaTestoVisite(
+    String testo,
+    double larghezza, {
+    bool centro = false,
+  }) {
+    return SizedBox(
+      width: larghezza,
+      child: Align(
+        alignment: centro ? Alignment.center : Alignment.centerLeft,
+        child: Text(
+          testo,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontSize: 14, color: Color(0xFF1F2937)),
+        ),
+      ),
+    );
+  }
+
   DateTime? parseDataItaliana(String valore) {
     final testo = valore.trim();
 
@@ -706,6 +724,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
 
     final excel = xls.Excel.createExcel();
     final sheet = excel['Visite mediche'];
+    excel.delete('Sheet1');
 
     final ora = DateTime.now();
     final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
@@ -1375,43 +1394,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                     interactive: true,
                                     child: SingleChildScrollView(
                                       controller: visiteVerticalController,
-                                      child: DataTable(
-                                        headingRowHeight: 0,
-                                        columnSpacing: 18,
-                                        horizontalMargin: 14,
-                                        columns: const [
-                                          DataColumn(
-                                            label: SizedBox(width: 170),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 210),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 80),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 105),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 105),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 104),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 110),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 170),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 220),
-                                          ),
-                                          DataColumn(
-                                            label: SizedBox(width: 86),
-                                          ),
-                                        ],
-                                        rows: visiteFiltrate.map((visita) {
+                                      child: Column(
+                                        children: visiteFiltrate.map((visita) {
                                           final nome = testoValore(
                                             visita['discente_nome'],
                                           );
@@ -1422,67 +1406,53 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                             visita['data_scadenza'],
                                           );
 
-                                          return DataRow(
-                                            cells: [
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 170,
-                                                  child: Text(
-                                                    '$cognome $nome',
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                          return Container(
+                                            height: 52,
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                            ),
+                                            decoration: const BoxDecoration(
+                                              border: Border(
+                                                bottom: BorderSide(
+                                                  color: Color(0xFFE2E8F0),
                                                 ),
                                               ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 210,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['medico_struttura_denominazione'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                            ),
+                                            child: Row(
+                                              children: [
+                                                cellaTestoVisite(
+                                                  '$cognome $nome',
+                                                  170,
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 80,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['medico_struttura_tipo'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(
+                                                    visita['medico_struttura_denominazione'],
                                                   ),
+                                                  210,
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 105,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['data_visita'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(
+                                                    visita['medico_struttura_tipo'],
                                                   ),
+                                                  80,
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 105,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['data_scadenza'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(
+                                                    visita['data_visita'],
                                                   ),
+                                                  105,
                                                 ),
-                                              ),
-                                              DataCell(
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(
+                                                    visita['data_scadenza'],
+                                                  ),
+                                                  105,
+                                                ),
+                                                const SizedBox(width: 18),
                                                 SizedBox(
                                                   width: 104,
                                                   child: Center(
@@ -1491,42 +1461,24 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                                     ),
                                                   ),
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 110,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['esito'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(visita['esito']),
+                                                  110,
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 170,
-                                                  child: Text(
-                                                    testoValore(
-                                                      visita['giudizio'],
-                                                    ),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(
+                                                    visita['giudizio'],
                                                   ),
+                                                  170,
                                                 ),
-                                              ),
-                                              DataCell(
-                                                SizedBox(
-                                                  width: 220,
-                                                  child: Text(
-                                                    testoValore(visita['note']),
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
+                                                const SizedBox(width: 18),
+                                                cellaTestoVisite(
+                                                  testoValore(visita['note']),
+                                                  220,
                                                 ),
-                                              ),
-                                              DataCell(
+                                                const SizedBox(width: 18),
                                                 SizedBox(
                                                   width: 86,
                                                   child: Row(
@@ -1579,8 +1531,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                                                     ],
                                                   ),
                                                 ),
-                                              ),
-                                            ],
+                                              ],
+                                            ),
                                           );
                                         }).toList(),
                                       ),

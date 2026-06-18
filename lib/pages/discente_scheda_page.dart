@@ -8,6 +8,7 @@ import 'package:open_file/open_file.dart';
 
 import '../models/discente.dart';
 import '../services/database_service.dart';
+import '../services/app_database.dart';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -26,6 +27,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   bool eliminazioneCorsiInCorso = false;
   List<Map<String, dynamic>> storico = [];
   List<Map<String, dynamic>> storicoFiltrato = [];
+  List<Map<String, dynamic>> visiteMediche = [];
 
   String filtroStorico = 'tutti';
 
@@ -395,18 +397,21 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       setState(() {
         storico = [];
         storicoFiltrato = [];
+        visiteMediche = [];
         caricamento = false;
       });
       return;
     }
 
     final dati = await DatabaseService.instance.getStoricoDiscente(id);
+    final visite = await AppDatabase.instance.getVisiteMedicheByDiscente(id);
 
     if (!mounted) return;
 
     setState(() {
       storico = dati;
       storicoFiltrato = List.from(dati);
+      visiteMediche = visite;
       caricamento = false;
     });
   }
@@ -533,6 +538,56 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     }
 
     return DateTime.tryParse(testo) ?? DateTime(1900);
+  }
+
+  Map<String, dynamic>? ultimaVisitaMedica() {
+    if (visiteMediche.isEmpty) return null;
+    return visiteMediche.first;
+  }
+
+  String statoVisitaMedicaScheda(dynamic valoreScadenza) {
+    final testo = valoreScadenza?.toString().trim() ?? '';
+
+    if (testo.isEmpty) return 'NON DISP.';
+
+    final parti = testo.split('/');
+    DateTime? data;
+
+    if (parti.length == 3) {
+      final giorno = int.tryParse(parti[0]);
+      final mese = int.tryParse(parti[1]);
+      final anno = int.tryParse(parti[2]);
+
+      if (giorno != null && mese != null && anno != null) {
+        data = DateTime(anno, mese, giorno);
+      }
+    } else {
+      data = DateTime.tryParse(testo);
+    }
+
+    if (data == null) return 'NON DISP.';
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final scadenzaPulita = DateTime(data.year, data.month, data.day);
+    final giorni = scadenzaPulita.difference(oggiPulito).inDays;
+
+    if (giorni < 0) return 'SCADUTA';
+    if (giorni <= 60) return 'IN SCADENZA';
+    return 'VALIDA';
+  }
+
+  Color coloreStatoVisitaScheda(String stato) {
+    switch (stato) {
+      case 'VALIDA':
+        return const Color(0xFF16A34A);
+      case 'IN SCADENZA':
+        return const Color(0xFFF59E0B);
+      case 'SCADUTA':
+        return const Color(0xFFDC2626);
+      default:
+        return const Color(0xFF64748B);
+    }
   }
 
   void ordinaStorico(String colonna) {
@@ -1754,7 +1809,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           children: [
             _AnagraficaCard(discente: d),
             const SizedBox(height: 12),
-            _SorveglianzaSanitariaCard(discente: d),
+            _SorveglianzaSanitariaCard(
+              discente: d,
+              visiteMediche: visiteMediche,
+            ),
             const SizedBox(height: 14),
             const Text(
               'Storico formativo',
@@ -3235,8 +3293,12 @@ class _AnagraficaCard extends StatelessWidget {
 
 class _SorveglianzaSanitariaCard extends StatelessWidget {
   final Discente discente;
+  final List<Map<String, dynamic>> visiteMediche;
 
-  const _SorveglianzaSanitariaCard({required this.discente});
+  const _SorveglianzaSanitariaCard({
+    required this.discente,
+    required this.visiteMediche,
+  });
 
   String valore(String? v) {
     final testo = v?.trim() ?? '';
@@ -3303,11 +3365,12 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final visitaSvolta = discente.visitaMedicaSvolta == 1;
+    final ultimaVisita = visiteMediche.isNotEmpty ? visiteMediche.first : null;
+    final visitaSvolta = ultimaVisita != null;
 
     final statoVisita = _statoVisitaMedica(
       visitaSvolta,
-      discente.scadenzaVisitaMedica,
+      ultimaVisita?['data_scadenza']?.toString(),
     );
 
     return Container(
@@ -3325,11 +3388,17 @@ class _SorveglianzaSanitariaCard extends StatelessWidget {
           _InfoItem(label: 'Visita medica', value: visitaSvolta ? 'Sì' : 'No'),
           _InfoItem(
             label: 'Data visita',
-            value: valore(discente.dataVisitaMedica),
+            value: valore(ultimaVisita?['data_visita']?.toString()),
           ),
           _InfoItem(
             label: 'Scadenza visita',
-            value: valore(discente.scadenzaVisitaMedica),
+            value: valore(ultimaVisita?['data_scadenza']?.toString()),
+          ),
+          _InfoItem(
+            label: 'Medico/struttura',
+            value: valore(
+              ultimaVisita?['medico_struttura_denominazione']?.toString(),
+            ),
           ),
           SizedBox(
             width: 220,

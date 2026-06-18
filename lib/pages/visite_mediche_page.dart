@@ -5,8 +5,11 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class VisiteMedichePage extends StatefulWidget {
   const VisiteMedichePage({super.key});
@@ -818,6 +821,157 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     );
   }
 
+  Future<void> esportaPdfVisiteMediche() async {
+    if (visiteFiltrate.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessuna visita medica da esportare.')),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+    final intestazione = await caricaIntestazioneAziendaPdf();
+
+    final ora = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+    final timestampFile = DateFormat('yyyy_MM_dd_HHmm').format(ora);
+
+    final ricercaAttiva = _cercaController.text.trim().isNotEmpty;
+    final filtroAttivo = filtroStatoVisita != 'Tutte';
+    final vistaFiltrata = ricercaAttiva || filtroAttivo;
+
+    final infoExport = vistaFiltrata
+        ? 'Export visite mediche filtrato - ${visiteFiltrate.length} record - $dataOra'
+        : 'Export visite mediche - ${visiteFiltrate.length} record - $dataOra';
+
+    final righe = visiteFiltrate.map((visita) {
+      final nome = testoValore(visita['discente_nome']);
+      final cognome = testoValore(visita['discente_cognome']);
+      final discente = '$cognome $nome'.trim();
+      final stato = statoVisitaMedica(visita['data_scadenza']);
+
+      return [
+        discente,
+        testoValore(visita['medico_struttura_denominazione']),
+        testoValore(visita['medico_struttura_tipo']),
+        testoValore(visita['data_visita']),
+        testoValore(visita['data_scadenza']),
+        stato,
+        testoValore(visita['esito']),
+        testoValore(visita['giudizio']),
+        testoValore(visita['note']),
+      ];
+    }).toList();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAziendaPdfWidget(intestazione),
+            pw.SizedBox(height: 8),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(dataOra, style: const pw.TextStyle(fontSize: 9)),
+            ),
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'VISITE MEDICHE',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              infoExport,
+              style: pw.TextStyle(
+                fontSize: 10,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey700,
+              ),
+            ),
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Discente',
+                'Medico / Struttura',
+                'Tipo',
+                'Data visita',
+                'Scadenza',
+                'Stato',
+                'Esito',
+                'Giudizio',
+                'Note',
+              ],
+              data: righe,
+              border: pw.TableBorder.all(
+                color: PdfColors.blueGrey100,
+                width: 0.5,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              headerStyle: pw.TextStyle(
+                color: PdfColors.white,
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.6),
+                1: pw.FlexColumnWidth(1.9),
+                2: pw.FlexColumnWidth(0.9),
+                3: pw.FlexColumnWidth(0.9),
+                4: pw.FlexColumnWidth(0.9),
+                5: pw.FlexColumnWidth(1.1),
+                6: pw.FlexColumnWidth(1.0),
+                7: pw.FlexColumnWidth(1.7),
+                8: pw.FlexColumnWidth(2.0),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final nomeFile = vistaFiltrata
+        ? 'visite_mediche_export_filtrato_$timestampFile.pdf'
+        : 'visite_mediche_export_$timestampFile.pdf';
+
+    final file = File('${directory.path}/$nomeFile');
+    await file.writeAsBytes(await pdf.save(), flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          vistaFiltrata
+              ? 'Export PDF filtrato creato: ${visiteFiltrate.length} visite.'
+              : 'Export PDF creato: ${visiteFiltrate.length} visite.',
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -878,6 +1032,14 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                       : esportaExcelVisiteMediche,
                   icon: const Icon(Icons.table_chart_rounded),
                   label: Text('Export Excel (${visiteFiltrate.length})'),
+                ),
+                const SizedBox(width: 12),
+                ElevatedButton.icon(
+                  onPressed: visiteFiltrate.isEmpty
+                      ? null
+                      : esportaPdfVisiteMediche,
+                  icon: const Icon(Icons.picture_as_pdf_rounded),
+                  label: Text('Export PDF (${visiteFiltrate.length})'),
                 ),
                 const SizedBox(width: 12),
                 ElevatedButton.icon(

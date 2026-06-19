@@ -858,6 +858,77 @@ class AppDatabase {
     return db.delete('medici_strutture', where: 'id = ?', whereArgs: [id]);
   }
 
+  Future<List<Map<String, dynamic>>> getDocenti() async {
+    final db = await database;
+
+    return db.query('docenti', orderBy: 'cognome ASC, nome ASC');
+  }
+
+  Future<int> inserisciDocente({
+    required String nome,
+    required String cognome,
+    String? telefono,
+    String? email,
+    String? codiceFiscale,
+    String? qualifica,
+    String? note,
+    int attivo = 1,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.insert('docenti', {
+      'nome': nome.trim(),
+      'cognome': cognome.trim(),
+      'telefono': telefono?.trim(),
+      'email': email?.trim(),
+      'codice_fiscale': codiceFiscale?.trim(),
+      'qualifica': qualifica?.trim(),
+      'note': note?.trim(),
+      'attivo': attivo,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  Future<int> aggiornaDocente({
+    required int id,
+    required String nome,
+    required String cognome,
+    String? telefono,
+    String? email,
+    String? codiceFiscale,
+    String? qualifica,
+    String? note,
+    int attivo = 1,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'docenti',
+      {
+        'nome': nome.trim(),
+        'cognome': cognome.trim(),
+        'telefono': telefono?.trim(),
+        'email': email?.trim(),
+        'codice_fiscale': codiceFiscale?.trim(),
+        'qualifica': qualifica?.trim(),
+        'note': note?.trim(),
+        'attivo': attivo,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> eliminaDocente(int id) async {
+    final db = await database;
+
+    return db.delete('docenti', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<Map<String, dynamic>?> getDiscenteConImpresa(int idDiscente) async {
     final db = await database;
 

@@ -4,6 +4,7 @@ import 'medici_strutture_page.dart';
 import 'visite_mediche_page.dart';
 import 'docenti_page.dart';
 import 'aule_sedi_page.dart';
+import 'attrezzature_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -78,6 +79,18 @@ class ImpostazioniPage extends StatelessWidget {
               Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const AuleSediPage()));
+            },
+          ),
+          SizedBox(height: 12),
+          _SezioneImpostazioniCard(
+            icona: Icons.construction_rounded,
+            titolo: 'Attrezzature',
+            descrizione:
+                'Gestisci attrezzature, materiali, DPI e dotazioni usate nei corsi.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const AttrezzaturePage()),
+              );
             },
           ),
           SizedBox(height: 12),

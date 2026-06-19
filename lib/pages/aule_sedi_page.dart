@@ -33,6 +33,193 @@ class _AuleSediPageState extends State<AuleSediPage> {
     });
   }
 
+  Future<void> apriDialogNuovaAulaSede() async {
+    final formKey = GlobalKey<FormState>();
+
+    final denominazioneController = TextEditingController();
+    final indirizzoController = TextEditingController();
+    final comuneController = TextEditingController();
+    final capienzaController = TextEditingController();
+    final noteController = TextEditingController();
+
+    String tipoSelezionato = 'Aula';
+    bool attiva = true;
+
+    final salvata = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Nuova aula / sede formativa'),
+              content: SizedBox(
+                width: 520,
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: denominazioneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Denominazione *',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Inserisci la denominazione';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        DropdownButtonFormField<String>(
+                          initialValue: tipoSelezionato,
+                          decoration: const InputDecoration(
+                            labelText: 'Tipo',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: const [
+                            DropdownMenuItem(
+                              value: 'Aula',
+                              child: Text('Aula'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Campo prove',
+                              child: Text('Campo prove'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Sede cliente',
+                              child: Text('Sede cliente'),
+                            ),
+                            DropdownMenuItem(
+                              value: 'Altro',
+                              child: Text('Altro'),
+                            ),
+                          ],
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setDialogState(() => tipoSelezionato = value);
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: indirizzoController,
+                          decoration: const InputDecoration(
+                            labelText: 'Indirizzo',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: comuneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Comune',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: capienzaController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                            labelText: 'Capienza',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (value) {
+                            final testo = value?.trim() ?? '';
+                            if (testo.isEmpty) return null;
+
+                            final numero = int.tryParse(testo);
+                            if (numero == null || numero < 0) {
+                              return 'Inserisci un numero valido';
+                            }
+
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 14),
+                        TextFormField(
+                          controller: noteController,
+                          maxLines: 3,
+                          decoration: const InputDecoration(
+                            labelText: 'Note',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Voce attiva'),
+                          value: attiva,
+                          onChanged: (value) {
+                            setDialogState(() => attiva = value);
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva'),
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) return;
+
+                    final capienzaTesto = capienzaController.text.trim();
+
+                    final aulaSede = AulaSede(
+                      denominazione: denominazioneController.text.trim(),
+                      tipo: tipoSelezionato,
+                      indirizzo: indirizzoController.text.trim(),
+                      comune: comuneController.text.trim(),
+                      capienza: capienzaTesto.isEmpty
+                          ? null
+                          : int.tryParse(capienzaTesto),
+                      note: noteController.text.trim(),
+                      attiva: attiva,
+                    );
+
+                    await AppDatabase.instance.inserisciAulaSede(aulaSede);
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    denominazioneController.dispose();
+    indirizzoController.dispose();
+    comuneController.dispose();
+    capienzaController.dispose();
+    noteController.dispose();
+
+    if (salvata == true) {
+      await caricaAuleSedi();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Aula / sede formativa salvata.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   String testoCapienza(AulaSede aulaSede) {
     if (aulaSede.capienza == null) return '-';
     if (aulaSede.capienza! <= 0) return '-';
@@ -99,6 +286,12 @@ class _AuleSediPageState extends State<AuleSediPage> {
                   ),
                 ),
                 ElevatedButton.icon(
+                  onPressed: apriDialogNuovaAulaSede,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nuova voce'),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
                   onPressed: caricaAuleSedi,
                   icon: const Icon(Icons.refresh),
                   label: const Text('Aggiorna'),

@@ -15,6 +15,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
   bool caricamento = true;
 
   final cercaController = TextEditingController();
+  bool soloAttive = true;
 
   @override
   void initState() {
@@ -44,9 +45,13 @@ class _AuleSediPageState extends State<AuleSediPage> {
   List<AulaSede> get auleSediFiltrate {
     final ricerca = cercaController.text.trim().toLowerCase();
 
-    if (ricerca.isEmpty) return auleSedi;
+    final filtratePerStato = soloAttive
+        ? auleSedi.where((aulaSede) => aulaSede.attiva).toList()
+        : auleSedi;
 
-    return auleSedi.where((aulaSede) {
+    if (ricerca.isEmpty) return filtratePerStato;
+
+    return filtratePerStato.where((aulaSede) {
       final stato = aulaSede.attiva ? 'attiva' : 'non attiva';
       final capienza = aulaSede.capienza?.toString() ?? '';
 
@@ -575,6 +580,24 @@ class _AuleSediPageState extends State<AuleSediPage> {
                   ),
                 ),
                 const SizedBox(width: 14),
+                FilterChip(
+                  selected: soloAttive,
+                  label: const Text('Solo attive'),
+                  avatar: const Icon(Icons.check_circle_outline, size: 18),
+                  onSelected: (_) {
+                    setState(() => soloAttive = true);
+                  },
+                ),
+                const SizedBox(width: 8),
+                FilterChip(
+                  selected: !soloAttive,
+                  label: const Text('Tutte'),
+                  avatar: const Icon(Icons.list_alt_rounded, size: 18),
+                  onSelected: (_) {
+                    setState(() => soloAttive = false);
+                  },
+                ),
+                const SizedBox(width: 14),
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 14,
@@ -587,7 +610,9 @@ class _AuleSediPageState extends State<AuleSediPage> {
                   ),
                   child: Text(
                     cercaController.text.trim().isEmpty
-                        ? '${auleSedi.length} voci presenti'
+                        ? soloAttive
+                              ? '${auleSediFiltrate.length} voci attive'
+                              : '${auleSediFiltrate.length} voci presenti'
                         : '${auleSediFiltrate.length} risultati',
                     style: TextStyle(
                       color: Colors.blueGrey.shade800,

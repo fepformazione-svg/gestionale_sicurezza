@@ -2,6 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+
+import '../utils/pdf_azienda_helper.dart';
 
 import 'dart:io';
 
@@ -404,6 +408,158 @@ class _AuleSediPageState extends State<AuleSediPage> {
     );
   }
 
+  Future<void> esportaPdfAuleSedi() async {
+    final datiExport = auleSediFiltrate;
+
+    if (datiExport.isEmpty) return;
+
+    final pdf = pw.Document();
+    final now = DateTime.now();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final dataExport =
+        '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+        '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+    final ricerca = cercaController.text.trim();
+
+    final descrizioneFiltro = [
+      soloAttive ? 'Solo attive' : 'Tutte',
+      if (ricerca.isNotEmpty) 'Ricerca: "$ricerca"',
+      '${datiExport.length} voci',
+      'Export: $dataExport',
+    ].join(' - ');
+
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+    final intestazioneAzienda = intestazioneAziendaPdfWidget(intestazionePdf);
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAzienda,
+            pw.SizedBox(height: 10),
+            pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                dataExport,
+                style: pw.TextStyle(fontSize: 9, color: PdfColors.blueGrey600),
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'AULE / SEDI FORMATIVE',
+              style: pw.TextStyle(
+                fontSize: 20,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              descrizioneFiltro,
+              style: pw.TextStyle(fontSize: 10, color: PdfColors.blueGrey700),
+            ),
+            pw.SizedBox(height: 16),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Denominazione',
+                'Tipo',
+                'Indirizzo',
+                'Comune',
+                'Capienza',
+                'Stato',
+                'Note',
+              ],
+              data: datiExport.map((aulaSede) {
+                return [
+                  aulaSede.denominazione,
+                  aulaSede.tipo,
+                  aulaSede.indirizzo,
+                  aulaSede.comune,
+                  aulaSede.capienza?.toString() ?? '',
+                  aulaSede.attiva ? 'Attiva' : 'Non attiva',
+                  aulaSede.note,
+                ];
+              }).toList(),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              headerStyle: pw.TextStyle(
+                color: PdfColors.white,
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 9,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 8),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2.2),
+                1: const pw.FlexColumnWidth(1.2),
+                2: const pw.FlexColumnWidth(2.4),
+                3: const pw.FlexColumnWidth(1.4),
+                4: const pw.FlexColumnWidth(0.8),
+                5: const pw.FlexColumnWidth(1.0),
+                6: const pw.FlexColumnWidth(2.4),
+              },
+              rowDecoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: PdfColors.blueGrey100,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${directory.path}/Gestionale Sicurezza/Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final nomeFile =
+        'aule_sedi_export_${soloAttive ? 'attive' : 'tutte'}_'
+        '${now.year}_${dueCifre(now.month)}_${dueCifre(now.day)}_'
+        '${dueCifre(now.hour)}${dueCifre(now.minute)}.pdf';
+
+    final file = File('${exportDir.path}/$nomeFile');
+
+    await file.writeAsBytes(await pdf.save(), flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Export PDF creato: ${datiExport.length} voci.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Future<void> apriDialogModificaAulaSede(AulaSede aulaSede) async {
     final formKey = GlobalKey<FormState>();
 
@@ -674,6 +830,14 @@ class _AuleSediPageState extends State<AuleSediPage> {
                       : esportaExcelAuleSedi,
                   icon: const Icon(Icons.table_chart),
                   label: Text('Esporta Excel (${auleSediFiltrate.length})'),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: auleSediFiltrate.isEmpty
+                      ? null
+                      : esportaPdfAuleSedi,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: Text('Esporta PDF (${auleSediFiltrate.length})'),
                 ),
                 const SizedBox(width: 10),
                 OutlinedButton.icon(

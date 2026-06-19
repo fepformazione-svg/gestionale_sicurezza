@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/attrezzatura.dart';
 import '../services/app_database.dart';
@@ -135,6 +141,126 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     );
   }
 
+  Future<void> esportaExcelAttrezzature() async {
+    final dati = attrezzatureFiltrate;
+
+    if (dati.isEmpty) {
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Attrezzature'];
+
+    excel.setDefaultSheet('Attrezzature');
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final ora = DateTime.now();
+    final dataOra =
+        '${dueCifre(ora.day)}/${dueCifre(ora.month)}/${ora.year} '
+        '${dueCifre(ora.hour)}:${dueCifre(ora.minute)}';
+
+    final ricerca = cercaController.text.trim();
+
+    final info = [
+      soloAttive ? 'Solo attive' : 'Tutte',
+      if (ricerca.isNotEmpty) 'Ricerca: "$ricerca"',
+      '${dati.length} ${dati.length == 1 ? 'attrezzatura' : 'attrezzature'}',
+      'Esportazione del $dataOra',
+    ].join(' - ');
+
+    sheet.cell(xls.CellIndex.indexByString('A1')).value = xls.TextCellValue(
+      info,
+    );
+
+    final intestazioni = [
+      'Denominazione',
+      'Categoria',
+      'Codice',
+      'Descrizione',
+      'Quantità',
+      'Unità',
+      'Stato',
+      'Note',
+    ];
+
+    for (var i = 0; i < intestazioni.length; i++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 1),
+      );
+      cella.value = xls.TextCellValue(intestazioni[i]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var i = 0; i < dati.length; i++) {
+      final attrezzatura = dati[i];
+      final rowIndex = i + 2;
+
+      final valori = [
+        attrezzatura.denominazione,
+        attrezzatura.categoria,
+        attrezzatura.codice,
+        attrezzatura.descrizione,
+        attrezzatura.quantita.toString(),
+        attrezzatura.unitaMisura,
+        attrezzatura.attiva ? 'ATTIVA' : 'NON ATTIVA',
+        attrezzatura.note,
+      ];
+
+      for (var col = 0; col < valori.length; col++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: col,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[col],
+        );
+      }
+    }
+
+    sheet.setColumnWidth(0, 32);
+    sheet.setColumnWidth(1, 18);
+    sheet.setColumnWidth(2, 16);
+    sheet.setColumnWidth(3, 38);
+    sheet.setColumnWidth(4, 12);
+    sheet.setColumnWidth(5, 12);
+    sheet.setColumnWidth(6, 14);
+    sheet.setColumnWidth(7, 32);
+
+    final bytes = excel.encode();
+    if (bytes == null) {
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFiltro = ricerca.isNotEmpty ? '_filtrato' : '';
+    final nomeFile =
+        'attrezzature_export$nomeFiltro'
+        '_${ora.year}_${dueCifre(ora.month)}_${dueCifre(ora.day)}'
+        '_${dueCifre(ora.hour)}h${dueCifre(ora.minute)}.xlsx';
+
+    final file = File('${directory.path}/$nomeFile');
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export Excel completato: ${dati.length} '
+          '${dati.length == 1 ? 'attrezzatura esportata' : 'attrezzature esportate'}.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
   void azzeraRicerca() {
     cercaController.clear();
 
@@ -260,6 +386,13 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                       soloAttive = false;
                                     });
                                   },
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: filtrate.isEmpty
+                                      ? null
+                                      : esportaExcelAttrezzature,
+                                  icon: const Icon(Icons.table_chart_rounded),
+                                  label: Text('Excel (${filtrate.length})'),
                                 ),
                               ],
                             ),

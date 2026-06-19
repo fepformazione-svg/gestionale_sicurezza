@@ -35,21 +35,32 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
     });
   }
 
-  Future<void> mostraDialogNuovoEnte() async {
+  Future<void> mostraDialogEnte({EnteAttestato? ente}) async {
     final formKey = GlobalKey<FormState>();
+    final inModifica = ente != null;
 
-    final denominazioneController = TextEditingController();
-    final tipoController = TextEditingController(text: 'Ente');
-    final codiceAccreditamentoController = TextEditingController();
-    final referenteController = TextEditingController();
-    final telefonoController = TextEditingController();
-    final emailController = TextEditingController();
-    final pecController = TextEditingController();
-    final indirizzoController = TextEditingController();
-    final comuneController = TextEditingController();
-    final noteController = TextEditingController();
+    final denominazioneController = TextEditingController(
+      text: ente?.denominazione ?? '',
+    );
+    final tipoController = TextEditingController(text: ente?.tipo ?? 'Ente');
+    final codiceAccreditamentoController = TextEditingController(
+      text: ente?.codiceAccreditamento ?? '',
+    );
+    final referenteController = TextEditingController(
+      text: ente?.referente ?? '',
+    );
+    final telefonoController = TextEditingController(
+      text: ente?.telefono ?? '',
+    );
+    final emailController = TextEditingController(text: ente?.email ?? '');
+    final pecController = TextEditingController(text: ente?.pec ?? '');
+    final indirizzoController = TextEditingController(
+      text: ente?.indirizzo ?? '',
+    );
+    final comuneController = TextEditingController(text: ente?.comune ?? '');
+    final noteController = TextEditingController(text: ente?.note ?? '');
 
-    bool attivo = true;
+    bool attivo = ente?.attivo == 1 || ente == null;
 
     String? valoreOpzionale(TextEditingController controller) {
       final valore = controller.text.trim();
@@ -64,11 +75,15 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
           return StatefulBuilder(
             builder: (context, setDialogState) {
               return AlertDialog(
-                title: const Row(
+                title: Row(
                   children: [
-                    Icon(Icons.account_balance),
-                    SizedBox(width: 8),
-                    Text('Nuova voce ente attestati'),
+                    const Icon(Icons.account_balance),
+                    const SizedBox(width: 8),
+                    Text(
+                      inModifica
+                          ? 'Modifica ente attestati'
+                          : 'Nuova voce ente attestati',
+                    ),
                   ],
                 ),
                 content: SizedBox(
@@ -232,28 +247,52 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
 
       if (confermato != true) return;
 
-      await AppDatabase.instance.inserisciEnteAttestato(
-        denominazione: denominazioneController.text.trim(),
-        tipo: tipoController.text.trim().isEmpty
-            ? 'Ente'
-            : tipoController.text.trim(),
-        codiceAccreditamento: valoreOpzionale(codiceAccreditamentoController),
-        referente: valoreOpzionale(referenteController),
-        telefono: valoreOpzionale(telefonoController),
-        email: valoreOpzionale(emailController),
-        pec: valoreOpzionale(pecController),
-        indirizzo: valoreOpzionale(indirizzoController),
-        comune: valoreOpzionale(comuneController),
-        note: valoreOpzionale(noteController),
-        attivo: attivo ? 1 : 0,
-      );
+      if (inModifica) {
+        await AppDatabase.instance.aggiornaEnteAttestato(
+          id: ente.id!,
+          denominazione: denominazioneController.text.trim(),
+          tipo: tipoController.text.trim().isEmpty
+              ? 'Ente'
+              : tipoController.text.trim(),
+          codiceAccreditamento: valoreOpzionale(codiceAccreditamentoController),
+          referente: valoreOpzionale(referenteController),
+          telefono: valoreOpzionale(telefonoController),
+          email: valoreOpzionale(emailController),
+          pec: valoreOpzionale(pecController),
+          indirizzo: valoreOpzionale(indirizzoController),
+          comune: valoreOpzionale(comuneController),
+          note: valoreOpzionale(noteController),
+          attivo: attivo ? 1 : 0,
+        );
+      } else {
+        await AppDatabase.instance.inserisciEnteAttestato(
+          denominazione: denominazioneController.text.trim(),
+          tipo: tipoController.text.trim().isEmpty
+              ? 'Ente'
+              : tipoController.text.trim(),
+          codiceAccreditamento: valoreOpzionale(codiceAccreditamentoController),
+          referente: valoreOpzionale(referenteController),
+          telefono: valoreOpzionale(telefonoController),
+          email: valoreOpzionale(emailController),
+          pec: valoreOpzionale(pecController),
+          indirizzo: valoreOpzionale(indirizzoController),
+          comune: valoreOpzionale(comuneController),
+          note: valoreOpzionale(noteController),
+          attivo: attivo ? 1 : 0,
+        );
+      }
+
       await caricaEntiAttestati();
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Ente rilascio attestati salvato correttamente.'),
+        SnackBar(
+          content: Text(
+            inModifica
+                ? 'Ente rilascio attestati aggiornato correttamente.'
+                : 'Ente rilascio attestati salvato correttamente.',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -280,7 +319,7 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
           Padding(
             padding: const EdgeInsets.only(right: 12),
             child: FilledButton.icon(
-              onPressed: mostraDialogNuovoEnte,
+              onPressed: () => mostraDialogEnte(),
               icon: const Icon(Icons.add),
               label: const Text('Nuova voce'),
             ),
@@ -344,6 +383,7 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                               DataColumn(label: Text('Telefono')),
                               DataColumn(label: Text('Email')),
                               DataColumn(label: Text('Stato')),
+                              DataColumn(label: Text('Azioni')),
                             ],
                             rows: entiAttestati.map((ente) {
                               return DataRow(
@@ -425,6 +465,18 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                                               ? Colors.green[800]
                                               : Colors.grey[700],
                                         ),
+                                      ),
+                                    ),
+                                  ),
+                                  DataCell(
+                                    SizedBox(
+                                      width: 70,
+                                      child: IconButton(
+                                        tooltip:
+                                            'Modifica ente rilascio attestati',
+                                        onPressed: () =>
+                                            mostraDialogEnte(ente: ente),
+                                        icon: const Icon(Icons.edit),
                                       ),
                                     ),
                                   ),

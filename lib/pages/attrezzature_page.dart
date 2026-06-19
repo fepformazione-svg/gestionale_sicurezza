@@ -31,6 +31,27 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     });
   }
 
+  Future<void> apriDialogNuovaAttrezzatura() async {
+    final salvata = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _NuovaAttrezzaturaDialog(),
+    );
+
+    if (salvata != true) return;
+
+    await caricaAttrezzature();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Attrezzatura salvata correttamente.'),
+        backgroundColor: Color(0xFF16A34A),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -41,6 +62,16 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
         foregroundColor: const Color(0xFF111827),
         elevation: 0,
         surfaceTintColor: Colors.white,
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 16),
+            child: FilledButton.icon(
+              onPressed: apriDialogNuovaAttrezzatura,
+              icon: const Icon(Icons.add_rounded),
+              label: const Text('Nuova attrezzatura'),
+            ),
+          ),
+        ],
       ),
       body: Padding(
         padding: const EdgeInsets.all(24),
@@ -83,43 +114,48 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                             const SizedBox(height: 20),
                             Expanded(
                               child: SingleChildScrollView(
-                                child: DataTable(
-                                  headingRowColor:
-                                      WidgetStateProperty.all<Color>(
-                                        const Color(0xFFF1F5F9),
-                                      ),
-                                  columns: const [
-                                    DataColumn(label: Text('Denominazione')),
-                                    DataColumn(label: Text('Categoria')),
-                                    DataColumn(label: Text('Codice')),
-                                    DataColumn(label: Text('Quantità')),
-                                    DataColumn(label: Text('Unità')),
-                                    DataColumn(label: Text('Stato')),
-                                  ],
-                                  rows: attrezzature.map((attrezzatura) {
-                                    return DataRow(
-                                      cells: [
-                                        DataCell(
-                                          Text(attrezzatura.denominazione),
+                                scrollDirection: Axis.horizontal,
+                                child: SingleChildScrollView(
+                                  child: DataTable(
+                                    headingRowColor:
+                                        WidgetStateProperty.all<Color>(
+                                          const Color(0xFFF1F5F9),
                                         ),
-                                        DataCell(Text(attrezzatura.categoria)),
-                                        DataCell(Text(attrezzatura.codice)),
-                                        DataCell(
-                                          Text(
-                                            attrezzatura.quantita.toString(),
+                                    columns: const [
+                                      DataColumn(label: Text('Denominazione')),
+                                      DataColumn(label: Text('Categoria')),
+                                      DataColumn(label: Text('Codice')),
+                                      DataColumn(label: Text('Quantità')),
+                                      DataColumn(label: Text('Unità')),
+                                      DataColumn(label: Text('Stato')),
+                                    ],
+                                    rows: attrezzature.map((attrezzatura) {
+                                      return DataRow(
+                                        cells: [
+                                          DataCell(
+                                            Text(attrezzatura.denominazione),
                                           ),
-                                        ),
-                                        DataCell(
-                                          Text(attrezzatura.unitaMisura),
-                                        ),
-                                        DataCell(
-                                          _BadgeStatoAttrezzatura(
-                                            attiva: attrezzatura.attiva,
+                                          DataCell(
+                                            Text(attrezzatura.categoria),
                                           ),
-                                        ),
-                                      ],
-                                    );
-                                  }).toList(),
+                                          DataCell(Text(attrezzatura.codice)),
+                                          DataCell(
+                                            Text(
+                                              attrezzatura.quantita.toString(),
+                                            ),
+                                          ),
+                                          DataCell(
+                                            Text(attrezzatura.unitaMisura),
+                                          ),
+                                          DataCell(
+                                            _BadgeStatoAttrezzatura(
+                                              attiva: attrezzatura.attiva,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ),
                                 ),
                               ),
                             ),
@@ -128,6 +164,192 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                 ),
               ),
       ),
+    );
+  }
+}
+
+class _NuovaAttrezzaturaDialog extends StatefulWidget {
+  const _NuovaAttrezzaturaDialog();
+
+  @override
+  State<_NuovaAttrezzaturaDialog> createState() =>
+      _NuovaAttrezzaturaDialogState();
+}
+
+class _NuovaAttrezzaturaDialogState extends State<_NuovaAttrezzaturaDialog> {
+  final formKey = GlobalKey<FormState>();
+  final denominazioneController = TextEditingController();
+  final categoriaController = TextEditingController(text: 'Generica');
+  final codiceController = TextEditingController();
+  final descrizioneController = TextEditingController();
+  final quantitaController = TextEditingController(text: '1');
+  final unitaMisuraController = TextEditingController(text: 'pz');
+  final noteController = TextEditingController();
+
+  bool attiva = true;
+  bool salvataggio = false;
+
+  @override
+  void dispose() {
+    denominazioneController.dispose();
+    categoriaController.dispose();
+    codiceController.dispose();
+    descrizioneController.dispose();
+    quantitaController.dispose();
+    unitaMisuraController.dispose();
+    noteController.dispose();
+    super.dispose();
+  }
+
+  Future<void> salva() async {
+    if (!formKey.currentState!.validate()) return;
+
+    setState(() {
+      salvataggio = true;
+    });
+
+    final quantita = int.tryParse(quantitaController.text.trim()) ?? 1;
+
+    await AppDatabase.instance.inserisciAttrezzatura(
+      denominazione: denominazioneController.text,
+      categoria: categoriaController.text,
+      codice: codiceController.text,
+      descrizione: descrizioneController.text,
+      quantita: quantita <= 0 ? 1 : quantita,
+      unitaMisura: unitaMisuraController.text,
+      attiva: attiva ? 1 : 0,
+      note: noteController.text,
+    );
+
+    if (!mounted) return;
+
+    Navigator.of(context).pop(true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nuova attrezzatura'),
+      content: SizedBox(
+        width: 560,
+        child: Form(
+          key: formKey,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: denominazioneController,
+                  decoration: const InputDecoration(
+                    labelText: 'Denominazione *',
+                    border: OutlineInputBorder(),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.trim().isEmpty) {
+                      return 'Inserisci la denominazione';
+                    }
+
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: categoriaController,
+                  decoration: const InputDecoration(
+                    labelText: 'Categoria',
+                    hintText: 'Es. DPI, Antincendio, Ponteggi, Aula',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: codiceController,
+                  decoration: const InputDecoration(
+                    labelText: 'Codice',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: descrizioneController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Descrizione',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: quantitaController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Quantità',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextFormField(
+                        controller: unitaMisuraController,
+                        decoration: const InputDecoration(
+                          labelText: 'Unità di misura',
+                          hintText: 'pz, kit, aula, set',
+                          border: OutlineInputBorder(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                TextFormField(
+                  controller: noteController,
+                  minLines: 2,
+                  maxLines: 3,
+                  decoration: const InputDecoration(
+                    labelText: 'Note',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SwitchListTile(
+                  value: attiva,
+                  onChanged: salvataggio
+                      ? null
+                      : (value) {
+                          setState(() {
+                            attiva = value;
+                          });
+                        },
+                  title: const Text('Attrezzatura attiva'),
+                  contentPadding: EdgeInsets.zero,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: salvataggio ? null : () => Navigator.of(context).pop(),
+          child: const Text('Annulla'),
+        ),
+        FilledButton.icon(
+          onPressed: salvataggio ? null : salva,
+          icon: salvataggio
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.save_rounded),
+          label: Text(salvataggio ? 'Salvataggio...' : 'Salva'),
+        ),
+      ],
     );
   }
 }

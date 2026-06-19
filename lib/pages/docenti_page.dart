@@ -453,12 +453,76 @@ class _DocentiPageState extends State<DocentiPage> {
                                   ),
                                 ),
                                 DataCell(
-                                  IconButton(
-                                    tooltip: 'Modifica docente',
-                                    icon: const Icon(Icons.edit_rounded),
-                                    color: Colors.blueGrey,
-                                    onPressed: () =>
-                                        apriDialogModificaDocente(docente),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        tooltip: 'Modifica docente',
+                                        icon: const Icon(Icons.edit_rounded),
+                                        color: Colors.blueGrey,
+                                        onPressed: () =>
+                                            apriDialogModificaDocente(docente),
+                                      ),
+                                      IconButton(
+                                        tooltip: attivo
+                                            ? 'Disattiva docente'
+                                            : 'Riattiva docente',
+                                        icon: Icon(
+                                          attivo
+                                              ? Icons.visibility_off_rounded
+                                              : Icons.visibility_rounded,
+                                        ),
+                                        color: attivo
+                                            ? Colors.orange.shade700
+                                            : Colors.green.shade700,
+                                        onPressed: () async {
+                                          final messenger =
+                                              ScaffoldMessenger.of(context);
+
+                                          await AppDatabase.instance
+                                              .aggiornaDocente(
+                                                id: docente['id'] as int,
+                                                nome:
+                                                    docente['nome']
+                                                        ?.toString() ??
+                                                    '',
+                                                cognome:
+                                                    docente['cognome']
+                                                        ?.toString() ??
+                                                    '',
+                                                telefono: docente['telefono']
+                                                    ?.toString(),
+                                                email: docente['email']
+                                                    ?.toString(),
+                                                codiceFiscale:
+                                                    docente['codice_fiscale']
+                                                        ?.toString(),
+                                                qualifica: docente['qualifica']
+                                                    ?.toString(),
+                                                note: docente['note']
+                                                    ?.toString(),
+                                                attivo: attivo ? 0 : 1,
+                                              );
+
+                                          await caricaDocenti();
+
+                                          if (!mounted) return;
+
+                                          messenger.showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                attivo
+                                                    ? 'Docente disattivato.'
+                                                    : 'Docente riattivato.',
+                                              ),
+                                              backgroundColor: attivo
+                                                  ? Colors.orange
+                                                  : Colors.green,
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

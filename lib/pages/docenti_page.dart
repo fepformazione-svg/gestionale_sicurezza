@@ -407,7 +407,11 @@ class _DocentiPageState extends State<DocentiPage> {
             const SizedBox(height: 16),
             Text(
               ricerca.trim().isEmpty
-                  ? '${docenti.length} docenti presenti'
+                  ? docenti.length == 1
+                        ? '1 docente presente'
+                        : '${docenti.length} docenti presenti'
+                  : docentiFiltrati.length == 1
+                  ? '1 docente trovato su ${docenti.length}'
                   : '${docentiFiltrati.length} docenti trovati su ${docenti.length}',
               style: TextStyle(color: Colors.blueGrey.shade600),
             ),
@@ -454,7 +458,9 @@ class _DocentiPageState extends State<DocentiPage> {
                     : docentiFiltrati.isEmpty
                     ? Center(
                         child: Text(
-                          'Nessun docente inserito',
+                          ricerca.trim().isEmpty
+                              ? 'Nessun docente inserito'
+                              : 'Nessun docente trovato',
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.blueGrey.shade500,

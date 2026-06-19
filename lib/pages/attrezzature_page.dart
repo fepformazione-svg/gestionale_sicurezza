@@ -35,7 +35,7 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     final salvata = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const _NuovaAttrezzaturaDialog(),
+      builder: (_) => const _AttrezzaturaDialog(),
     );
 
     if (salvata != true) return;
@@ -47,6 +47,27 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Attrezzatura salvata correttamente.'),
+        backgroundColor: Color(0xFF16A34A),
+      ),
+    );
+  }
+
+  Future<void> apriDialogModificaAttrezzatura(Attrezzatura attrezzatura) async {
+    final salvata = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _AttrezzaturaDialog(attrezzatura: attrezzatura),
+    );
+
+    if (salvata != true) return;
+
+    await caricaAttrezzature();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Attrezzatura aggiornata correttamente.'),
         backgroundColor: Color(0xFF16A34A),
       ),
     );
@@ -128,6 +149,7 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                       DataColumn(label: Text('Quantità')),
                                       DataColumn(label: Text('Unità')),
                                       DataColumn(label: Text('Stato')),
+                                      DataColumn(label: Text('Azioni')),
                                     ],
                                     rows: attrezzature.map((attrezzatura) {
                                       return DataRow(
@@ -152,6 +174,20 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                               attiva: attrezzatura.attiva,
                                             ),
                                           ),
+                                          DataCell(
+                                            IconButton(
+                                              tooltip: 'Modifica attrezzatura',
+                                              icon: const Icon(
+                                                Icons.edit_rounded,
+                                                color: Color(0xFF2563EB),
+                                              ),
+                                              onPressed: () {
+                                                apriDialogModificaAttrezzatura(
+                                                  attrezzatura,
+                                                );
+                                              },
+                                            ),
+                                          ),
                                         ],
                                       );
                                     }).toList(),
@@ -168,26 +204,56 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
   }
 }
 
-class _NuovaAttrezzaturaDialog extends StatefulWidget {
-  const _NuovaAttrezzaturaDialog();
+class _AttrezzaturaDialog extends StatefulWidget {
+  final Attrezzatura? attrezzatura;
+
+  const _AttrezzaturaDialog({this.attrezzatura});
 
   @override
-  State<_NuovaAttrezzaturaDialog> createState() =>
-      _NuovaAttrezzaturaDialogState();
+  State<_AttrezzaturaDialog> createState() => _AttrezzaturaDialogState();
 }
 
-class _NuovaAttrezzaturaDialogState extends State<_NuovaAttrezzaturaDialog> {
+class _AttrezzaturaDialogState extends State<_AttrezzaturaDialog> {
   final formKey = GlobalKey<FormState>();
-  final denominazioneController = TextEditingController();
-  final categoriaController = TextEditingController(text: 'Generica');
-  final codiceController = TextEditingController();
-  final descrizioneController = TextEditingController();
-  final quantitaController = TextEditingController(text: '1');
-  final unitaMisuraController = TextEditingController(text: 'pz');
-  final noteController = TextEditingController();
+
+  late final TextEditingController denominazioneController;
+  late final TextEditingController categoriaController;
+  late final TextEditingController codiceController;
+  late final TextEditingController descrizioneController;
+  late final TextEditingController quantitaController;
+  late final TextEditingController unitaMisuraController;
+  late final TextEditingController noteController;
 
   bool attiva = true;
   bool salvataggio = false;
+
+  bool get isModifica => widget.attrezzatura != null;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final attrezzatura = widget.attrezzatura;
+
+    denominazioneController = TextEditingController(
+      text: attrezzatura?.denominazione ?? '',
+    );
+    categoriaController = TextEditingController(
+      text: attrezzatura?.categoria ?? 'Generica',
+    );
+    codiceController = TextEditingController(text: attrezzatura?.codice ?? '');
+    descrizioneController = TextEditingController(
+      text: attrezzatura?.descrizione ?? '',
+    );
+    quantitaController = TextEditingController(
+      text: (attrezzatura?.quantita ?? 1).toString(),
+    );
+    unitaMisuraController = TextEditingController(
+      text: attrezzatura?.unitaMisura ?? 'pz',
+    );
+    noteController = TextEditingController(text: attrezzatura?.note ?? '');
+    attiva = attrezzatura?.attiva ?? true;
+  }
 
   @override
   void dispose() {
@@ -209,17 +275,32 @@ class _NuovaAttrezzaturaDialogState extends State<_NuovaAttrezzaturaDialog> {
     });
 
     final quantita = int.tryParse(quantitaController.text.trim()) ?? 1;
+    final quantitaCorretta = quantita <= 0 ? 1 : quantita;
 
-    await AppDatabase.instance.inserisciAttrezzatura(
-      denominazione: denominazioneController.text,
-      categoria: categoriaController.text,
-      codice: codiceController.text,
-      descrizione: descrizioneController.text,
-      quantita: quantita <= 0 ? 1 : quantita,
-      unitaMisura: unitaMisuraController.text,
-      attiva: attiva ? 1 : 0,
-      note: noteController.text,
-    );
+    if (isModifica) {
+      await AppDatabase.instance.aggiornaAttrezzatura(
+        id: widget.attrezzatura!.id!,
+        denominazione: denominazioneController.text,
+        categoria: categoriaController.text,
+        codice: codiceController.text,
+        descrizione: descrizioneController.text,
+        quantita: quantitaCorretta,
+        unitaMisura: unitaMisuraController.text,
+        attiva: attiva ? 1 : 0,
+        note: noteController.text,
+      );
+    } else {
+      await AppDatabase.instance.inserisciAttrezzatura(
+        denominazione: denominazioneController.text,
+        categoria: categoriaController.text,
+        codice: codiceController.text,
+        descrizione: descrizioneController.text,
+        quantita: quantitaCorretta,
+        unitaMisura: unitaMisuraController.text,
+        attiva: attiva ? 1 : 0,
+        note: noteController.text,
+      );
+    }
 
     if (!mounted) return;
 
@@ -229,7 +310,7 @@ class _NuovaAttrezzaturaDialogState extends State<_NuovaAttrezzaturaDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nuova attrezzatura'),
+      title: Text(isModifica ? 'Modifica attrezzatura' : 'Nuova attrezzatura'),
       content: SizedBox(
         width: 560,
         child: Form(

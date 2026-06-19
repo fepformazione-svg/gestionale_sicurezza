@@ -288,6 +288,22 @@ class AppDatabase {
     updated_at TEXT
   )
 ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS attrezzature (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    denominazione TEXT NOT NULL,
+    categoria TEXT NOT NULL DEFAULT 'Generica',
+    codice TEXT,
+    descrizione TEXT,
+    quantita INTEGER DEFAULT 1,
+    unita_misura TEXT DEFAULT 'pz',
+    attiva INTEGER DEFAULT 1,
+    note TEXT,
+    created_at TEXT,
+    updated_at TEXT
+  )
+''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -437,6 +453,19 @@ class AppDatabase {
       'capienza': 'INTEGER',
       'note': "TEXT NOT NULL DEFAULT ''",
       'attiva': 'INTEGER NOT NULL DEFAULT 1',
+      'created_at': 'TEXT',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'attrezzature', {
+      'denominazione': "TEXT NOT NULL DEFAULT ''",
+      'categoria': "TEXT NOT NULL DEFAULT 'Generica'",
+      'codice': 'TEXT',
+      'descrizione': 'TEXT',
+      'quantita': 'INTEGER DEFAULT 1',
+      'unita_misura': "TEXT DEFAULT 'pz'",
+      'attiva': 'INTEGER DEFAULT 1',
+      'note': 'TEXT',
       'created_at': 'TEXT',
       'updated_at': 'TEXT',
     });
@@ -605,6 +634,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_aule_sedi_attiva ON aule_sedi(attiva)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_attrezzature_denominazione ON attrezzature(denominazione)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_attrezzature_categoria ON attrezzature(categoria)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_attrezzature_attiva ON attrezzature(attiva)',
     );
   }
 

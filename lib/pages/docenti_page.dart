@@ -3,9 +3,12 @@ import 'package:excel/excel.dart' as xls;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 import 'dart:io';
 
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class DocentiPage extends StatefulWidget {
   const DocentiPage({super.key});
@@ -191,6 +194,149 @@ class _DocentiPageState extends State<DocentiPage> {
       SnackBar(
         content: Text(
           'Export Excel creato correttamente: ${lista.length} ${lista.length == 1 ? 'docente esportato' : 'docenti esportati'}.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    await OpenFile.open(file.path);
+  }
+
+  Future<void> esportaPdfDocenti() async {
+    final lista = docentiFiltrati;
+
+    if (lista.isEmpty) {
+      return;
+    }
+
+    final now = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(now);
+    final timestamp = DateFormat('yyyy_MM_dd_HHmm').format(now);
+
+    final vista = ricerca.trim().isEmpty
+        ? (soloAttivi ? 'Vista: solo docenti attivi' : 'Vista: tutti i docenti')
+        : (soloAttivi
+              ? 'Vista filtrata: ricerca "${ricerca.trim()}" tra i docenti attivi'
+              : 'Vista filtrata: ricerca "${ricerca.trim()}" tra tutti i docenti');
+
+    final intestazione = await caricaIntestazioneAziendaPdf();
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey500,
+              ),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAziendaPdfWidget(intestazione),
+            pw.SizedBox(height: 18),
+            pw.Text(
+              'DOCENTI',
+              style: pw.TextStyle(
+                fontSize: 20,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              '$vista - ${lista.length} ${lista.length == 1 ? 'docente' : 'docenti'} - Generato il $dataOra',
+              style: const pw.TextStyle(
+                fontSize: 9,
+                color: PdfColors.blueGrey600,
+              ),
+            ),
+            pw.SizedBox(height: 14),
+            pw.TableHelper.fromTextArray(
+              headers: [
+                'Cognome',
+                'Nome',
+                'Codice fiscale',
+                'Qualifica',
+                'Telefono',
+                'Email',
+                'Stato',
+              ],
+              data: lista.map((docente) {
+                final attivo = docente['attivo']?.toString() != '0';
+
+                return [
+                  docente['cognome']?.toString() ?? '',
+                  docente['nome']?.toString() ?? '',
+                  docente['codice_fiscale']?.toString() ?? '',
+                  docente['qualifica']?.toString() ?? '',
+                  docente['telefono']?.toString() ?? '',
+                  docente['email']?.toString() ?? '',
+                  attivo ? 'Attivo' : 'Non attivo',
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontSize: 8,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(
+                fontSize: 8,
+                color: PdfColors.blueGrey900,
+              ),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              rowDecoration: const pw.BoxDecoration(
+                border: pw.Border(
+                  bottom: pw.BorderSide(
+                    color: PdfColors.blueGrey100,
+                    width: 0.5,
+                  ),
+                ),
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.3),
+                1: const pw.FlexColumnWidth(1.3),
+                2: const pw.FlexColumnWidth(1.5),
+                3: const pw.FlexColumnWidth(1.8),
+                4: const pw.FlexColumnWidth(1.1),
+                5: const pw.FlexColumnWidth(2.0),
+                6: const pw.FlexColumnWidth(0.9),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFile = ricerca.trim().isEmpty && soloAttivi
+        ? 'docenti_attivi_export_$timestamp.pdf'
+        : 'docenti_export_filtrato_$timestamp.pdf';
+
+    final file = File('${directory.path}\\$nomeFile');
+    await file.writeAsBytes(await pdf.save(), flush: true);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export PDF creato correttamente: ${lista.length} ${lista.length == 1 ? 'docente esportato' : 'docenti esportati'}.',
         ),
         backgroundColor: Colors.green,
       ),
@@ -544,6 +690,13 @@ class _DocentiPageState extends State<DocentiPage> {
                           : esportaExcelDocenti,
                       icon: const Icon(Icons.table_chart_rounded),
                       label: Text('Export Excel (${docentiFiltrati.length})'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: docentiFiltrati.isEmpty
+                          ? null
+                          : esportaPdfDocenti,
+                      icon: const Icon(Icons.picture_as_pdf_rounded),
+                      label: Text('Export PDF (${docentiFiltrati.length})'),
                     ),
                     ElevatedButton.icon(
                       onPressed: apriDialogNuovoDocente,

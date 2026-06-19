@@ -3,6 +3,7 @@ import 'dati_azienda_page.dart';
 import 'medici_strutture_page.dart';
 import 'visite_mediche_page.dart';
 import 'docenti_page.dart';
+import 'aule_sedi_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -66,6 +67,17 @@ class ImpostazioniPage extends StatelessWidget {
               Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const DocentiPage()));
+            },
+          ),
+          _SezioneImpostazioniCard(
+            icona: Icons.meeting_room_rounded,
+            titolo: 'Aule / Sedi formative',
+            descrizione:
+                'Gestisci aule, campi prova e sedi cliente per i corsi.',
+            onTap: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AuleSediPage()));
             },
           ),
           SizedBox(height: 12),

@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
+import '../models/aula_sede.dart';
+
 class AppDatabase {
   AppDatabase._();
 
@@ -271,6 +273,21 @@ class AppDatabase {
     updated_at TEXT
   )
 ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS aule_sedi (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    denominazione TEXT NOT NULL,
+    tipo TEXT NOT NULL DEFAULT 'Aula',
+    indirizzo TEXT NOT NULL DEFAULT '',
+    comune TEXT NOT NULL DEFAULT '',
+    capienza INTEGER,
+    note TEXT NOT NULL DEFAULT '',
+    attiva INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT,
+    updated_at TEXT
+  )
+''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -409,6 +426,18 @@ class AppDatabase {
       'logo_path': 'TEXT',
       'note': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'aule_sedi', {
+      'denominazione': "TEXT NOT NULL DEFAULT ''",
+      'tipo': "TEXT NOT NULL DEFAULT 'Aula'",
+      'indirizzo': "TEXT NOT NULL DEFAULT ''",
+      'comune': "TEXT NOT NULL DEFAULT ''",
+      'capienza': 'INTEGER',
+      'note': "TEXT NOT NULL DEFAULT ''",
+      'attiva': 'INTEGER NOT NULL DEFAULT 1',
+      'created_at': 'TEXT',
       'updated_at': 'TEXT',
     });
   }
@@ -564,6 +593,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_docenti_attivo ON docenti(attivo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_aule_sedi_tipo ON aule_sedi(tipo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_aule_sedi_denominazione ON aule_sedi(denominazione)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_aule_sedi_attiva ON aule_sedi(attiva)',
     );
   }
 
@@ -987,5 +1028,44 @@ class AppDatabase {
       await db.close();
       _database = null;
     }
+  }
+
+  Future<List<AulaSede>> getAuleSedi() async {
+    final db = await database;
+
+    final rows = await db.query(
+      'aule_sedi',
+      orderBy: 'attiva DESC, denominazione ASC',
+    );
+
+    return rows.map((row) => AulaSede.fromMap(row)).toList();
+  }
+
+  Future<int> inserisciAulaSede(AulaSede aulaSede) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    final data = aulaSede.toMap();
+    data.remove('id');
+    data['created_at'] = now;
+    data['updated_at'] = now;
+
+    return db.insert('aule_sedi', data);
+  }
+
+  Future<int> aggiornaAulaSede(AulaSede aulaSede) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    final data = aulaSede.toMap();
+    data.remove('id');
+    data['updated_at'] = now;
+
+    return db.update(
+      'aule_sedi',
+      data,
+      where: 'id = ?',
+      whereArgs: [aulaSede.id],
+    );
   }
 }

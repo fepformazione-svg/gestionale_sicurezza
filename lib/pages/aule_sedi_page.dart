@@ -1,9 +1,12 @@
+import 'package:intl/intl.dart';
+
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart' as xls;
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../utils/pdf_azienda_helper.dart';
 
@@ -560,6 +563,98 @@ class _AuleSediPageState extends State<AuleSediPage> {
     );
   }
 
+  Future<void> stampaAuleSedi() async {
+    final dati = auleSediFiltrate;
+    final testoRicerca = cercaController.text.trim();
+
+    if (dati.isEmpty) {
+      return;
+    }
+
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+        ),
+        build: (context) => [
+          intestazioneAziendaPdfWidget(intestazionePdf),
+          pw.SizedBox(height: 14),
+          pw.Text(
+            'AULE / SEDI FORMATIVE',
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            '${soloAttive ? 'Solo attive' : 'Tutte'}'
+            '${testoRicerca.isNotEmpty ? ' - Ricerca: "$testoRicerca"' : ''}'
+            ' - ${dati.length} ${dati.length == 1 ? 'voce' : 'voci'}'
+            ' - Stampa del ${DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now())}',
+            style: const pw.TextStyle(fontSize: 10),
+          ),
+          pw.SizedBox(height: 12),
+          pw.TableHelper.fromTextArray(
+            headers: const [
+              'Denominazione',
+              'Tipo',
+              'Indirizzo',
+              'Comune',
+              'Capienza',
+              'Stato',
+              'Note',
+            ],
+            data: dati.map((aula) {
+              return [
+                aula.denominazione,
+                aula.tipo,
+                aula.indirizzo,
+                aula.comune,
+                aula.capienza?.toString() ?? '',
+                aula.attiva ? 'ATTIVA' : 'NON ATTIVA',
+                aula.note,
+              ];
+            }).toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+              fontSize: 9,
+            ),
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColors.blueGrey700,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 8),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerAlignment: pw.Alignment.centerLeft,
+            columnWidths: const {
+              0: pw.FlexColumnWidth(2.2),
+              1: pw.FlexColumnWidth(1.1),
+              2: pw.FlexColumnWidth(2.2),
+              3: pw.FlexColumnWidth(1.4),
+              4: pw.FlexColumnWidth(0.8),
+              5: pw.FlexColumnWidth(1.0),
+              6: pw.FlexColumnWidth(2.4),
+            },
+            cellPadding: const pw.EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 5,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+  }
+
   Future<void> apriDialogModificaAulaSede(AulaSede aulaSede) async {
     final formKey = GlobalKey<FormState>();
 
@@ -838,6 +933,11 @@ class _AuleSediPageState extends State<AuleSediPage> {
                       : esportaPdfAuleSedi,
                   icon: const Icon(Icons.picture_as_pdf),
                   label: Text('Esporta PDF (${auleSediFiltrate.length})'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: auleSediFiltrate.isEmpty ? null : stampaAuleSedi,
+                  icon: const Icon(Icons.print_rounded),
+                  label: Text('Stampa (${auleSediFiltrate.length})'),
                 ),
                 const SizedBox(width: 10),
                 OutlinedButton.icon(

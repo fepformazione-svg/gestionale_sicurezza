@@ -11,13 +11,44 @@ class AttrezzaturePage extends StatefulWidget {
 }
 
 class _AttrezzaturePageState extends State<AttrezzaturePage> {
+  final cercaController = TextEditingController();
+
   List<Attrezzatura> attrezzature = [];
   bool caricamento = true;
+
+  List<Attrezzatura> get attrezzatureFiltrate {
+    final ricerca = cercaController.text.trim().toLowerCase();
+
+    if (ricerca.isEmpty) {
+      return attrezzature;
+    }
+
+    return attrezzature.where((attrezzatura) {
+      final testo = [
+        attrezzatura.denominazione,
+        attrezzatura.categoria,
+        attrezzatura.codice,
+        attrezzatura.descrizione,
+        attrezzatura.quantita.toString(),
+        attrezzatura.unitaMisura,
+        attrezzatura.attiva ? 'attiva' : 'non attiva',
+        attrezzatura.note,
+      ].join(' ').toLowerCase();
+
+      return testo.contains(ricerca);
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     caricaAttrezzature();
+  }
+
+  @override
+  void dispose() {
+    cercaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaAttrezzature() async {
@@ -99,8 +130,17 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     );
   }
 
+  void azzeraRicerca() {
+    cercaController.clear();
+
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
+    final filtrate = attrezzatureFiltrate;
+    final ricercaAttiva = cercaController.text.trim().isNotEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -148,7 +188,9 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(
-                                    '${attrezzature.length} ${attrezzature.length == 1 ? 'attrezzatura presente' : 'attrezzature presenti'}',
+                                    ricercaAttiva
+                                        ? '${filtrate.length} ${filtrate.length == 1 ? 'attrezzatura trovata' : 'attrezzature trovate'}'
+                                        : '${attrezzature.length} ${attrezzature.length == 1 ? 'attrezzatura presente' : 'attrezzature presenti'}',
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
@@ -158,99 +200,133 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 20),
-                            Expanded(
-                              child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                child: SingleChildScrollView(
-                                  child: DataTable(
-                                    headingRowColor:
-                                        WidgetStateProperty.all<Color>(
-                                          const Color(0xFFF1F5F9),
-                                        ),
-                                    columns: const [
-                                      DataColumn(label: Text('Denominazione')),
-                                      DataColumn(label: Text('Categoria')),
-                                      DataColumn(label: Text('Codice')),
-                                      DataColumn(label: Text('Quantità')),
-                                      DataColumn(label: Text('Unità')),
-                                      DataColumn(label: Text('Stato')),
-                                      DataColumn(label: Text('Azioni')),
-                                    ],
-                                    rows: attrezzature.map((attrezzatura) {
-                                      return DataRow(
-                                        cells: [
-                                          DataCell(
-                                            Text(attrezzatura.denominazione),
-                                          ),
-                                          DataCell(
-                                            Text(attrezzatura.categoria),
-                                          ),
-                                          DataCell(Text(attrezzatura.codice)),
-                                          DataCell(
-                                            Text(
-                                              attrezzatura.quantita.toString(),
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Text(attrezzatura.unitaMisura),
-                                          ),
-                                          DataCell(
-                                            _BadgeStatoAttrezzatura(
-                                              attiva: attrezzatura.attiva,
-                                            ),
-                                          ),
-                                          DataCell(
-                                            Row(
-                                              mainAxisSize: MainAxisSize.min,
-                                              children: [
-                                                IconButton(
-                                                  tooltip:
-                                                      'Modifica attrezzatura',
-                                                  icon: const Icon(
-                                                    Icons.edit_rounded,
-                                                    color: Color(0xFF2563EB),
-                                                  ),
-                                                  onPressed: () {
-                                                    apriDialogModificaAttrezzatura(
-                                                      attrezzatura,
-                                                    );
-                                                  },
-                                                ),
-                                                IconButton(
-                                                  tooltip: attrezzatura.attiva
-                                                      ? 'Disattiva attrezzatura'
-                                                      : 'Riattiva attrezzatura',
-                                                  icon: Icon(
-                                                    attrezzatura.attiva
-                                                        ? Icons
-                                                              .visibility_off_rounded
-                                                        : Icons
-                                                              .visibility_rounded,
-                                                    color: attrezzatura.attiva
-                                                        ? const Color(
-                                                            0xFFDC2626,
-                                                          )
-                                                        : const Color(
-                                                            0xFF16A34A,
-                                                          ),
-                                                  ),
-                                                  onPressed: () {
-                                                    cambiaStatoAttrezzatura(
-                                                      attrezzatura,
-                                                    );
-                                                  },
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    }).toList(),
-                                  ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: cercaController,
+                              onChanged: (_) {
+                                setState(() {});
+                              },
+                              decoration: InputDecoration(
+                                labelText: 'Cerca attrezzatura',
+                                hintText:
+                                    'Cerca per denominazione, categoria, codice, descrizione, note...',
+                                prefixIcon: const Icon(Icons.search_rounded),
+                                suffixIcon: ricercaAttiva
+                                    ? IconButton(
+                                        tooltip: 'Pulisci ricerca',
+                                        icon: const Icon(Icons.close_rounded),
+                                        onPressed: azzeraRicerca,
+                                      )
+                                    : null,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            if (filtrate.isEmpty)
+                              Expanded(
+                                child: _StatoVuotoRicercaAttrezzature(
+                                  ricerca: cercaController.text.trim(),
+                                  onAzzera: azzeraRicerca,
+                                ),
+                              )
+                            else
+                              Expanded(
+                                child: SingleChildScrollView(
+                                  scrollDirection: Axis.horizontal,
+                                  child: SingleChildScrollView(
+                                    child: DataTable(
+                                      headingRowColor:
+                                          WidgetStateProperty.all<Color>(
+                                            const Color(0xFFF1F5F9),
+                                          ),
+                                      columns: const [
+                                        DataColumn(
+                                          label: Text('Denominazione'),
+                                        ),
+                                        DataColumn(label: Text('Categoria')),
+                                        DataColumn(label: Text('Codice')),
+                                        DataColumn(label: Text('Quantità')),
+                                        DataColumn(label: Text('Unità')),
+                                        DataColumn(label: Text('Stato')),
+                                        DataColumn(label: Text('Azioni')),
+                                      ],
+                                      rows: filtrate.map((attrezzatura) {
+                                        return DataRow(
+                                          cells: [
+                                            DataCell(
+                                              Text(attrezzatura.denominazione),
+                                            ),
+                                            DataCell(
+                                              Text(attrezzatura.categoria),
+                                            ),
+                                            DataCell(Text(attrezzatura.codice)),
+                                            DataCell(
+                                              Text(
+                                                attrezzatura.quantita
+                                                    .toString(),
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Text(attrezzatura.unitaMisura),
+                                            ),
+                                            DataCell(
+                                              _BadgeStatoAttrezzatura(
+                                                attiva: attrezzatura.attiva,
+                                              ),
+                                            ),
+                                            DataCell(
+                                              Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  IconButton(
+                                                    tooltip:
+                                                        'Modifica attrezzatura',
+                                                    icon: const Icon(
+                                                      Icons.edit_rounded,
+                                                      color: Color(0xFF2563EB),
+                                                    ),
+                                                    onPressed: () {
+                                                      apriDialogModificaAttrezzatura(
+                                                        attrezzatura,
+                                                      );
+                                                    },
+                                                  ),
+                                                  IconButton(
+                                                    tooltip: attrezzatura.attiva
+                                                        ? 'Disattiva attrezzatura'
+                                                        : 'Riattiva attrezzatura',
+                                                    icon: Icon(
+                                                      attrezzatura.attiva
+                                                          ? Icons
+                                                                .visibility_off_rounded
+                                                          : Icons
+                                                                .visibility_rounded,
+                                                      color: attrezzatura.attiva
+                                                          ? const Color(
+                                                              0xFFDC2626,
+                                                            )
+                                                          : const Color(
+                                                              0xFF16A34A,
+                                                            ),
+                                                    ),
+                                                    onPressed: () {
+                                                      cambiaStatoAttrezzatura(
+                                                        attrezzatura,
+                                                      );
+                                                    },
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ],
+                                        );
+                                      }).toList(),
+                                    ),
+                                  ),
+                                ),
+                              ),
                           ],
                         ),
                 ),
@@ -523,6 +599,56 @@ class _StatoVuotoAttrezzature extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StatoVuotoRicercaAttrezzature extends StatelessWidget {
+  final String ricerca;
+  final VoidCallback onAzzera;
+
+  const _StatoVuotoRicercaAttrezzature({
+    required this.ricerca,
+    required this.onAzzera,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 520),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.search_off_rounded,
+              color: Color(0xFF94A3B8),
+              size: 42,
+            ),
+            const SizedBox(height: 12),
+            const Text(
+              'Nessuna attrezzatura trovata',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF0F172A),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'La ricerca "$ricerca" non ha prodotto risultati.',
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Color(0xFF64748B), height: 1.4),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton.icon(
+              onPressed: onAzzera,
+              icon: const Icon(Icons.close_rounded),
+              label: const Text('Azzera ricerca'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

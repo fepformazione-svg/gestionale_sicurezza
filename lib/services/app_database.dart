@@ -5,6 +5,7 @@ import 'package:path/path.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../models/aula_sede.dart';
+import '../models/attrezzatura.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -1110,10 +1111,15 @@ class AppDatabase {
     );
   }
 
-  Future<List<Map<String, dynamic>>> getAttrezzature() async {
+  Future<List<Attrezzatura>> getAttrezzature() async {
     final db = await database;
 
-    return db.query('attrezzature', orderBy: 'attiva DESC, denominazione ASC');
+    final rows = await db.query(
+      'attrezzature',
+      orderBy: 'attiva DESC, denominazione ASC',
+    );
+
+    return rows.map((row) => Attrezzatura.fromMap(row)).toList();
   }
 
   Future<int> inserisciAttrezzatura({

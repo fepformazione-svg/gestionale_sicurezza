@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart' as xls;
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+
+import 'dart:io';
 
 import '../models/aula_sede.dart';
 import '../services/app_database.dart';
@@ -279,6 +284,126 @@ class _AuleSediPageState extends State<AuleSediPage> {
     );
   }
 
+  Future<void> esportaExcelAuleSedi() async {
+    final datiExport = auleSediFiltrate;
+
+    if (datiExport.isEmpty) return;
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['AuleSedi'];
+
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    final now = DateTime.now();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final dataExport =
+        '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+        '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+    final ricerca = cercaController.text.trim();
+
+    final infoFiltro = [
+      soloAttive ? 'Solo attive' : 'Tutte',
+      if (ricerca.isNotEmpty) 'Ricerca: "$ricerca"',
+      '${datiExport.length} voci esportate',
+      'Export: $dataExport',
+    ].join(' - ');
+
+    sheet.cell(xls.CellIndex.indexByString('A1')).value = xls.TextCellValue(
+      infoFiltro,
+    );
+
+    final intestazioni = [
+      'Denominazione',
+      'Tipo',
+      'Indirizzo',
+      'Comune',
+      'Capienza',
+      'Stato',
+      'Note',
+    ];
+
+    for (var i = 0; i < intestazioni.length; i++) {
+      final cella = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 2),
+      );
+      cella.value = xls.TextCellValue(intestazioni[i]);
+      cella.cellStyle = xls.CellStyle(bold: true);
+    }
+
+    for (var i = 0; i < datiExport.length; i++) {
+      final aulaSede = datiExport[i];
+      final rowIndex = i + 3;
+
+      final valori = [
+        aulaSede.denominazione,
+        aulaSede.tipo,
+        aulaSede.indirizzo,
+        aulaSede.comune,
+        aulaSede.capienza?.toString() ?? '',
+        aulaSede.attiva ? 'Attiva' : 'Non attiva',
+        aulaSede.note,
+      ];
+
+      for (var col = 0; col < valori.length; col++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: col,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[col],
+        );
+      }
+    }
+
+    sheet.setColumnWidth(0, 34);
+    sheet.setColumnWidth(1, 18);
+    sheet.setColumnWidth(2, 36);
+    sheet.setColumnWidth(3, 22);
+    sheet.setColumnWidth(4, 14);
+    sheet.setColumnWidth(5, 16);
+    sheet.setColumnWidth(6, 42);
+
+    final directory = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${directory.path}/Gestionale Sicurezza/Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final nomeFile =
+        'aule_sedi_export_${soloAttive ? 'attive' : 'tutte'}_'
+        '${now.year}_${dueCifre(now.month)}_${dueCifre(now.day)}_'
+        '${dueCifre(now.hour)}${dueCifre(now.minute)}.xlsx';
+
+    final file = File('${exportDir.path}/$nomeFile');
+
+    final bytes = excel.encode();
+
+    if (bytes == null) return;
+
+    await file.writeAsBytes(bytes, flush: true);
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Export Excel creato: ${datiExport.length} voci.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Future<void> apriDialogModificaAulaSede(AulaSede aulaSede) async {
     final formKey = GlobalKey<FormState>();
 
@@ -541,6 +666,14 @@ class _AuleSediPageState extends State<AuleSediPage> {
                   onPressed: apriDialogNuovaAulaSede,
                   icon: const Icon(Icons.add),
                   label: const Text('Nuova voce'),
+                ),
+                const SizedBox(width: 10),
+                OutlinedButton.icon(
+                  onPressed: auleSediFiltrate.isEmpty
+                      ? null
+                      : esportaExcelAuleSedi,
+                  icon: const Icon(Icons.table_chart),
+                  label: Text('Esporta Excel (${auleSediFiltrate.length})'),
                 ),
                 const SizedBox(width: 10),
                 OutlinedButton.icon(

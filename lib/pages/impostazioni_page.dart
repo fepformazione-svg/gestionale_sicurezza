@@ -5,6 +5,7 @@ import 'visite_mediche_page.dart';
 import 'docenti_page.dart';
 import 'aule_sedi_page.dart';
 import 'attrezzature_page.dart';
+import 'enti_attestati_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -99,6 +100,11 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Enti rilascio attestati',
             descrizione:
                 'Anagrafica degli enti che rilasciano attestati o certificazioni.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const EntiAttestatiPage()),
+              );
+            },
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(

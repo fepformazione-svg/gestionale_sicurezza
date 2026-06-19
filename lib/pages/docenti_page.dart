@@ -179,6 +179,167 @@ class _DocentiPageState extends State<DocentiPage> {
     }
   }
 
+  Future<void> apriDialogModificaDocente(Map<String, dynamic> docente) async {
+    final nomeController = TextEditingController(
+      text: docente['nome']?.toString() ?? '',
+    );
+    final cognomeController = TextEditingController(
+      text: docente['cognome']?.toString() ?? '',
+    );
+    final telefonoController = TextEditingController(
+      text: docente['telefono']?.toString() ?? '',
+    );
+    final emailController = TextEditingController(
+      text: docente['email']?.toString() ?? '',
+    );
+    final codiceFiscaleController = TextEditingController(
+      text: docente['codice_fiscale']?.toString() ?? '',
+    );
+    final qualificaController = TextEditingController(
+      text: docente['qualifica']?.toString() ?? '',
+    );
+    final noteController = TextEditingController(
+      text: docente['note']?.toString() ?? '',
+    );
+
+    bool attivo = docente['attivo'] == 1;
+
+    final salvato = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Modifica docente'),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        controller: cognomeController,
+                        decoration: const InputDecoration(
+                          labelText: 'Cognome *',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: nomeController,
+                        decoration: const InputDecoration(labelText: 'Nome *'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: qualificaController,
+                        decoration: const InputDecoration(
+                          labelText: 'Qualifica',
+                          hintText: 'Es. Docente sicurezza, antincendio...',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: emailController,
+                        decoration: const InputDecoration(labelText: 'Email'),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: telefonoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Telefono',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: codiceFiscaleController,
+                        decoration: const InputDecoration(
+                          labelText: 'Codice fiscale',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: noteController,
+                        maxLines: 3,
+                        decoration: const InputDecoration(labelText: 'Note'),
+                      ),
+                      const SizedBox(height: 12),
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Docente attivo'),
+                        value: attivo,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            attivo = value;
+                          });
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    if (nomeController.text.trim().isEmpty ||
+                        cognomeController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Nome e cognome sono obbligatori.'),
+                        ),
+                      );
+                      return;
+                    }
+
+                    await AppDatabase.instance.aggiornaDocente(
+                      id: docente['id'] as int,
+                      nome: nomeController.text,
+                      cognome: cognomeController.text,
+                      telefono: telefonoController.text,
+                      email: emailController.text,
+                      codiceFiscale: codiceFiscaleController.text,
+                      qualifica: qualificaController.text,
+                      note: noteController.text,
+                      attivo: attivo ? 1 : 0,
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop(true);
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva modifiche'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    nomeController.dispose();
+    cognomeController.dispose();
+    telefonoController.dispose();
+    emailController.dispose();
+    codiceFiscaleController.dispose();
+    qualificaController.dispose();
+    noteController.dispose();
+
+    if (salvato == true) {
+      await caricaDocenti();
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Docente aggiornato.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -253,6 +414,7 @@ class _DocentiPageState extends State<DocentiPage> {
                             DataColumn(label: Text('Email')),
                             DataColumn(label: Text('Telefono')),
                             DataColumn(label: Text('Stato')),
+                            DataColumn(label: Text('Azioni')),
                           ],
                           rows: docenti.map((docente) {
                             final attivo = docente['attivo'] == 1;
@@ -288,6 +450,15 @@ class _DocentiPageState extends State<DocentiPage> {
                                           : Colors.grey.shade700,
                                       fontWeight: FontWeight.bold,
                                     ),
+                                  ),
+                                ),
+                                DataCell(
+                                  IconButton(
+                                    tooltip: 'Modifica docente',
+                                    icon: const Icon(Icons.edit_rounded),
+                                    color: Colors.blueGrey,
+                                    onPressed: () =>
+                                        apriDialogModificaDocente(docente),
                                   ),
                                 ),
                               ],

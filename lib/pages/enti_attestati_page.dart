@@ -35,6 +35,30 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
     });
   }
 
+  Future<void> cambiaStatoEnte(EnteAttestato ente) async {
+    final nuovoStato = ente.attivo == 1 ? 0 : 1;
+
+    await AppDatabase.instance.aggiornaStatoEnteAttestato(
+      id: ente.id!,
+      attivo: nuovoStato,
+    );
+
+    await caricaEntiAttestati();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nuovoStato == 1
+              ? 'Ente rilascio attestati riattivato correttamente.'
+              : 'Ente rilascio attestati disattivato correttamente.',
+        ),
+        backgroundColor: nuovoStato == 1 ? Colors.green : Colors.grey,
+      ),
+    );
+  }
+
   Future<void> mostraDialogEnte({EnteAttestato? ente}) async {
     final formKey = GlobalKey<FormState>();
     final inModifica = ente != null;
@@ -470,13 +494,30 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                                   ),
                                   DataCell(
                                     SizedBox(
-                                      width: 70,
-                                      child: IconButton(
-                                        tooltip:
-                                            'Modifica ente rilascio attestati',
-                                        onPressed: () =>
-                                            mostraDialogEnte(ente: ente),
-                                        icon: const Icon(Icons.edit),
+                                      width: 100,
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            tooltip:
+                                                'Modifica ente rilascio attestati',
+                                            onPressed: () =>
+                                                mostraDialogEnte(ente: ente),
+                                            icon: const Icon(Icons.edit),
+                                          ),
+                                          IconButton(
+                                            tooltip: ente.attivo == 1
+                                                ? 'Disattiva ente rilascio attestati'
+                                                : 'Riattiva ente rilascio attestati',
+                                            onPressed: () =>
+                                                cambiaStatoEnte(ente),
+                                            icon: Icon(
+                                              ente.attivo == 1
+                                                  ? Icons.visibility_off
+                                                  : Icons.visibility,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ),

@@ -6,6 +6,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import '../models/aula_sede.dart';
 import '../models/attrezzatura.dart';
+import '../models/ente_attestato.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -305,6 +306,25 @@ class AppDatabase {
     updated_at TEXT
   )
 ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS enti_attestati (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        denominazione TEXT NOT NULL,
+        tipo TEXT NOT NULL DEFAULT 'Ente',
+        codice_accreditamento TEXT,
+        referente TEXT,
+        telefono TEXT,
+        email TEXT,
+        pec TEXT,
+        indirizzo TEXT,
+        comune TEXT,
+        note TEXT,
+        attivo INTEGER DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      )
+    ''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -468,6 +488,22 @@ class AppDatabase {
       'attiva': 'INTEGER DEFAULT 1',
       'note': 'TEXT',
       'created_at': 'TEXT',
+      'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'enti_attestati', {
+      'denominazione': "TEXT NOT NULL DEFAULT ''",
+      'tipo': "TEXT NOT NULL DEFAULT 'Ente'",
+      'codice_accreditamento': 'TEXT',
+      'referente': 'TEXT',
+      'telefono': 'TEXT',
+      'email': 'TEXT',
+      'pec': 'TEXT',
+      'indirizzo': 'TEXT',
+      'comune': 'TEXT',
+      'note': 'TEXT',
+      'attivo': 'INTEGER DEFAULT 1',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });
   }
@@ -647,6 +683,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_attrezzature_attiva ON attrezzature(attiva)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_enti_attestati_denominazione ON enti_attestati(denominazione)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_enti_attestati_tipo ON enti_attestati(tipo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_enti_attestati_attivo ON enti_attestati(attivo)',
     );
   }
 
@@ -1197,6 +1245,107 @@ class AppDatabase {
     return db.update(
       'attrezzature',
       {'attiva': attiva, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<List<EnteAttestato>> getEntiAttestati() async {
+    final db = await database;
+
+    final rows = await db.query(
+      'enti_attestati',
+      orderBy: 'attivo DESC, denominazione ASC',
+    );
+
+    return rows.map((row) => EnteAttestato.fromMap(row)).toList();
+  }
+
+  Future<int> inserisciEnteAttestato({
+    required String denominazione,
+    required String tipo,
+    String? codiceAccreditamento,
+    String? referente,
+    String? telefono,
+    String? email,
+    String? pec,
+    String? indirizzo,
+    String? comune,
+    String? note,
+    int attivo = 1,
+  }) async {
+    final db = await database;
+
+    return db.insert('enti_attestati', {
+      'denominazione': denominazione.trim(),
+      'tipo': tipo.trim().isEmpty ? 'Ente' : tipo.trim(),
+      'codice_accreditamento': codiceAccreditamento?.trim(),
+      'referente': referente?.trim(),
+      'telefono': telefono?.trim(),
+      'email': email?.trim(),
+      'pec': pec?.trim(),
+      'indirizzo': indirizzo?.trim(),
+      'comune': comune?.trim(),
+      'note': note?.trim(),
+      'attivo': attivo,
+      'created_at': DateTime.now().toIso8601String(),
+    });
+  }
+
+  Future<int> aggiornaEnteAttestato({
+    required int id,
+    required String denominazione,
+    required String tipo,
+    String? codiceAccreditamento,
+    String? referente,
+    String? telefono,
+    String? email,
+    String? pec,
+    String? indirizzo,
+    String? comune,
+    String? note,
+    required int attivo,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'enti_attestati',
+      {
+        'denominazione': denominazione.trim(),
+        'tipo': tipo.trim().isEmpty ? 'Ente' : tipo.trim(),
+        'codice_accreditamento': codiceAccreditamento?.trim(),
+        'referente': referente?.trim(),
+        'telefono': telefono?.trim(),
+        'email': email?.trim(),
+        'pec': pec?.trim(),
+        'indirizzo': indirizzo?.trim(),
+        'comune': comune?.trim(),
+        'note': note?.trim(),
+        'attivo': attivo,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> eliminaEnteAttestato(int id) async {
+    final db = await database;
+
+    return db.delete('enti_attestati', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> aggiornaStatoEnteAttestato({
+    required int id,
+    required int attivo,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'enti_attestati',
+      {'attivo': attivo, 'updated_at': now},
       where: 'id = ?',
       whereArgs: [id],
     );

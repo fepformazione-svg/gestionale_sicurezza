@@ -7,6 +7,7 @@ import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/attrezzatura.dart';
 import '../services/app_database.dart';
@@ -388,6 +389,112 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     );
   }
 
+  Future<void> stampaAttrezzature() async {
+    final dati = attrezzatureFiltrate;
+
+    if (dati.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna attrezzatura da stampare.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+    final filtro = soloAttive ? 'Solo attive' : 'Tutte';
+    final ricerca = cercaController.text.trim();
+    final oggi = DateFormat('dd/MM/yyyy HH:mm').format(DateTime.now());
+
+    await Printing.layoutPdf(
+      onLayout: (PdfPageFormat format) async {
+        final pdf = pw.Document();
+
+        pdf.addPage(
+          pw.MultiPage(
+            pageFormat: PdfPageFormat.a4.landscape,
+            margin: const pw.EdgeInsets.all(24),
+            footer: (context) => pw.Align(
+              alignment: pw.Alignment.centerRight,
+              child: pw.Text(
+                'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+            ),
+            build: (context) => [
+              intestazioneAziendaPdfWidget(intestazionePdf),
+              pw.SizedBox(height: 14),
+              pw.Text(
+                'ATTREZZATURE',
+                style: pw.TextStyle(
+                  fontSize: 18,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 6),
+              pw.Text(
+                ricerca.isEmpty
+                    ? 'Stampa attrezzature - Filtro: $filtro - ${dati.length} risultati - $oggi'
+                    : 'Stampa attrezzature - Filtro: $filtro - Ricerca: "$ricerca" - ${dati.length} risultati - $oggi',
+                style: const pw.TextStyle(fontSize: 9),
+              ),
+              pw.SizedBox(height: 12),
+              pw.TableHelper.fromTextArray(
+                headers: const [
+                  'Denominazione',
+                  'Categoria',
+                  'Codice',
+                  'Descrizione',
+                  'Quantità',
+                  'Unità',
+                  'Stato',
+                  'Note',
+                ],
+                data: dati.map((attrezzatura) {
+                  return [
+                    attrezzatura.denominazione,
+                    attrezzatura.categoria,
+                    attrezzatura.codice,
+                    attrezzatura.descrizione,
+                    attrezzatura.quantita.toString(),
+                    attrezzatura.unitaMisura,
+                    attrezzatura.attiva ? 'Attiva' : 'Non attiva',
+                    attrezzatura.note,
+                  ];
+                }).toList(),
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                  fontSize: 8,
+                ),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.blueGrey700,
+                ),
+                cellStyle: const pw.TextStyle(fontSize: 7),
+                cellAlignment: pw.Alignment.centerLeft,
+                headerAlignment: pw.Alignment.centerLeft,
+                cellPadding: const pw.EdgeInsets.all(4),
+                columnWidths: const {
+                  0: pw.FlexColumnWidth(2.0),
+                  1: pw.FlexColumnWidth(1.4),
+                  2: pw.FlexColumnWidth(1.0),
+                  3: pw.FlexColumnWidth(2.2),
+                  4: pw.FlexColumnWidth(0.8),
+                  5: pw.FlexColumnWidth(0.8),
+                  6: pw.FlexColumnWidth(1.0),
+                  7: pw.FlexColumnWidth(2.0),
+                },
+              ),
+            ],
+          ),
+        );
+
+        return pdf.save();
+      },
+    );
+  }
+
   void azzeraRicerca() {
     cercaController.clear();
 
@@ -529,6 +636,13 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                     Icons.picture_as_pdf_rounded,
                                   ),
                                   label: Text('PDF (${filtrate.length})'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: filtrate.isEmpty
+                                      ? null
+                                      : stampaAttrezzature,
+                                  icon: const Icon(Icons.print_rounded),
+                                  label: Text('Stampa (${filtrate.length})'),
                                 ),
                               ],
                             ),

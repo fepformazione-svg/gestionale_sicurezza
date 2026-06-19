@@ -1109,4 +1109,90 @@ class AppDatabase {
       whereArgs: [aulaSede.id],
     );
   }
+
+  Future<List<Map<String, dynamic>>> getAttrezzature() async {
+    final db = await database;
+
+    return db.query('attrezzature', orderBy: 'attiva DESC, denominazione ASC');
+  }
+
+  Future<int> inserisciAttrezzatura({
+    required String denominazione,
+    required String categoria,
+    String? codice,
+    String? descrizione,
+    int quantita = 1,
+    String unitaMisura = 'pz',
+    int attiva = 1,
+    String? note,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.insert('attrezzature', {
+      'denominazione': denominazione.trim(),
+      'categoria': categoria.trim().isEmpty ? 'Generica' : categoria.trim(),
+      'codice': codice?.trim(),
+      'descrizione': descrizione?.trim(),
+      'quantita': quantita,
+      'unita_misura': unitaMisura.trim().isEmpty ? 'pz' : unitaMisura.trim(),
+      'attiva': attiva,
+      'note': note?.trim(),
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  Future<int> aggiornaAttrezzatura({
+    required int id,
+    required String denominazione,
+    required String categoria,
+    String? codice,
+    String? descrizione,
+    int quantita = 1,
+    String unitaMisura = 'pz',
+    int attiva = 1,
+    String? note,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'attrezzature',
+      {
+        'denominazione': denominazione.trim(),
+        'categoria': categoria.trim().isEmpty ? 'Generica' : categoria.trim(),
+        'codice': codice?.trim(),
+        'descrizione': descrizione?.trim(),
+        'quantita': quantita,
+        'unita_misura': unitaMisura.trim().isEmpty ? 'pz' : unitaMisura.trim(),
+        'attiva': attiva,
+        'note': note?.trim(),
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> eliminaAttrezzatura(int id) async {
+    final db = await database;
+
+    return db.delete('attrezzature', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> aggiornaStatoAttrezzatura({
+    required int id,
+    required int attiva,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'attrezzature',
+      {'attiva': attiva, 'updated_at': now},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dati_azienda_page.dart';
 import 'medici_strutture_page.dart';
 import 'visite_mediche_page.dart';
+import 'docenti_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -61,6 +62,11 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Docenti',
             descrizione:
                 'Lista docenti e futura associazione ai corsi o alle edizioni svolte.',
+            onTap: () {
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const DocentiPage()));
+            },
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(

@@ -220,6 +220,29 @@ class _AuleSediPageState extends State<AuleSediPage> {
     }
   }
 
+  Future<void> cambiaStatoAulaSede(AulaSede aulaSede) async {
+    final nuovaAttiva = !aulaSede.attiva;
+
+    final aulaSedeAggiornata = aulaSede.copyWith(attiva: nuovaAttiva);
+
+    await AppDatabase.instance.aggiornaAulaSede(aulaSedeAggiornata);
+
+    await caricaAuleSedi();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nuovaAttiva
+              ? 'Aula / sede formativa riattivata.'
+              : 'Aula / sede formativa disattivata.',
+        ),
+        backgroundColor: nuovaAttiva ? Colors.green : Colors.blueGrey,
+      ),
+    );
+  }
+
   Future<void> apriDialogModificaAulaSede(AulaSede aulaSede) async {
     final formKey = GlobalKey<FormState>();
 
@@ -570,25 +593,45 @@ class _AuleSediPageState extends State<AuleSediPage> {
                                   DataCell(badgeStato(aulaSede.attiva)),
                                   DataCell(Text(aulaSede.note)),
                                   DataCell(
-                                    Builder(
-                                      builder: (cellContext) {
-                                        return IconButton(
-                                          tooltip: 'Modifica aula / sede',
-                                          icon: Icon(
-                                            Icons.edit,
-                                            color: Colors.blueGrey.shade700,
-                                          ),
-                                          onPressed: () {
-                                            WidgetsBinding.instance
-                                                .addPostFrameCallback((_) {
-                                                  if (!mounted) return;
-                                                  apriDialogModificaAulaSede(
-                                                    aulaSede,
-                                                  );
-                                                });
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Builder(
+                                          builder: (cellContext) {
+                                            return IconButton(
+                                              tooltip: 'Modifica aula / sede',
+                                              icon: Icon(
+                                                Icons.edit,
+                                                color: Colors.blueGrey.shade700,
+                                              ),
+                                              onPressed: () {
+                                                WidgetsBinding.instance
+                                                    .addPostFrameCallback((_) {
+                                                      if (!mounted) return;
+                                                      apriDialogModificaAulaSede(
+                                                        aulaSede,
+                                                      );
+                                                    });
+                                              },
+                                            );
                                           },
-                                        );
-                                      },
+                                        ),
+                                        IconButton(
+                                          tooltip: aulaSede.attiva
+                                              ? 'Disattiva aula / sede'
+                                              : 'Riattiva aula / sede',
+                                          icon: Icon(
+                                            aulaSede.attiva
+                                                ? Icons.visibility_off_rounded
+                                                : Icons.visibility_rounded,
+                                            color: aulaSede.attiva
+                                                ? Colors.orange.shade700
+                                                : Colors.green.shade700,
+                                          ),
+                                          onPressed: () =>
+                                              cambiaStatoAulaSede(aulaSede),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],

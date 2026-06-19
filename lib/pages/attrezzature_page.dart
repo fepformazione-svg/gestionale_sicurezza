@@ -5,9 +5,12 @@ import 'package:excel/excel.dart' as xls;
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../models/attrezzatura.dart';
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class AttrezzaturePage extends StatefulWidget {
   const AttrezzaturePage({super.key});
@@ -261,6 +264,130 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     );
   }
 
+  Future<void> esportaPdfAttrezzature() async {
+    final dati = attrezzatureFiltrate;
+
+    if (dati.isEmpty) {
+      return;
+    }
+
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+
+    final pdf = pw.Document();
+
+    final ricerca = cercaController.text.trim();
+    final ora = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+
+    final info = [
+      soloAttive ? 'Solo attive' : 'Tutte',
+      if (ricerca.isNotEmpty) 'Ricerca: "$ricerca"',
+      '${dati.length} ${dati.length == 1 ? 'attrezzatura' : 'attrezzature'}',
+      'Esportazione del $dataOra',
+    ].join(' - ');
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+        ),
+        build: (context) => [
+          intestazioneAziendaPdfWidget(intestazionePdf),
+          pw.SizedBox(height: 14),
+          pw.Text(
+            'ATTREZZATURE',
+            style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(info, style: const pw.TextStyle(fontSize: 10)),
+          pw.SizedBox(height: 12),
+          pw.TableHelper.fromTextArray(
+            headers: const [
+              'Denominazione',
+              'Categoria',
+              'Codice',
+              'Descrizione',
+              'Quantita',
+              'Unita',
+              'Stato',
+              'Note',
+            ],
+            data: dati.map((attrezzatura) {
+              return [
+                attrezzatura.denominazione,
+                attrezzatura.categoria,
+                attrezzatura.codice,
+                attrezzatura.descrizione,
+                attrezzatura.quantita.toString(),
+                attrezzatura.unitaMisura,
+                attrezzatura.attiva ? 'ATTIVA' : 'NON ATTIVA',
+                attrezzatura.note,
+              ];
+            }).toList(),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.white,
+              fontSize: 8,
+            ),
+            headerDecoration: const pw.BoxDecoration(
+              color: PdfColors.blueGrey700,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 7),
+            cellAlignment: pw.Alignment.centerLeft,
+            headerAlignment: pw.Alignment.centerLeft,
+            columnWidths: const {
+              0: pw.FlexColumnWidth(2.0),
+              1: pw.FlexColumnWidth(1.4),
+              2: pw.FlexColumnWidth(1.1),
+              3: pw.FlexColumnWidth(2.4),
+              4: pw.FlexColumnWidth(0.8),
+              5: pw.FlexColumnWidth(0.8),
+              6: pw.FlexColumnWidth(1.0),
+              7: pw.FlexColumnWidth(2.0),
+            },
+            cellPadding: const pw.EdgeInsets.symmetric(
+              horizontal: 4,
+              vertical: 5,
+            ),
+          ),
+        ],
+      ),
+    );
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final nomeFiltro = ricerca.isNotEmpty ? '_filtrato' : '';
+    final nomeFile =
+        'attrezzature_export_pdf$nomeFiltro'
+        '_${ora.year}_${dueCifre(ora.month)}_${dueCifre(ora.day)}'
+        '_${dueCifre(ora.hour)}h${dueCifre(ora.minute)}.pdf';
+
+    final directory = await getApplicationDocumentsDirectory();
+    final file = File('${directory.path}/$nomeFile');
+
+    await file.writeAsBytes(await pdf.save(), flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export PDF completato: ${dati.length} '
+          '${dati.length == 1 ? 'attrezzatura esportata' : 'attrezzature esportate'}.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
   void azzeraRicerca() {
     cercaController.clear();
 
@@ -393,6 +520,15 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                       : esportaExcelAttrezzature,
                                   icon: const Icon(Icons.table_chart_rounded),
                                   label: Text('Excel (${filtrate.length})'),
+                                ),
+                                OutlinedButton.icon(
+                                  onPressed: filtrate.isEmpty
+                                      ? null
+                                      : esportaPdfAttrezzature,
+                                  icon: const Icon(
+                                    Icons.picture_as_pdf_rounded,
+                                  ),
+                                  label: Text('PDF (${filtrate.length})'),
                                 ),
                               ],
                             ),

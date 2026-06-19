@@ -73,6 +73,32 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
     );
   }
 
+  Future<void> cambiaStatoAttrezzatura(Attrezzatura attrezzatura) async {
+    final nuovoStato = !attrezzatura.attiva;
+
+    await AppDatabase.instance.aggiornaStatoAttrezzatura(
+      id: attrezzatura.id!,
+      attiva: nuovoStato ? 1 : 0,
+    );
+
+    await caricaAttrezzature();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nuovoStato
+              ? 'Attrezzatura riattivata correttamente.'
+              : 'Attrezzatura disattivata correttamente.',
+        ),
+        backgroundColor: nuovoStato
+            ? const Color(0xFF16A34A)
+            : const Color(0xFF64748B),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -175,17 +201,47 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                             ),
                                           ),
                                           DataCell(
-                                            IconButton(
-                                              tooltip: 'Modifica attrezzatura',
-                                              icon: const Icon(
-                                                Icons.edit_rounded,
-                                                color: Color(0xFF2563EB),
-                                              ),
-                                              onPressed: () {
-                                                apriDialogModificaAttrezzatura(
-                                                  attrezzatura,
-                                                );
-                                              },
+                                            Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                IconButton(
+                                                  tooltip:
+                                                      'Modifica attrezzatura',
+                                                  icon: const Icon(
+                                                    Icons.edit_rounded,
+                                                    color: Color(0xFF2563EB),
+                                                  ),
+                                                  onPressed: () {
+                                                    apriDialogModificaAttrezzatura(
+                                                      attrezzatura,
+                                                    );
+                                                  },
+                                                ),
+                                                IconButton(
+                                                  tooltip: attrezzatura.attiva
+                                                      ? 'Disattiva attrezzatura'
+                                                      : 'Riattiva attrezzatura',
+                                                  icon: Icon(
+                                                    attrezzatura.attiva
+                                                        ? Icons
+                                                              .visibility_off_rounded
+                                                        : Icons
+                                                              .visibility_rounded,
+                                                    color: attrezzatura.attiva
+                                                        ? const Color(
+                                                            0xFFDC2626,
+                                                          )
+                                                        : const Color(
+                                                            0xFF16A34A,
+                                                          ),
+                                                  ),
+                                                  onPressed: () {
+                                                    cambiaStatoAttrezzatura(
+                                                      attrezzatura,
+                                                    );
+                                                  },
+                                                ),
+                                              ],
                                             ),
                                           ),
                                         ],

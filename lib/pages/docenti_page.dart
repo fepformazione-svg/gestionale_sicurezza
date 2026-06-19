@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart' as xls;
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 import '../services/app_database.dart';
 
@@ -69,6 +74,129 @@ class _DocentiPageState extends State<DocentiPage> {
       docenti = dati;
       caricamento = false;
     });
+  }
+
+  Future<void> esportaExcelDocenti() async {
+    final lista = docentiFiltrati;
+
+    if (lista.isEmpty) {
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Docenti'];
+
+    final defaultSheet = excel.getDefaultSheet();
+    if (defaultSheet != null && defaultSheet != 'Docenti') {
+      excel.delete(defaultSheet);
+    }
+
+    final now = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
+    final vista = ricerca.trim().isEmpty
+        ? (soloAttivi ? 'Vista: solo docenti attivi' : 'Vista: tutti i docenti')
+        : (soloAttivi
+              ? 'Vista filtrata: ricerca "${ricerca.trim()}" tra i docenti attivi'
+              : 'Vista filtrata: ricerca "${ricerca.trim()}" tra tutti i docenti');
+
+    sheet.appendRow([xls.TextCellValue('Export Docenti')]);
+
+    sheet.appendRow([
+      xls.TextCellValue(
+        '$vista - ${lista.length} ${lista.length == 1 ? 'docente' : 'docenti'} - Generato il $dataOra',
+      ),
+    ]);
+
+    sheet.appendRow([]);
+
+    final headers = [
+      'Cognome',
+      'Nome',
+      'Codice fiscale',
+      'Qualifica',
+      'Telefono',
+      'Email',
+      'Note',
+      'Stato',
+    ];
+
+    sheet.appendRow(headers.map((h) => xls.TextCellValue(h)).toList());
+
+    final titoloStyle = xls.CellStyle(bold: true);
+
+    final intestazioneStyle = xls.CellStyle(bold: true);
+
+    sheet
+            .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+            .cellStyle =
+        titoloStyle;
+
+    for (var col = 0; col < headers.length; col++) {
+      sheet
+              .cell(
+                xls.CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 2),
+              )
+              .cellStyle =
+          intestazioneStyle;
+    }
+
+    for (final docente in lista) {
+      final attivo = docente['attivo']?.toString() != '0';
+
+      sheet.appendRow([
+        xls.TextCellValue(docente['cognome']?.toString() ?? ''),
+        xls.TextCellValue(docente['nome']?.toString() ?? ''),
+        xls.TextCellValue(docente['codice_fiscale']?.toString() ?? ''),
+        xls.TextCellValue(docente['qualifica']?.toString() ?? ''),
+        xls.TextCellValue(docente['telefono']?.toString() ?? ''),
+        xls.TextCellValue(docente['email']?.toString() ?? ''),
+        xls.TextCellValue(docente['note']?.toString() ?? ''),
+        xls.TextCellValue(attivo ? 'Attivo' : 'Non attivo'),
+      ]);
+    }
+
+    for (var col = 0; col < headers.length; col++) {
+      sheet.setColumnWidth(col, switch (col) {
+        0 => 22,
+        1 => 22,
+        2 => 22,
+        3 => 28,
+        4 => 18,
+        5 => 32,
+        6 => 40,
+        7 => 16,
+        _ => 18,
+      });
+    }
+
+    final bytes = excel.encode();
+    if (bytes == null) {
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final timestamp = DateFormat('yyyy_MM_dd_HHmm').format(now);
+
+    final nomeFile = ricerca.trim().isEmpty && soloAttivi
+        ? 'docenti_attivi_export_$timestamp.xlsx'
+        : 'docenti_export_filtrato_$timestamp.xlsx';
+
+    final file = File('${directory.path}\\$nomeFile');
+    await file.writeAsBytes(bytes, flush: true);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export Excel creato correttamente: ${lista.length} ${lista.length == 1 ? 'docente esportato' : 'docenti esportati'}.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    await OpenFile.open(file.path);
   }
 
   Future<void> apriDialogNuovoDocente() async {
@@ -406,10 +534,23 @@ class _DocentiPageState extends State<DocentiPage> {
                     color: Colors.blueGrey.shade800,
                   ),
                 ),
-                ElevatedButton.icon(
-                  onPressed: apriDialogNuovoDocente,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Nuovo docente'),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ElevatedButton.icon(
+                      onPressed: docentiFiltrati.isEmpty
+                          ? null
+                          : esportaExcelDocenti,
+                      icon: const Icon(Icons.table_chart_rounded),
+                      label: Text('Export Excel (${docentiFiltrati.length})'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: apriDialogNuovoDocente,
+                      icon: const Icon(Icons.add),
+                      label: const Text('Nuovo docente'),
+                    ),
+                  ],
                 ),
               ],
             ),

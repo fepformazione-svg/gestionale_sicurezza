@@ -255,6 +255,22 @@ class AppDatabase {
         updated_at TEXT
       )
     ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS docenti (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    cognome TEXT NOT NULL,
+    telefono TEXT,
+    email TEXT,
+    codice_fiscale TEXT,
+    qualifica TEXT,
+    note TEXT,
+    attivo INTEGER DEFAULT 1,
+    created_at TEXT,
+    updated_at TEXT
+  )
+''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -536,6 +552,18 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_dati_azienda_nome_commerciale ON dati_azienda(nome_commerciale)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_docenti_cognome ON docenti(cognome)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_docenti_nome ON docenti(nome)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_docenti_attivo ON docenti(attivo)',
     );
   }
 

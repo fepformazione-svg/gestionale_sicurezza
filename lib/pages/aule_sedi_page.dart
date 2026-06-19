@@ -14,10 +14,18 @@ class _AuleSediPageState extends State<AuleSediPage> {
   List<AulaSede> auleSedi = [];
   bool caricamento = true;
 
+  final cercaController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     caricaAuleSedi();
+  }
+
+  @override
+  void dispose() {
+    cercaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaAuleSedi() async {
@@ -31,6 +39,29 @@ class _AuleSediPageState extends State<AuleSediPage> {
       auleSedi = dati;
       caricamento = false;
     });
+  }
+
+  List<AulaSede> get auleSediFiltrate {
+    final ricerca = cercaController.text.trim().toLowerCase();
+
+    if (ricerca.isEmpty) return auleSedi;
+
+    return auleSedi.where((aulaSede) {
+      final stato = aulaSede.attiva ? 'attiva' : 'non attiva';
+      final capienza = aulaSede.capienza?.toString() ?? '';
+
+      final testo = [
+        aulaSede.denominazione,
+        aulaSede.tipo,
+        aulaSede.indirizzo,
+        aulaSede.comune,
+        capienza,
+        aulaSede.note,
+        stato,
+      ].join(' ').toLowerCase();
+
+      return testo.contains(ricerca);
+    }).toList();
   }
 
   Future<void> apriDialogNuovaAulaSede() async {
@@ -520,6 +551,53 @@ class _AuleSediPageState extends State<AuleSediPage> {
               style: TextStyle(color: Colors.blueGrey.shade700),
             ),
             const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: cercaController,
+                    onChanged: (_) => setState(() {}),
+                    decoration: InputDecoration(
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: cercaController.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Pulisci ricerca',
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                cercaController.clear();
+                                setState(() {});
+                              },
+                            ),
+                      labelText: 'Cerca aula, sede, tipo, comune o note...',
+                      border: const OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.blueGrey.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.blueGrey.shade100),
+                  ),
+                  child: Text(
+                    cercaController.text.trim().isEmpty
+                        ? '${auleSedi.length} voci presenti'
+                        : '${auleSediFiltrate.length} risultati',
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade800,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Expanded(
               child: Card(
                 elevation: 0,
@@ -531,31 +609,48 @@ class _AuleSediPageState extends State<AuleSediPage> {
                   padding: const EdgeInsets.all(18),
                   child: caricamento
                       ? const Center(child: CircularProgressIndicator())
-                      : auleSedi.isEmpty
+                      : auleSediFiltrate.isEmpty
                       ? Center(
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.meeting_room_outlined,
+                                cercaController.text.trim().isEmpty
+                                    ? Icons.meeting_room_outlined
+                                    : Icons.search_off_rounded,
                                 size: 54,
                                 color: Colors.blueGrey.shade300,
                               ),
                               const SizedBox(height: 12),
-                              const Text(
-                                'Nessuna aula o sede formativa presente',
-                                style: TextStyle(
+                              Text(
+                                cercaController.text.trim().isEmpty
+                                    ? 'Nessuna aula o sede formativa presente'
+                                    : 'Nessuna aula o sede formativa trovata',
+                                style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                'Qui saranno elencate le aule, i campi prova e le sedi cliente.',
+                                cercaController.text.trim().isEmpty
+                                    ? 'Qui saranno elencate le aule, i campi prova e le sedi cliente.'
+                                    : 'Modifica o azzera la ricerca per visualizzare altre voci.',
                                 style: TextStyle(
                                   color: Colors.blueGrey.shade600,
                                 ),
                               ),
+                              if (cercaController.text.trim().isNotEmpty) ...[
+                                const SizedBox(height: 14),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    cercaController.clear();
+                                    setState(() {});
+                                  },
+                                  icon: const Icon(Icons.clear),
+                                  label: const Text('Azzera ricerca'),
+                                ),
+                              ],
                             ],
                           ),
                         )
@@ -575,7 +670,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
                               DataColumn(label: Text('Note')),
                               DataColumn(label: Text('Azioni')),
                             ],
-                            rows: auleSedi.map((aulaSede) {
+                            rows: auleSediFiltrate.map((aulaSede) {
                               return DataRow(
                                 cells: [
                                   DataCell(

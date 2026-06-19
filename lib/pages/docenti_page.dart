@@ -11,7 +11,35 @@ class DocentiPage extends StatefulWidget {
 
 class _DocentiPageState extends State<DocentiPage> {
   List<Map<String, dynamic>> docenti = [];
+  final TextEditingController ricercaController = TextEditingController();
+  String ricerca = '';
   bool caricamento = true;
+
+  List<Map<String, dynamic>> get docentiFiltrati {
+    final testo = ricerca.trim().toLowerCase();
+
+    if (testo.isEmpty) return docenti;
+
+    return docenti.where((docente) {
+      final nome = docente['nome']?.toString().toLowerCase() ?? '';
+      final cognome = docente['cognome']?.toString().toLowerCase() ?? '';
+      final qualifica = docente['qualifica']?.toString().toLowerCase() ?? '';
+      final email = docente['email']?.toString().toLowerCase() ?? '';
+      final telefono = docente['telefono']?.toString().toLowerCase() ?? '';
+
+      return nome.contains(testo) ||
+          cognome.contains(testo) ||
+          qualifica.contains(testo) ||
+          email.contains(testo) ||
+          telefono.contains(testo);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    ricercaController.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -378,8 +406,41 @@ class _DocentiPageState extends State<DocentiPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              '${docenti.length} docenti presenti',
+              ricerca.trim().isEmpty
+                  ? '${docenti.length} docenti presenti'
+                  : '${docentiFiltrati.length} docenti trovati su ${docenti.length}',
               style: TextStyle(color: Colors.blueGrey.shade600),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: ricercaController,
+              decoration: InputDecoration(
+                hintText: 'Cerca docente, qualifica, email o telefono...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: ricerca.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Pulisci ricerca',
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          ricercaController.clear();
+                          setState(() {
+                            ricerca = '';
+                          });
+                        },
+                      ),
+                filled: true,
+                fillColor: Colors.white,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                  borderSide: BorderSide(color: Colors.blueGrey.shade100),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  ricerca = value;
+                });
+              },
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -390,7 +451,7 @@ class _DocentiPageState extends State<DocentiPage> {
                 ),
                 child: caricamento
                     ? const Center(child: CircularProgressIndicator())
-                    : docenti.isEmpty
+                    : docentiFiltrati.isEmpty
                     ? Center(
                         child: Text(
                           'Nessun docente inserito',
@@ -416,7 +477,7 @@ class _DocentiPageState extends State<DocentiPage> {
                             DataColumn(label: Text('Stato')),
                             DataColumn(label: Text('Azioni')),
                           ],
-                          rows: docenti.map((docente) {
+                          rows: docentiFiltrati.map((docente) {
                             final attivo = docente['attivo'] == 1;
 
                             return DataRow(

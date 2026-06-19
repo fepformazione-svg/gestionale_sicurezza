@@ -13,14 +13,23 @@ class _DocentiPageState extends State<DocentiPage> {
   List<Map<String, dynamic>> docenti = [];
   final TextEditingController ricercaController = TextEditingController();
   String ricerca = '';
+  bool soloAttivi = true;
   bool caricamento = true;
 
   List<Map<String, dynamic>> get docentiFiltrati {
     final testo = ricerca.trim().toLowerCase();
 
-    if (testo.isEmpty) return docenti;
-
     return docenti.where((docente) {
+      final attivo = docente['attivo'] == 1;
+
+      if (soloAttivi && !attivo) {
+        return false;
+      }
+
+      if (testo.isEmpty) {
+        return true;
+      }
+
       final nome = docente['nome']?.toString().toLowerCase() ?? '';
       final cognome = docente['cognome']?.toString().toLowerCase() ?? '';
       final qualifica = docente['qualifica']?.toString().toLowerCase() ?? '';
@@ -407,7 +416,11 @@ class _DocentiPageState extends State<DocentiPage> {
             const SizedBox(height: 16),
             Text(
               ricerca.trim().isEmpty
-                  ? docenti.length == 1
+                  ? soloAttivi
+                        ? docentiFiltrati.length == 1
+                              ? '1 docente attivo'
+                              : '${docentiFiltrati.length} docenti attivi'
+                        : docenti.length == 1
                         ? '1 docente presente'
                         : '${docenti.length} docenti presenti'
                   : docentiFiltrati.length == 1
@@ -445,6 +458,36 @@ class _DocentiPageState extends State<DocentiPage> {
                   ricerca = value;
                 });
               },
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                FilterChip(
+                  label: const Text('Solo attivi'),
+                  selected: soloAttivi,
+                  selectedColor: Colors.green.shade50,
+                  checkmarkColor: Colors.green.shade800,
+                  onSelected: (_) {
+                    setState(() {
+                      soloAttivi = true;
+                    });
+                  },
+                ),
+                FilterChip(
+                  label: const Text('Tutti'),
+                  selected: !soloAttivi,
+                  selectedColor: Colors.blueGrey.shade50,
+                  checkmarkColor: Colors.blueGrey.shade800,
+                  onSelected: (_) {
+                    setState(() {
+                      soloAttivi = false;
+                    });
+                  },
+                ),
+              ],
             ),
             const SizedBox(height: 20),
             Expanded(

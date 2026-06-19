@@ -12,6 +12,7 @@ class AttrezzaturePage extends StatefulWidget {
 
 class _AttrezzaturePageState extends State<AttrezzaturePage> {
   final cercaController = TextEditingController();
+  bool soloAttive = true;
 
   List<Attrezzatura> attrezzature = [];
   bool caricamento = true;
@@ -19,11 +20,15 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
   List<Attrezzatura> get attrezzatureFiltrate {
     final ricerca = cercaController.text.trim().toLowerCase();
 
+    final filtratePerStato = soloAttive
+        ? attrezzature.where((attrezzatura) => attrezzatura.attiva).toList()
+        : attrezzature;
+
     if (ricerca.isEmpty) {
-      return attrezzature;
+      return filtratePerStato;
     }
 
-    return attrezzature.where((attrezzatura) {
+    return filtratePerStato.where((attrezzatura) {
       final testo = [
         attrezzatura.denominazione,
         attrezzatura.categoria,
@@ -190,7 +195,9 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                   child: Text(
                                     ricercaAttiva
                                         ? '${filtrate.length} ${filtrate.length == 1 ? 'attrezzatura trovata' : 'attrezzature trovate'}'
-                                        : '${attrezzature.length} ${attrezzature.length == 1 ? 'attrezzatura presente' : 'attrezzature presenti'}',
+                                        : soloAttive
+                                        ? '${filtrate.length} ${filtrate.length == 1 ? 'attrezzatura attiva' : 'attrezzature attive'}'
+                                        : '${filtrate.length} ${filtrate.length == 1 ? 'attrezzatura presente' : 'attrezzature presenti'}',
                                     style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.w700,
@@ -222,6 +229,39 @@ class _AttrezzaturePageState extends State<AttrezzaturePage> {
                                   borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 12),
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: [
+                                FilterChip(
+                                  selected: soloAttive,
+                                  label: const Text('Solo attive'),
+                                  avatar: const Icon(
+                                    Icons.visibility_rounded,
+                                    size: 18,
+                                  ),
+                                  onSelected: (_) {
+                                    setState(() {
+                                      soloAttive = true;
+                                    });
+                                  },
+                                ),
+                                FilterChip(
+                                  selected: !soloAttive,
+                                  label: const Text('Tutte'),
+                                  avatar: const Icon(
+                                    Icons.list_rounded,
+                                    size: 18,
+                                  ),
+                                  onSelected: (_) {
+                                    setState(() {
+                                      soloAttive = false;
+                                    });
+                                  },
+                                ),
+                              ],
                             ),
                             const SizedBox(height: 20),
                             if (filtrate.isEmpty)

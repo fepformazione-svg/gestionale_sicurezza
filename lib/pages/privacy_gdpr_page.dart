@@ -15,10 +15,19 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   bool caricamento = true;
   bool soloAttive = true;
 
+  final ScrollController scrollOrizzontaleTabellaController =
+      ScrollController();
+
   @override
   void initState() {
     super.initState();
     caricaPrivacyGdpr();
+  }
+
+  @override
+  void dispose() {
+    scrollOrizzontaleTabellaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaPrivacyGdpr() async {
@@ -230,6 +239,218 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     noteController.dispose();
   }
 
+  Future<void> mostraDialogModificaVoce(PrivacyGdpr voce) async {
+    final idVoce = voce.id;
+    if (idVoce == null) {
+      return;
+    }
+
+    final formKey = GlobalKey<FormState>();
+
+    final titoloController = TextEditingController(text: voce.titolo);
+    final titolareController = TextEditingController(
+      text: voce.titolareTrattamento ?? '',
+    );
+    final referenteController = TextEditingController(
+      text: voce.referentePrivacy ?? '',
+    );
+    final baseGiuridicaController = TextEditingController(
+      text: voce.baseGiuridica ?? '',
+    );
+    final finalitaController = TextEditingController(
+      text: voce.finalitaTrattamento ?? '',
+    );
+    final categorieDatiController = TextEditingController(
+      text: voce.categorieDati ?? '',
+    );
+    final periodoConservazioneController = TextEditingController(
+      text: voce.periodoConservazione ?? '',
+    );
+    final misureSicurezzaController = TextEditingController(
+      text: voce.misureSicurezza ?? '',
+    );
+    final noteController = TextEditingController(text: voce.note ?? '');
+
+    bool voceAttiva = voce.attivo;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Modifica voce Privacy/GDPR'),
+              content: SizedBox(
+                width: 760,
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: titoloController,
+                          decoration: const InputDecoration(
+                            labelText: 'Titolo *',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (valore) {
+                            if (valore == null || valore.trim().isEmpty) {
+                              return 'Inserisci il titolo';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: titolareController,
+                          decoration: const InputDecoration(
+                            labelText: 'Titolare trattamento',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: referenteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Referente privacy',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: baseGiuridicaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Base giuridica',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: finalitaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Finalità trattamento',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: categorieDatiController,
+                          decoration: const InputDecoration(
+                            labelText: 'Categorie dati',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: periodoConservazioneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Periodo conservazione',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: misureSicurezzaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Misure sicurezza',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: noteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Note',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Voce attiva'),
+                          subtitle: const Text(
+                            'Le voci non attive restano archiviate ma vengono nascoste dal filtro Solo attive.',
+                          ),
+                          value: voceAttiva,
+                          onChanged: (valore) {
+                            setDialogState(() {
+                              voceAttiva = valore;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Annulla'),
+                ),
+                FilledButton.icon(
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) {
+                      return;
+                    }
+
+                    await AppDatabase.instance.aggiornaPrivacyGdpr(
+                      id: idVoce,
+                      titolo: titoloController.text,
+                      titolareTrattamento: titolareController.text,
+                      referentePrivacy: referenteController.text,
+                      baseGiuridica: baseGiuridicaController.text,
+                      finalitaTrattamento: finalitaController.text,
+                      categorieDati: categorieDatiController.text,
+                      periodoConservazione: periodoConservazioneController.text,
+                      misureSicurezza: misureSicurezzaController.text,
+                      note: noteController.text,
+                      attivo: voceAttiva,
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
+
+                    await caricaPrivacyGdpr();
+
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Voce Privacy/GDPR aggiornata.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva modifiche'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    titoloController.dispose();
+    titolareController.dispose();
+    referenteController.dispose();
+    baseGiuridicaController.dispose();
+    finalitaController.dispose();
+    categorieDatiController.dispose();
+    periodoConservazioneController.dispose();
+    misureSicurezzaController.dispose();
+    noteController.dispose();
+  }
+
   Color coloreStato(bool attivo) {
     return attivo ? Colors.green.shade700 : Colors.grey.shade600;
   }
@@ -302,67 +523,91 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   Widget tabellaPrivacy() {
     return Card(
       elevation: 1,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
-          columns: const [
-            DataColumn(label: Text('Titolo')),
-            DataColumn(label: Text('Titolare trattamento')),
-            DataColumn(label: Text('Referente privacy')),
-            DataColumn(label: Text('Base giuridica')),
-            DataColumn(label: Text('Periodo conservazione')),
-            DataColumn(label: Text('Stato')),
-          ],
-          rows: vociPrivacy.map((voce) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  SizedBox(
-                    width: 220,
-                    child: Text(voce.titolo, overflow: TextOverflow.ellipsis),
-                  ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 220,
-                    child: Text(
-                      voce.titolareTrattamento ?? '',
-                      overflow: TextOverflow.ellipsis,
+      child: Scrollbar(
+        controller: scrollOrizzontaleTabellaController,
+        thumbVisibility: true,
+        trackVisibility: true,
+        scrollbarOrientation: ScrollbarOrientation.bottom,
+        child: SingleChildScrollView(
+          controller: scrollOrizzontaleTabellaController,
+          scrollDirection: Axis.horizontal,
+          child: DataTable(
+            columnSpacing: 18,
+            horizontalMargin: 16,
+            headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
+            columns: const [
+              DataColumn(label: Text('Titolo')),
+              DataColumn(label: Text('Titolare trattamento')),
+              DataColumn(label: Text('Referente privacy')),
+              DataColumn(label: Text('Base giuridica')),
+              DataColumn(label: Text('Periodo conservazione')),
+              DataColumn(label: Text('Stato')),
+              DataColumn(label: Text('Azioni')),
+            ],
+            rows: vociPrivacy.map((voce) {
+              return DataRow(
+                cells: [
+                  DataCell(
+                    SizedBox(
+                      width: 250,
+                      child: Text(voce.titolo, overflow: TextOverflow.ellipsis),
                     ),
                   ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 190,
-                    child: Text(
-                      voce.referentePrivacy ?? '',
-                      overflow: TextOverflow.ellipsis,
+                  DataCell(
+                    SizedBox(
+                      width: 220,
+                      child: Text(
+                        voce.titolareTrattamento ?? '',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 220,
-                    child: Text(
-                      voce.baseGiuridica ?? '',
-                      overflow: TextOverflow.ellipsis,
+                  DataCell(
+                    SizedBox(
+                      width: 190,
+                      child: Text(
+                        voce.referentePrivacy ?? '',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 210,
-                    child: Text(
-                      voce.periodoConservazione ?? '',
-                      overflow: TextOverflow.ellipsis,
+                  DataCell(
+                    SizedBox(
+                      width: 250,
+                      child: Text(
+                        voce.baseGiuridica ?? '',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                ),
-                DataCell(badgeStato(voce.attivo)),
-              ],
-            );
-          }).toList(),
+                  DataCell(
+                    SizedBox(
+                      width: 200,
+                      child: Text(
+                        voce.periodoConservazione ?? '',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    SizedBox(width: 115, child: badgeStato(voce.attivo)),
+                  ),
+                  DataCell(
+                    SizedBox(
+                      width: 70,
+                      child: IconButton(
+                        tooltip: 'Modifica voce Privacy/GDPR',
+                        icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                        onPressed: () {
+                          mostraDialogModificaVoce(voce);
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ),
     );

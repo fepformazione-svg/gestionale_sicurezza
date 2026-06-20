@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
 
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
+
 import '../models/ente_attestato.dart';
 import '../services/app_database.dart';
 
@@ -373,6 +380,136 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
     }
   }
 
+  Future<void> esportaExcelEntiAttestati() async {
+    final entiDaEsportare = entiFiltrati;
+
+    if (entiDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun ente da esportare.')),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Enti attestati'];
+
+    excel.delete('Sheet1');
+
+    final ora = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+
+    final filtroAttivi = soloAttivi ? 'Solo attivi' : 'Tutti';
+    final ricercaAttiva = ricerca.trim().isNotEmpty
+        ? ' - Ricerca: "${ricerca.trim()}"'
+        : '';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      'Export enti attestati - $filtroAttivi$ricercaAttiva - '
+      '${entiDaEsportare.length} record - $dataOra',
+    );
+
+    final intestazioni = [
+      'Denominazione',
+      'Tipo',
+      'Codice accreditamento',
+      'Referente',
+      'Telefono',
+      'Email',
+      'PEC',
+      'Indirizzo',
+      'Comune',
+      'Stato',
+      'Note',
+    ];
+
+    final stileIntestazione = xls.CellStyle(bold: true);
+
+    for (var i = 0; i < intestazioni.length; i++) {
+      final cell = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 1),
+      );
+
+      cell.value = xls.TextCellValue(intestazioni[i]);
+      cell.cellStyle = stileIntestazione;
+    }
+
+    for (var i = 0; i < entiDaEsportare.length; i++) {
+      final ente = entiDaEsportare[i];
+      final rowIndex = i + 2;
+
+      final valori = [
+        ente.denominazione,
+        ente.tipo,
+        ente.codiceAccreditamento,
+        ente.referente,
+        ente.telefono,
+        ente.email,
+        ente.pec,
+        ente.indirizzo,
+        ente.comune,
+        ente.attivo == 1 ? 'Attivo' : 'Non attivo',
+        ente.note,
+      ];
+
+      for (var colIndex = 0; colIndex < valori.length; colIndex++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[colIndex] ?? '',
+        );
+      }
+    }
+
+    sheet.setColumnWidth(0, 24); // Denominazione
+    sheet.setColumnWidth(1, 12); // Tipo
+    sheet.setColumnWidth(2, 20); // Codice accreditamento
+    sheet.setColumnWidth(3, 18); // Referente
+    sheet.setColumnWidth(4, 14); // Telefono
+    sheet.setColumnWidth(5, 28); // Email
+    sheet.setColumnWidth(6, 28); // PEC
+    sheet.setColumnWidth(7, 26); // Indirizzo
+    sheet.setColumnWidth(8, 18); // Comune
+    sheet.setColumnWidth(9, 12); // Stato
+    sheet.setColumnWidth(10, 32); // Note
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final nomeFileData = DateFormat('yyyy_MM_dd_HHmm').format(ora);
+    final nomeFile = ricerca.trim().isNotEmpty || !soloAttivi
+        ? 'enti_attestati_export_filtrato_$nomeFileData.xlsx'
+        : 'enti_attestati_export_$nomeFileData.xlsx';
+
+    final file = File('${directory.path}${Platform.pathSeparator}$nomeFile');
+
+    final bytes = excel.encode();
+    if (bytes == null) {
+      throw Exception('Errore durante la generazione del file Excel.');
+    }
+
+    await file.writeAsBytes(bytes);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export Excel creato correttamente: ${entiDaEsportare.length} '
+          '${entiDaEsportare.length == 1 ? 'ente' : 'enti'}.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    await OpenFile.open(file.path);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -434,6 +571,14 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                           soloAttivi = false;
                         });
                       },
+                    ),
+                    const SizedBox(width: 8),
+                    ElevatedButton.icon(
+                      onPressed: entiFiltrati.isEmpty
+                          ? null
+                          : esportaExcelEntiAttestati,
+                      icon: const Icon(Icons.table_chart),
+                      label: Text('Excel (${entiFiltrati.length})'),
                     ),
                     const SizedBox(width: 24),
                     Expanded(

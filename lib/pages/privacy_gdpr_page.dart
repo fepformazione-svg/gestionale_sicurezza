@@ -5,9 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../models/privacy_gdpr.dart';
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class PrivacyGdprPage extends StatefulWidget {
   const PrivacyGdprPage({super.key});
@@ -629,6 +632,149 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     await OpenFile.open(file.path);
   }
 
+  Future<void> esportaPdfPrivacyGdpr() async {
+    final vociDaEsportare = vociPrivacyFiltrate;
+
+    if (vociDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna voce Privacy/GDPR da esportare in PDF.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+
+    final now = DateTime.now();
+    final dataGenerazione = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
+    final filtroAttivo = soloAttive ? 'Solo attive' : 'Tutte';
+    final ricercaAttiva = ricerca.trim().isEmpty ? 'Nessuna' : ricerca.trim();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAziendaPdfWidget(intestazionePdf),
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'PRIVACY / GDPR 679/2016',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Filtro: $filtroAttivo | Ricerca: $ricercaAttiva | '
+              'Record esportati: ${vociDaEsportare.length} | '
+              'Generato il: $dataGenerazione',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 14),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Titolo',
+                'Titolare',
+                'Referente',
+                'Base giuridica',
+                'Finalità',
+                'Categorie dati',
+                'Conservazione',
+                'Stato',
+                'Note',
+              ],
+              data: vociDaEsportare.map((voce) {
+                return [
+                  voce.titolo,
+                  voce.titolareTrattamento ?? '',
+                  voce.referentePrivacy ?? '',
+                  voce.baseGiuridica ?? '',
+                  voce.finalitaTrattamento ?? '',
+                  voce.categorieDati ?? '',
+                  voce.periodoConservazione ?? '',
+                  voce.attivo ? 'Attiva' : 'Non attiva',
+                  voce.note ?? '',
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 8,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 3,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2.0),
+                1: const pw.FlexColumnWidth(1.6),
+                2: const pw.FlexColumnWidth(1.4),
+                3: const pw.FlexColumnWidth(2.0),
+                4: const pw.FlexColumnWidth(2.0),
+                5: const pw.FlexColumnWidth(1.6),
+                6: const pw.FlexColumnWidth(1.4),
+                7: const pw.FlexColumnWidth(0.9),
+                8: const pw.FlexColumnWidth(1.8),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final suffixFiltro = ricerca.trim().isEmpty && soloAttive
+        ? ''
+        : '_filtrato';
+
+    final nomeFile =
+        'privacy_gdpr_export_pdf$suffixFiltro'
+        '_${DateFormat('yyyy_MM_dd_HHmm').format(now)}.pdf';
+
+    final file = File('${directory.path}${Platform.pathSeparator}$nomeFile');
+    await file.writeAsBytes(await pdf.save());
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'PDF Privacy/GDPR esportato: ${vociDaEsportare.length} '
+          '${vociDaEsportare.length == 1 ? 'voce' : 'voci'}.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Color coloreStato(bool attivo) {
     return attivo ? Colors.green.shade700 : Colors.grey.shade600;
   }
@@ -912,6 +1058,14 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                 : esportaExcelPrivacyGdpr,
                             icon: const Icon(Icons.table_chart),
                             label: Text('Excel ($totaleFiltrato)'),
+                          ),
+                          const SizedBox(width: 8),
+                          ElevatedButton.icon(
+                            onPressed: vociPrivacyFiltrate.isEmpty
+                                ? null
+                                : esportaPdfPrivacyGdpr,
+                            icon: const Icon(Icons.picture_as_pdf),
+                            label: Text('PDF ($totaleFiltrato)'),
                           ),
                           const SizedBox(width: 8),
                           FilledButton.icon(

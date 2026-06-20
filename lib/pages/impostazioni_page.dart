@@ -6,6 +6,7 @@ import 'docenti_page.dart';
 import 'aule_sedi_page.dart';
 import 'attrezzature_page.dart';
 import 'enti_attestati_page.dart';
+import 'privacy_gdpr_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -112,6 +113,12 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Privacy / GDPR 679/2016',
             descrizione:
                 'Informativa sul trattamento dei dati, consensi privacy e futura gestione GDPR.',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PrivacyGdprPage()),
+              );
+            },
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(

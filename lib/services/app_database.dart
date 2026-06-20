@@ -1391,4 +1391,128 @@ class AppDatabase {
       whereArgs: [id],
     );
   }
+
+  // ============================================================
+  // PRIVACY / GDPR 679/2016
+  // ============================================================
+
+  Future<List<Map<String, dynamic>>> getPrivacyGdpr({
+    bool soloAttivi = false,
+  }) async {
+    final db = await database;
+
+    return db.query(
+      'privacy_gdpr',
+      where: soloAttivi ? 'attivo = ?' : null,
+      whereArgs: soloAttivi ? [1] : null,
+      orderBy: 'titolo COLLATE NOCASE ASC',
+    );
+  }
+
+  Future<Map<String, dynamic>?> getPrivacyGdprById(int id) async {
+    final db = await database;
+
+    final risultati = await db.query(
+      'privacy_gdpr',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (risultati.isEmpty) {
+      return null;
+    }
+
+    return risultati.first;
+  }
+
+  Future<int> insertPrivacyGdpr({
+    required String titolo,
+    String? titolareTrattamento,
+    String? referentePrivacy,
+    String? baseGiuridica,
+    String? finalitaTrattamento,
+    String? categorieDati,
+    String? periodoConservazione,
+    String? misureSicurezza,
+    String? note,
+    bool attivo = true,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.insert('privacy_gdpr', {
+      'titolo': titolo.trim(),
+      'titolare_trattamento': titolareTrattamento?.trim(),
+      'referente_privacy': referentePrivacy?.trim(),
+      'base_giuridica': baseGiuridica?.trim(),
+      'finalita_trattamento': finalitaTrattamento?.trim(),
+      'categorie_dati': categorieDati?.trim(),
+      'periodo_conservazione': periodoConservazione?.trim(),
+      'misure_sicurezza': misureSicurezza?.trim(),
+      'note': note?.trim(),
+      'attivo': attivo ? 1 : 0,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  Future<int> aggiornaPrivacyGdpr({
+    required int id,
+    required String titolo,
+    String? titolareTrattamento,
+    String? referentePrivacy,
+    String? baseGiuridica,
+    String? finalitaTrattamento,
+    String? categorieDati,
+    String? periodoConservazione,
+    String? misureSicurezza,
+    String? note,
+    bool attivo = true,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'privacy_gdpr',
+      {
+        'titolo': titolo.trim(),
+        'titolare_trattamento': titolareTrattamento?.trim(),
+        'referente_privacy': referentePrivacy?.trim(),
+        'base_giuridica': baseGiuridica?.trim(),
+        'finalita_trattamento': finalitaTrattamento?.trim(),
+        'categorie_dati': categorieDati?.trim(),
+        'periodo_conservazione': periodoConservazione?.trim(),
+        'misure_sicurezza': misureSicurezza?.trim(),
+        'note': note?.trim(),
+        'attivo': attivo ? 1 : 0,
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> cambiaStatoPrivacyGdpr({
+    required int id,
+    required bool attivo,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'privacy_gdpr',
+      {
+        'attivo': attivo ? 1 : 0,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> deletePrivacyGdpr(int id) async {
+    final db = await database;
+
+    return db.delete('privacy_gdpr', where: 'id = ?', whereArgs: [id]);
+  }
 }

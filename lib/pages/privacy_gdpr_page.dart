@@ -14,6 +14,9 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   List<PrivacyGdpr> vociPrivacy = [];
   bool caricamento = true;
   bool soloAttive = true;
+  String ricerca = '';
+
+  final TextEditingController ricercaController = TextEditingController();
 
   final ScrollController scrollOrizzontaleTabellaController =
       ScrollController();
@@ -26,9 +29,39 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
 
   @override
   void dispose() {
+    ricercaController.dispose();
     scrollOrizzontaleTabellaController.dispose();
     super.dispose();
   }
+
+  List<PrivacyGdpr> get vociPrivacyFiltrate {
+    final testo = ricerca.trim().toLowerCase();
+
+    if (testo.isEmpty) {
+      return vociPrivacy;
+    }
+
+    return vociPrivacy.where((voce) {
+      final stato = voce.attivo ? 'attiva' : 'non attiva';
+
+      final campiRicerca = [
+        voce.titolo,
+        voce.titolareTrattamento ?? '',
+        voce.referentePrivacy ?? '',
+        voce.baseGiuridica ?? '',
+        voce.finalitaTrattamento ?? '',
+        voce.categorieDati ?? '',
+        voce.periodoConservazione ?? '',
+        voce.misureSicurezza ?? '',
+        voce.note ?? '',
+        stato,
+      ].join(' ').toLowerCase();
+
+      return campiRicerca.contains(testo);
+    }).toList();
+  }
+
+  bool get ricercaAttiva => ricerca.trim().isNotEmpty;
 
   Future<void> caricaPrivacyGdpr() async {
     setState(() {
@@ -501,18 +534,32 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
               ),
               const SizedBox(height: 8),
               Text(
-                soloAttive
+                ricercaAttiva
+                    ? 'Nessuna voce Privacy/GDPR trovata per la ricerca corrente.'
+                    : soloAttive
                     ? 'Nessuna voce privacy/GDPR attiva inserita.'
                     : 'Nessuna voce privacy/GDPR inserita.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.blueGrey.shade600),
               ),
               const SizedBox(height: 16),
-              FilledButton.icon(
-                onPressed: mostraDialogNuovaVoce,
-                icon: const Icon(Icons.add),
-                label: const Text('Nuova voce'),
-              ),
+              if (ricercaAttiva)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    ricercaController.clear();
+                    setState(() {
+                      ricerca = '';
+                    });
+                  },
+                  icon: const Icon(Icons.clear),
+                  label: const Text('Azzera ricerca'),
+                )
+              else
+                FilledButton.icon(
+                  onPressed: mostraDialogNuovaVoce,
+                  icon: const Icon(Icons.add),
+                  label: const Text('Nuova voce'),
+                ),
             ],
           ),
         ),
@@ -544,7 +591,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
               DataColumn(label: Text('Stato')),
               DataColumn(label: Text('Azioni')),
             ],
-            rows: vociPrivacy.map((voce) {
+            rows: vociPrivacyFiltrate.map((voce) {
               return DataRow(
                 cells: [
                   DataCell(
@@ -616,6 +663,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   @override
   Widget build(BuildContext context) {
     final totale = vociPrivacy.length;
+    final totaleFiltrato = vociPrivacyFiltrate.length;
 
     return Scaffold(
       appBar: AppBar(
@@ -681,6 +729,38 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
+                          SizedBox(
+                            width: 360,
+                            child: TextField(
+                              controller: ricercaController,
+                              decoration: InputDecoration(
+                                labelText: 'Cerca Privacy/GDPR',
+                                hintText:
+                                    'Titolo, titolare, referente, base giuridica...',
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: ricercaAttiva
+                                    ? IconButton(
+                                        tooltip: 'Azzera ricerca',
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          ricercaController.clear();
+                                          setState(() {
+                                            ricerca = '';
+                                          });
+                                        },
+                                      )
+                                    : null,
+                                border: const OutlineInputBorder(),
+                                isDense: true,
+                              ),
+                              onChanged: (valore) {
+                                setState(() {
+                                  ricerca = valore;
+                                });
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 12),
                           FilledButton.icon(
                             onPressed: mostraDialogNuovaVoce,
                             icon: const Icon(Icons.add),
@@ -690,7 +770,9 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                           Chip(
                             avatar: const Icon(Icons.list_alt, size: 18),
                             label: Text(
-                              soloAttive
+                              ricercaAttiva
+                                  ? '$totaleFiltrato voci trovate'
+                                  : soloAttive
                                   ? '$totale voci attive'
                                   : '$totale voci totali',
                             ),
@@ -701,7 +783,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                   ),
                   const SizedBox(height: 12),
                   Expanded(
-                    child: vociPrivacy.isEmpty
+                    child: vociPrivacyFiltrate.isEmpty
                         ? statoVuoto()
                         : tabellaPrivacy(),
                   ),

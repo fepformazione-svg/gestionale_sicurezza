@@ -38,6 +38,198 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     });
   }
 
+  Future<void> mostraDialogNuovaVoce() async {
+    final formKey = GlobalKey<FormState>();
+
+    final titoloController = TextEditingController();
+    final titolareController = TextEditingController();
+    final referenteController = TextEditingController();
+    final baseGiuridicaController = TextEditingController();
+    final finalitaController = TextEditingController();
+    final categorieDatiController = TextEditingController();
+    final periodoConservazioneController = TextEditingController();
+    final misureSicurezzaController = TextEditingController();
+    final noteController = TextEditingController();
+
+    bool voceAttiva = true;
+
+    await showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Nuova voce Privacy/GDPR'),
+              content: SizedBox(
+                width: 760,
+                child: Form(
+                  key: formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        TextFormField(
+                          controller: titoloController,
+                          decoration: const InputDecoration(
+                            labelText: 'Titolo *',
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (valore) {
+                            if (valore == null || valore.trim().isEmpty) {
+                              return 'Inserisci il titolo';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: titolareController,
+                          decoration: const InputDecoration(
+                            labelText: 'Titolare trattamento',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: referenteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Referente privacy',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: baseGiuridicaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Base giuridica',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: finalitaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Finalità trattamento',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: categorieDatiController,
+                          decoration: const InputDecoration(
+                            labelText: 'Categorie dati',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: periodoConservazioneController,
+                          decoration: const InputDecoration(
+                            labelText: 'Periodo conservazione',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: misureSicurezzaController,
+                          decoration: const InputDecoration(
+                            labelText: 'Misure sicurezza',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: noteController,
+                          decoration: const InputDecoration(
+                            labelText: 'Note',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 8),
+                        SwitchListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: const Text('Voce attiva'),
+                          subtitle: const Text(
+                            'Le voci non attive restano archiviate ma vengono nascoste dal filtro Solo attive.',
+                          ),
+                          value: voceAttiva,
+                          onChanged: (valore) {
+                            setDialogState(() {
+                              voceAttiva = valore;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                  },
+                  child: const Text('Annulla'),
+                ),
+                FilledButton.icon(
+                  onPressed: () async {
+                    if (!formKey.currentState!.validate()) {
+                      return;
+                    }
+
+                    await AppDatabase.instance.insertPrivacyGdpr(
+                      titolo: titoloController.text,
+                      titolareTrattamento: titolareController.text,
+                      referentePrivacy: referenteController.text,
+                      baseGiuridica: baseGiuridicaController.text,
+                      finalitaTrattamento: finalitaController.text,
+                      categorieDati: categorieDatiController.text,
+                      periodoConservazione: periodoConservazioneController.text,
+                      misureSicurezza: misureSicurezzaController.text,
+                      note: noteController.text,
+                      attivo: voceAttiva,
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    Navigator.of(dialogContext).pop();
+
+                    await caricaPrivacyGdpr();
+
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(this.context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Voce Privacy/GDPR salvata.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    titoloController.dispose();
+    titolareController.dispose();
+    referenteController.dispose();
+    baseGiuridicaController.dispose();
+    finalitaController.dispose();
+    categorieDatiController.dispose();
+    periodoConservazioneController.dispose();
+    misureSicurezzaController.dispose();
+    noteController.dispose();
+  }
+
   Color coloreStato(bool attivo) {
     return attivo ? Colors.green.shade700 : Colors.grey.shade600;
   }
@@ -95,9 +287,10 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                 style: TextStyle(color: Colors.blueGrey.shade600),
               ),
               const SizedBox(height: 16),
-              const Text(
-                'Nel prossimo step verrà aggiunta la funzione Nuova voce.',
-                textAlign: TextAlign.center,
+              FilledButton.icon(
+                onPressed: mostraDialogNuovaVoce,
+                icon: const Icon(Icons.add),
+                label: const Text('Nuova voce'),
               ),
             ],
           ),
@@ -242,6 +435,13 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                               ],
                             ),
                           ),
+                          const SizedBox(width: 12),
+                          FilledButton.icon(
+                            onPressed: mostraDialogNuovaVoce,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Nuova voce'),
+                          ),
+                          const SizedBox(width: 12),
                           Chip(
                             avatar: const Icon(Icons.list_alt, size: 18),
                             label: Text(

@@ -14,6 +14,40 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
   List<EnteAttestato> entiAttestati = [];
   bool caricamento = true;
 
+  final TextEditingController ricercaController = TextEditingController();
+  String ricerca = '';
+
+  List<EnteAttestato> get entiFiltrati {
+    final testo = ricerca.trim().toLowerCase();
+
+    if (testo.isEmpty) {
+      return entiAttestati;
+    }
+
+    return entiAttestati.where((ente) {
+      final valori = [
+        ente.denominazione,
+        ente.tipo,
+        ente.codiceAccreditamento,
+        ente.referente,
+        ente.telefono,
+        ente.email,
+        ente.pec,
+        ente.indirizzo,
+        ente.comune,
+        ente.note,
+      ].map((v) => (v ?? '').toLowerCase()).join(' ');
+
+      return valori.contains(testo);
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    ricercaController.dispose();
+    super.dispose();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -364,8 +398,45 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${entiAttestati.length} enti presenti',
-                        style: Theme.of(context).textTheme.titleMedium,
+                        ricerca.trim().isEmpty
+                            ? '${entiAttestati.length} enti presenti'
+                            : '${entiFiltrati.length} enti trovati',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    Expanded(
+                      child: TextField(
+                        controller: ricercaController,
+                        decoration: InputDecoration(
+                          labelText: 'Cerca ente rilascio attestati',
+                          hintText:
+                              'Cerca per denominazione, tipo, codice, referente, email...',
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: ricerca.isNotEmpty
+                              ? IconButton(
+                                  tooltip: 'Svuota ricerca',
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    ricercaController.clear();
+                                    setState(() {
+                                      ricerca = '';
+                                    });
+                                  },
+                                )
+                              : null,
+                          border: const OutlineInputBorder(),
+                        ),
+                        onChanged: (valore) {
+                          setState(() {
+                            ricerca = valore;
+                          });
+                        },
                       ),
                     ),
                     IconButton(
@@ -381,11 +452,13 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
             Expanded(
               child: caricamento
                   ? const Center(child: CircularProgressIndicator())
-                  : entiAttestati.isEmpty
-                  ? const Center(
+                  : entiFiltrati.isEmpty
+                  ? Center(
                       child: Text(
-                        'Nessun ente rilascio attestati presente.',
-                        style: TextStyle(fontSize: 16),
+                        ricerca.trim().isEmpty
+                            ? 'Nessun ente rilascio attestati presente.'
+                            : 'Nessun ente trovato con la ricerca corrente.',
+                        style: const TextStyle(fontSize: 16),
                       ),
                     )
                   : Scrollbar(
@@ -409,7 +482,7 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                               DataColumn(label: Text('Stato')),
                               DataColumn(label: Text('Azioni')),
                             ],
-                            rows: entiAttestati.map((ente) {
+                            rows: entiFiltrati.map((ente) {
                               return DataRow(
                                 cells: [
                                   DataCell(

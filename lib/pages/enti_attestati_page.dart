@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../utils/pdf_azienda_helper.dart';
+import 'package:printing/printing.dart';
 
 import '../models/ente_attestato.dart';
 import '../services/app_database.dart';
@@ -664,6 +665,145 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
     );
   }
 
+  Future<void> stampaEntiAttestati() async {
+    final entiDaStampare = entiFiltrati;
+
+    if (entiDaStampare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun ente da stampare.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+
+    final now = DateTime.now();
+    final dataGenerazione = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
+    final filtroAttivo = soloAttivi ? 'Solo attivi' : 'Tutti';
+    final ricercaAttiva = ricerca.trim().isEmpty ? 'Nessuna' : ricerca.trim();
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAziendaPdfWidget(intestazionePdf),
+            pw.SizedBox(height: 12),
+
+            pw.Text(
+              'ENTI RILASCIO ATTESTATI',
+              style: pw.TextStyle(
+                fontSize: 18,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+
+            pw.SizedBox(height: 6),
+
+            pw.Text(
+              'Filtro: $filtroAttivo | Ricerca: $ricercaAttiva | '
+              'Record stampati: ${entiDaStampare.length} | '
+              'Generato il: $dataGenerazione',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+
+            pw.SizedBox(height: 14),
+
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Denominazione',
+                'Tipo',
+                'Codice accr.',
+                'Referente',
+                'Telefono',
+                'Email',
+                'PEC',
+                'Comune',
+                'Stato',
+                'Note',
+              ],
+              data: entiDaStampare.map((ente) {
+                return [
+                  ente.denominazione,
+                  ente.tipo,
+                  ente.codiceAccreditamento,
+                  ente.referente,
+                  ente.telefono,
+                  ente.email,
+                  ente.pec,
+                  ente.comune,
+                  ente.attivo == 1 ? 'Attivo' : 'Non attivo',
+                  ente.note,
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 8,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 4,
+                vertical: 3,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2.2),
+                1: const pw.FlexColumnWidth(1.0),
+                2: const pw.FlexColumnWidth(1.1),
+                3: const pw.FlexColumnWidth(1.3),
+                4: const pw.FlexColumnWidth(1.0),
+                5: const pw.FlexColumnWidth(1.8),
+                6: const pw.FlexColumnWidth(1.6),
+                7: const pw.FlexColumnWidth(1.1),
+                8: const pw.FlexColumnWidth(0.9),
+                9: const pw.FlexColumnWidth(1.8),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Stampa Enti rilascio attestati avviata: '
+          '${entiDaStampare.length} record.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -742,6 +882,15 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                           : esportaPdfEntiAttestati,
                       icon: const Icon(Icons.picture_as_pdf),
                       label: Text('PDF (${entiFiltrati.length})'),
+                    ),
+                    const SizedBox(width: 8),
+
+                    ElevatedButton.icon(
+                      onPressed: entiFiltrati.isEmpty
+                          ? null
+                          : stampaEntiAttestati,
+                      icon: const Icon(Icons.print),
+                      label: Text('Stampa (${entiFiltrati.length})'),
                     ),
                     const SizedBox(width: 24),
                     Expanded(

@@ -1,4 +1,10 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as xls;
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/privacy_gdpr.dart';
 import '../services/app_database.dart';
@@ -484,6 +490,145 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     noteController.dispose();
   }
 
+  Future<void> esportaExcelPrivacyGdpr() async {
+    final vociDaEsportare = vociPrivacyFiltrate;
+
+    if (vociDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessuna voce Privacy/GDPR da esportare.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final excel = xls.Excel.createExcel();
+    final sheet = excel['Privacy GDPR'];
+
+    excel.delete('Sheet1');
+
+    final ora = DateTime.now();
+    final dataOra = DateFormat('dd/MM/yyyy HH:mm').format(ora);
+
+    final filtroAttive = soloAttive ? 'Solo attive' : 'Tutte';
+    final ricercaCorrente = ricerca.trim().isNotEmpty
+        ? ' - Ricerca: "${ricerca.trim()}"'
+        : '';
+
+    sheet
+        .cell(xls.CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: 0))
+        .value = xls.TextCellValue(
+      'Export Privacy/GDPR - $filtroAttive$ricercaCorrente - '
+      '${vociDaEsportare.length} record - $dataOra',
+    );
+
+    final intestazioni = [
+      'Titolo',
+      'Titolare trattamento',
+      'Referente privacy',
+      'Base giuridica',
+      'Finalità trattamento',
+      'Categorie dati',
+      'Periodo conservazione',
+      'Misure sicurezza',
+      'Stato',
+      'Note',
+    ];
+
+    final stileIntestazione = xls.CellStyle(bold: true);
+
+    for (var i = 0; i < intestazioni.length; i++) {
+      final cell = sheet.cell(
+        xls.CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 1),
+      );
+
+      cell.value = xls.TextCellValue(intestazioni[i]);
+      cell.cellStyle = stileIntestazione;
+    }
+
+    for (var i = 0; i < vociDaEsportare.length; i++) {
+      final voce = vociDaEsportare[i];
+      final rowIndex = i + 2;
+
+      final valori = [
+        voce.titolo,
+        voce.titolareTrattamento ?? '',
+        voce.referentePrivacy ?? '',
+        voce.baseGiuridica ?? '',
+        voce.finalitaTrattamento ?? '',
+        voce.categorieDati ?? '',
+        voce.periodoConservazione ?? '',
+        voce.misureSicurezza ?? '',
+        voce.attivo ? 'Attiva' : 'Non attiva',
+        voce.note ?? '',
+      ];
+
+      for (var colIndex = 0; colIndex < valori.length; colIndex++) {
+        sheet
+            .cell(
+              xls.CellIndex.indexByColumnRow(
+                columnIndex: colIndex,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = xls.TextCellValue(
+          valori[colIndex],
+        );
+      }
+    }
+
+    final larghezze = <int, double>{
+      0: 28, // Titolo
+      1: 24, // Titolare trattamento
+      2: 22, // Referente privacy
+      3: 30, // Base giuridica
+      4: 30, // Finalità trattamento
+      5: 26, // Categorie dati
+      6: 24, // Periodo conservazione
+      7: 28, // Misure sicurezza
+      8: 14, // Stato
+      9: 32, // Note
+    };
+
+    larghezze.forEach((colonna, larghezza) {
+      sheet.setColumnWidth(colonna, larghezza);
+    });
+
+    final directory = await getApplicationDocumentsDirectory();
+
+    final suffissoFiltro = ricerca.trim().isNotEmpty || !soloAttive
+        ? '_filtrato'
+        : '_attive';
+
+    final nomeFile =
+        'privacy_gdpr_export$suffissoFiltro'
+        '_${DateFormat('yyyy_MM_dd_HHmm').format(ora)}.xlsx';
+
+    final file = File('${directory.path}${Platform.pathSeparator}$nomeFile');
+
+    final bytes = excel.encode();
+    if (bytes == null) {
+      throw Exception('Errore durante la generazione del file Excel.');
+    }
+
+    await file.writeAsBytes(bytes);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Export Excel creato correttamente: ${vociDaEsportare.length} '
+          '${vociDaEsportare.length == 1 ? 'voce' : 'voci'} Privacy/GDPR.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    await OpenFile.open(file.path);
+  }
+
   Color coloreStato(bool attivo) {
     return attivo ? Colors.green.shade700 : Colors.grey.shade600;
   }
@@ -761,6 +906,14 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                             ),
                           ),
                           const SizedBox(width: 12),
+                          ElevatedButton.icon(
+                            onPressed: vociPrivacyFiltrate.isEmpty
+                                ? null
+                                : esportaExcelPrivacyGdpr,
+                            icon: const Icon(Icons.table_chart),
+                            label: Text('Excel ($totaleFiltrato)'),
+                          ),
+                          const SizedBox(width: 8),
                           FilledButton.icon(
                             onPressed: mostraDialogNuovaVoce,
                             icon: const Icon(Icons.add),

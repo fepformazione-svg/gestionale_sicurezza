@@ -16,15 +16,20 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
 
   final TextEditingController ricercaController = TextEditingController();
   String ricerca = '';
+  bool soloAttivi = true;
 
   List<EnteAttestato> get entiFiltrati {
     final testo = ricerca.trim().toLowerCase();
 
-    if (testo.isEmpty) {
-      return entiAttestati;
-    }
-
     return entiAttestati.where((ente) {
+      if (soloAttivi && ente.attivo != 1) {
+        return false;
+      }
+
+      if (testo.isEmpty) {
+        return true;
+      }
+
       final valori = [
         ente.denominazione,
         ente.tipo,
@@ -396,10 +401,13 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                   children: [
                     const Icon(Icons.account_balance, size: 32),
                     const SizedBox(width: 12),
-                    Expanded(
+                    SizedBox(
+                      width: 190,
                       child: Text(
                         ricerca.trim().isEmpty
-                            ? '${entiAttestati.length} enti presenti'
+                            ? soloAttivi
+                                  ? '${entiFiltrati.length} enti attivi'
+                                  : '${entiFiltrati.length} enti presenti'
                             : '${entiFiltrati.length} enti trovati',
                         style: const TextStyle(
                           fontSize: 16,
@@ -407,9 +415,27 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                         ),
                       ),
                     ),
-
-                    const SizedBox(height: 12),
-
+                    const SizedBox(width: 16),
+                    FilterChip(
+                      label: const Text('Solo attivi'),
+                      selected: soloAttivi,
+                      onSelected: (_) {
+                        setState(() {
+                          soloAttivi = true;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    FilterChip(
+                      label: const Text('Tutti'),
+                      selected: !soloAttivi,
+                      onSelected: (_) {
+                        setState(() {
+                          soloAttivi = false;
+                        });
+                      },
+                    ),
+                    const SizedBox(width: 24),
                     Expanded(
                       child: TextField(
                         controller: ricercaController,
@@ -439,6 +465,7 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                         },
                       ),
                     ),
+                    const SizedBox(width: 12),
                     IconButton(
                       tooltip: 'Aggiorna elenco',
                       onPressed: caricaEntiAttestati,

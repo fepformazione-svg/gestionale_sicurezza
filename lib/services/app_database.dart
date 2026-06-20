@@ -325,6 +325,24 @@ class AppDatabase {
         updated_at TEXT
       )
     ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS privacy_gdpr (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    titolo TEXT NOT NULL,
+    titolare_trattamento TEXT DEFAULT '',
+    referente_privacy TEXT DEFAULT '',
+    base_giuridica TEXT DEFAULT '',
+    finalita_trattamento TEXT DEFAULT '',
+    categorie_dati TEXT DEFAULT '',
+    periodo_conservazione TEXT DEFAULT '',
+    misure_sicurezza TEXT DEFAULT '',
+    note TEXT DEFAULT '',
+    attivo INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -505,6 +523,21 @@ class AppDatabase {
       'attivo': 'INTEGER DEFAULT 1',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
+    });
+
+    await _ensureColumns(db, 'privacy_gdpr', {
+      'titolo': 'TEXT NOT NULL DEFAULT ""',
+      'titolare_trattamento': 'TEXT DEFAULT ""',
+      'referente_privacy': 'TEXT DEFAULT ""',
+      'base_giuridica': 'TEXT DEFAULT ""',
+      'finalita_trattamento': 'TEXT DEFAULT ""',
+      'categorie_dati': 'TEXT DEFAULT ""',
+      'periodo_conservazione': 'TEXT DEFAULT ""',
+      'misure_sicurezza': 'TEXT DEFAULT ""',
+      'note': 'TEXT DEFAULT ""',
+      'attivo': 'INTEGER DEFAULT 1',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
     });
   }
 
@@ -695,6 +728,14 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_enti_attestati_attivo ON enti_attestati(attivo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_privacy_gdpr_titolo ON privacy_gdpr(titolo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_privacy_gdpr_attivo ON privacy_gdpr(attivo)',
     );
   }
 

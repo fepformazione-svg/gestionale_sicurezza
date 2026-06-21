@@ -16,6 +16,11 @@ class Discente {
   final String? dataVisitaMedica;
   final String? scadenzaVisitaMedica;
 
+  final int informativaPrivacyFirmata;
+  final String? dataFirmaInformativaPrivacy;
+  final String? documentoPrivacyDiscentePath;
+  final String? notePrivacyDiscente;
+
   Discente({
     this.id,
     required this.nome,
@@ -28,6 +33,10 @@ class Discente {
     this.visitaMedicaSvolta = 0,
     this.dataVisitaMedica,
     this.scadenzaVisitaMedica,
+    this.informativaPrivacyFirmata = 0,
+    this.dataFirmaInformativaPrivacy,
+    this.documentoPrivacyDiscentePath,
+    this.notePrivacyDiscente,
   });
 
   // =========================================================
@@ -61,16 +70,23 @@ class Discente {
       nomeImpresa: map['nome_impresa']?.toString(),
 
       visitaMedicaSvolta:
-          int.tryParse(
-            (map['visita_medica_svolta'] ?? 0).toString(),
-          ) ??
+          int.tryParse((map['visita_medica_svolta'] ?? 0).toString()) ?? 0,
+
+      dataVisitaMedica: map['data_visita_medica']?.toString(),
+
+      scadenzaVisitaMedica: map['scadenza_visita_medica']?.toString(),
+
+      informativaPrivacyFirmata:
+          int.tryParse((map['informativa_privacy_firmata'] ?? 0).toString()) ??
           0,
 
-      dataVisitaMedica:
-          map['data_visita_medica']?.toString(),
+      dataFirmaInformativaPrivacy: map['data_firma_informativa_privacy']
+          ?.toString(),
 
-      scadenzaVisitaMedica:
-          map['scadenza_visita_medica']?.toString(),
+      documentoPrivacyDiscentePath: map['documento_privacy_discente_path']
+          ?.toString(),
+
+      notePrivacyDiscente: map['note_privacy_discente']?.toString(),
     );
   }
 
@@ -89,6 +105,10 @@ class Discente {
       'visita_medica_svolta': visitaMedicaSvolta,
       'data_visita_medica': dataVisitaMedica,
       'scadenza_visita_medica': scadenzaVisitaMedica,
+      'informativa_privacy_firmata': informativaPrivacyFirmata,
+      'data_firma_informativa_privacy': dataFirmaInformativaPrivacy,
+      'documento_privacy_discente_path': documentoPrivacyDiscentePath,
+      'note_privacy_discente': notePrivacyDiscente,
     };
   }
 }

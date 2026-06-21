@@ -244,6 +244,223 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     );
   }
 
+  Future<void> generaInformativaPrivacyImpresaPdf() async {
+    final discente = discenteCorrente;
+    final impresa = (discente.nomeImpresa ?? '').trim();
+
+    if (impresa.isEmpty) {
+      mostraSnackBarErrore(
+        'Nessuna impresa collegata al discente. Impossibile generare l’informativa impresa.',
+      );
+      return;
+    }
+
+    final intestazione = await caricaIntestazioneAziendaPdf();
+    final pdf = pw.Document();
+
+    final nomeCompletoDiscente = [
+      discente.cognome.trim(),
+      discente.nome.trim(),
+    ].where((parte) => parte.isNotEmpty).join(' ');
+
+    final dataDocumento = DateFormat('dd/MM/yyyy').format(DateTime.now());
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.blueGrey500,
+            ),
+          ),
+        ),
+        build: (context) => [
+          intestazioneAziendaPdfWidget(intestazione),
+          pw.SizedBox(height: 22),
+
+          pw.Text(
+            'INFORMATIVA PRIVACY IMPRESA / CLIENTE',
+            style: pw.TextStyle(
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blueGrey800,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'Informativa sul trattamento dei dati personali dei lavoratori/discenti comunicati dall\'impresa cliente ai sensi del Regolamento UE 2016/679.',
+            style: const pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.blueGrey700,
+            ),
+          ),
+
+          pw.SizedBox(height: 18),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.blueGrey200),
+              borderRadius: pw.BorderRadius.circular(8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Dati impresa / cliente',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text('Impresa / cliente: ${testoPdf(impresa)}'),
+                pw.Text(
+                  'Discente di riferimento: ${testoPdf(nomeCompletoDiscente)}',
+                ),
+                pw.Text('Data documento: $dataDocumento'),
+              ],
+            ),
+          ),
+
+          pw.SizedBox(height: 18),
+          pw.Text(
+            'Premessa',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'La presente informativa disciplina il trattamento dei dati personali dei lavoratori, collaboratori o altri soggetti indicati dall\'impresa cliente per la partecipazione ad attività formative in materia di salute e sicurezza sul lavoro.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Finalità del trattamento',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati personali comunicati dall\'impresa cliente sono trattati per organizzare e gestire i corsi di formazione, predisporre registri presenza, verificare la partecipazione, emettere attestati, gestire scadenze formative e adempiere agli obblighi documentali previsti dalla normativa applicabile.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Categorie di dati trattati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Possono essere trattati dati anagrafici, identificativi, di contatto, codice fiscale, dati relativi al ruolo/mansione, partecipazione ai corsi, registri, attestati, idoneita documentale alla formazione e informazioni strettamente necessarie alla gestione dell\'attivita formativa.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Base giuridica',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Il trattamento è effettuato per l\'esecuzione di obblighi contrattuali e precontrattuali, per l\'adempimento di obblighi normativi in materia di formazione e sicurezza sul lavoro e per la tutela dei diritti del titolare del trattamento.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Comunicazione dei dati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati possono essere comunicati, nei limiti necessari, a docenti, enti di formazione, enti di rilascio attestati, consulenti, fornitori tecnici, soggetti incaricati della gestione documentale e autorità competenti, ove previsto dalla normativa.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Conservazione dei dati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati sono conservati per il tempo necessario alla gestione dell\'attività formativa, al rilascio e alla conservazione degli attestati, alla gestione delle scadenze, agli obblighi di legge e alla tutela dei diritti del titolare.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Obblighi dell\'impresa cliente',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'L\'impresa cliente dichiara di comunicare dati personali pertinenti, esatti e necessari alle finalità formative, impegnandosi a informare i propri lavoratori o collaboratori secondo quanto previsto dalla normativa privacy applicabile.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Diritti degli interessati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Gli interessati possono esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilita dei dati, nei limiti previsti dalla normativa applicabile.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 28),
+          pw.Text('Luogo e data: ________________________________'),
+          pw.SizedBox(height: 24),
+          pw.Text('Timbro e firma impresa cliente: _______________'),
+        ],
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final cartella = Directory(
+      p.join(directory.path, 'Gestionale Sicurezza', 'Privacy Imprese'),
+    );
+
+    if (!cartella.existsSync()) {
+      cartella.createSync(recursive: true);
+    }
+
+    final timestamp = DateFormat('yyyy_MM_dd_HHmm').format(DateTime.now());
+
+    final nomeImpresaSicuro = impresa
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+
+    final file = File(
+      p.join(
+        cartella.path,
+        'informativa_privacy_impresa_${nomeImpresaSicuro}_$timestamp.pdf',
+      ),
+    );
+
+    await file.writeAsBytes(await pdf.save());
+
+    if (!mounted) return;
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    mostraSnackBarSuccesso(
+      'Informativa privacy impresa generata correttamente.',
+    );
+  }
+
   Future<void> apriDocumentoPrivacyDiscente() async {
     final percorso = discenteCorrente.documentoPrivacyDiscentePath;
 
@@ -2452,6 +2669,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                       onGeneraInformativaPrivacy:
                           generaInformativaPrivacyDiscentePdf,
                       onApriDocumentoPrivacy: apriDocumentoPrivacyDiscente,
+                      onGeneraInformativaImpresaPrivacy:
+                          generaInformativaPrivacyImpresaPdf,
                     ),
 
                     const SizedBox(height: 10),
@@ -4474,12 +4693,14 @@ class _PrivacyGdprCard extends StatelessWidget {
   final VoidCallback onGestisciPrivacy;
   final VoidCallback onGeneraInformativaPrivacy;
   final VoidCallback onApriDocumentoPrivacy;
+  final VoidCallback onGeneraInformativaImpresaPrivacy;
 
   const _PrivacyGdprCard({
     required this.discente,
     required this.onGestisciPrivacy,
     required this.onGeneraInformativaPrivacy,
     required this.onApriDocumentoPrivacy,
+    required this.onGeneraInformativaImpresaPrivacy,
   });
 
   String valore(String? v) {
@@ -4593,6 +4814,15 @@ class _PrivacyGdprCard extends StatelessWidget {
                   label: const Text('Genera informativa'),
                 ),
               ),
+              if ((discente.nomeImpresa ?? '').trim().isNotEmpty)
+                SizedBox(
+                  width: 230,
+                  child: OutlinedButton.icon(
+                    onPressed: onGeneraInformativaImpresaPrivacy,
+                    icon: const Icon(Icons.business_outlined),
+                    label: const Text('Informativa impresa'),
+                  ),
+                ),
               if ((discente.documentoPrivacyDiscentePath ?? '')
                   .trim()
                   .isNotEmpty)

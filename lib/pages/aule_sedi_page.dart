@@ -905,6 +905,14 @@ class _AuleSediPageState extends State<AuleSediPage> {
           children: [
             Row(
               children: [
+                IconButton(
+                  tooltip: 'Torna alla Dashboard',
+                  onPressed: () {
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                  icon: const Icon(Icons.arrow_back),
+                ),
+                const SizedBox(width: 12),
                 Icon(Icons.meeting_room, color: Colors.blueGrey.shade700),
                 const SizedBox(width: 10),
                 const Expanded(

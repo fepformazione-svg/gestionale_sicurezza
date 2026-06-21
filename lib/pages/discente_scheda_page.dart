@@ -4487,6 +4487,16 @@ class _PrivacyGdprCard extends StatelessWidget {
     return testo.isEmpty ? '-' : testo;
   }
 
+  String nomeFileDocumentoPrivacy(String? percorso) {
+    final testo = percorso?.trim() ?? '';
+
+    if (testo.isEmpty) {
+      return '-';
+    }
+
+    return p.basename(testo);
+  }
+
   Color _coloreStatoPrivacy(bool firmata) {
     return firmata ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
   }
@@ -4555,7 +4565,9 @@ class _PrivacyGdprCard extends StatelessWidget {
           ),
           _InfoItem(
             label: 'Documento firmato',
-            value: valore(discente.documentoPrivacyDiscentePath),
+            value: nomeFileDocumentoPrivacy(
+              discente.documentoPrivacyDiscentePath,
+            ),
           ),
           _InfoItem(
             label: 'Note privacy',

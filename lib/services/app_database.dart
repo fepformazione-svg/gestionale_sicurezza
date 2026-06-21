@@ -86,22 +86,26 @@ class AppDatabase {
     ''');
 
     await db.execute('''
-      CREATE TABLE IF NOT EXISTS discenti (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        nome TEXT NOT NULL,
-        cognome TEXT DEFAULT '',
-        luogo_nascita TEXT,
-        data_nascita TEXT,
-        codice_fiscale TEXT,
-        impresa_id INTEGER,
-        visita_medica_svolta INTEGER DEFAULT 0,
-        data_visita_medica TEXT,
-        scadenza_visita_medica TEXT,
-        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-        updated_at TEXT,
-        FOREIGN KEY (impresa_id) REFERENCES imprese(id)
-      )
-    ''');
+  CREATE TABLE IF NOT EXISTS discenti (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    cognome TEXT DEFAULT '',
+    luogo_nascita TEXT,
+    data_nascita TEXT,
+    codice_fiscale TEXT,
+    impresa_id INTEGER,
+    visita_medica_svolta INTEGER DEFAULT 0,
+    data_visita_medica TEXT,
+    scadenza_visita_medica TEXT,
+    informativa_privacy_firmata INTEGER DEFAULT 0,
+    data_firma_informativa_privacy TEXT,
+    documento_privacy_discente_path TEXT,
+    note_privacy_discente TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT,
+    FOREIGN KEY (impresa_id) REFERENCES imprese(id)
+  )
+''');
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS corsi (
@@ -365,6 +369,10 @@ class AppDatabase {
       'visita_medica_svolta': 'INTEGER DEFAULT 0',
       'data_visita_medica': 'TEXT',
       'scadenza_visita_medica': 'TEXT',
+      'informativa_privacy_firmata': 'INTEGER DEFAULT 0',
+      'data_firma_informativa_privacy': 'TEXT',
+      'documento_privacy_discente_path': 'TEXT',
+      'note_privacy_discente': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });

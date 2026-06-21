@@ -1806,666 +1806,705 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _AnagraficaCard(discente: d),
-            const SizedBox(height: 12),
-            _SorveglianzaSanitariaCard(
-              discente: d,
-              visiteMediche: visiteMediche,
-              onAggiornaDati: caricaStorico,
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Storico formativo',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF111827),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 14,
-              runSpacing: 10,
-              children: [
-                Tooltip(
-                  message: eliminazioneCorsiInCorso
-                      ? 'Azione disabilitata durante l’eliminazione'
-                      : totaleCorsi == 0
-                      ? 'Nessun corso presente'
-                      : 'Mostra tutti i corsi',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MouseRegion(
-                    cursor: eliminazioneCorsiInCorso
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: InkWell(
-                      onTap: eliminazioneCorsiInCorso || totaleCorsi == 0
-                          ? null
-                          : () {
-                              filtroStorico = 'tutti';
-                              applicaFiltroStorico();
-
-                              mostraTuttiICorsi();
-                            },
-                      child: _StoricoKpiCard(
-                        titolo: 'Totale corsi',
-                        valore: totaleCorsi.toString(),
-                        colore: const Color(0xFF2563EB),
-                        attivo: filtroStorico == 'tutti' && totaleCorsi > 0,
-                        disabilitato: totaleCorsi == 0,
+            Flexible(
+              fit: FlexFit.loose,
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _AnagraficaCard(discente: d),
+                    const SizedBox(height: 12),
+                    _SorveglianzaSanitariaCard(
+                      discente: d,
+                      visiteMediche: visiteMediche,
+                      onAggiornaDati: caricaStorico,
+                    ),
+                    const SizedBox(height: 16),
+                    _PrivacyGdprCard(discente: d),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Storico formativo',
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF111827),
                       ),
                     ),
-                  ),
-                ),
-                Tooltip(
-                  message: eliminazioneCorsiInCorso
-                      ? 'Azione disabilitata durante l’eliminazione'
-                      : corsiValidi == 0
-                      ? 'Nessun corso valido presente'
-                      : 'Mostra corsi validi',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MouseRegion(
-                    cursor: eliminazioneCorsiInCorso || totaleCorsi == 0
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: InkWell(
-                      onTap: eliminazioneCorsiInCorso || corsiValidi == 0
-                          ? null
-                          : () {
-                              filtroStorico = 'validi';
-                              applicaFiltroStorico();
-                            },
-                      child: _StoricoKpiCard(
-                        titolo: 'Validi',
-                        valore: corsiValidi.toString(),
-                        colore: const Color(0xFF16A34A),
-                        attivo: filtroStorico == 'validi',
-                        disabilitato: corsiValidi == 0,
-                      ),
-                    ),
-                  ),
-                ),
-                Tooltip(
-                  message: eliminazioneCorsiInCorso
-                      ? 'Azione disabilitata durante l’eliminazione'
-                      : corsiInScadenza == 0
-                      ? 'Nessun corso in scadenza presente'
-                      : 'Mostra corsi in scadenza',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MouseRegion(
-                    cursor: eliminazioneCorsiInCorso || corsiInScadenza == 0
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: InkWell(
-                      onTap: eliminazioneCorsiInCorso || corsiInScadenza == 0
-                          ? null
-                          : () {
-                              filtroStorico = 'in_scadenza';
-                              applicaFiltroStorico();
-                            },
-                      child: _StoricoKpiCard(
-                        titolo: 'In scadenza',
-                        valore: corsiInScadenza.toString(),
-                        colore: const Color(0xFFF59E0B),
-                        attivo: filtroStorico == 'in_scadenza',
-                        disabilitato: corsiInScadenza == 0,
-                      ),
-                    ),
-                  ),
-                ),
-                Tooltip(
-                  message: eliminazioneCorsiInCorso
-                      ? 'Azione disabilitata durante l’eliminazione'
-                      : corsiScaduti == 0
-                      ? 'Nessun corso scaduto presente'
-                      : 'Mostra corsi scaduti',
-                  waitDuration: const Duration(milliseconds: 500),
-                  child: MouseRegion(
-                    cursor: eliminazioneCorsiInCorso || corsiScaduti == 0
-                        ? SystemMouseCursors.basic
-                        : SystemMouseCursors.click,
-                    child: InkWell(
-                      onTap: eliminazioneCorsiInCorso || corsiScaduti == 0
-                          ? null
-                          : () {
-                              filtroStorico = 'scaduti';
-                              applicaFiltroStorico();
-                            },
-                      child: _StoricoKpiCard(
-                        titolo: 'Scaduti',
-                        valore: corsiScaduti.toString(),
-                        colore: const Color(0xFFDC2626),
-                        attivo: filtroStorico == 'scaduti' && corsiScaduti > 0,
-                        disabilitato: corsiScaduti == 0,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            Row(
-              children: [
-                AnimatedContainer(
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  width: _cercaStoricoController.text.trim().isNotEmpty
-                      ? 430
-                      : 400,
-                  child: TextField(
-                    controller: _cercaStoricoController,
-                    enabled: !eliminazioneCorsiInCorso,
-                    onChanged: filtraStorico,
-                    decoration: InputDecoration(
-                      hintText: 'Cerca corso...',
-                      prefixIcon: const Icon(
-                        Icons.search_rounded,
-                        color: Color(0xFF64748B),
-                      ),
-                      suffixIcon: _cercaStoricoController.text.isNotEmpty
-                          ? IconButton(
-                              tooltip: 'Azzera ricerca',
-                              icon: const Icon(Icons.close_rounded),
-                              onPressed: eliminazioneCorsiInCorso
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 14,
+                      runSpacing: 10,
+                      children: [
+                        Tooltip(
+                          message: eliminazioneCorsiInCorso
+                              ? 'Azione disabilitata durante l’eliminazione'
+                              : totaleCorsi == 0
+                              ? 'Nessun corso presente'
+                              : 'Mostra tutti i corsi',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MouseRegion(
+                            cursor: eliminazioneCorsiInCorso
+                                ? SystemMouseCursors.basic
+                                : SystemMouseCursors.click,
+                            child: InkWell(
+                              onTap:
+                                  eliminazioneCorsiInCorso || totaleCorsi == 0
                                   ? null
                                   : () {
-                                      _cercaStoricoController.clear();
-                                      filtraStorico('');
-                                    },
-                            )
-                          : null,
-                      filled: true,
-                      fillColor: Colors.white,
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 14,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(color: Color(0xFFD1D5DB)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: const BorderSide(
-                          color: Color(0xFF2563EB),
-                          width: 1.5,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                                      filtroStorico = 'tutti';
+                                      applicaFiltroStorico();
 
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 180),
-                  switchInCurve: Curves.easeOut,
-                  switchOutCurve: Curves.easeIn,
-                  transitionBuilder: (child, animation) {
-                    return FadeTransition(
-                      opacity: animation,
-                      child: SizeTransition(
-                        sizeFactor: animation,
-                        axis: Axis.horizontal,
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: _cercaStoricoController.text.trim().isNotEmpty
-                      ? Padding(
-                          key: const ValueKey('ricerca-attiva'),
-                          padding: const EdgeInsets.only(left: 10),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 11,
-                              vertical: 7,
-                            ),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFEFF6FF),
-                              borderRadius: BorderRadius.circular(999),
-                              border: Border.all(
-                                color: const Color(0xFFBFDBFE),
+                                      mostraTuttiICorsi();
+                                    },
+                              child: _StoricoKpiCard(
+                                titolo: 'Totale corsi',
+                                valore: totaleCorsi.toString(),
+                                colore: const Color(0xFF2563EB),
+                                attivo:
+                                    filtroStorico == 'tutti' && totaleCorsi > 0,
+                                disabilitato: totaleCorsi == 0,
                               ),
                             ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(
-                                  Icons.tune_rounded,
-                                  size: 16,
-                                  color: Color(0xFF2563EB),
+                          ),
+                        ),
+                        Tooltip(
+                          message: eliminazioneCorsiInCorso
+                              ? 'Azione disabilitata durante l’eliminazione'
+                              : corsiValidi == 0
+                              ? 'Nessun corso valido presente'
+                              : 'Mostra corsi validi',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MouseRegion(
+                            cursor: eliminazioneCorsiInCorso || totaleCorsi == 0
+                                ? SystemMouseCursors.basic
+                                : SystemMouseCursors.click,
+                            child: InkWell(
+                              onTap:
+                                  eliminazioneCorsiInCorso || corsiValidi == 0
+                                  ? null
+                                  : () {
+                                      filtroStorico = 'validi';
+                                      applicaFiltroStorico();
+                                    },
+                              child: _StoricoKpiCard(
+                                titolo: 'Validi',
+                                valore: corsiValidi.toString(),
+                                colore: const Color(0xFF16A34A),
+                                attivo: filtroStorico == 'validi',
+                                disabilitato: corsiValidi == 0,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: eliminazioneCorsiInCorso
+                              ? 'Azione disabilitata durante l’eliminazione'
+                              : corsiInScadenza == 0
+                              ? 'Nessun corso in scadenza presente'
+                              : 'Mostra corsi in scadenza',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MouseRegion(
+                            cursor:
+                                eliminazioneCorsiInCorso || corsiInScadenza == 0
+                                ? SystemMouseCursors.basic
+                                : SystemMouseCursors.click,
+                            child: InkWell(
+                              onTap:
+                                  eliminazioneCorsiInCorso ||
+                                      corsiInScadenza == 0
+                                  ? null
+                                  : () {
+                                      filtroStorico = 'in_scadenza';
+                                      applicaFiltroStorico();
+                                    },
+                              child: _StoricoKpiCard(
+                                titolo: 'In scadenza',
+                                valore: corsiInScadenza.toString(),
+                                colore: const Color(0xFFF59E0B),
+                                attivo: filtroStorico == 'in_scadenza',
+                                disabilitato: corsiInScadenza == 0,
+                              ),
+                            ),
+                          ),
+                        ),
+                        Tooltip(
+                          message: eliminazioneCorsiInCorso
+                              ? 'Azione disabilitata durante l’eliminazione'
+                              : corsiScaduti == 0
+                              ? 'Nessun corso scaduto presente'
+                              : 'Mostra corsi scaduti',
+                          waitDuration: const Duration(milliseconds: 500),
+                          child: MouseRegion(
+                            cursor:
+                                eliminazioneCorsiInCorso || corsiScaduti == 0
+                                ? SystemMouseCursors.basic
+                                : SystemMouseCursors.click,
+                            child: InkWell(
+                              onTap:
+                                  eliminazioneCorsiInCorso || corsiScaduti == 0
+                                  ? null
+                                  : () {
+                                      filtroStorico = 'scaduti';
+                                      applicaFiltroStorico();
+                                    },
+                              child: _StoricoKpiCard(
+                                titolo: 'Scaduti',
+                                valore: corsiScaduti.toString(),
+                                colore: const Color(0xFFDC2626),
+                                attivo:
+                                    filtroStorico == 'scaduti' &&
+                                    corsiScaduti > 0,
+                                disabilitato: corsiScaduti == 0,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Row(
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 180),
+                          curve: Curves.easeOut,
+                          width: _cercaStoricoController.text.trim().isNotEmpty
+                              ? 430
+                              : 400,
+                          child: TextField(
+                            controller: _cercaStoricoController,
+                            enabled: !eliminazioneCorsiInCorso,
+                            onChanged: filtraStorico,
+                            decoration: InputDecoration(
+                              hintText: 'Cerca corso...',
+                              prefixIcon: const Icon(
+                                Icons.search_rounded,
+                                color: Color(0xFF64748B),
+                              ),
+                              suffixIcon:
+                                  _cercaStoricoController.text.isNotEmpty
+                                  ? IconButton(
+                                      tooltip: 'Azzera ricerca',
+                                      icon: const Icon(Icons.close_rounded),
+                                      onPressed: eliminazioneCorsiInCorso
+                                          ? null
+                                          : () {
+                                              _cercaStoricoController.clear();
+                                              filtraStorico('');
+                                            },
+                                    )
+                                  : null,
+                              filled: true,
+                              fillColor: Colors.white,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFD1D5DB),
                                 ),
-                                SizedBox(width: 6),
-                                Text(
-                                  'Ricerca attiva',
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFFD1D5DB),
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF2563EB),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 180),
+                          switchInCurve: Curves.easeOut,
+                          switchOutCurve: Curves.easeIn,
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: SizeTransition(
+                                sizeFactor: animation,
+                                axis: Axis.horizontal,
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: _cercaStoricoController.text.trim().isNotEmpty
+                              ? Padding(
+                                  key: const ValueKey('ricerca-attiva'),
+                                  padding: const EdgeInsets.only(left: 10),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 11,
+                                      vertical: 7,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFEFF6FF),
+                                      borderRadius: BorderRadius.circular(999),
+                                      border: Border.all(
+                                        color: const Color(0xFFBFDBFE),
+                                      ),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.tune_rounded,
+                                          size: 16,
+                                          color: Color(0xFF2563EB),
+                                        ),
+                                        SizedBox(width: 6),
+                                        Text(
+                                          'Ricerca attiva',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w800,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                )
+                              : const SizedBox(
+                                  key: ValueKey('ricerca-non-attiva'),
+                                  width: 0,
+                                ),
+                        ),
+
+                        if (filtroAttivo) ...[
+                          const SizedBox(width: 12),
+
+                          OutlinedButton.icon(
+                            onPressed: eliminazioneCorsiInCorso
+                                ? null
+                                : azzeraFiltroStorico,
+                            icon: const Icon(Icons.close_rounded, size: 18),
+                            label: const Text(
+                              'Azzera filtro',
+                              style: TextStyle(fontWeight: FontWeight.w600),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              backgroundColor: const Color(0xFFEFF6FF),
+                              foregroundColor: const Color(0xFF2563EB),
+                              side: const BorderSide(
+                                color: Color(0xFF2563EB),
+                                width: 1.4,
+                              ),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 18,
+                                vertical: 18,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 180),
+                              switchInCurve: Curves.easeOut,
+                              switchOutCurve: Curves.easeIn,
+                              transitionBuilder: (child, animation) {
+                                return FadeTransition(
+                                  opacity: animation,
+                                  child: SizeTransition(
+                                    sizeFactor: animation,
+                                    axis: Axis.horizontal,
+                                    child: child,
+                                  ),
+                                );
+                              },
+                              child:
+                                  _cercaStoricoController.text.trim().isNotEmpty
+                                  ? Container(
+                                      key: const ValueKey(
+                                        'badge-risultati-ricerca',
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 7,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        border: Border.all(
+                                          color: const Color(0xFFBFDBFE),
+                                        ),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.manage_search_rounded,
+                                            size: 18,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            storicoFiltrato.length == 1
+                                                ? 'Trovato 1 corso'
+                                                : 'Trovati ${storicoFiltrato.length} corsi',
+                                            style: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w800,
+                                              color: Color(0xFF2563EB),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    )
+                                  : Text(
+                                      key: const ValueKey(
+                                        'testo-risultati-normale',
+                                      ),
+                                      storicoFiltrato.length == 1
+                                          ? 'Visualizzato 1 corso'
+                                          : 'Visualizzati ${storicoFiltrato.length} corsi',
+                                      style: const TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                        color: Color(0xFF475569),
+                                      ),
+                                    ),
+                            ),
+
+                            const SizedBox(width: 16),
+
+                            TextButton.icon(
+                              onPressed:
+                                  eliminazioneCorsiInCorso ||
+                                      storicoFiltrato.isEmpty ||
+                                      storiciSelezionati.length ==
+                                          storicoFiltrato.length
+                                  ? null
+                                  : () {
+                                      setState(() {
+                                        storiciSelezionati.clear();
+                                        storiciSelezionati.addAll(
+                                          List.generate(
+                                            storicoFiltrato.length,
+                                            (i) => i,
+                                          ),
+                                        );
+                                        storicoSelezionato =
+                                            storicoFiltrato.isNotEmpty
+                                            ? 0
+                                            : null;
+                                        ultimoStoricoSelezionato =
+                                            storicoFiltrato.isNotEmpty
+                                            ? storicoFiltrato.length - 1
+                                            : null;
+                                      });
+                                    },
+                              icon: const Icon(Icons.select_all, size: 18),
+                              label: const Text('Seleziona tutto'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: const Color(0xFF1D4ED8),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 9,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                textStyle: const TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+
+                            if (storiciSelezionati.isNotEmpty) ...[
+                              const SizedBox(width: 6),
+
+                              TextButton.icon(
+                                onPressed:
+                                    eliminazioneCorsiInCorso ||
+                                        storiciSelezionati.isEmpty
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          storiciSelezionati.clear();
+                                          storicoSelezionato = null;
+                                          ultimoStoricoSelezionato = null;
+                                          indiceHoverStorico = null;
+                                        });
+                                      },
+                                icon: const Icon(Icons.clear_all, size: 18),
+                                label: const Text('Deseleziona tutto'),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF4338CA),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 6),
+
+                              TextButton.icon(
+                                onPressed:
+                                    !selezioneStoricoValida() ||
+                                        eliminazioneCorsiInCorso
+                                    ? null
+                                    : esportaCorsiSelezionatiExcel,
+                                icon: Icon(
+                                  Icons.table_chart_outlined,
+                                  size: 20,
+                                  color:
+                                      !selezioneStoricoValida() ||
+                                          eliminazioneCorsiInCorso
+                                      ? null
+                                      : const Color(0xFF16A34A),
+                                ),
+                                label: Text(
+                                  'Excel',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    color:
+                                        !selezioneStoricoValida() ||
+                                            eliminazioneCorsiInCorso
+                                        ? null
+                                        : const Color(0xFF16A34A),
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF2563EB),
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFF16A34A),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 6),
+
+                              TextButton.icon(
+                                onPressed:
+                                    !selezioneStoricoValida() ||
+                                        eliminazioneCorsiInCorso
+                                    ? null
+                                    : esportaCorsiSelezionatiPdf,
+                                icon: Icon(
+                                  Icons.picture_as_pdf_outlined,
+                                  size: 20,
+                                  color:
+                                      !selezioneStoricoValida() ||
+                                          eliminazioneCorsiInCorso
+                                      ? null
+                                      : const Color(0xFFDC2626),
+                                ),
+                                label: Text(
+                                  'PDF',
+                                  style: TextStyle(
+                                    color:
+                                        !selezioneStoricoValida() ||
+                                            eliminazioneCorsiInCorso
+                                        ? null
+                                        : const Color(0xFFDC2626),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFDC2626),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(width: 6),
+
+                              TextButton.icon(
+                                onPressed:
+                                    !selezioneStoricoValida() ||
+                                        eliminazioneCorsiInCorso
+                                    ? null
+                                    : eliminaCorsiSelezionati,
+                                icon: eliminazioneCorsiInCorso
+                                    ? const SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2.2,
+                                          color: Color(0xFF9A3412),
+                                        ),
+                                      )
+                                    : Icon(
+                                        Icons.delete_outline,
+                                        size: 20,
+                                        color: !selezioneStoricoValida()
+                                            ? null
+                                            : const Color(0xFFDC2626),
+                                      ),
+                                label: Text(
+                                  eliminazioneCorsiInCorso
+                                      ? 'Eliminazione...'
+                                      : 'Elimina',
+                                  style: TextStyle(
+                                    color:
+                                        !selezioneStoricoValida() ||
+                                            eliminazioneCorsiInCorso
+                                        ? null
+                                        : const Color(0xFFDC2626),
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                                style: TextButton.styleFrom(
+                                  foregroundColor: const Color(0xFFDC2626),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 9,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  textStyle: const TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
+                        if (storiciSelezionati.isNotEmpty) ...[
+                          const SizedBox(height: 10),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: eliminazioneCorsiInCorso
+                                  ? const Color(0xFFFFF7ED)
+                                  : const Color(0xFFEFF6FF),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: eliminazioneCorsiInCorso
+                                    ? const Color(0xFFF97316)
+                                    : const Color(0xFFBFDBFE),
+                                width: 1.1,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: eliminazioneCorsiInCorso
+                                      ? const Color(
+                                          0xFFF97316,
+                                        ).withValues(alpha: 0.10)
+                                      : const Color(
+                                          0xFF2563EB,
+                                        ).withValues(alpha: 0.08),
+                                  blurRadius: 14,
+                                  offset: const Offset(0, 6),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 34,
+                                  height: 34,
+                                  decoration: BoxDecoration(
+                                    color: eliminazioneCorsiInCorso
+                                        ? const Color(0xFFFFEDD5)
+                                        : const Color(0xFFDBEAFE),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Center(
+                                    child: eliminazioneCorsiInCorso
+                                        ? const SizedBox(
+                                            width: 17,
+                                            height: 17,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2.2,
+                                              color: Color(0xFFC2410C),
+                                            ),
+                                          )
+                                        : const Icon(
+                                            Icons.check_circle_outline,
+                                            size: 20,
+                                            color: Color(0xFF2563EB),
+                                          ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    eliminazioneCorsiInCorso
+                                        ? storiciSelezionati.length == 1
+                                              ? 'Eliminazione in corso di 1 corso selezionato...'
+                                              : 'Eliminazione in corso di ${storiciSelezionati.length} corsi selezionati...'
+                                        : storiciSelezionati.length == 1
+                                        ? '1 corso selezionato'
+                                        : '${storiciSelezionati.length} corsi selezionati',
+                                    style: TextStyle(
+                                      color: eliminazioneCorsiInCorso
+                                          ? const Color(0xFF9A3412)
+                                          : const Color(0xFF1E3A8A),
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ),
-                        )
-                      : const SizedBox(
-                          key: ValueKey('ricerca-non-attiva'),
-                          width: 0,
-                        ),
-                ),
-
-                if (filtroAttivo) ...[
-                  const SizedBox(width: 12),
-
-                  OutlinedButton.icon(
-                    onPressed: eliminazioneCorsiInCorso
-                        ? null
-                        : azzeraFiltroStorico,
-                    icon: const Icon(Icons.close_rounded, size: 18),
-                    label: const Text(
-                      'Azzera filtro',
-                      style: TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      backgroundColor: const Color(0xFFEFF6FF),
-                      foregroundColor: const Color(0xFF2563EB),
-                      side: const BorderSide(
-                        color: Color(0xFF2563EB),
-                        width: 1.4,
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 18,
-                        vertical: 18,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
-            ),
-
-            const SizedBox(height: 8),
-
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 180),
-                      switchInCurve: Curves.easeOut,
-                      switchOutCurve: Curves.easeIn,
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: SizeTransition(
-                            sizeFactor: animation,
-                            axis: Axis.horizontal,
-                            child: child,
-                          ),
-                        );
-                      },
-                      child: _cercaStoricoController.text.trim().isNotEmpty
-                          ? Container(
-                              key: const ValueKey('badge-risultati-ricerca'),
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                borderRadius: BorderRadius.circular(999),
-                                border: Border.all(
-                                  color: const Color(0xFFBFDBFE),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.manage_search_rounded,
-                                    size: 18,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    storicoFiltrato.length == 1
-                                        ? 'Trovato 1 corso'
-                                        : 'Trovati ${storicoFiltrato.length} corsi',
-                                    style: const TextStyle(
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w800,
-                                      color: Color(0xFF2563EB),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : Text(
-                              key: const ValueKey('testo-risultati-normale'),
-                              storicoFiltrato.length == 1
-                                  ? 'Visualizzato 1 corso'
-                                  : 'Visualizzati ${storicoFiltrato.length} corsi',
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w700,
-                                color: Color(0xFF475569),
-                              ),
-                            ),
+                        ],
+                      ],
                     ),
 
-                    const SizedBox(width: 16),
-
-                    TextButton.icon(
-                      onPressed:
-                          eliminazioneCorsiInCorso ||
-                              storicoFiltrato.isEmpty ||
-                              storiciSelezionati.length ==
-                                  storicoFiltrato.length
-                          ? null
-                          : () {
-                              setState(() {
-                                storiciSelezionati.clear();
-                                storiciSelezionati.addAll(
-                                  List.generate(
-                                    storicoFiltrato.length,
-                                    (i) => i,
-                                  ),
-                                );
-                                storicoSelezionato = storicoFiltrato.isNotEmpty
-                                    ? 0
-                                    : null;
-                                ultimoStoricoSelezionato =
-                                    storicoFiltrato.isNotEmpty
-                                    ? storicoFiltrato.length - 1
-                                    : null;
-                              });
-                            },
-                      icon: const Icon(Icons.select_all, size: 18),
-                      label: const Text('Seleziona tutto'),
-                      style: TextButton.styleFrom(
-                        foregroundColor: const Color(0xFF1D4ED8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-
-                    if (storiciSelezionati.isNotEmpty) ...[
-                      const SizedBox(width: 6),
-
-                      TextButton.icon(
-                        onPressed:
-                            eliminazioneCorsiInCorso ||
-                                storiciSelezionati.isEmpty
-                            ? null
-                            : () {
-                                setState(() {
-                                  storiciSelezionati.clear();
-                                  storicoSelezionato = null;
-                                  ultimoStoricoSelezionato = null;
-                                  indiceHoverStorico = null;
-                                });
-                              },
-                        icon: const Icon(Icons.clear_all, size: 18),
-                        label: const Text('Deseleziona tutto'),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF4338CA),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      TextButton.icon(
-                        onPressed:
-                            !selezioneStoricoValida() ||
-                                eliminazioneCorsiInCorso
-                            ? null
-                            : esportaCorsiSelezionatiExcel,
-                        icon: Icon(
-                          Icons.table_chart_outlined,
-                          size: 20,
-                          color:
-                              !selezioneStoricoValida() ||
-                                  eliminazioneCorsiInCorso
-                              ? null
-                              : const Color(0xFF16A34A),
-                        ),
-                        label: Text(
-                          'Excel',
-                          style: TextStyle(
-                            color:
-                                !selezioneStoricoValida() ||
-                                    eliminazioneCorsiInCorso
-                                ? null
-                                : const Color(0xFF16A34A),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFF16A34A),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      TextButton.icon(
-                        onPressed:
-                            !selezioneStoricoValida() ||
-                                eliminazioneCorsiInCorso
-                            ? null
-                            : esportaCorsiSelezionatiPdf,
-                        icon: Icon(
-                          Icons.picture_as_pdf_outlined,
-                          size: 20,
-                          color:
-                              !selezioneStoricoValida() ||
-                                  eliminazioneCorsiInCorso
-                              ? null
-                              : const Color(0xFFDC2626),
-                        ),
-                        label: Text(
-                          'PDF',
-                          style: TextStyle(
-                            color:
-                                !selezioneStoricoValida() ||
-                                    eliminazioneCorsiInCorso
-                                ? null
-                                : const Color(0xFFDC2626),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFDC2626),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(width: 6),
-
-                      TextButton.icon(
-                        onPressed:
-                            !selezioneStoricoValida() ||
-                                eliminazioneCorsiInCorso
-                            ? null
-                            : eliminaCorsiSelezionati,
-                        icon: eliminazioneCorsiInCorso
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2.2,
-                                  color: Color(0xFF9A3412),
-                                ),
-                              )
-                            : Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: !selezioneStoricoValida()
-                                    ? null
-                                    : const Color(0xFFDC2626),
-                              ),
-                        label: Text(
-                          eliminazioneCorsiInCorso
-                              ? 'Eliminazione...'
-                              : 'Elimina',
-                          style: TextStyle(
-                            color:
-                                !selezioneStoricoValida() ||
-                                    eliminazioneCorsiInCorso
-                                ? null
-                                : const Color(0xFFDC2626),
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFDC2626),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 9,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          textStyle: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    ],
+                    const SizedBox(height: 6),
                   ],
                 ),
-                if (storiciSelezionati.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: eliminazioneCorsiInCorso
-                          ? const Color(0xFFFFF7ED)
-                          : const Color(0xFFEFF6FF),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: eliminazioneCorsiInCorso
-                            ? const Color(0xFFF97316)
-                            : const Color(0xFFBFDBFE),
-                        width: 1.1,
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: eliminazioneCorsiInCorso
-                              ? const Color(0xFFF97316).withValues(alpha: 0.10)
-                              : const Color(0xFF2563EB).withValues(alpha: 0.08),
-                          blurRadius: 14,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 34,
-                          height: 34,
-                          decoration: BoxDecoration(
-                            color: eliminazioneCorsiInCorso
-                                ? const Color(0xFFFFEDD5)
-                                : const Color(0xFFDBEAFE),
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Center(
-                            child: eliminazioneCorsiInCorso
-                                ? const SizedBox(
-                                    width: 17,
-                                    height: 17,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2.2,
-                                      color: Color(0xFFC2410C),
-                                    ),
-                                  )
-                                : const Icon(
-                                    Icons.check_circle_outline,
-                                    size: 20,
-                                    color: Color(0xFF2563EB),
-                                  ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            eliminazioneCorsiInCorso
-                                ? storiciSelezionati.length == 1
-                                      ? 'Eliminazione in corso di 1 corso selezionato...'
-                                      : 'Eliminazione in corso di ${storiciSelezionati.length} corsi selezionati...'
-                                : storiciSelezionati.length == 1
-                                ? '1 corso selezionato'
-                                : '${storiciSelezionati.length} corsi selezionati',
-                            style: TextStyle(
-                              color: eliminazioneCorsiInCorso
-                                  ? const Color(0xFF9A3412)
-                                  : const Color(0xFF1E3A8A),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
-
-            const SizedBox(height: 6),
 
             Expanded(
               child: Container(
@@ -3793,6 +3832,96 @@ class _StoricoHeaderCell extends StatelessWidget {
           ),
         ],
       ],
+    );
+  }
+}
+
+class _PrivacyGdprCard extends StatelessWidget {
+  final Discente discente;
+
+  const _PrivacyGdprCard({required this.discente});
+
+  String valore(String? v) {
+    final testo = v?.trim() ?? '';
+    return testo.isEmpty ? '-' : testo;
+  }
+
+  Color _coloreStatoPrivacy(bool firmata) {
+    return firmata ? const Color(0xFF16A34A) : const Color(0xFFDC2626);
+  }
+
+  Color _sfondoStatoPrivacy(bool firmata) {
+    return firmata ? const Color(0xFFEAF7EE) : const Color(0xFFFEE2E2);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final firmata = discente.informativaPrivacyFirmata == 1;
+    final stato = firmata ? 'FIRMATA' : 'NON FIRMATA';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+      ),
+      child: Wrap(
+        runSpacing: 14,
+        spacing: 28,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          SizedBox(
+            width: 220,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'PRIVACY / GDPR',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF6B7280),
+                    letterSpacing: 0.6,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _sfondoStatoPrivacy(firmata),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    stato,
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      color: _coloreStatoPrivacy(firmata),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _InfoItem(
+            label: 'Data firma',
+            value: valore(discente.dataFirmaInformativaPrivacy),
+          ),
+          _InfoItem(
+            label: 'Documento firmato',
+            value: valore(discente.documentoPrivacyDiscentePath),
+          ),
+          _InfoItem(
+            label: 'Note privacy',
+            value: valore(discente.notePrivacyDiscente),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -5,6 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:excel/excel.dart' as excel;
 import 'package:path_provider/path_provider.dart';
 import 'package:open_file/open_file.dart';
+import 'package:file_picker/file_picker.dart' as fp;
+import 'package:path/path.dart' as p;
+import 'package:intl/intl.dart';
+
 import 'visite_mediche_page.dart';
 
 import '../models/discente.dart';
@@ -143,14 +147,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      TextField(
-                        controller: documentoController,
-                        decoration: const InputDecoration(
-                          labelText: 'Documento firmato',
-                          hintText: 'Percorso file PDF/scansione firmata',
-                          border: OutlineInputBorder(),
-                          prefixIcon: Icon(Icons.attach_file),
-                        ),
+                      campoDocumentoPrivacyFirmato(
+                        documentoController: documentoController,
+                        aggiornaDialog: setDialogState,
                       ),
                       const SizedBox(height: 12),
                       TextField(
@@ -289,6 +288,199 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     return storiciSelezionati.every(
       (index) => index >= 0 && index < storicoFiltrato.length,
+    );
+  }
+
+  String nomeFileDocumentoPrivacy(String? percorso) {
+    if (percorso == null || percorso.trim().isEmpty) {
+      return 'Nessun documento allegato';
+    }
+
+    return p.basename(percorso);
+  }
+
+  String nomeSicuroFilePrivacy(String testo) {
+    return testo
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+  }
+
+  Future<String?> selezionaDocumentoPrivacyFirmato() async {
+    final risultato = await fp.FilePicker.pickFiles(
+      type: fp.FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      allowMultiple: false,
+    );
+
+    if (risultato == null || risultato.files.single.path == null) {
+      return null;
+    }
+
+    final fileOrigine = File(risultato.files.single.path!);
+
+    if (!await fileOrigine.exists()) {
+      if (!mounted) return null;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('File non trovato.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return null;
+    }
+
+    final cartellaDocumenti = await getApplicationDocumentsDirectory();
+
+    final cartellaPrivacy = Directory(
+      p.join(
+        cartellaDocumenti.path,
+        'Gestionale Sicurezza',
+        'Privacy Discenti',
+      ),
+    );
+
+    if (!await cartellaPrivacy.exists()) {
+      await cartellaPrivacy.create(recursive: true);
+    }
+
+    final discente = discenteCorrente;
+
+    final cognome = nomeSicuroFilePrivacy(discente.cognome);
+    final nome = nomeSicuroFilePrivacy(discente.nome);
+    final estensione = p.extension(fileOrigine.path).toLowerCase();
+
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+
+    final nomeFileDestinazione =
+        'privacy_discente_${discente.id}_${cognome}_${nome}_$timestamp$estensione';
+
+    final percorsoDestinazione = p.join(
+      cartellaPrivacy.path,
+      nomeFileDestinazione,
+    );
+
+    await fileOrigine.copy(percorsoDestinazione);
+
+    return percorsoDestinazione;
+  }
+
+  Future<void> apriDocumentoPrivacyFirmato(String? percorso) async {
+    if (percorso == null || percorso.trim().isEmpty) {
+      return;
+    }
+
+    final file = File(percorso);
+
+    if (!await file.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Documento non trovato nel percorso salvato.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+
+      return;
+    }
+
+    await OpenFile.open(percorso);
+  }
+
+  Widget campoDocumentoPrivacyFirmato({
+    required TextEditingController documentoController,
+    required StateSetter aggiornaDialog,
+  }) {
+    final percorso = documentoController.text.trim();
+    final documentoPresente = percorso.isNotEmpty;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Documento privacy firmato',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(
+                documentoPresente
+                    ? Icons.attach_file
+                    : Icons.attach_file_outlined,
+                color: documentoPresente ? Colors.green : Colors.grey,
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  nomeFileDocumentoPrivacy(percorso),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final nuovoPercorso =
+                      await selezionaDocumentoPrivacyFirmato();
+
+                  if (nuovoPercorso == null) {
+                    return;
+                  }
+
+                  aggiornaDialog(() {
+                    documentoController.text = nuovoPercorso;
+                  });
+                },
+                icon: Icon(
+                  documentoPresente ? Icons.swap_horiz : Icons.upload_file,
+                ),
+                label: Text(
+                  documentoPresente
+                      ? 'Sostituisci documento'
+                      : 'Allega documento',
+                ),
+              ),
+              if (documentoPresente)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    apriDocumentoPrivacyFirmato(percorso);
+                  },
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Apri'),
+                ),
+              if (documentoPresente)
+                OutlinedButton.icon(
+                  onPressed: () {
+                    aggiornaDialog(() {
+                      documentoController.clear();
+                    });
+                  },
+                  icon: const Icon(Icons.delete_outline),
+                  label: const Text('Rimuovi'),
+                  style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                ),
+            ],
+          ),
+        ],
+      ),
     );
   }
 
@@ -591,10 +783,17 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     final dati = await DatabaseService.instance.getStoricoDiscente(id);
     final visite = await AppDatabase.instance.getVisiteMedicheByDiscente(id);
+    final discenteAggiornato = await AppDatabase.instance.getDiscenteConImpresa(
+      id,
+    );
 
     if (!mounted) return;
 
     setState(() {
+      if (discenteAggiornato != null) {
+        discenteCorrente = Discente.fromMap(discenteAggiornato);
+      }
+
       storico = dati;
       storicoFiltrato = List.from(dati);
       visiteMediche = visite;

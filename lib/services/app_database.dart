@@ -1114,24 +1114,28 @@ class AppDatabase {
 
     final result = await db.rawQuery(
       '''
-      SELECT 
-        d.id,
-        d.nome,
-        d.cognome,
-        d.luogo_nascita,
-        d.data_nascita,
-        d.codice_fiscale,
-        d.impresa_id,
-        d.visita_medica_svolta,
-        d.data_visita_medica,
-        d.scadenza_visita_medica,
-        i.intestazione AS nome_impresa
-      FROM discenti d
-      LEFT JOIN imprese i
-        ON i.id = d.impresa_id
-      WHERE d.id = ?
-      LIMIT 1
-    ''',
+  SELECT 
+    d.id,
+    d.nome,
+    d.cognome,
+    d.luogo_nascita,
+    d.data_nascita,
+    d.codice_fiscale,
+    d.impresa_id,
+    d.visita_medica_svolta,
+    d.data_visita_medica,
+    d.scadenza_visita_medica,
+    d.informativa_privacy_firmata,
+    d.data_firma_informativa_privacy,
+    d.documento_privacy_discente_path,
+    d.note_privacy_discente,
+    i.intestazione AS nome_impresa
+  FROM discenti d
+  LEFT JOIN imprese i
+    ON i.id = d.impresa_id
+  WHERE d.id = ?
+  LIMIT 1
+''',
       [idDiscente],
     );
 
@@ -1522,5 +1526,28 @@ class AppDatabase {
     final db = await database;
 
     return db.delete('privacy_gdpr', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> aggiornaPrivacyDiscente({
+    required int discenteId,
+    required bool informativaPrivacyFirmata,
+    String? dataFirmaInformativaPrivacy,
+    String? documentoPrivacyDiscentePath,
+    String? notePrivacyDiscente,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'discenti',
+      {
+        'informativa_privacy_firmata': informativaPrivacyFirmata ? 1 : 0,
+        'data_firma_informativa_privacy': dataFirmaInformativaPrivacy,
+        'documento_privacy_discente_path': documentoPrivacyDiscentePath,
+        'note_privacy_discente': notePrivacyDiscente,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [discenteId],
+    );
   }
 }

@@ -88,11 +88,195 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     );
   }
 
+  Future<void> apriDialogGestisciPrivacyDiscente(
+    Discente discenteDaAggiornare,
+  ) async {
+    bool informativaFirmata =
+        discenteDaAggiornare.informativaPrivacyFirmata == 1;
+
+    final dataController = TextEditingController(
+      text: discenteDaAggiornare.dataFirmaInformativaPrivacy ?? '',
+    );
+
+    final documentoController = TextEditingController(
+      text: discenteDaAggiornare.documentoPrivacyDiscentePath ?? '',
+    );
+
+    final noteController = TextEditingController(
+      text: discenteDaAggiornare.notePrivacyDiscente ?? '',
+    );
+
+    final risultato = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Gestisci privacy discente'),
+              content: SizedBox(
+                width: 560,
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SwitchListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: const Text('Informativa privacy firmata'),
+                        subtitle: const Text(
+                          'Attiva questa voce quando il discente ha firmato l’informativa privacy.',
+                        ),
+                        value: informativaFirmata,
+                        onChanged: (value) {
+                          setDialogState(() {
+                            informativaFirmata = value;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: dataController,
+                        decoration: const InputDecoration(
+                          labelText: 'Data firma informativa',
+                          hintText: 'es. 21/06/2026',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.event),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: documentoController,
+                        decoration: const InputDecoration(
+                          labelText: 'Documento firmato',
+                          hintText: 'Percorso file PDF/scansione firmata',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.attach_file),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: noteController,
+                        maxLines: 4,
+                        decoration: const InputDecoration(
+                          labelText: 'Note privacy',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.notes),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    if (discenteDaAggiornare.id == null) {
+                      Navigator.pop(dialogContext, false);
+                      return;
+                    }
+
+                    final righeAggiornate = await AppDatabase.instance
+                        .aggiornaPrivacyDiscente(
+                          discenteId: discenteDaAggiornare.id!,
+                          informativaPrivacyFirmata: informativaFirmata,
+                          dataFirmaInformativaPrivacy:
+                              dataController.text.trim().isEmpty
+                              ? null
+                              : dataController.text.trim(),
+                          documentoPrivacyDiscentePath:
+                              documentoController.text.trim().isEmpty
+                              ? null
+                              : documentoController.text.trim(),
+                          notePrivacyDiscente:
+                              noteController.text.trim().isEmpty
+                              ? null
+                              : noteController.text.trim(),
+                        );
+
+                    if (righeAggiornate == 0) {
+                      if (dialogContext.mounted) {
+                        ScaffoldMessenger.of(dialogContext).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Privacy non salvata: nessun discente aggiornato.',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    if (dialogContext.mounted) {
+                      Navigator.pop(dialogContext, true);
+                    }
+                  },
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    final nuovaDataFirma = dataController.text.trim().isEmpty
+        ? null
+        : dataController.text.trim();
+
+    final nuovoDocumento = documentoController.text.trim().isEmpty
+        ? null
+        : documentoController.text.trim();
+
+    final nuoveNote = noteController.text.trim().isEmpty
+        ? null
+        : noteController.text.trim();
+
+    dataController.dispose();
+    documentoController.dispose();
+    noteController.dispose();
+
+    if (risultato != true) return;
+    if (!mounted) return;
+
+    setState(() {
+      discenteCorrente = Discente(
+        id: discenteDaAggiornare.id,
+        nome: discenteDaAggiornare.nome,
+        cognome: discenteDaAggiornare.cognome,
+        luogoNascita: discenteDaAggiornare.luogoNascita,
+        dataNascita: discenteDaAggiornare.dataNascita,
+        codiceFiscale: discenteDaAggiornare.codiceFiscale,
+        impresaId: discenteDaAggiornare.impresaId,
+        nomeImpresa: discenteDaAggiornare.nomeImpresa,
+        visitaMedicaSvolta: discenteDaAggiornare.visitaMedicaSvolta,
+        dataVisitaMedica: discenteDaAggiornare.dataVisitaMedica,
+        scadenzaVisitaMedica: discenteDaAggiornare.scadenzaVisitaMedica,
+        informativaPrivacyFirmata: informativaFirmata ? 1 : 0,
+        dataFirmaInformativaPrivacy: nuovaDataFirma,
+        documentoPrivacyDiscentePath: nuovoDocumento,
+        notePrivacyDiscente: nuoveNote,
+      );
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Dati privacy discente aggiornati.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   static String ultimaColonnaOrdinamentoStorico = 'data';
   static bool ultimoOrdinamentoStoricoAscendente = false;
 
   late String colonnaOrdinamentoStorico;
   late bool ordinamentoStoricoAscendente;
+  late Discente discenteCorrente;
 
   int? storicoSelezionato;
   int? indiceHoverStorico;
@@ -384,6 +568,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   @override
   void initState() {
     super.initState();
+    discenteCorrente = widget.discente;
 
     colonnaOrdinamentoStorico = ultimaColonnaOrdinamentoStorico;
     ordinamentoStoricoAscendente = ultimoOrdinamentoStoricoAscendente;
@@ -1742,7 +1927,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
   @override
   Widget build(BuildContext context) {
-    final d = widget.discente;
+    final d = discenteCorrente;
 
     final totaleCorsi = storico.length;
     final corsiValidi = storico
@@ -1820,7 +2005,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                       onAggiornaDati: caricaStorico,
                     ),
                     const SizedBox(height: 16),
-                    _PrivacyGdprCard(discente: d),
+                    _PrivacyGdprCard(
+                      discente: d,
+                      onGestisciPrivacy: () =>
+                          apriDialogGestisciPrivacyDiscente(d),
+                    ),
                     const SizedBox(height: 10),
                     const Text(
                       'Storico formativo',
@@ -3838,8 +4027,12 @@ class _StoricoHeaderCell extends StatelessWidget {
 
 class _PrivacyGdprCard extends StatelessWidget {
   final Discente discente;
+  final VoidCallback onGestisciPrivacy;
 
-  const _PrivacyGdprCard({required this.discente});
+  const _PrivacyGdprCard({
+    required this.discente,
+    required this.onGestisciPrivacy,
+  });
 
   String valore(String? v) {
     final testo = v?.trim() ?? '';
@@ -3919,6 +4112,14 @@ class _PrivacyGdprCard extends StatelessWidget {
           _InfoItem(
             label: 'Note privacy',
             value: valore(discente.notePrivacyDiscente),
+          ),
+          SizedBox(
+            width: 180,
+            child: ElevatedButton.icon(
+              onPressed: onGestisciPrivacy,
+              icon: const Icon(Icons.privacy_tip),
+              label: const Text('Gestisci privacy'),
+            ),
           ),
         ],
       ),

@@ -244,6 +244,39 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     );
   }
 
+  Future<void> apriDocumentoPrivacyDiscente() async {
+    final percorso = discenteCorrente.documentoPrivacyDiscentePath;
+
+    if (percorso == null || percorso.trim().isEmpty) {
+      mostraSnackBarErrore('Nessun documento privacy collegato.');
+      return;
+    }
+
+    final file = File(percorso);
+
+    if (!await file.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Documento privacy non trovato nel percorso salvato.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final risultato = await OpenFile.open(percorso);
+
+    if (!mounted) return;
+
+    if (risultato.type != ResultType.done) {
+      mostraSnackBarErrore(
+        'Impossibile aprire il documento privacy: ${risultato.message}',
+      );
+    }
+  }
+
   void mostraSnackBarSuccesso(String messaggio) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -2418,7 +2451,9 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                           apriDialogGestisciPrivacyDiscente(d),
                       onGeneraInformativaPrivacy:
                           generaInformativaPrivacyDiscentePdf,
+                      onApriDocumentoPrivacy: apriDocumentoPrivacyDiscente,
                     ),
+
                     const SizedBox(height: 10),
                     const Text(
                       'Storico formativo',
@@ -4438,11 +4473,13 @@ class _PrivacyGdprCard extends StatelessWidget {
   final Discente discente;
   final VoidCallback onGestisciPrivacy;
   final VoidCallback onGeneraInformativaPrivacy;
+  final VoidCallback onApriDocumentoPrivacy;
 
   const _PrivacyGdprCard({
     required this.discente,
     required this.onGestisciPrivacy,
     required this.onGeneraInformativaPrivacy,
+    required this.onApriDocumentoPrivacy,
   });
 
   String valore(String? v) {
@@ -4544,6 +4581,17 @@ class _PrivacyGdprCard extends StatelessWidget {
                   label: const Text('Genera informativa'),
                 ),
               ),
+              if ((discente.documentoPrivacyDiscentePath ?? '')
+                  .trim()
+                  .isNotEmpty)
+                SizedBox(
+                  width: 180,
+                  child: OutlinedButton.icon(
+                    onPressed: onApriDocumentoPrivacy,
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('Apri documento'),
+                  ),
+                ),
             ],
           ),
         ],

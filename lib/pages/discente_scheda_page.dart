@@ -14,6 +14,7 @@ import 'visite_mediche_page.dart';
 import '../models/discente.dart';
 import '../services/database_service.dart';
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -35,6 +36,191 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
   List<Map<String, dynamic>> visiteMediche = [];
 
   String filtroStorico = 'tutti';
+
+  String testoPdf(dynamic valore) {
+    final testo = valore?.toString().trim() ?? '';
+    return testo.isEmpty ? '-' : testo;
+  }
+
+  String dataPdf(dynamic valore) {
+    final testo = valore?.toString().trim() ?? '';
+    if (testo.isEmpty) return '-';
+
+    try {
+      final data = DateTime.parse(testo);
+      return DateFormat('dd/MM/yyyy').format(data);
+    } catch (_) {
+      return testo;
+    }
+  }
+
+  Future<void> generaInformativaPrivacyDiscentePdf() async {
+    final discente = discenteCorrente;
+    final intestazione = await caricaIntestazioneAziendaPdf();
+    final pdf = pw.Document();
+
+    final nomeCompleto = [
+      discente.cognome.trim(),
+      discente.nome.trim(),
+    ].where((parte) => parte.isNotEmpty).join(' ');
+
+    final dataNascita = dataPdf(discente.dataNascita);
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(32),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(
+              fontSize: 8,
+              color: PdfColors.blueGrey500,
+            ),
+          ),
+        ),
+        build: (context) => [
+          intestazioneAziendaPdfWidget(intestazione),
+          pw.SizedBox(height: 22),
+
+          pw.Text(
+            'INFORMATIVA PRIVACY DISCENTE',
+            style: pw.TextStyle(
+              fontSize: 18,
+              fontWeight: pw.FontWeight.bold,
+              color: PdfColors.blueGrey800,
+            ),
+          ),
+          pw.SizedBox(height: 6),
+          pw.Text(
+            'Informativa sul trattamento dei dati personali ai sensi del Regolamento UE 2016/679.',
+            style: const pw.TextStyle(
+              fontSize: 10,
+              color: PdfColors.blueGrey700,
+            ),
+          ),
+
+          pw.SizedBox(height: 18),
+          pw.Container(
+            width: double.infinity,
+            padding: const pw.EdgeInsets.all(12),
+            decoration: pw.BoxDecoration(
+              border: pw.Border.all(color: PdfColors.blueGrey200),
+              borderRadius: pw.BorderRadius.circular(8),
+            ),
+            child: pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Text(
+                  'Dati del discente',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                    color: PdfColors.blueGrey800,
+                  ),
+                ),
+                pw.SizedBox(height: 8),
+                pw.Text('Cognome e nome: ${testoPdf(nomeCompleto)}'),
+                pw.Text('Codice fiscale: ${testoPdf(discente.codiceFiscale)}'),
+                pw.Text('Luogo di nascita: ${testoPdf(discente.luogoNascita)}'),
+                pw.Text('Data di nascita: $dataNascita'),
+              ],
+            ),
+          ),
+
+          pw.SizedBox(height: 18),
+          pw.Text(
+            'Finalità del trattamento',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati personali del discente sono trattati per finalità connesse alla gestione delle attività formative, alla registrazione delle presenze, alla produzione della documentazione didattica, al rilascio di attestati e all\'adempimento degli obblighi previsti dalla normativa applicabile in materia di salute e sicurezza sul lavoro.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Base giuridica',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Il trattamento è effettuato per l\'esecuzione di obblighi contrattuali, precontrattuali, normativi e amministrativi collegati all\'erogazione dei corsi di formazione e agli obblighi documentali conseguenti.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Categorie di dati trattati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Possono essere trattati dati anagrafici, identificativi, di contatto, dati relativi alla partecipazione ai corsi, dati contenuti nei registri presenza, negli attestati e nella documentazione formativa.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Conservazione dei dati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati sono conservati per il tempo necessario alla gestione del rapporto formativo, agli obblighi di legge, alla tutela dei diritti del titolare del trattamento e alla corretta archiviazione della documentazione relativa alla formazione svolta.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Diritti dell\'interessato',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Il discente può esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilità dei dati, nei limiti previsti dalla normativa applicabile.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 28),
+          pw.Text('Luogo e data: ________________________________'),
+          pw.SizedBox(height: 24),
+          pw.Text('Firma del discente: ___________________________'),
+        ],
+      ),
+    );
+
+    final directory = await getApplicationDocumentsDirectory();
+    final cartella = Directory(
+      p.join(directory.path, 'Gestionale Sicurezza', 'Privacy Discenti'),
+    );
+
+    if (!cartella.existsSync()) {
+      cartella.createSync(recursive: true);
+    }
+
+    final timestamp = DateFormat('yyyy_MM_dd_HHmm').format(DateTime.now());
+    final nomeFileSicuro = nomeCompleto
+        .replaceAll(RegExp(r'[^a-zA-Z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+
+    final file = File(
+      p.join(
+        cartella.path,
+        'informativa_privacy_discente_${discente.id}_${nomeFileSicuro}_$timestamp.pdf',
+      ),
+    );
+
+    await file.writeAsBytes(await pdf.save());
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    mostraSnackBarSuccesso('Informativa privacy discente generata.');
+  }
 
   void mostraSnackBarSuccesso(String messaggio) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -2208,6 +2394,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                       discente: d,
                       onGestisciPrivacy: () =>
                           apriDialogGestisciPrivacyDiscente(d),
+                      onGeneraInformativaPrivacy:
+                          generaInformativaPrivacyDiscentePdf,
                     ),
                     const SizedBox(height: 10),
                     const Text(
@@ -4227,10 +4415,12 @@ class _StoricoHeaderCell extends StatelessWidget {
 class _PrivacyGdprCard extends StatelessWidget {
   final Discente discente;
   final VoidCallback onGestisciPrivacy;
+  final VoidCallback onGeneraInformativaPrivacy;
 
   const _PrivacyGdprCard({
     required this.discente,
     required this.onGestisciPrivacy,
+    required this.onGeneraInformativaPrivacy,
   });
 
   String valore(String? v) {
@@ -4312,13 +4502,27 @@ class _PrivacyGdprCard extends StatelessWidget {
             label: 'Note privacy',
             value: valore(discente.notePrivacyDiscente),
           ),
-          SizedBox(
-            width: 180,
-            child: ElevatedButton.icon(
-              onPressed: onGestisciPrivacy,
-              icon: const Icon(Icons.privacy_tip),
-              label: const Text('Gestisci privacy'),
-            ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              SizedBox(
+                width: 180,
+                child: ElevatedButton.icon(
+                  onPressed: onGestisciPrivacy,
+                  icon: const Icon(Icons.privacy_tip),
+                  label: const Text('Gestisci privacy'),
+                ),
+              ),
+              SizedBox(
+                width: 210,
+                child: OutlinedButton.icon(
+                  onPressed: onGeneraInformativaPrivacy,
+                  icon: const Icon(Icons.picture_as_pdf),
+                  label: const Text('Genera informativa'),
+                ),
+              ),
+            ],
           ),
         ],
       ),

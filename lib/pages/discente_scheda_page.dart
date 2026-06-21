@@ -215,11 +215,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     );
 
     await file.writeAsBytes(await pdf.save());
+
+    final righeAggiornate = await AppDatabase.instance.aggiornaPrivacyDiscente(
+      discenteId: discente.id!,
+      informativaPrivacyFirmata: discente.informativaPrivacyFirmata == 1,
+      dataFirmaInformativaPrivacy: discente.dataFirmaInformativaPrivacy,
+      documentoPrivacyDiscentePath: file.path,
+      notePrivacyDiscente: discente.notePrivacyDiscente,
+    );
+
+    if (!mounted) return;
+
+    if (righeAggiornate == 0) {
+      mostraSnackBarErrore(
+        'Informativa generata, ma non collegata alla scheda discente.',
+      );
+      await OpenFile.open(file.path);
+      return;
+    }
+
+    await caricaStorico();
     await OpenFile.open(file.path);
 
     if (!mounted) return;
 
-    mostraSnackBarSuccesso('Informativa privacy discente generata.');
+    mostraSnackBarSuccesso(
+      'Informativa generata e collegata alla scheda discente.',
+    );
   }
 
   void mostraSnackBarSuccesso(String messaggio) {

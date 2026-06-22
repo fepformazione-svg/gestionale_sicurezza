@@ -1554,4 +1554,30 @@ class AppDatabase {
       whereArgs: [discenteId],
     );
   }
+
+  // QUI SOTTO AGGIUNGI IL NUOVO METODO
+
+  Future<int> aggiornaPrivacyImpresa({
+    required int impresaId,
+    required bool informativaPrivacyImpresaFirmata,
+    String? dataFirmaInformativaPrivacyImpresa,
+    String? notePrivacyImpresa,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'imprese',
+      {
+        'informativa_privacy_impresa_firmata': informativaPrivacyImpresaFirmata
+            ? 1
+            : 0,
+        'data_firma_informativa_privacy_impresa':
+            dataFirmaInformativaPrivacyImpresa,
+        'note_privacy_impresa': notePrivacyImpresa,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [impresaId],
+    );
+  }
 }

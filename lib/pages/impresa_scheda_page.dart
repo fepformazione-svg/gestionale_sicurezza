@@ -5,6 +5,7 @@ import '../models/impresa.dart';
 import '../services/database_service.dart';
 import 'discente_scheda_page.dart';
 import '../dialogs/discente_dialog.dart' as dialog_discente;
+import '../services/app_database.dart';
 
 class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
@@ -18,10 +19,172 @@ class ImpresaSchedaPage extends StatefulWidget {
 class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   List<Discente> discentiAssociati = [];
 
+  late bool privacyImpresaFirmata;
+  String? dataFirmaPrivacyImpresa;
+  String? notePrivacyImpresa;
+
   @override
   void initState() {
     super.initState();
+
+    privacyImpresaFirmata =
+        widget.impresa.informativaPrivacyImpresaFirmata == 1;
+    dataFirmaPrivacyImpresa = widget.impresa.dataFirmaInformativaPrivacyImpresa;
+    notePrivacyImpresa = widget.impresa.notePrivacyImpresa;
+
     caricaDiscentiAssociati();
+  }
+
+  Future<void> apriDialogPrivacyImpresa() async {
+    bool firmata = privacyImpresaFirmata;
+
+    final dataController = TextEditingController(
+      text: dataFirmaPrivacyImpresa ?? '',
+    );
+
+    final noteController = TextEditingController(
+      text: notePrivacyImpresa ?? '',
+    );
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            return AlertDialog(
+              title: const Text('Gestione Privacy / GDPR impresa'),
+              content: SizedBox(
+                width: 520,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: const Text('Informativa privacy impresa firmata'),
+                      value: firmata,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          firmata = value;
+                          if (!firmata) {
+                            dataController.clear();
+                          }
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: dataController,
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Data firma',
+                        prefixIcon: const Icon(Icons.event),
+                        suffixIcon: dataController.text.isNotEmpty
+                            ? IconButton(
+                                tooltip: 'Svuota data',
+                                icon: const Icon(Icons.clear),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    dataController.clear();
+                                  });
+                                },
+                              )
+                            : null,
+                        border: const OutlineInputBorder(),
+                      ),
+                      onTap: () async {
+                        final oggi = DateTime.now();
+
+                        final dataSelezionata = await showDatePicker(
+                          context: dialogContext,
+                          initialDate: oggi,
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime(2100),
+                        );
+
+                        if (dataSelezionata != null) {
+                          final giorno = dataSelezionata.day.toString().padLeft(
+                            2,
+                            '0',
+                          );
+                          final mese = dataSelezionata.month.toString().padLeft(
+                            2,
+                            '0',
+                          );
+                          final anno = dataSelezionata.year.toString();
+
+                          setDialogState(() {
+                            dataController.text = '$giorno/$mese/$anno';
+                            firmata = true;
+                          });
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: noteController,
+                      maxLines: 4,
+                      decoration: const InputDecoration(
+                        labelText: 'Note privacy impresa',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('Annulla'),
+                ),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.save),
+                  label: const Text('Salva'),
+                  onPressed: () async {
+                    await AppDatabase.instance.aggiornaPrivacyImpresa(
+                      impresaId: widget.impresa.id!,
+                      informativaPrivacyImpresaFirmata: firmata,
+                      dataFirmaInformativaPrivacyImpresa:
+                          dataController.text.trim().isEmpty
+                          ? null
+                          : dataController.text.trim(),
+                      notePrivacyImpresa: noteController.text.trim().isEmpty
+                          ? null
+                          : noteController.text.trim(),
+                    );
+
+                    if (!dialogContext.mounted) return;
+                    if (!mounted) return;
+
+                    setState(() {
+                      privacyImpresaFirmata = firmata;
+                      dataFirmaPrivacyImpresa =
+                          dataController.text.trim().isEmpty
+                          ? null
+                          : dataController.text.trim();
+                      notePrivacyImpresa = noteController.text.trim().isEmpty
+                          ? null
+                          : noteController.text.trim();
+                    });
+
+                    Navigator.of(dialogContext).pop();
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Dati Privacy/GDPR impresa aggiornati.'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  },
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    dataController.dispose();
+    noteController.dispose();
   }
 
   Future<void> caricaDiscentiAssociati() async {
@@ -210,10 +373,6 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   Widget build(BuildContext context) {
     final impresa = widget.impresa;
 
-    final privacyImpresaFirmata = impresa.informativaPrivacyImpresaFirmata == 1;
-
-    final testoStatoPrivacy = privacyImpresaFirmata ? 'FIRMATA' : 'NON FIRMATA';
-
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -304,7 +463,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                     ),
                     const SizedBox(width: 16),
                     Text(
-                      'Data firma: ${valore(impresa.dataFirmaInformativaPrivacyImpresa)}',
+                      'Data firma: ${valore(dataFirmaPrivacyImpresa)}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF6B7280),
@@ -323,7 +482,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        testoStatoPrivacy,
+                        privacyImpresaFirmata ? 'FIRMATA' : 'NON FIRMATA',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
@@ -332,6 +491,16 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                               : const Color(0xFF991B1B),
                         ),
                       ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      tooltip: 'Modifica dati Privacy/GDPR impresa',
+                      icon: const Icon(
+                        Icons.edit_outlined,
+                        size: 20,
+                        color: Color(0xFF2563EB),
+                      ),
+                      onPressed: apriDialogPrivacyImpresa,
                     ),
                   ],
                 ),

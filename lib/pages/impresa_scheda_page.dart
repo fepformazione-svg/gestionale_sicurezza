@@ -210,6 +210,10 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   Widget build(BuildContext context) {
     final impresa = widget.impresa;
 
+    final privacyImpresaFirmata = impresa.informativaPrivacyImpresaFirmata == 1;
+
+    final testoStatoPrivacy = privacyImpresaFirmata ? 'FIRMATA' : 'NON FIRMATA';
+
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
@@ -268,7 +272,72 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               _InfoRiga(label: 'Referente', value: valore(impresa.referente)),
               _InfoRiga(label: 'Telefono', value: valore(impresa.telefono)),
               _InfoRiga(label: 'Indirizzo', value: valore(impresa.indirizzo)),
-              const SizedBox(height: 28),
+
+              const SizedBox(height: 16),
+
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF9FAFB),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.privacy_tip_outlined,
+                      size: 22,
+                      color: Color(0xFF2563EB),
+                    ),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'Privacy / GDPR impresa',
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF111827),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Text(
+                      'Data firma: ${valore(impresa.dataFirmaInformativaPrivacyImpresa)}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: privacyImpresaFirmata
+                            ? const Color(0xFFDCFCE7)
+                            : const Color(0xFFFEE2E2),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        testoStatoPrivacy,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: privacyImpresaFirmata
+                              ? const Color(0xFF166534)
+                              : const Color(0xFF991B1B),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 20),
               const Divider(),
               const SizedBox(height: 18),
               Row(

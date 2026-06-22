@@ -82,7 +82,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         ),
         build: (context) => [
           intestazioneAziendaPdfWidget(intestazione),
-          pw.SizedBox(height: 22),
+          pw.SizedBox(height: 18),
 
           pw.Text(
             'INFORMATIVA PRIVACY DISCENTE',
@@ -101,7 +101,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             ),
           ),
 
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 14),
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.all(12),
@@ -129,14 +129,35 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             ),
           ),
 
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 14),
           pw.Text(
-            'Finalità del trattamento',
+            'Titolare del trattamento',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati personali del discente sono trattati per finalità connesse alla gestione delle attività formative, alla registrazione delle presenze, alla produzione della documentazione didattica, al rilascio di attestati e all\'adempimento degli obblighi previsti dalla normativa applicabile in materia di salute e sicurezza sul lavoro.',
+            "Il Titolare del trattamento dei dati personali e' F&P Formazione e Prevenzione, con sede e recapiti indicati nell'intestazione del presente documento.",
+            textAlign: pw.TextAlign.justify,
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' Alessandro Locatelli.",
+            textAlign: pw.TextAlign.justify,
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: fepsrls@legalmail.it.",
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Finalita del trattamento',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati personali del discente sono trattati per finalita connesse alla gestione delle attivita formative, alla registrazione delle presenze, alla produzione della documentazione didattica, al rilascio di attestati e all adempimento degli obblighi previsti dalla normativa applicabile in materia di salute e sicurezza sul lavoro.',
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -147,7 +168,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il trattamento è effettuato per l\'esecuzione di obblighi contrattuali, precontrattuali, normativi e amministrativi collegati all\'erogazione dei corsi di formazione e agli obblighi documentali conseguenti.',
+            'Il trattamento e effettuato per l esecuzione di obblighi contrattuali, precontrattuali, normativi e amministrativi collegati all erogazione dei corsi di formazione e agli obblighi documentali conseguenti.',
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -164,6 +185,17 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
           pw.SizedBox(height: 12),
           pw.Text(
+            'Comunicazione dei dati',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'I dati possono essere comunicati, nei limiti necessari, a enti di formazione, organismi di controllo, consulenti, imprese clienti, docenti, medici competenti o altri soggetti coinvolti nella gestione delle attivita formative e degli obblighi previsti dalla normativa applicabile.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
+          pw.Text(
             'Conservazione dei dati',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
@@ -175,19 +207,30 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
           pw.SizedBox(height: 12),
           pw.Text(
-            'Diritti dell\'interessato',
+            'Diritti dell interessato',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il discente può esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilità dei dati, nei limiti previsti dalla normativa applicabile.',
+            'Il discente puo esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilita dei dati, nei limiti previsti dalla normativa applicabile.',
             textAlign: pw.TextAlign.justify,
           ),
 
-          pw.SizedBox(height: 28),
-          pw.Text('Luogo e data: ________________________________'),
-          pw.SizedBox(height: 24),
-          pw.Text('Firma del discente: ___________________________'),
+          pw.SizedBox(height: 18),
+          pw.Text(
+            'Dichiarazione del discente',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            'Il sottoscritto dichiara di aver ricevuto e preso visione della presente informativa sul trattamento dei dati personali.',
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 22),
+          pw.Text('Luogo e data: ________________________________________'),
+          pw.SizedBox(height: 20),
+          pw.Text('Firma del discente: ___________________________________'),
         ],
       ),
     );

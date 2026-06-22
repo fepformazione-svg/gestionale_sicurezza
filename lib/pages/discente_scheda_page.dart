@@ -324,7 +324,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         ),
         build: (context) => [
           intestazioneAziendaPdfWidget(intestazione),
-          pw.SizedBox(height: 22),
+          pw.SizedBox(height: 18),
 
           pw.Text(
             'INFORMATIVA PRIVACY IMPRESA / CLIENTE',
@@ -336,14 +336,14 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 6),
           pw.Text(
-            'Informativa sul trattamento dei dati personali dei lavoratori/discenti comunicati dall\'impresa cliente ai sensi del Regolamento UE 2016/679.',
+            'Informativa sul trattamento dei dati personali dei lavoratori/discenti comunicati dall impresa cliente ai sensi del Regolamento UE 2016/679.',
             style: const pw.TextStyle(
               fontSize: 10,
               color: PdfColors.blueGrey700,
             ),
           ),
 
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 14),
           pw.Container(
             width: double.infinity,
             padding: const pw.EdgeInsets.all(12),
@@ -372,25 +372,46 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             ),
           ),
 
-          pw.SizedBox(height: 18),
+          pw.SizedBox(height: 14),
+          pw.Text(
+            'Titolare del trattamento',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "Il Titolare del trattamento dei dati personali e' F&P Formazione e Prevenzione, con sede e recapiti indicati nell'intestazione del presente documento.",
+            textAlign: pw.TextAlign.justify,
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' Alessandro Locatelli.",
+            textAlign: pw.TextAlign.justify,
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: fepsrls@legalmail.it.",
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 12),
           pw.Text(
             'Premessa',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'La presente informativa disciplina il trattamento dei dati personali dei lavoratori, collaboratori o altri soggetti indicati dall\'impresa cliente per la partecipazione ad attività formative in materia di salute e sicurezza sul lavoro.',
+            "La presente informativa riguarda il trattamento dei dati personali dei lavoratori, collaboratori o altri soggetti indicati dall'impresa cliente per la partecipazione ad attivita' formative in materia di salute e sicurezza sul lavoro.",
             textAlign: pw.TextAlign.justify,
           ),
 
           pw.SizedBox(height: 12),
           pw.Text(
-            'Finalità del trattamento',
+            'Finalita del trattamento',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati personali comunicati dall\'impresa cliente sono trattati per organizzare e gestire i corsi di formazione, predisporre registri presenza, verificare la partecipazione, emettere attestati, gestire scadenze formative e adempiere agli obblighi documentali previsti dalla normativa applicabile.',
+            "I dati personali comunicati dall'impresa cliente sono trattati per organizzare e gestire i corsi di formazione, predisporre registri presenza, verificare la partecipazione, emettere attestati, gestire scadenze formative e adempiere agli obblighi documentali previsti dalla normativa applicabile.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -401,7 +422,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Possono essere trattati dati anagrafici, identificativi, di contatto, codice fiscale, dati relativi al ruolo/mansione, partecipazione ai corsi, registri, attestati, idoneita documentale alla formazione e informazioni strettamente necessarie alla gestione dell\'attivita formativa.',
+            "Possono essere trattati dati anagrafici, identificativi, di contatto, codice fiscale, dati relativi al ruolo o mansione, partecipazione ai corsi, registri, attestati, idoneita' documentale alla formazione e informazioni strettamente necessarie alla gestione dell'attivita' formativa.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -412,7 +433,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il trattamento è effettuato per l\'esecuzione di obblighi contrattuali e precontrattuali, per l\'adempimento di obblighi normativi in materia di formazione e sicurezza sul lavoro e per la tutela dei diritti del titolare del trattamento.',
+            "Il trattamento e' effettuato per l'esecuzione di obblighi contrattuali e precontrattuali, per l'adempimento di obblighi normativi in materia di formazione e sicurezza sul lavoro e per la tutela dei diritti del titolare del trattamento.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -423,7 +444,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati possono essere comunicati, nei limiti necessari, a docenti, enti di formazione, enti di rilascio attestati, consulenti, fornitori tecnici, soggetti incaricati della gestione documentale e autorità competenti, ove previsto dalla normativa.',
+            "I dati possono essere comunicati, nei limiti necessari, a docenti, enti di formazione, enti di rilascio attestati, consulenti, fornitori tecnici, soggetti incaricati della gestione documentale, imprese clienti e autorita' competenti, ove previsto dalla normativa.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -434,18 +455,18 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati sono conservati per il tempo necessario alla gestione dell\'attività formativa, al rilascio e alla conservazione degli attestati, alla gestione delle scadenze, agli obblighi di legge e alla tutela dei diritti del titolare.',
+            "I dati sono conservati per il tempo necessario alla gestione dell'attivita' formativa, al rilascio e alla conservazione degli attestati, alla gestione delle scadenze, agli obblighi di legge e alla tutela dei diritti del titolare.",
             textAlign: pw.TextAlign.justify,
           ),
 
           pw.SizedBox(height: 12),
           pw.Text(
-            'Obblighi dell\'impresa cliente',
+            "Obblighi dell'impresa cliente",
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'L\'impresa cliente dichiara di comunicare dati personali pertinenti, esatti e necessari alle finalità formative, impegnandosi a informare i propri lavoratori o collaboratori secondo quanto previsto dalla normativa privacy applicabile.',
+            "L'impresa cliente dichiara di comunicare dati personali pertinenti, esatti e necessari alle finalita' formative e si impegna a informare i propri lavoratori o collaboratori circa la comunicazione dei dati a F&P Formazione e Prevenzione per le attivita' formative, documentali e di rilascio attestati.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -460,10 +481,21 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             textAlign: pw.TextAlign.justify,
           ),
 
-          pw.SizedBox(height: 28),
-          pw.Text('Luogo e data: ________________________________'),
-          pw.SizedBox(height: 24),
-          pw.Text('Timbro e firma impresa cliente: _______________'),
+          pw.SizedBox(height: 18),
+          pw.Text(
+            'Dichiarazione impresa / cliente',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.SizedBox(height: 5),
+          pw.Text(
+            "L'impresa cliente dichiara di aver ricevuto e preso visione della presente informativa e di aver informato, o di impegnarsi a informare, i lavoratori/discenti interessati secondo quanto previsto dalla normativa privacy applicabile.",
+            textAlign: pw.TextAlign.justify,
+          ),
+
+          pw.SizedBox(height: 22),
+          pw.Text('Luogo e data: ________________________________________'),
+          pw.SizedBox(height: 20),
+          pw.Text('Timbro e firma impresa cliente: _______________________'),
         ],
       ),
     );

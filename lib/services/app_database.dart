@@ -356,6 +356,10 @@ class AppDatabase {
       'indirizzo': 'TEXT',
       'telefono': 'TEXT',
       'referente': 'TEXT',
+      'informativa_privacy_impresa_firmata': 'INTEGER DEFAULT 0',
+      'data_firma_informativa_privacy_impresa': 'TEXT',
+      'documento_privacy_impresa_path': 'TEXT',
+      'note_privacy_impresa': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });

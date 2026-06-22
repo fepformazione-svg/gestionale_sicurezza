@@ -1,4 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart' as fp;
+import 'package:open_file/open_file.dart';
+import 'package:path/path.dart' as p;
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
@@ -17,6 +22,7 @@ class ImpresaSchedaPage extends StatefulWidget {
 }
 
 class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
+  String? documentoPrivacyImpresaPath;
   List<Discente> discentiAssociati = [];
 
   late bool privacyImpresaFirmata;
@@ -31,6 +37,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
         widget.impresa.informativaPrivacyImpresaFirmata == 1;
     dataFirmaPrivacyImpresa = widget.impresa.dataFirmaInformativaPrivacyImpresa;
     notePrivacyImpresa = widget.impresa.notePrivacyImpresa;
+    documentoPrivacyImpresaPath = widget.impresa.documentoPrivacyImpresaPath;
 
     caricaDiscentiAssociati();
   }
@@ -432,20 +439,21 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               _InfoRiga(label: 'Telefono', value: valore(impresa.telefono)),
               _InfoRiga(label: 'Indirizzo', value: valore(impresa.indirizzo)),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 8),
 
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
-                  vertical: 12,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF9FAFB),
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: const Color(0xFFE5E7EB)),
                 ),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Icon(
                       Icons.privacy_tip_outlined,
@@ -469,11 +477,51 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                         color: Color(0xFF6B7280),
                       ),
                     ),
-                    const Spacer(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.description,
+                          size: 18,
+                          color: Colors.blueGrey,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            documentoPrivacyImpresaPath == null ||
+                                    documentoPrivacyImpresaPath!.trim().isEmpty
+                                ? 'Documento privacy: non collegato'
+                                : 'Documento privacy: ${p.basename(documentoPrivacyImpresaPath!)}',
+                            style: const TextStyle(fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        OutlinedButton.icon(
+                          onPressed: allegaDocumentoPrivacyImpresa,
+                          icon: const Icon(Icons.attach_file),
+                          label: const Text('Allega documento'),
+                        ),
+                        if (documentoPrivacyImpresaPath != null &&
+                            documentoPrivacyImpresaPath!.trim().isNotEmpty)
+                          OutlinedButton.icon(
+                            onPressed: apriDocumentoPrivacyImpresa,
+                            icon: const Icon(Icons.open_in_new),
+                            label: const Text('Apri documento'),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 5,
+                        vertical: 3,
                       ),
                       decoration: BoxDecoration(
                         color: privacyImpresaFirmata
@@ -759,6 +807,80 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
         ),
       ),
     );
+  }
+
+  Future<void> allegaDocumentoPrivacyImpresa() async {
+    if (widget.impresa.id == null) return;
+
+    final risultato = await fp.FilePicker.pickFiles(
+      type: fp.FileType.custom,
+      allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg'],
+    );
+
+    if (risultato == null || risultato.files.single.path == null) {
+      return;
+    }
+
+    final percorso = risultato.files.single.path!;
+
+    final righeAggiornate = await AppDatabase.instance
+        .aggiornaDocumentoPrivacyImpresa(
+          impresaId: widget.impresa.id!,
+          documentoPrivacyImpresaPath: percorso,
+        );
+
+    if (!mounted) return;
+
+    if (righeAggiornate == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Documento privacy impresa non aggiornato.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      documentoPrivacyImpresaPath = percorso;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Documento privacy impresa collegato correttamente.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> apriDocumentoPrivacyImpresa() async {
+    final percorso = documentoPrivacyImpresaPath;
+
+    if (percorso == null || percorso.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun documento privacy impresa collegato.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final file = File(percorso);
+
+    if (!await file.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Il file collegato non è stato trovato.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    await OpenFile.open(percorso);
   }
 }
 

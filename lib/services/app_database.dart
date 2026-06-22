@@ -1580,4 +1580,21 @@ class AppDatabase {
       whereArgs: [impresaId],
     );
   }
+
+  Future<int> aggiornaDocumentoPrivacyImpresa({
+    required int impresaId,
+    required String? documentoPrivacyImpresaPath,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'imprese',
+      {
+        'documento_privacy_impresa_path': documentoPrivacyImpresaPath,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [impresaId],
+    );
+  }
 }

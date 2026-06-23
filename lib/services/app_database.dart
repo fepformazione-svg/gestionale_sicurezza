@@ -312,6 +312,18 @@ class AppDatabase {
 ''');
 
     await db.execute('''
+  CREATE TABLE IF NOT EXISTS prenotazioni_attrezzature (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prenotazione_id INTEGER NOT NULL,
+    attrezzatura_id INTEGER NOT NULL,
+    quantita REAL DEFAULT 1,
+    note TEXT,
+    created_at TEXT,
+    updated_at TEXT
+  )
+''');
+
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS enti_attestati (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         denominazione TEXT NOT NULL,
@@ -401,6 +413,9 @@ class AppDatabase {
       'seleziona': 'INTEGER DEFAULT 0',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
+      'docente_id': 'INTEGER',
+      'aula_sede_id': 'INTEGER',
+      'ente_attestato_id': 'INTEGER',
     });
 
     await _ensureColumns(db, 'diario', {
@@ -520,6 +535,18 @@ class AppDatabase {
       'created_at': 'TEXT',
       'updated_at': 'TEXT',
     });
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS prenotazioni_attrezzature (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prenotazione_id INTEGER NOT NULL,
+    attrezzatura_id INTEGER NOT NULL,
+    quantita REAL DEFAULT 1,
+    note TEXT,
+    created_at TEXT,
+    updated_at TEXT
+  )
+''');
 
     await _ensureColumns(db, 'enti_attestati', {
       'denominazione': "TEXT NOT NULL DEFAULT ''",
@@ -728,6 +755,31 @@ class AppDatabase {
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_attrezzature_attiva ON attrezzature(attiva)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prenotazioni_docente '
+      'ON prenotazioni(docente_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prenotazioni_aula_sede '
+      'ON prenotazioni(aula_sede_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prenotazioni_ente_attestato '
+      'ON prenotazioni(ente_attestato_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prenotazioni_attrezzature_prenotazione '
+      'ON prenotazioni_attrezzature(prenotazione_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_prenotazioni_attrezzature_attrezzatura '
+      'ON prenotazioni_attrezzature(attrezzatura_id)',
     );
 
     await db.execute(

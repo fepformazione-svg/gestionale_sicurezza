@@ -7,6 +7,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import '../models/aula_sede.dart';
 import '../models/attrezzatura.dart';
 import '../models/ente_attestato.dart';
+import '../models/registro_presenza.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -1945,6 +1946,82 @@ class AppDatabase {
       },
       where: 'id = ?',
       whereArgs: [impresaId],
+    );
+  }
+
+  Future<List<RegistroPresenza>> getRegistriPresenze({
+    int? prenotazioneId,
+    int? discenteId,
+  }) async {
+    final db = await database;
+
+    final whereParts = <String>[];
+    final whereArgs = <Object?>[];
+
+    if (prenotazioneId != null) {
+      whereParts.add('prenotazione_id = ?');
+      whereArgs.add(prenotazioneId);
+    }
+
+    if (discenteId != null) {
+      whereParts.add('discente_id = ?');
+      whereArgs.add(discenteId);
+    }
+
+    final rows = await db.query(
+      'registri_presenze',
+      where: whereParts.isEmpty ? null : whereParts.join(' AND '),
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: 'data_lezione ASC, ora_inizio ASC, id ASC',
+    );
+
+    return rows.map(RegistroPresenza.fromMap).toList();
+  }
+
+  Future<int> inserisciRegistroPresenza(RegistroPresenza registro) async {
+    final db = await database;
+
+    final dati = registro.toMap()
+      ..remove('id')
+      ..remove('created_at')
+      ..['updated_at'] = DateTime.now().toIso8601String();
+
+    return db.insert('registri_presenze', dati);
+  }
+
+  Future<int> aggiornaRegistroPresenza(RegistroPresenza registro) async {
+    final db = await database;
+
+    if (registro.id == null) {
+      throw ArgumentError('ID registro presenza mancante');
+    }
+
+    final dati = registro.toMap()
+      ..remove('id')
+      ..remove('created_at')
+      ..['updated_at'] = DateTime.now().toIso8601String();
+
+    return db.update(
+      'registri_presenze',
+      dati,
+      where: 'id = ?',
+      whereArgs: [registro.id],
+    );
+  }
+
+  Future<int> eliminaRegistroPresenza(int id) async {
+    final db = await database;
+
+    return db.delete('registri_presenze', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> eliminaRegistriPresenzePrenotazione(int prenotazioneId) async {
+    final db = await database;
+
+    return db.delete(
+      'registri_presenze',
+      where: 'prenotazione_id = ?',
+      whereArgs: [prenotazioneId],
     );
   }
 }

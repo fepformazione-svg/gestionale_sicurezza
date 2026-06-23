@@ -140,6 +140,40 @@ class AppDatabase {
     ''');
 
     await db.execute('''
+  CREATE TABLE IF NOT EXISTS registri_presenze (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prenotazione_id INTEGER NOT NULL,
+    discente_id INTEGER,
+    data_lezione TEXT,
+    ora_inizio TEXT,
+    ora_fine TEXT,
+    presente INTEGER DEFAULT 0,
+    firma_discente_path TEXT,
+    firma_docente_path TEXT,
+    note TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (prenotazione_id) REFERENCES prenotazioni(id),
+    FOREIGN KEY (discente_id) REFERENCES discenti(id)
+  )
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_prenotazione
+  ON registri_presenze (prenotazione_id)
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_discente
+  ON registri_presenze (discente_id)
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_data_lezione
+  ON registri_presenze (data_lezione)
+''');
+
+    await db.execute('''
       CREATE TABLE IF NOT EXISTS diario (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         prenotazione_id INTEGER,
@@ -553,6 +587,54 @@ class AppDatabase {
     updated_at TEXT
   )
 ''');
+
+    await db.execute('''
+  CREATE TABLE IF NOT EXISTS registri_presenze (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    prenotazione_id INTEGER NOT NULL,
+    discente_id INTEGER,
+    data_lezione TEXT,
+    ora_inizio TEXT,
+    ora_fine TEXT,
+    presente INTEGER DEFAULT 0,
+    firma_discente_path TEXT,
+    firma_docente_path TEXT,
+    note TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (prenotazione_id) REFERENCES prenotazioni(id),
+    FOREIGN KEY (discente_id) REFERENCES discenti(id)
+  )
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_prenotazione
+  ON registri_presenze (prenotazione_id)
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_discente
+  ON registri_presenze (discente_id)
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_registri_presenze_data_lezione
+  ON registri_presenze (data_lezione)
+''');
+
+    await _ensureColumns(db, 'registri_presenze', {
+      'prenotazione_id': 'INTEGER NOT NULL DEFAULT 0',
+      'discente_id': 'INTEGER',
+      'data_lezione': 'TEXT',
+      'ora_inizio': 'TEXT',
+      'ora_fine': 'TEXT',
+      'presente': 'INTEGER DEFAULT 0',
+      'firma_discente_path': 'TEXT',
+      'firma_docente_path': 'TEXT',
+      'note': 'TEXT',
+      'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+      'updated_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
+    });
 
     await _ensureColumns(db, 'enti_attestati', {
       'denominazione': "TEXT NOT NULL DEFAULT ''",

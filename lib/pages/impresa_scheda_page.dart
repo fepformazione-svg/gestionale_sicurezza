@@ -858,6 +858,11 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
 
     try {
       final datiAzienda = await caricaIntestazioneAziendaPdf();
+
+      const ragioneSocialeFp = 'F&P S.r.l.s. Formazione e Privacy';
+      const emailPrivacyFp = 'fepsrls@legalmail.it';
+      const riferimentoOperativoPrivacy = 'Alessandro Locatelli';
+
       final pdf = pw.Document();
 
       String valorePdf(String? valore) {
@@ -968,8 +973,24 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               'Indirizzo: $indirizzoImpresa',
             ]),
             sezione('Premessa', [
-              'La presente informativa descrive le modalita con cui F&P tratta i dati personali comunicati dall’impresa cliente nell’ambito della gestione dei rapporti formativi, amministrativi e documentali.',
-              'Il trattamento puo riguardare i dati identificativi e di contatto dei referenti aziendali, nonche i dati dei lavoratori/discenti trasmessi dall’impresa per l’organizzazione dei corsi, la gestione delle presenze e il rilascio degli attestati.',
+              'La presente informativa e resa ai sensi del Regolamento UE 2016/679 '
+                  '(GDPR) e della normativa nazionale applicabile in materia di protezione '
+                  'dei dati personali.',
+              '$ragioneSocialeFp tratta i dati personali dell’impresa cliente, dei suoi '
+                  'referenti e, ove necessario, dei lavoratori/discenti comunicati dalla '
+                  'stessa impresa per finalita connesse all’organizzazione, gestione, '
+                  'erogazione e documentazione delle attivita formative, nonche per gli '
+                  'adempimenti amministrativi, contabili, contrattuali e normativi collegati.',
+            ]),
+            sezione('Titolare del trattamento e riferimenti privacy', [
+              '$ragioneSocialeFp opera quale titolare del trattamento per i dati trattati '
+                  'nell’ambito della gestione dei rapporti contrattuali, amministrativi, '
+                  'formativi e documentali con l’impresa cliente.',
+              'Per le comunicazioni relative alla privacy e all’esercizio dei diritti '
+                  'previsti dal GDPR e possibile scrivere all’indirizzo PEC/email: '
+                  '$emailPrivacyFp.',
+              'Il riferimento operativo/autorizzato al trattamento per la gestione delle '
+                  'attivita formative e documentali e: $riferimentoOperativoPrivacy.',
             ]),
             sezione('Finalita del trattamento', [
               'I dati sono trattati per organizzare e gestire le attivita formative richieste dall’impresa cliente.',
@@ -986,8 +1007,13 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               'L’impresa cliente si impegna a comunicare a F&P dati corretti, aggiornati e pertinenti rispetto alle finalita formative richieste.',
             ]),
             sezione('Comunicazione dei dati', [
-              'I dati possono essere comunicati a enti di rilascio attestati, docenti, consulenti, collaboratori, fornitori di servizi informatici, soggetti incaricati della gestione amministrativa e altri destinatari autorizzati, nei limiti necessari alla gestione del servizio richiesto.',
-              'I dati non sono oggetto di diffusione indiscriminata.',
+              'I dati potranno essere comunicati, nei limiti strettamente necessari, '
+                  'a soggetti pubblici o privati coinvolti nella gestione delle attivita '
+                  'formative, agli enti di rilascio attestati, a docenti, consulenti, '
+                  'collaboratori, professionisti, fornitori di servizi informatici o '
+                  'amministrativi, nonche ad autorita o organismi competenti nei casi '
+                  'previsti dalla legge.',
+              'I dati non saranno diffusi se non nei casi previsti da obblighi normativi.',
             ]),
             sezione('Conservazione', [
               'I dati sono conservati per il tempo necessario alla gestione del rapporto, all’emissione e conservazione degli attestati, alla tutela dei diritti delle parti e all’adempimento degli obblighi normativi, amministrativi e fiscali applicabili.',
@@ -997,8 +1023,17 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
               'Per comunicazioni privacy e possibile utilizzare i recapiti indicati da F&P nella propria documentazione aziendale.',
             ]),
             sezione('Dichiarazione dell’impresa cliente', [
-              'L’impresa cliente dichiara di aver ricevuto la presente informativa e di essere consapevole che i dati dei propri lavoratori/discenti potranno essere trattati da F&P per le finalita formative, documentali e amministrative sopra descritte.',
-              'L’impresa cliente si impegna, ove necessario, a rendere ai propri lavoratori/discenti le informazioni opportune in merito alla comunicazione dei dati a F&P per la gestione dei corsi e degli attestati.',
+              'L’impresa cliente dichiara di aver ricevuto la presente informativa privacy '
+                  'e di averne preso visione.',
+              'L’impresa cliente dichiara inoltre che i dati personali dei propri referenti, '
+                  'lavoratori e/o discenti eventualmente comunicati a $ragioneSocialeFp '
+                  'sono trasmessi per finalita connesse alla gestione delle attivita '
+                  'formative, documentali, amministrative e agli adempimenti previsti '
+                  'dalla normativa applicabile.',
+              'L’impresa cliente si impegna, ove necessario, a fornire ai propri referenti, '
+                  'lavoratori e/o discenti le informazioni opportune in merito alla '
+                  'comunicazione dei dati a $ragioneSocialeFp per la gestione dei corsi, '
+                  'dei registri, degli attestati e della relativa documentazione.',
             ]),
             pw.SizedBox(height: 20),
             pw.Row(

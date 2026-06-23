@@ -270,16 +270,6 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
         );
       },
     );
-
-    titoloController.dispose();
-    titolareController.dispose();
-    referenteController.dispose();
-    baseGiuridicaController.dispose();
-    finalitaController.dispose();
-    categorieDatiController.dispose();
-    periodoConservazioneController.dispose();
-    misureSicurezzaController.dispose();
-    noteController.dispose();
   }
 
   Future<void> mostraDialogModificaVoce(PrivacyGdpr voce) async {
@@ -482,16 +472,6 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
         );
       },
     );
-
-    titoloController.dispose();
-    titolareController.dispose();
-    referenteController.dispose();
-    baseGiuridicaController.dispose();
-    finalitaController.dispose();
-    categorieDatiController.dispose();
-    periodoConservazioneController.dispose();
-    misureSicurezzaController.dispose();
-    noteController.dispose();
   }
 
   Future<void> esportaExcelPrivacyGdpr() async {

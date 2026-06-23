@@ -499,56 +499,71 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        OutlinedButton.icon(
-                          onPressed: allegaDocumentoPrivacyImpresa,
-                          icon: const Icon(Icons.attach_file),
-                          label: const Text('Allega documento'),
-                        ),
-                        if (documentoPrivacyImpresaPath != null &&
-                            documentoPrivacyImpresaPath!.trim().isNotEmpty)
-                          OutlinedButton.icon(
-                            onPressed: apriDocumentoPrivacyImpresa,
-                            icon: const Icon(Icons.open_in_new),
-                            label: const Text('Apri documento'),
+                        Expanded(
+                          child: Wrap(
+                            spacing: 8,
+                            runSpacing: 6,
+                            children: [
+                              OutlinedButton.icon(
+                                onPressed: allegaDocumentoPrivacyImpresa,
+                                icon: const Icon(Icons.attach_file, size: 18),
+                                label: const Text('Allega documento'),
+                              ),
+                              if (documentoPrivacyImpresaPath != null &&
+                                  documentoPrivacyImpresaPath!
+                                      .trim()
+                                      .isNotEmpty)
+                                OutlinedButton.icon(
+                                  onPressed: apriDocumentoPrivacyImpresa,
+                                  icon: const Icon(Icons.open_in_new, size: 18),
+                                  label: const Text('Apri documento'),
+                                ),
+                            ],
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: privacyImpresaFirmata
-                            ? const Color(0xFFDCFCE7)
-                            : const Color(0xFFFEE2E2),
-                        borderRadius: BorderRadius.circular(999),
-                      ),
-                      child: Text(
-                        privacyImpresaFirmata ? 'FIRMATA' : 'NON FIRMATA',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: privacyImpresaFirmata
-                              ? const Color(0xFF166534)
-                              : const Color(0xFF991B1B),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: 'Modifica dati Privacy/GDPR impresa',
-                      icon: const Icon(
-                        Icons.edit_outlined,
-                        size: 20,
-                        color: Color(0xFF2563EB),
-                      ),
-                      onPressed: apriDialogPrivacyImpresa,
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: privacyImpresaFirmata
+                                ? const Color(0xFFDCFCE7)
+                                : const Color(0xFFFEE2E2),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            privacyImpresaFirmata ? 'FIRMATA' : 'NON FIRMATA',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: privacyImpresaFirmata
+                                  ? const Color(0xFF166534)
+                                  : const Color(0xFF991B1B),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        IconButton(
+                          tooltip: 'Modifica dati Privacy/GDPR impresa',
+                          icon: const Icon(
+                            Icons.edit_outlined,
+                            size: 20,
+                            color: Color(0xFF2563EB),
+                          ),
+                          onPressed: apriDialogPrivacyImpresa,
+                          visualDensity: VisualDensity.compact,
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(
+                            minWidth: 32,
+                            minHeight: 32,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),

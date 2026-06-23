@@ -545,7 +545,11 @@ ente.tipo AS ente_attestato_tipo,
   SELECT GROUP_CONCAT(
     a.denominazione ||
     ' x' ||
-    COALESCE(pa.quantita, 1) ||
+    CASE
+      WHEN COALESCE(pa.quantita, 1) = CAST(COALESCE(pa.quantita, 1) AS INTEGER)
+      THEN CAST(COALESCE(pa.quantita, 1) AS INTEGER)
+      ELSE COALESCE(pa.quantita, 1)
+    END ||
     CASE
       WHEN pa.note IS NOT NULL AND TRIM(pa.note) <> ''
       THEN ' - ' || pa.note

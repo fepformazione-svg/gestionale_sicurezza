@@ -324,6 +324,11 @@ class AppDatabase {
   )
 ''');
 
+    await _ensureColumns(db, 'prenotazioni_attrezzature', {
+      'quantita': 'REAL DEFAULT 1',
+      'note': 'TEXT',
+    });
+
     await db.execute('''
       CREATE TABLE IF NOT EXISTS enti_attestati (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1411,29 +1416,46 @@ class AppDatabase {
 
   Future<void> salvaAttrezzaturePrenotazione({
     required int prenotazioneId,
-    required List<int> attrezzatureIds,
+    List<int>? attrezzatureIds,
+    List<Map<String, dynamic>>? attrezzature,
   }) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
 
-    await db.transaction((txn) async {
-      await txn.delete(
-        'prenotazioni_attrezzature',
-        where: 'prenotazione_id = ?',
-        whereArgs: [prenotazioneId],
-      );
+    final attrezzatureDaSalvare =
+        attrezzature ??
+        (attrezzatureIds ?? [])
+            .map(
+              (attrezzaturaId) => {
+                'attrezzatura_id': attrezzaturaId,
+                'quantita': 1,
+                'note': null,
+              },
+            )
+            .toList();
 
-      for (final attrezzaturaId in attrezzatureIds) {
-        await txn.insert('prenotazioni_attrezzature', {
-          'prenotazione_id': prenotazioneId,
-          'attrezzatura_id': attrezzaturaId,
-          'quantita': 1,
-          'note': '',
-          'created_at': now,
-          'updated_at': now,
-        });
+    await db.delete(
+      'prenotazioni_attrezzature',
+      where: 'prenotazione_id = ?',
+      whereArgs: [prenotazioneId],
+    );
+
+    for (final attrezzatura in attrezzatureDaSalvare) {
+      final attrezzaturaId = attrezzatura['attrezzatura_id'];
+
+      if (attrezzaturaId == null) {
+        continue;
       }
-    });
+
+      await db.insert('prenotazioni_attrezzature', {
+        'prenotazione_id': prenotazioneId,
+        'attrezzatura_id': attrezzaturaId,
+        'quantita': attrezzatura['quantita'] ?? 1,
+        'note': attrezzatura['note'],
+        'created_at': now,
+        'updated_at': now,
+      });
+    }
   }
 
   Future<String> getSintesiAttrezzaturePrenotazione(int prenotazioneId) async {

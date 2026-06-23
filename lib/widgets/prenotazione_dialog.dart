@@ -37,6 +37,9 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   List<Map<String, dynamic>> attrezzatureDisponibili = [];
   List<int> attrezzatureSelezionateIds = [];
 
+  final Map<int, TextEditingController> quantitaAttrezzatureControllers = {};
+  final Map<int, TextEditingController> noteAttrezzatureControllers = {};
+
   List<Map<String, dynamic>> discentiFiltrati = [];
   List<Map<String, dynamic>> impreseFiltrate = [];
   List<Map<String, dynamic>> corsiFiltrati = [];
@@ -78,6 +81,14 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
     debounceImpresa?.cancel();
     debounceCorso?.cancel();
 
+    for (final controller in quantitaAttrezzatureControllers.values) {
+      controller.dispose();
+    }
+
+    for (final controller in noteAttrezzatureControllers.values) {
+      controller.dispose();
+    }
+
     super.dispose();
   }
 
@@ -112,8 +123,24 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
         .toList();
 
     if (widget.prenotazione != null && widget.prenotazione!['id'] != null) {
-      attrezzatureSelezionateIds = await AppDatabase.instance
-          .getAttrezzatureIdsByPrenotazione(widget.prenotazione!['id'] as int);
+      final attrezzaturePrenotazione = await AppDatabase.instance
+          .getAttrezzaturePrenotazione(widget.prenotazione!['id'] as int);
+
+      attrezzatureSelezionateIds = attrezzaturePrenotazione
+          .map((item) => item['attrezzatura_id'] as int)
+          .toList();
+
+      for (final item in attrezzaturePrenotazione) {
+        final attrezzaturaId = item['attrezzatura_id'] as int;
+
+        quantitaAttrezzatureControllers[attrezzaturaId] = TextEditingController(
+          text: (item['quantita'] ?? 1).toString(),
+        );
+
+        noteAttrezzatureControllers[attrezzaturaId] = TextEditingController(
+          text: (item['note'] ?? '').toString(),
+        );
+      }
     }
 
     if (widget.prenotazione != null) {
@@ -306,6 +333,25 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   void salva() {
     if (!formKey.currentState!.validate()) return;
 
+    final attrezzatureSelezionate = attrezzatureSelezionateIds.map((id) {
+      final quantitaText =
+          quantitaAttrezzatureControllers[id]?.text.trim().replaceAll(
+            ',',
+            '.',
+          ) ??
+          '1';
+
+      final quantita = double.tryParse(quantitaText) ?? 1;
+
+      final note = noteAttrezzatureControllers[id]?.text.trim();
+
+      return {
+        'attrezzatura_id': id,
+        'quantita': quantita,
+        'note': note == null || note.isEmpty ? null : note,
+      };
+    }).toList();
+
     Navigator.pop(context, {
       'discente_id': discenteId,
       'impresa_id': impresaId,
@@ -314,6 +360,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
       'aula_sede_id': aulaSedeId,
       'ente_attestato_id': enteAttestatiId,
       'attrezzature_ids': attrezzatureSelezionateIds,
+      'attrezzature': attrezzatureSelezionate,
       'data': dataController.text.trim(),
       'prot': protController.text.trim(),
       'note': noteController.text.trim(),
@@ -592,22 +639,103 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                                     ? denominazione
                                     : '$denominazione ($categoria)';
 
-                                return FilterChip(
-                                  label: Text(
-                                    testo.isEmpty
-                                        ? 'Attrezzatura senza nome'
-                                        : testo,
-                                  ),
-                                  selected: selezionata,
-                                  onSelected: (selected) {
-                                    setState(() {
-                                      if (selected) {
-                                        attrezzatureSelezionateIds.add(id);
-                                      } else {
-                                        attrezzatureSelezionateIds.remove(id);
-                                      }
-                                    });
-                                  },
+                                quantitaAttrezzatureControllers.putIfAbsent(
+                                  id,
+                                  () => TextEditingController(text: '1'),
+                                );
+
+                                noteAttrezzatureControllers.putIfAbsent(
+                                  id,
+                                  () => TextEditingController(),
+                                );
+
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    FilterChip(
+                                      label: Text(
+                                        testo.isEmpty
+                                            ? 'Attrezzatura senza nome'
+                                            : testo,
+                                      ),
+                                      selected: selezionata,
+                                      onSelected: (selected) {
+                                        setState(() {
+                                          if (selected) {
+                                            if (!attrezzatureSelezionateIds
+                                                .contains(id)) {
+                                              attrezzatureSelezionateIds.add(
+                                                id,
+                                              );
+                                            }
+
+                                            quantitaAttrezzatureControllers
+                                                .putIfAbsent(
+                                                  id,
+                                                  () => TextEditingController(
+                                                    text: '1',
+                                                  ),
+                                                );
+
+                                            noteAttrezzatureControllers
+                                                .putIfAbsent(
+                                                  id,
+                                                  () => TextEditingController(),
+                                                );
+                                          } else {
+                                            attrezzatureSelezionateIds.remove(
+                                              id,
+                                            );
+                                          }
+                                        });
+                                      },
+                                    ),
+                                    if (selezionata)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          left: 8,
+                                          right: 8,
+                                          bottom: 8,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 90,
+                                              child: TextField(
+                                                controller:
+                                                    quantitaAttrezzatureControllers[id],
+                                                keyboardType:
+                                                    const TextInputType.numberWithOptions(
+                                                      decimal: true,
+                                                    ),
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText: 'Quantità',
+                                                      isDense: true,
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Expanded(
+                                              child: TextField(
+                                                controller:
+                                                    noteAttrezzatureControllers[id],
+                                                decoration:
+                                                    const InputDecoration(
+                                                      labelText:
+                                                          'Note attrezzatura',
+                                                      isDense: true,
+                                                      border:
+                                                          OutlineInputBorder(),
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                  ],
                                 );
                               }).toList(),
                             ),

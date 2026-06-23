@@ -1280,12 +1280,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         datiPuliti,
       );
 
-      final attrezzatureIds =
-          nuovaPrenotazione['attrezzature_ids'] as List<int>? ?? [];
-
       await AppDatabase.instance.salvaAttrezzaturePrenotazione(
         prenotazioneId: nuovoId,
-        attrezzatureIds: attrezzatureIds,
+        attrezzature: List<Map<String, dynamic>>.from(
+          nuovaPrenotazione['attrezzature'] ?? [],
+        ),
+        attrezzatureIds: List<int>.from(
+          nuovaPrenotazione['attrezzature_ids'] ?? [],
+        ),
       );
 
       if (datiPuliti['conferma'] == 1) {
@@ -1330,12 +1332,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         datiPuliti,
       );
 
-      final attrezzatureIds =
-          prenotazioneModificata['attrezzature_ids'] as List<int>? ?? [];
-
       await AppDatabase.instance.salvaAttrezzaturePrenotazione(
         prenotazioneId: prenotazione['id'] as int,
-        attrezzatureIds: attrezzatureIds,
+        attrezzature: List<Map<String, dynamic>>.from(
+          prenotazioneModificata['attrezzature'] ?? [],
+        ),
+        attrezzatureIds: List<int>.from(
+          prenotazioneModificata['attrezzature_ids'] ?? [],
+        ),
       );
 
       if (datiPuliti['conferma'] == 1) {

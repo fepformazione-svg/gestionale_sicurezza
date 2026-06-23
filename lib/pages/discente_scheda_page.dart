@@ -19,6 +19,10 @@ import '../utils/pdf_azienda_helper.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
+const ragioneSocialeFp = 'F&P S.r.l.s. Formazione e Privacy';
+const emailPrivacyFp = 'fepsrls@legalmail.it';
+const riferimentoOperativoPrivacy = 'Alessandro Locatelli';
+
 class DiscenteSchedaPage extends StatefulWidget {
   final Discente discente;
 
@@ -58,6 +62,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     final discente = discenteCorrente;
     final intestazione = await caricaIntestazioneAziendaPdf();
     final pdf = pw.Document();
+
+    const ragioneSocialeFp = 'F&P S.r.l.s. Formazione e Privacy';
+    const emailPrivacyFp = 'fepsrls@legalmail.it';
+    const riferimentoOperativoPrivacy = 'Alessandro Locatelli';
 
     final nomeCompleto = [
       discente.cognome.trim(),
@@ -136,17 +144,17 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Il Titolare del trattamento dei dati personali e' F&P Formazione e Prevenzione, con sede e recapiti indicati nell'intestazione del presente documento.",
+            "Il Titolare del trattamento dei dati personali e' $ragioneSocialeFp, con sede e recapiti indicati nell'intestazione del presente documento.",
             textAlign: pw.TextAlign.justify,
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' Alessandro Locatelli.",
+            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' $riferimentoOperativoPrivacy.",
             textAlign: pw.TextAlign.justify,
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: fepsrls@legalmail.it.",
+            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: $emailPrivacyFp.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -157,7 +165,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati personali del discente sono trattati per finalita connesse alla gestione delle attivita formative, alla registrazione delle presenze, alla produzione della documentazione didattica, al rilascio di attestati e all adempimento degli obblighi previsti dalla normativa applicabile in materia di salute e sicurezza sul lavoro.',
+            'I dati personali del discente sono trattati per finalita\' connesse alla gestione delle attivita\' formative, '
+            'alla registrazione delle presenze, alla predisposizione della documentazione didattica e amministrativa, '
+            'al rilascio degli attestati di formazione, alla gestione delle scadenze formative e all\'adempimento degli obblighi '
+            'previsti dalla normativa applicabile in materia di salute e sicurezza sul lavoro.',
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -168,7 +179,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il trattamento e effettuato per l esecuzione di obblighi contrattuali, precontrattuali, normativi e amministrativi collegati all erogazione dei corsi di formazione e agli obblighi documentali conseguenti.',
+            'Il trattamento e\' effettuato per l\'esecuzione di obblighi contrattuali e precontrattuali connessi '
+            'all\'iscrizione e alla partecipazione ai corsi di formazione, nonche\' per l\'adempimento degli obblighi '
+            'normativi e documentali previsti dalla disciplina applicabile in materia di salute e sicurezza sul lavoro. '
+            'Il trattamento puo\' inoltre essere necessario per la corretta gestione amministrativa delle attivita\' formative '
+            'e per la tutela dei diritti del titolare del trattamento.',
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -179,7 +194,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Possono essere trattati dati anagrafici, identificativi, di contatto, dati relativi alla partecipazione ai corsi, dati contenuti nei registri presenza, negli attestati e nella documentazione formativa.',
+            "Possono essere trattati dati anagrafici, identificativi e di contatto del discente, codice fiscale, eventuali dati relativi "
+            "al ruolo o alla mansione, dati relativi alla partecipazione ai corsi, firme sui registri presenza, informazioni contenute "
+            "negli attestati, nella documentazione formativa e negli archivi gestionali necessari alla corretta erogazione e tracciabilità "
+            "delle attività formative.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -201,18 +219,25 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'I dati sono conservati per il tempo necessario alla gestione del rapporto formativo, agli obblighi di legge, alla tutela dei diritti del titolare del trattamento e alla corretta archiviazione della documentazione relativa alla formazione svolta.',
+            "I dati personali sono conservati per il tempo necessario alla gestione del rapporto formativo, "
+            "alla produzione e archiviazione della documentazione relativa alla formazione svolta, alla gestione "
+            "delle scadenze formative, all'adempimento degli obblighi di legge e alla tutela dei diritti del titolare "
+            "del trattamento. Decorso tale periodo, i dati saranno conservati, archiviati o eliminati secondo i termini "
+            "previsti dalla normativa applicabile e dalle esigenze documentali connesse alla formazione in materia di salute e sicurezza sul lavoro.",
             textAlign: pw.TextAlign.justify,
           ),
 
           pw.SizedBox(height: 12),
           pw.Text(
-            'Diritti dell interessato',
+            "Diritti dell'interessato",
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il discente puo esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilita dei dati, nei limiti previsti dalla normativa applicabile.',
+            "Il discente puo' esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, "
+            "tra cui il diritto di accesso ai dati personali, rettifica, cancellazione, limitazione del trattamento, "
+            "opposizione al trattamento e portabilita' dei dati, nei limiti e secondo le condizioni previste dalla normativa applicabile. "
+            "Le richieste possono essere inviate al riferimento privacy indicato nella presente informativa.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -223,14 +248,19 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'Il sottoscritto dichiara di aver ricevuto e preso visione della presente informativa sul trattamento dei dati personali.',
+            'Il sottoscritto dichiara di aver ricevuto, letto e compreso la presente informativa sul trattamento dei dati personali, '
+            'resa ai sensi del Regolamento UE 2016/679. Dichiara inoltre di essere stato informato sulle finalita\' del trattamento, '
+            'sulle categorie di dati trattati, sui soggetti ai quali i dati possono essere comunicati, sui tempi di conservazione '
+            'e sui diritti esercitabili in materia di protezione dei dati personali.',
             textAlign: pw.TextAlign.justify,
           ),
 
           pw.SizedBox(height: 22),
           pw.Text('Luogo e data: ________________________________________'),
           pw.SizedBox(height: 20),
-          pw.Text('Firma del discente: ___________________________________'),
+          pw.Text(
+            'Firma del discente per presa visione: ________________________________',
+          ),
         ],
       ),
     );
@@ -379,17 +409,17 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Il Titolare del trattamento dei dati personali e' F&P Formazione e Prevenzione, con sede e recapiti indicati nell'intestazione del presente documento.",
+            "Il Titolare del trattamento dei dati personali e' $ragioneSocialeFp, con sede e recapiti indicati nell'intestazione del presente documento.",
             textAlign: pw.TextAlign.justify,
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' Alessandro Locatelli.",
+            "Il soggetto autorizzato al trattamento dei dati nell'ambito della gestione delle attivita' formative e' $riferimentoOperativoPrivacy.",
             textAlign: pw.TextAlign.justify,
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: fepsrls@legalmail.it.",
+            "Per comunicazioni relative al trattamento dei dati personali e' possibile scrivere all'indirizzo PEC/email: $emailPrivacyFp.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -444,7 +474,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "I dati possono essere comunicati, nei limiti necessari, a docenti, enti di formazione, enti di rilascio attestati, consulenti, fornitori tecnici, soggetti incaricati della gestione documentale, imprese clienti e autorita' competenti, ove previsto dalla normativa.",
+            "I dati personali del discente possono essere comunicati, nei limiti strettamente necessari alle finalita' indicate, "
+            "a docenti, enti di formazione, enti di rilascio attestati, consulenti, fornitori tecnici, soggetti incaricati della "
+            "gestione documentale, imprese clienti, medici competenti o strutture sanitarie ove pertinenti, organismi di controllo "
+            "e autorita' competenti, quando previsto dalla normativa applicabile o necessario per la corretta gestione delle attivita' formative.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -466,7 +499,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            "L'impresa cliente dichiara di comunicare dati personali pertinenti, esatti e necessari alle finalita' formative e si impegna a informare i propri lavoratori o collaboratori circa la comunicazione dei dati a F&P Formazione e Prevenzione per le attivita' formative, documentali e di rilascio attestati.",
+            "L'impresa cliente dichiara di comunicare dati personali pertinenti, esatti e necessari alle finalita' formative e si impegna a informare i propri lavoratori o collaboratori circa la comunicazione dei dati a $ragioneSocialeFp per le attivita' formative, documentali e di rilascio attestati.",
             textAlign: pw.TextAlign.justify,
           ),
 
@@ -2215,7 +2248,7 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                 mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                 children: [
                   pw.Text(
-                    'F&P Formazione e Prevenzione',
+                    ragioneSocialeFp,
                     style: pw.TextStyle(
                       fontSize: 18,
                       fontWeight: pw.FontWeight.bold,

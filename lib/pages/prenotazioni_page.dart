@@ -160,6 +160,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 'Discente',
                 'Impresa',
                 'Corso',
+                'Attrezzature',
                 'Data',
                 'Prot.',
                 'Stato',
@@ -174,6 +175,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   discenteCompleto,
                   testo(p['impresa_nome']),
                   testo(p['corso_nome']),
+                  testo(p['attrezzature_sintesi']),
                   dataItaliana(p['data']),
                   testo(p['prot']),
                   statoPrenotazione(p),
@@ -189,7 +191,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 vertical: 5,
               ),
               headerDecoration: const pw.BoxDecoration(
-                color: PdfColors.blueGrey800,
+                color: PdfColors.blueGrey100,
               ),
               cellStyle: const pw.TextStyle(fontSize: 8),
               cellAlignment: pw.Alignment.centerLeft,
@@ -199,12 +201,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 vertical: 5,
               ),
               columnWidths: const {
-                0: pw.FlexColumnWidth(2),
-                1: pw.FlexColumnWidth(2),
-                2: pw.FlexColumnWidth(3),
-                3: pw.FlexColumnWidth(1),
-                4: pw.FlexColumnWidth(1),
-                5: pw.FlexColumnWidth(1.2),
+                0: pw.FlexColumnWidth(1.6),
+                1: pw.FlexColumnWidth(1.3),
+                2: pw.FlexColumnWidth(2.0),
+                3: pw.FlexColumnWidth(2.8),
+                4: pw.FlexColumnWidth(0.9),
+                5: pw.FlexColumnWidth(0.7),
+                6: pw.FlexColumnWidth(1.0),
               },
             ),
           ];
@@ -1734,6 +1737,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       sheet.setColumnWidth(3, 16); // Data
       sheet.setColumnWidth(4, 18); // Protocollo
       sheet.setColumnWidth(5, 16); // Stato
+      sheet.setColumnWidth(6, 48); // Attrezzature
 
       // RIGA INFORMATIVA EXPORT
 
@@ -1746,6 +1750,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       sheet.appendRow([
         TextCellValue(testoInfoExport),
+        TextCellValue(''),
         TextCellValue(''),
         TextCellValue(''),
         TextCellValue(''),
@@ -1787,11 +1792,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         TextCellValue('Data'),
         TextCellValue('Protocollo'),
         TextCellValue('Stato'),
+        TextCellValue('Attrezzature'),
       ]);
 
-      for (int col = 0; col < 6; col++) {
+      for (int col = 0; col < 7; col++) {
         final cell = sheet.cell(
-          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 2),
+          CellIndex.indexByColumnRow(columnIndex: col, rowIndex: 4),
         );
 
         cell.cellStyle = CellStyle(bold: true);
@@ -1806,6 +1812,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           TextCellValue(testo(p['data'])),
           TextCellValue(testo(p['prot'])),
           TextCellValue(statoPrenotazione(p)),
+          TextCellValue(testo(p['attrezzature_sintesi'])),
         ]);
       }
 
@@ -1994,25 +2001,28 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 'Discente',
                 'Impresa',
                 'Corso',
+                'Attrezzature',
                 'Data',
                 'Prot.',
                 'Stato',
               ],
               columnWidths: {
-                0: const pw.FlexColumnWidth(1.7),
-                1: const pw.FlexColumnWidth(1.2),
-                2: const pw.FlexColumnWidth(2.8),
-                3: const pw.FlexColumnWidth(1.2),
-                4: const pw.FlexColumnWidth(0.7),
-                5: const pw.FlexColumnWidth(1.1),
+                0: const pw.FlexColumnWidth(1.5),
+                1: const pw.FlexColumnWidth(1.1),
+                2: const pw.FlexColumnWidth(2.0),
+                3: const pw.FlexColumnWidth(2.6),
+                4: const pw.FlexColumnWidth(0.9),
+                5: const pw.FlexColumnWidth(0.7),
+                6: const pw.FlexColumnWidth(0.9),
               },
               cellAlignments: {
                 0: pw.Alignment.centerLeft,
                 1: pw.Alignment.centerLeft,
                 2: pw.Alignment.centerLeft,
-                3: pw.Alignment.center,
+                3: pw.Alignment.centerLeft,
                 4: pw.Alignment.center,
                 5: pw.Alignment.center,
+                6: pw.Alignment.center,
               },
               headerAlignment: pw.Alignment.center,
               headerStyle: pw.TextStyle(
@@ -2038,6 +2048,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   nomeDiscente(p),
                   testo(p['impresa_nome']),
                   testo(p['corso_nome']),
+                  testo(p['attrezzature_sintesi']),
                   testo(p['data']),
                   testo(p['prot']),
                   statoPrenotazione(p),

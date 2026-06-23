@@ -542,7 +542,17 @@ class DatabaseService {
 ente.tipo AS ente_attestato_tipo,
 
 (
-  SELECT GROUP_CONCAT(a.denominazione, ', ')
+  SELECT GROUP_CONCAT(
+    a.denominazione ||
+    ' x' ||
+    COALESCE(pa.quantita, 1) ||
+    CASE
+      WHEN pa.note IS NOT NULL AND TRIM(pa.note) <> ''
+      THEN ' - ' || pa.note
+      ELSE ''
+    END,
+    ', '
+  )
   FROM prenotazioni_attrezzature pa
   INNER JOIN attrezzature a ON a.id = pa.attrezzatura_id
   WHERE pa.prenotazione_id = p.id

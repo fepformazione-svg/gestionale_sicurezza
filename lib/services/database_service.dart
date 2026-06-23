@@ -324,6 +324,54 @@ class DatabaseService {
     return await db.query('corsi', orderBy: 'denominazione ASC');
   }
 
+  Future<List<Map<String, dynamic>>> getDocentiLookup() async {
+    final db = await _db;
+
+    return await db.rawQuery('''
+    SELECT
+      id,
+      nome,
+      cognome,
+      attivo
+    FROM docenti
+    WHERE attivo = 1
+    ORDER BY cognome ASC, nome ASC
+  ''');
+  }
+
+  Future<List<Map<String, dynamic>>> getAuleSediLookup() async {
+    final db = await _db;
+
+    return await db.rawQuery('''
+    SELECT
+      id,
+      denominazione,
+      tipo,
+      indirizzo,
+      comune,
+      attiva
+    FROM aule_sedi
+    WHERE attiva = 1
+    ORDER BY denominazione ASC
+  ''');
+  }
+
+  Future<List<Map<String, dynamic>>> getEntiAttestatiLookup() async {
+    final db = await _db;
+
+    return await db.rawQuery('''
+    SELECT
+      id,
+      denominazione,
+      tipo,
+      codice_accreditamento,
+      attivo
+    FROM enti_attestati
+    WHERE attivo = 1
+    ORDER BY denominazione ASC
+  ''');
+  }
+
   // =========================
   // PREZZARIO
   // ======
@@ -574,6 +622,9 @@ class DatabaseService {
         'discente_id': dati['discente_id'],
         'impresa_id': dati['impresa_id'],
         'corso_id': dati['corso_id'],
+        'docente_id': dati['docente_id'],
+        'aula_sede_id': dati['aula_sede_id'],
+        'ente_attestato_id': dati['ente_attestato_id'],
         'data': dati['data'],
         'prot': dati['prot'],
         'aperto': dati['aperto'] ?? 1,

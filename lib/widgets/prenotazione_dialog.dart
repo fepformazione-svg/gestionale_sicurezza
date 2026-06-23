@@ -28,6 +28,10 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   List<Map<String, dynamic>> imprese = [];
   List<Map<String, dynamic>> corsi = [];
 
+  List<Map<String, dynamic>> docenti = [];
+  List<Map<String, dynamic>> auleSedi = [];
+  List<Map<String, dynamic>> entiAttestati = [];
+
   List<Map<String, dynamic>> discentiFiltrati = [];
   List<Map<String, dynamic>> impreseFiltrate = [];
   List<Map<String, dynamic>> corsiFiltrati = [];
@@ -35,6 +39,10 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   int? discenteId;
   int? impresaId;
   int? corsoId;
+
+  int? docenteId;
+  int? aulaSedeId;
+  int? enteAttestatiId;
 
   bool aperto = true;
   bool conferma = false;
@@ -89,12 +97,20 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
     imprese = await db.getImpreseLookup();
     corsi = await db.getCorsiLookup();
 
+    docenti = await db.getDocentiLookup();
+    auleSedi = await db.getAuleSediLookup();
+    entiAttestati = await db.getEntiAttestatiLookup();
+
     if (widget.prenotazione != null) {
       final p = widget.prenotazione!;
 
       discenteId = p['discente_id'];
       impresaId = p['impresa_id'];
       corsoId = p['corso_id'];
+
+      docenteId = p['docente_id'];
+      aulaSedeId = p['aula_sede_id'];
+      enteAttestatiId = p['ente_attestato_id'];
 
       final discenteNome = (p['discente_nome'] ?? '').toString();
       final discenteCognome = (p['discente_cognome'] ?? '').toString();
@@ -279,6 +295,9 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
       'discente_id': discenteId,
       'impresa_id': impresaId,
       'corso_id': corsoId,
+      'docente_id': docenteId,
+      'aula_sede_id': aulaSedeId,
+      'ente_attestato_id': enteAttestatiId,
       'data': dataController.text.trim(),
       'prot': protController.text.trim(),
       'note': noteController.text.trim(),
@@ -390,6 +409,122 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                     corsiFiltrati = [];
 
                     setState(() {});
+                  },
+                ),
+
+                const SizedBox(height: 18),
+
+                DropdownButtonFormField<int?>(
+                  initialValue: docenti.any((item) => item['id'] == docenteId)
+                      ? docenteId
+                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Docente',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Nessun docente selezionato'),
+                    ),
+                    ...docenti.map((item) {
+                      final cognome = (item['cognome'] ?? '').toString();
+                      final nome = (item['nome'] ?? '').toString();
+                      final testo = '$cognome $nome'.trim();
+
+                      return DropdownMenuItem<int?>(
+                        value: item['id'] as int,
+                        child: Text(
+                          testo.isEmpty ? 'Docente senza nome' : testo,
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      docenteId = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 18),
+
+                DropdownButtonFormField<int?>(
+                  initialValue: auleSedi.any((item) => item['id'] == aulaSedeId)
+                      ? aulaSedeId
+                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Aula/Sede',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Nessuna aula/sede selezionata'),
+                    ),
+                    ...auleSedi.map((item) {
+                      final denominazione = (item['denominazione'] ?? '')
+                          .toString();
+                      final tipo = (item['tipo'] ?? '').toString();
+                      final comune = (item['comune'] ?? '').toString();
+
+                      final dettagli = [
+                        if (tipo.isNotEmpty) tipo,
+                        if (comune.isNotEmpty) comune,
+                      ].join(' - ');
+
+                      return DropdownMenuItem<int?>(
+                        value: item['id'] as int,
+                        child: Text(
+                          dettagli.isEmpty
+                              ? denominazione
+                              : '$denominazione ($dettagli)',
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      aulaSedeId = value;
+                    });
+                  },
+                ),
+
+                const SizedBox(height: 18),
+
+                DropdownButtonFormField<int?>(
+                  initialValue:
+                      entiAttestati.any((item) => item['id'] == enteAttestatiId)
+                      ? enteAttestatiId
+                      : null,
+                  decoration: const InputDecoration(
+                    labelText: 'Ente attestati',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: [
+                    const DropdownMenuItem<int?>(
+                      value: null,
+                      child: Text('Nessun ente selezionato'),
+                    ),
+                    ...entiAttestati.map((item) {
+                      final denominazione = (item['denominazione'] ?? '')
+                          .toString();
+                      final tipo = (item['tipo'] ?? '').toString();
+
+                      return DropdownMenuItem<int?>(
+                        value: item['id'] as int,
+                        child: Text(
+                          tipo.isEmpty
+                              ? denominazione
+                              : '$denominazione ($tipo)',
+                        ),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() {
+                      enteAttestatiId = value;
+                    });
                   },
                 ),
 

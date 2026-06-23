@@ -906,9 +906,9 @@ class _AuleSediPageState extends State<AuleSediPage> {
             Row(
               children: [
                 IconButton(
-                  tooltip: 'Torna alla Dashboard',
+                  tooltip: 'Torna a Impostazioni',
                   onPressed: () {
-                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    Navigator.of(context).pop();
                   },
                   icon: const Icon(Icons.arrow_back),
                 ),

@@ -14,7 +14,6 @@ import '../services/database_service.dart';
 import 'discente_scheda_page.dart';
 import '../dialogs/discente_dialog.dart' as dialog_discente;
 import '../services/app_database.dart';
-import '../utils/pdf_azienda_helper.dart';
 
 class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
@@ -857,8 +856,6 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
     if (widget.impresa.id == null) return;
 
     try {
-      final datiAzienda = await caricaIntestazioneAziendaPdf();
-
       const ragioneSocialeFp = 'F&P S.r.l.s. Formazione e Privacy';
       const emailPrivacyFp = 'fepsrls@legalmail.it';
       const riferimentoOperativoPrivacy = 'Alessandro Locatelli';
@@ -878,34 +875,54 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
             .replaceAll(RegExp(r'\s+'), '_');
       }
 
+      String testoPdfSafe(String valore) {
+        return valore
+            .replaceAll('\u2019', "'")
+            .replaceAll('\u2018', "'")
+            .replaceAll('\u0060', "'")
+            .replaceAll('\u00B4', "'")
+            .replaceAll('à', 'a')
+            .replaceAll('è', 'e')
+            .replaceAll('é', 'e')
+            .replaceAll('ì', 'i')
+            .replaceAll('ò', 'o')
+            .replaceAll('ù', 'u')
+            .replaceAll('À', 'A')
+            .replaceAll('È', 'E')
+            .replaceAll('É', 'E')
+            .replaceAll('Ì', 'I')
+            .replaceAll('Ò', 'O')
+            .replaceAll('Ù', 'U');
+      }
+
       pw.Widget sezione(String titolo, List<String> righe) {
         return pw.Container(
           width: double.infinity,
-          margin: const pw.EdgeInsets.only(top: 12),
+          margin: const pw.EdgeInsets.only(bottom: 10),
           padding: const pw.EdgeInsets.all(10),
           decoration: pw.BoxDecoration(
-            border: pw.Border.all(color: PdfColors.grey300),
+            border: pw.Border.all(color: PdfColors.grey300, width: 0.8),
             borderRadius: pw.BorderRadius.circular(6),
           ),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
-                titolo,
+                testoPdfSafe(titolo),
                 style: pw.TextStyle(
                   fontSize: 11,
                   fontWeight: pw.FontWeight.bold,
-                  color: PdfColors.blueGrey800,
                 ),
+                textAlign: pw.TextAlign.left,
               ),
               pw.SizedBox(height: 6),
               ...righe.map(
                 (riga) => pw.Padding(
                   padding: const pw.EdgeInsets.only(bottom: 4),
                   child: pw.Text(
-                    riga,
-                    style: const pw.TextStyle(fontSize: 9),
-                    textAlign: pw.TextAlign.justify,
+                    testoPdfSafe(riga),
+                    style: const pw.TextStyle(fontSize: 9, lineSpacing: 1.25),
+                    textAlign: pw.TextAlign.left,
                   ),
                 ),
               ),
@@ -939,13 +956,20 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
             ),
           ),
           build: (context) => [
-            intestazioneAziendaPdfWidget(datiAzienda),
+            pw.Text(
+              'F&P Formazione e Privacy',
+              style: pw.TextStyle(
+                fontSize: 15,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey900,
+              ),
+            ),
             pw.SizedBox(height: 16),
             pw.Center(
               child: pw.Text(
                 'INFORMATIVA PRIVACY / GDPR IMPRESA',
                 style: pw.TextStyle(
-                  fontSize: 16,
+                  fontSize: 15,
                   fontWeight: pw.FontWeight.bold,
                 ),
                 textAlign: pw.TextAlign.center,
@@ -955,15 +979,16 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
             pw.Center(
               child: pw.Text(
                 'Informativa ai sensi del Regolamento UE 2016/679',
-                style: const pw.TextStyle(fontSize: 10),
+                style: pw.TextStyle(fontSize: 9.5, color: PdfColors.grey700),
                 textAlign: pw.TextAlign.center,
               ),
             ),
             pw.SizedBox(height: 12),
             pw.Text(
               'Documento generato il $dataDocumentoTesto',
-              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+              style: pw.TextStyle(fontSize: 8.5, color: PdfColors.grey700),
             ),
+            pw.SizedBox(height: 8),
             sezione('Impresa destinataria', [
               'Ragione sociale: $ragioneSocialeImpresa',
               'Partita IVA: $partitaIvaImpresa',
@@ -1004,7 +1029,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
             ]),
             sezione('Categorie di dati trattati', [
               'Possono essere trattati dati anagrafici, dati di contatto, dati aziendali, dati relativi alla mansione o al ruolo, dati relativi alla partecipazione ai corsi, esiti formativi, registri presenze, attestati e altra documentazione strettamente collegata alla formazione.',
-              'L’impresa cliente si impegna a comunicare a F&P dati corretti, aggiornati e pertinenti rispetto alle finalita formative richieste.',
+              'L’impresa cliente si impegna a comunicare a $ragioneSocialeFp dati corretti, aggiornati e pertinenti rispetto alle finalita formative richieste.',
             ]),
             sezione('Comunicazione dei dati', [
               'I dati potranno essere comunicati, nei limiti strettamente necessari, '
@@ -1020,7 +1045,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
             ]),
             sezione('Diritti dell’interessato', [
               'Gli interessati possono esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilita, nei limiti previsti dalla normativa applicabile.',
-              'Per comunicazioni privacy e possibile utilizzare i recapiti indicati da F&P nella propria documentazione aziendale.',
+              'Per comunicazioni privacy e per l’esercizio dei diritti e possibile utilizzare l’indirizzo PEC/email: $emailPrivacyFp.',
             ]),
             sezione('Dichiarazione dell’impresa cliente', [
               'L’impresa cliente dichiara di aver ricevuto la presente informativa privacy '

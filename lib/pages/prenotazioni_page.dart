@@ -334,12 +334,18 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       final discente = nomeDiscente(p).toLowerCase();
       final impresa = testo(p['impresa_nome']).toLowerCase();
       final corso = testo(p['corso_nome']).toLowerCase();
+      final docente = testoDocentePrenotazione(p).toLowerCase();
+      final aulaSede = testoAulaSedePrenotazione(p).toLowerCase();
+      final enteAttestato = testoEnteAttestatoPrenotazione(p).toLowerCase();
       final data = testo(p['data']).toLowerCase();
       final prot = testo(p['prot']).toLowerCase();
 
       return discente.contains(query) ||
           impresa.contains(query) ||
           corso.contains(query) ||
+          docente.contains(query) ||
+          aulaSede.contains(query) ||
+          enteAttestato.contains(query) ||
           data.contains(query) ||
           prot.contains(query) ||
           stato.toLowerCase().contains(query);
@@ -846,6 +852,37 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     return '$cognome $nome'.trim();
   }
 
+  String testoDocentePrenotazione(Map<String, dynamic> prenotazione) {
+    final cognome = prenotazione['docente_cognome']?.toString().trim() ?? '';
+    final nome = prenotazione['docente_nome']?.toString().trim() ?? '';
+
+    final completo = '$cognome $nome'.trim();
+    if (completo.isEmpty) return '-';
+
+    return completo;
+  }
+
+  String testoAulaSedePrenotazione(Map<String, dynamic> prenotazione) {
+    final denominazione =
+        prenotazione['aula_sede_denominazione']?.toString().trim() ?? '';
+    final comune = prenotazione['aula_sede_comune']?.toString().trim() ?? '';
+
+    if (denominazione.isEmpty && comune.isEmpty) return '-';
+    if (comune.isEmpty) return denominazione;
+    if (denominazione.isEmpty) return comune;
+
+    return '$denominazione - $comune';
+  }
+
+  String testoEnteAttestatoPrenotazione(Map<String, dynamic> prenotazione) {
+    final denominazione =
+        prenotazione['ente_attestato_denominazione']?.toString().trim() ?? '';
+
+    if (denominazione.isEmpty) return '-';
+
+    return denominazione;
+  }
+
   String etichettaFiltroPrenotazioni(String filtro) {
     switch (filtro) {
       case 'aperte':
@@ -1160,10 +1197,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         final data = testo(p['data']).toLowerCase();
         final prot = testo(p['prot']).toLowerCase();
         final stato = statoPrenotazione(p).toLowerCase();
+        final docente = testoDocentePrenotazione(p).toLowerCase();
+        final aulaSede = testoAulaSedePrenotazione(p).toLowerCase();
+        final enteAttestato = testoEnteAttestatoPrenotazione(p).toLowerCase();
 
         return discente.contains(query) ||
             impresa.contains(query) ||
             corso.contains(query) ||
+            docente.contains(query) ||
+            aulaSede.contains(query) ||
+            enteAttestato.contains(query) ||
             data.contains(query) ||
             prot.contains(query) ||
             stato.contains(query);
@@ -2101,6 +2144,9 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         colDiscente +
         colImpresa +
         colCorso +
+        colDocente +
+        colAulaSede +
+        colEnteAttestato +
         colData +
         colProt +
         colStato +
@@ -3630,13 +3676,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 }
 
-const double colDiscente = 300;
-const double colImpresa = 230;
-const double colCorso = 430;
-const double colData = 125;
-const double colProt = 90;
-const double colStato = 125;
-const double colAzioni = 85;
+const double colDiscente = 230;
+const double colImpresa = 145;
+const double colCorso = 250;
+const double colDocente = 120;
+const double colAulaSede = 130;
+const double colEnteAttestato = 145;
+const double colData = 90;
+const double colProt = 60;
+const double colStato = 120;
+const double colAzioni = 90;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -3757,6 +3806,87 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                             padding: const EdgeInsets.only(left: 4),
                             child: Text(
                               widget.testo(widget.prenotazione['corso_nome']),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: colDocente,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              (() {
+                                final cognome = widget.testo(
+                                  widget.prenotazione['docente_cognome'],
+                                );
+                                final nome = widget.testo(
+                                  widget.prenotazione['docente_nome'],
+                                );
+                                final docente = '$cognome $nome'.trim();
+
+                                return docente.isEmpty ? '-' : docente;
+                              })(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: colAulaSede,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              (() {
+                                final denominazione = widget.testo(
+                                  widget
+                                      .prenotazione['aula_sede_denominazione'],
+                                );
+                                final comune = widget.testo(
+                                  widget.prenotazione['aula_sede_comune'],
+                                );
+
+                                if (denominazione.isEmpty && comune.isEmpty) {
+                                  return '-';
+                                }
+                                if (comune.isEmpty) return denominazione;
+                                if (denominazione.isEmpty) return comune;
+
+                                return '$denominazione - $comune';
+                              })(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
+                          width: colEnteAttestato,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              (() {
+                                final ente = widget.testo(
+                                  widget
+                                      .prenotazione['ente_attestato_denominazione'],
+                                );
+
+                                return ente.isEmpty ? '-' : ente;
+                              })(),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,
                               style: const TextStyle(
@@ -3916,6 +4046,13 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                   const SizedBox(width: colDiscente),
                   headerBuilder('Impresa', colImpresa, 'impresa'),
                   headerBuilder('Corso', colCorso, 'corso'),
+                  headerBuilder('Docente', colDocente, 'docente'),
+                  headerBuilder('Aula/Sede', colAulaSede, 'aula_sede'),
+                  headerBuilder(
+                    'Ente attestati',
+                    colEnteAttestato,
+                    'ente_attestato',
+                  ),
                   headerBuilder('Data', colData, 'data'),
                   headerBuilder('Prot.', colProt, 'prot'),
                   SizedBox(

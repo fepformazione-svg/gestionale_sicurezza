@@ -474,16 +474,32 @@ class DatabaseService {
       p.ok,
       p.registro,
       p.seleziona,
+      p.docente_id,
+      p.aula_sede_id,
+      p.ente_attestato_id,
 
       d.nome AS discente_nome,
       d.cognome AS discente_cognome,
       i.intestazione AS impresa_nome,
-      c.denominazione AS corso_nome
+      c.denominazione AS corso_nome,
+
+      doc.nome AS docente_nome,
+      doc.cognome AS docente_cognome,
+      doc.qualifica AS docente_qualifica,
+
+      aula.denominazione AS aula_sede_denominazione,
+      aula.comune AS aula_sede_comune,
+
+      ente.denominazione AS ente_attestato_denominazione,
+      ente.tipo AS ente_attestato_tipo
 
     FROM prenotazioni p
     LEFT JOIN discenti d ON d.id = p.discente_id
     LEFT JOIN imprese i ON i.id = p.impresa_id
     LEFT JOIN corsi c ON c.id = p.corso_id
+    LEFT JOIN docenti doc ON doc.id = p.docente_id
+    LEFT JOIN aule_sedi aula ON aula.id = p.aula_sede_id
+    LEFT JOIN enti_attestati ente ON ente.id = p.ente_attestato_id
 
     ORDER BY p.id DESC
 

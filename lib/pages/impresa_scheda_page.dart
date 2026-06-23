@@ -4,6 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart' as fp;
 import 'package:open_file/open_file.dart';
 import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
@@ -11,6 +14,7 @@ import '../services/database_service.dart';
 import 'discente_scheda_page.dart';
 import '../dialogs/discente_dialog.dart' as dialog_discente;
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class ImpresaSchedaPage extends StatefulWidget {
   final Impresa impresa;
@@ -525,6 +529,14 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                             runSpacing: 6,
                             children: [
                               OutlinedButton.icon(
+                                onPressed: generaInformativaPrivacyImpresaPdf,
+                                icon: const Icon(
+                                  Icons.picture_as_pdf,
+                                  size: 18,
+                                ),
+                                label: const Text('Genera informativa'),
+                              ),
+                              OutlinedButton.icon(
                                 onPressed: allegaDocumentoPrivacyImpresa,
                                 icon: const Icon(Icons.attach_file, size: 18),
                                 label: const Text('Allega documento'),
@@ -839,6 +851,271 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
         ),
       ),
     );
+  }
+
+  Future<void> generaInformativaPrivacyImpresaPdf() async {
+    if (widget.impresa.id == null) return;
+
+    try {
+      final datiAzienda = await caricaIntestazioneAziendaPdf();
+      final pdf = pw.Document();
+
+      String valorePdf(String? valore) {
+        final testo = valore?.trim();
+        if (testo == null || testo.isEmpty) return '-';
+        return testo;
+      }
+
+      String pulisciNomeFile(String valore) {
+        return valore
+            .trim()
+            .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+            .replaceAll(RegExp(r'\s+'), '_');
+      }
+
+      pw.Widget sezione(String titolo, List<String> righe) {
+        return pw.Container(
+          width: double.infinity,
+          margin: const pw.EdgeInsets.only(top: 12),
+          padding: const pw.EdgeInsets.all(10),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey300),
+            borderRadius: pw.BorderRadius.circular(6),
+          ),
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Text(
+                titolo,
+                style: pw.TextStyle(
+                  fontSize: 11,
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.blueGrey800,
+                ),
+              ),
+              pw.SizedBox(height: 6),
+              ...righe.map(
+                (riga) => pw.Padding(
+                  padding: const pw.EdgeInsets.only(bottom: 4),
+                  child: pw.Text(
+                    riga,
+                    style: const pw.TextStyle(fontSize: 9),
+                    textAlign: pw.TextAlign.justify,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      final dataDocumento = DateTime.now();
+      final dataDocumentoTesto =
+          '${dataDocumento.day.toString().padLeft(2, '0')}/'
+          '${dataDocumento.month.toString().padLeft(2, '0')}/'
+          '${dataDocumento.year}';
+
+      final ragioneSocialeImpresa = valorePdf(widget.impresa.intestazione);
+      final partitaIvaImpresa = valorePdf(widget.impresa.partitaIva);
+      final codiceFiscaleImpresa = valorePdf(widget.impresa.codiceFiscale);
+      final referenteImpresa = valorePdf(widget.impresa.referente);
+      final telefonoImpresa = valorePdf(widget.impresa.telefono);
+      final indirizzoImpresa = valorePdf(widget.impresa.indirizzo);
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(32),
+          footer: (context) => pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey600),
+            ),
+          ),
+          build: (context) => [
+            intestazioneAziendaPdfWidget(datiAzienda),
+            pw.SizedBox(height: 16),
+            pw.Center(
+              child: pw.Text(
+                'INFORMATIVA PRIVACY / GDPR IMPRESA',
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Center(
+              child: pw.Text(
+                'Informativa ai sensi del Regolamento UE 2016/679',
+                style: const pw.TextStyle(fontSize: 10),
+                textAlign: pw.TextAlign.center,
+              ),
+            ),
+            pw.SizedBox(height: 12),
+            pw.Text(
+              'Documento generato il $dataDocumentoTesto',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            ),
+            sezione('Impresa destinataria', [
+              'Ragione sociale: $ragioneSocialeImpresa',
+              'Partita IVA: $partitaIvaImpresa',
+              'Codice fiscale: $codiceFiscaleImpresa',
+              'Referente: $referenteImpresa',
+              'Telefono: $telefonoImpresa',
+              'Indirizzo: $indirizzoImpresa',
+            ]),
+            sezione('Premessa', [
+              'La presente informativa descrive le modalita con cui F&P tratta i dati personali comunicati dall’impresa cliente nell’ambito della gestione dei rapporti formativi, amministrativi e documentali.',
+              'Il trattamento puo riguardare i dati identificativi e di contatto dei referenti aziendali, nonche i dati dei lavoratori/discenti trasmessi dall’impresa per l’organizzazione dei corsi, la gestione delle presenze e il rilascio degli attestati.',
+            ]),
+            sezione('Finalita del trattamento', [
+              'I dati sono trattati per organizzare e gestire le attivita formative richieste dall’impresa cliente.',
+              'I dati dei discenti possono essere utilizzati per predisporre registri, attestati, verbali, documentazione didattica e comunicazioni connesse alla formazione in materia di salute e sicurezza sul lavoro.',
+              'Quando necessario, i dati dei discenti possono essere comunicati agli enti di rilascio attestati o ad altri soggetti coinvolti nella gestione documentale del corso, limitatamente a quanto necessario per l’emissione e la tracciabilita degli attestati.',
+              'I dati possono inoltre essere trattati per adempimenti amministrativi, fiscali, contabili, contrattuali e per la conservazione della documentazione prevista dalla normativa applicabile.',
+            ]),
+            sezione('Base giuridica', [
+              'Il trattamento e effettuato per l’esecuzione del rapporto contrattuale o precontrattuale con l’impresa cliente, per l’adempimento di obblighi di legge e per il legittimo interesse alla corretta gestione documentale e organizzativa delle attivita formative.',
+              'La presente informativa non costituisce richiesta di consenso generico, salvo i casi specifici in cui una distinta base giuridica renda necessario acquisire un consenso separato.',
+            ]),
+            sezione('Categorie di dati trattati', [
+              'Possono essere trattati dati anagrafici, dati di contatto, dati aziendali, dati relativi alla mansione o al ruolo, dati relativi alla partecipazione ai corsi, esiti formativi, registri presenze, attestati e altra documentazione strettamente collegata alla formazione.',
+              'L’impresa cliente si impegna a comunicare a F&P dati corretti, aggiornati e pertinenti rispetto alle finalita formative richieste.',
+            ]),
+            sezione('Comunicazione dei dati', [
+              'I dati possono essere comunicati a enti di rilascio attestati, docenti, consulenti, collaboratori, fornitori di servizi informatici, soggetti incaricati della gestione amministrativa e altri destinatari autorizzati, nei limiti necessari alla gestione del servizio richiesto.',
+              'I dati non sono oggetto di diffusione indiscriminata.',
+            ]),
+            sezione('Conservazione', [
+              'I dati sono conservati per il tempo necessario alla gestione del rapporto, all’emissione e conservazione degli attestati, alla tutela dei diritti delle parti e all’adempimento degli obblighi normativi, amministrativi e fiscali applicabili.',
+            ]),
+            sezione('Diritti dell’interessato', [
+              'Gli interessati possono esercitare i diritti previsti dagli articoli 15 e seguenti del Regolamento UE 2016/679, tra cui accesso, rettifica, cancellazione, limitazione, opposizione e portabilita, nei limiti previsti dalla normativa applicabile.',
+              'Per comunicazioni privacy e possibile utilizzare i recapiti indicati da F&P nella propria documentazione aziendale.',
+            ]),
+            sezione('Dichiarazione dell’impresa cliente', [
+              'L’impresa cliente dichiara di aver ricevuto la presente informativa e di essere consapevole che i dati dei propri lavoratori/discenti potranno essere trattati da F&P per le finalita formative, documentali e amministrative sopra descritte.',
+              'L’impresa cliente si impegna, ove necessario, a rendere ai propri lavoratori/discenti le informazioni opportune in merito alla comunicazione dei dati a F&P per la gestione dei corsi e degli attestati.',
+            ]),
+            pw.SizedBox(height: 20),
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.start,
+              children: [
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Luogo e data',
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 24),
+                      pw.Container(height: 1, color: PdfColors.grey500),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(width: 32),
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Firma per presa visione',
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 24),
+                      pw.Container(height: 1, color: PdfColors.grey500),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+
+      final documentsDirectory = await getApplicationDocumentsDirectory();
+      final cartellaPrivacy = Directory(
+        p.join(
+          documentsDirectory.path,
+          'Gestionale Sicurezza',
+          'Privacy GDPR Imprese',
+        ),
+      );
+
+      if (!await cartellaPrivacy.exists()) {
+        await cartellaPrivacy.create(recursive: true);
+      }
+
+      final nomeImpresaPulito = pulisciNomeFile(ragioneSocialeImpresa);
+      final timestamp =
+          '${dataDocumento.year}'
+          '${dataDocumento.month.toString().padLeft(2, '0')}'
+          '${dataDocumento.day.toString().padLeft(2, '0')}_'
+          '${dataDocumento.hour.toString().padLeft(2, '0')}'
+          '${dataDocumento.minute.toString().padLeft(2, '0')}';
+
+      final percorso = p.join(
+        cartellaPrivacy.path,
+        'informativa_privacy_impresa_${nomeImpresaPulito}_$timestamp.pdf',
+      );
+
+      final file = File(percorso);
+      await file.writeAsBytes(await pdf.save());
+
+      final righeAggiornate = await AppDatabase.instance
+          .aggiornaDocumentoPrivacyImpresa(
+            impresaId: widget.impresa.id!,
+            documentoPrivacyImpresaPath: percorso,
+          );
+
+      if (!mounted) return;
+
+      if (righeAggiornate == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Informativa generata ma non collegata all’impresa.'),
+            backgroundColor: Colors.orange,
+          ),
+        );
+        await OpenFile.open(percorso);
+        return;
+      }
+
+      setState(() {
+        documentoPrivacyImpresaPath = percorso;
+        schedaModificata = true;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Informativa Privacy/GDPR impresa generata correttamente.',
+          ),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await OpenFile.open(percorso);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore durante la generazione informativa: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Future<void> allegaDocumentoPrivacyImpresa() async {

@@ -8,6 +8,8 @@ import '../widgets/prenotazione_dialog.dart';
 import '../widgets/section_card.dart';
 import '../widgets/table_status_badge.dart';
 
+import '../services/app_database.dart';
+
 import '../utils/pdf_azienda_helper.dart';
 
 import 'dart:io';
@@ -1061,6 +1063,26 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         offset: offset,
       );
 
+      final datiConAttrezzature = <Map<String, dynamic>>[];
+
+      for (final prenotazione in dati) {
+        final prenotazioneArricchita = Map<String, dynamic>.from(prenotazione);
+        final prenotazioneIdRaw = prenotazioneArricchita['id'];
+        final prenotazioneId = prenotazioneIdRaw is int
+            ? prenotazioneIdRaw
+            : int.tryParse(prenotazioneIdRaw.toString());
+
+        if (prenotazioneId != null) {
+          prenotazioneArricchita['attrezzature_sintesi'] = await AppDatabase
+              .instance
+              .getSintesiAttrezzaturePrenotazione(prenotazioneId);
+        } else {
+          prenotazioneArricchita['attrezzature_sintesi'] = '';
+        }
+
+        datiConAttrezzature.add(prenotazioneArricchita);
+      }
+
       if (!mounted) return;
 
       setState(() {
@@ -1068,12 +1090,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           prenotazioni.clear();
         }
 
-        prenotazioni.addAll(dati);
+        prenotazioni.addAll(datiConAttrezzature);
         prenotazioniFiltrate = List.from(prenotazioni);
 
         paginaDbCorrente++;
 
-        if (dati.length < righePerPaginaDb) {
+        if (datiConAttrezzature.length < righePerPaginaDb) {
           fineArchivioPrenotazioni = true;
           mostraTutteLePrenotazioni = true;
         }
@@ -1258,6 +1280,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         datiPuliti,
       );
 
+      final attrezzatureIds =
+          nuovaPrenotazione['attrezzature_ids'] as List<int>? ?? [];
+
+      await AppDatabase.instance.salvaAttrezzaturePrenotazione(
+        prenotazioneId: nuovoId,
+        attrezzatureIds: attrezzatureIds,
+      );
+
       if (datiPuliti['conferma'] == 1) {
         await DatabaseService.instance.confermaPrenotazioneWorkflow(nuovoId);
       }
@@ -1298,6 +1328,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       await DatabaseService.instance.updatePrenotazione(
         prenotazione['id'],
         datiPuliti,
+      );
+
+      final attrezzatureIds =
+          prenotazioneModificata['attrezzature_ids'] as List<int>? ?? [];
+
+      await AppDatabase.instance.salvaAttrezzaturePrenotazione(
+        prenotazioneId: prenotazione['id'] as int,
+        attrezzatureIds: attrezzatureIds,
       );
 
       if (datiPuliti['conferma'] == 1) {
@@ -2150,6 +2188,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         colDocente +
         colAulaSede +
         colEnteAttestato +
+        colAttrezzature +
         colData +
         colProt +
         colStato +
@@ -3685,6 +3724,7 @@ const double colCorso = 250;
 const double colDocente = 120;
 const double colAulaSede = 130;
 const double colEnteAttestato = 145;
+const double colAttrezzature = 150;
 const double colData = 90;
 const double colProt = 60;
 const double colStato = 120;
@@ -3901,6 +3941,30 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         ),
 
                         SizedBox(
+                          width: colAttrezzature,
+                          child: Padding(
+                            padding: const EdgeInsets.only(left: 4),
+                            child: Text(
+                              (() {
+                                final attrezzature = widget.testo(
+                                  widget.prenotazione['attrezzature_sintesi'],
+                                );
+
+                                return attrezzature.isEmpty
+                                    ? '-'
+                                    : attrezzature;
+                              })(),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        SizedBox(
                           width: colData,
                           child: Text(
                             widget.testo(widget.prenotazione['data']),
@@ -4055,6 +4119,11 @@ class PrenotazioneHeaderRow extends StatelessWidget {
                     'Ente attestati',
                     colEnteAttestato,
                     'ente_attestato',
+                  ),
+                  headerBuilder(
+                    'Attrezzature',
+                    colAttrezzature,
+                    'attrezzature',
                   ),
                   headerBuilder('Data', colData, 'data'),
                   headerBuilder('Prot.', colProt, 'prot'),

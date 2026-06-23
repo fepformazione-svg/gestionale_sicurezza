@@ -539,9 +539,16 @@ class DatabaseService {
       aula.comune AS aula_sede_comune,
 
       ente.denominazione AS ente_attestato_denominazione,
-      ente.tipo AS ente_attestato_tipo
+ente.tipo AS ente_attestato_tipo,
 
-    FROM prenotazioni p
+(
+  SELECT GROUP_CONCAT(a.denominazione, ', ')
+  FROM prenotazioni_attrezzature pa
+  INNER JOIN attrezzature a ON a.id = pa.attrezzatura_id
+  WHERE pa.prenotazione_id = p.id
+) AS attrezzature_sintesi
+
+FROM prenotazioni p
     LEFT JOIN discenti d ON d.id = p.discente_id
     LEFT JOIN imprese i ON i.id = p.impresa_id
     LEFT JOIN corsi c ON c.id = p.corso_id

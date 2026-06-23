@@ -319,7 +319,8 @@ class AppDatabase {
     quantita REAL DEFAULT 1,
     note TEXT,
     created_at TEXT,
-    updated_at TEXT
+    updated_at TEXT,
+    UNIQUE(prenotazione_id, attrezzatura_id)
   )
 ''');
 
@@ -756,6 +757,16 @@ class AppDatabase {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_attrezzature_attiva ON attrezzature(attiva)',
     );
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_prenotazioni_attrezzature_prenotazione
+  ON prenotazioni_attrezzature(prenotazione_id)
+''');
+
+    await db.execute('''
+  CREATE INDEX IF NOT EXISTS idx_prenotazioni_attrezzature_attrezzatura
+  ON prenotazioni_attrezzature(attrezzatura_id)
+''');
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_prenotazioni_docente '
@@ -1359,6 +1370,85 @@ class AppDatabase {
     );
   }
 
+  Future<List<Map<String, dynamic>>> getAttrezzatureByPrenotazione(
+    int prenotazioneId,
+  ) async {
+    final db = await database;
+
+    return db.rawQuery(
+      '''
+    SELECT 
+      pa.id AS collegamento_id,
+      pa.prenotazione_id,
+      pa.attrezzatura_id,
+      pa.quantita,
+      pa.note,
+      a.denominazione,
+      a.categoria,
+      a.codice,
+      a.attiva
+    FROM prenotazioni_attrezzature pa
+    INNER JOIN attrezzature a ON a.id = pa.attrezzatura_id
+    WHERE pa.prenotazione_id = ?
+    ORDER BY a.denominazione COLLATE NOCASE
+  ''',
+      [prenotazioneId],
+    );
+  }
+
+  Future<List<int>> getAttrezzatureIdsByPrenotazione(int prenotazioneId) async {
+    final db = await database;
+
+    final result = await db.query(
+      'prenotazioni_attrezzature',
+      columns: ['attrezzatura_id'],
+      where: 'prenotazione_id = ?',
+      whereArgs: [prenotazioneId],
+    );
+
+    return result.map((row) => row['attrezzatura_id'] as int).toList();
+  }
+
+  Future<void> salvaAttrezzaturePrenotazione({
+    required int prenotazioneId,
+    required List<int> attrezzatureIds,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.transaction((txn) async {
+      await txn.delete(
+        'prenotazioni_attrezzature',
+        where: 'prenotazione_id = ?',
+        whereArgs: [prenotazioneId],
+      );
+
+      for (final attrezzaturaId in attrezzatureIds) {
+        await txn.insert('prenotazioni_attrezzature', {
+          'prenotazione_id': prenotazioneId,
+          'attrezzatura_id': attrezzaturaId,
+          'quantita': 1,
+          'note': '',
+          'created_at': now,
+          'updated_at': now,
+        });
+      }
+    });
+  }
+
+  Future<String> getSintesiAttrezzaturePrenotazione(int prenotazioneId) async {
+    final attrezzature = await getAttrezzatureByPrenotazione(prenotazioneId);
+
+    if (attrezzature.isEmpty) {
+      return '';
+    }
+
+    return attrezzature
+        .map((a) => (a['denominazione'] ?? '').toString())
+        .where((nome) => nome.trim().isNotEmpty)
+        .join(', ');
+  }
+
   Future<int> aggiornaCollegamentiPrenotazione({
     required int prenotazioneId,
     int? docenteId,
@@ -1461,41 +1551,6 @@ class AppDatabase {
       where: 'prenotazione_id = ?',
       whereArgs: [prenotazioneId],
     );
-  }
-
-  Future<void> salvaAttrezzaturePrenotazione({
-    required int prenotazioneId,
-    required List<Map<String, dynamic>> attrezzature,
-  }) async {
-    final db = await database;
-    final now = DateTime.now().toIso8601String();
-
-    await db.transaction((txn) async {
-      await txn.delete(
-        'prenotazioni_attrezzature',
-        where: 'prenotazione_id = ?',
-        whereArgs: [prenotazioneId],
-      );
-
-      for (final attrezzatura in attrezzature) {
-        final attrezzaturaId = attrezzatura['attrezzatura_id'] as int?;
-        if (attrezzaturaId == null) continue;
-
-        final quantitaRaw = attrezzatura['quantita'];
-        final quantita = quantitaRaw is num
-            ? quantitaRaw.toDouble()
-            : double.tryParse(quantitaRaw?.toString() ?? '') ?? 1;
-
-        await txn.insert('prenotazioni_attrezzature', {
-          'prenotazione_id': prenotazioneId,
-          'attrezzatura_id': attrezzaturaId,
-          'quantita': quantita,
-          'note': attrezzatura['note']?.toString(),
-          'created_at': now,
-          'updated_at': now,
-        });
-      }
-    });
   }
 
   Future<List<EnteAttestato>> getEntiAttestati() async {

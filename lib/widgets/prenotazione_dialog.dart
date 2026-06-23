@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
 
+import '../services/app_database.dart';
+
 class PrenotazioneDialog extends StatefulWidget {
   final Map<String, dynamic>? prenotazione;
 
@@ -31,6 +33,9 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   List<Map<String, dynamic>> docenti = [];
   List<Map<String, dynamic>> auleSedi = [];
   List<Map<String, dynamic>> entiAttestati = [];
+
+  List<Map<String, dynamic>> attrezzatureDisponibili = [];
+  List<int> attrezzatureSelezionateIds = [];
 
   List<Map<String, dynamic>> discentiFiltrati = [];
   List<Map<String, dynamic>> impreseFiltrate = [];
@@ -100,6 +105,16 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
     docenti = await db.getDocentiLookup();
     auleSedi = await db.getAuleSediLookup();
     entiAttestati = await db.getEntiAttestatiLookup();
+
+    attrezzatureDisponibili = (await AppDatabase.instance.getAttrezzature())
+        .where((a) => a.attiva)
+        .map((a) => a.toMap())
+        .toList();
+
+    if (widget.prenotazione != null && widget.prenotazione!['id'] != null) {
+      attrezzatureSelezionateIds = await AppDatabase.instance
+          .getAttrezzatureIdsByPrenotazione(widget.prenotazione!['id'] as int);
+    }
 
     if (widget.prenotazione != null) {
       final p = widget.prenotazione!;
@@ -298,6 +313,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
       'docente_id': docenteId,
       'aula_sede_id': aulaSedeId,
       'ente_attestato_id': enteAttestatiId,
+      'attrezzature_ids': attrezzatureSelezionateIds,
       'data': dataController.text.trim(),
       'prot': protController.text.trim(),
       'note': noteController.text.trim(),
@@ -530,6 +546,79 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
 
                 const SizedBox(height: 18),
 
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade300),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Attrezzature',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (attrezzatureDisponibili.isEmpty)
+                        const Text(
+                          'Nessuna attrezzatura attiva disponibile.',
+                          style: TextStyle(color: Colors.grey),
+                        )
+                      else
+                        SizedBox(
+                          height: attrezzatureDisponibili.length > 6
+                              ? 110
+                              : null,
+                          child: SingleChildScrollView(
+                            child: Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              children: attrezzatureDisponibili.map((item) {
+                                final id = item['id'] as int;
+                                final denominazione =
+                                    (item['denominazione'] ?? '').toString();
+                                final categoria = (item['categoria'] ?? '')
+                                    .toString();
+
+                                final selezionata = attrezzatureSelezionateIds
+                                    .contains(id);
+
+                                final testo = categoria.isEmpty
+                                    ? denominazione
+                                    : '$denominazione ($categoria)';
+
+                                return FilterChip(
+                                  label: Text(
+                                    testo.isEmpty
+                                        ? 'Attrezzatura senza nome'
+                                        : testo,
+                                  ),
+                                  selected: selezionata,
+                                  onSelected: (selected) {
+                                    setState(() {
+                                      if (selected) {
+                                        attrezzatureSelezionateIds.add(id);
+                                      } else {
+                                        attrezzatureSelezionateIds.remove(id);
+                                      }
+                                    });
+                                  },
+                                );
+                              }).toList(),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 18),
+
                 Row(
                   children: [
                     Expanded(
@@ -566,7 +655,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
 
                 TextFormField(
                   controller: noteController,
-                  maxLines: 4,
+                  maxLines: 2,
                   decoration: InputDecoration(
                     labelText: 'Note',
                     filled: true,

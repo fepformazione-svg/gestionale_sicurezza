@@ -827,6 +827,10 @@ class _ImpresePageState extends State<ImpresePage> {
                                           await caricaImprese();
                                         }
 
+                                        if (risultato == 'aggiorna') {
+                                          await caricaImprese();
+                                        }
+
                                         if (risultato == 'modifica') {
                                           await apriDialogModificaImpresa(item);
                                           await caricaImprese();

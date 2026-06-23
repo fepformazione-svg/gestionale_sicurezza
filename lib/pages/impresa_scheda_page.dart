@@ -24,6 +24,7 @@ class ImpresaSchedaPage extends StatefulWidget {
 class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
   String? documentoPrivacyImpresaPath;
   List<Discente> discentiAssociati = [];
+  bool schedaModificata = false;
 
   late bool privacyImpresaFirmata;
   String? dataFirmaPrivacyImpresa;
@@ -171,6 +172,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                       notePrivacyImpresa = noteController.text.trim().isEmpty
                           ? null
                           : noteController.text.trim();
+                      schedaModificata = true;
                     });
 
                     Navigator.of(dialogContext).pop();
@@ -383,6 +385,13 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
       appBar: AppBar(
+        leading: IconButton(
+          tooltip: 'Torna alle imprese',
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context, schedaModificata ? 'aggiorna' : null);
+          },
+        ),
         title: const Text('Scheda impresa'),
         backgroundColor: Colors.white,
         foregroundColor: const Color(0xFF111827),
@@ -455,29 +464,37 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
-                      Icons.privacy_tip_outlined,
-                      size: 22,
-                      color: Color(0xFF2563EB),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.privacy_tip_outlined,
+                          size: 20,
+                          color: Color(0xFF2563EB),
+                        ),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Privacy / GDPR impresa',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF111827),
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Data firma: ${valore(dataFirmaPrivacyImpresa)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Color(0xFF6B7280),
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Privacy / GDPR impresa',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF111827),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Text(
-                      'Data firma: ${valore(dataFirmaPrivacyImpresa)}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Color(0xFF6B7280),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         const Icon(
@@ -858,6 +875,7 @@ class _ImpresaSchedaPageState extends State<ImpresaSchedaPage> {
 
     setState(() {
       documentoPrivacyImpresaPath = percorso;
+      schedaModificata = true;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(

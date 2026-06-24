@@ -218,6 +218,21 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     }
   }
 
+  String formattaDataOraLog(dynamic valore) {
+    if (valore == null) return '';
+
+    final testo = valore.toString().trim();
+    if (testo.isEmpty) return '';
+
+    final data = DateTime.tryParse(testo);
+    if (data == null) return testo;
+
+    String dueCifre(int numero) => numero.toString().padLeft(2, '0');
+
+    return '${dueCifre(data.day)}/${dueCifre(data.month)}/${data.year} '
+        '${dueCifre(data.hour)}:${dueCifre(data.minute)}';
+  }
+
   Future<void> mostraDialogLogAccessi() async {
     final logAccessi = await AppDatabase.instance.getLogAccessi(limit: 100);
 
@@ -247,7 +262,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                         DataColumn(label: Text('Dispositivo')),
                       ],
                       rows: logAccessi.map((log) {
-                        final dataOra = log['data_ora']?.toString() ?? '-';
+                        final dataOra = formattaDataOraLog(log['data_ora']);
                         final username = log['username']?.toString() ?? '-';
                         final esito = log['esito']?.toString() ?? '-';
                         final messaggio = log['messaggio']?.toString() ?? '-';

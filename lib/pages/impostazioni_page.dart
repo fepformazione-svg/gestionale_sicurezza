@@ -7,6 +7,7 @@ import 'aule_sedi_page.dart';
 import 'attrezzature_page.dart';
 import 'enti_attestati_page.dart';
 import 'privacy_gdpr_page.dart';
+import 'utenti_ruoli_page.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
@@ -117,6 +118,20 @@ class ImpostazioniPage extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (_) => const PrivacyGdprPage()),
+              );
+            },
+          ),
+
+          SizedBox(height: 12),
+          _SezioneImpostazioniCard(
+            icona: Icons.manage_accounts_rounded,
+            titolo: 'Utenti e Ruoli',
+            descrizione:
+                'Gestione utenti, ruoli, accessi e tracciamento operazioni.',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const UtentiRuoliPage()),
               );
             },
           ),

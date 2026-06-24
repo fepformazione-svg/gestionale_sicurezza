@@ -8,6 +8,8 @@ import '../models/aula_sede.dart';
 import '../models/attrezzatura.dart';
 import '../models/ente_attestato.dart';
 import '../models/registro_presenza.dart';
+import '../models/ruolo_utente.dart';
+import '../models/utente_app.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -2185,5 +2187,188 @@ class AppDatabase {
       where: 'prenotazione_id = ?',
       whereArgs: [prenotazioneId],
     );
+  }
+  // ============================================================
+  // UTENTI / RUOLI / LOG ACCESSI
+  // ============================================================
+
+  Future<List<RuoloUtente>> getRuoliUtenti({bool soloAttivi = true}) async {
+    final db = await database;
+
+    final where = soloAttivi ? 'attivo = ?' : null;
+    final whereArgs = soloAttivi ? [1] : null;
+
+    final maps = await db.query(
+      'ruoli_utenti',
+      where: where,
+      whereArgs: whereArgs,
+      orderBy: 'nome ASC',
+    );
+
+    return maps.map((map) => RuoloUtente.fromMap(map)).toList();
+  }
+
+  Future<List<UtenteApp>> getUtentiApp({
+    bool soloAttivi = true,
+    String ricerca = '',
+  }) async {
+    final db = await database;
+
+    final condizioni = <String>[];
+    final args = <Object?>[];
+
+    if (soloAttivi) {
+      condizioni.add('attivo = ?');
+      args.add(1);
+    }
+
+    final testoRicerca = ricerca.trim();
+    if (testoRicerca.isNotEmpty) {
+      condizioni.add('''
+        (
+          LOWER(nome) LIKE ?
+          OR LOWER(cognome) LIKE ?
+          OR LOWER(username) LIKE ?
+          OR LOWER(email) LIKE ?
+        )
+      ''');
+
+      final valore = '%${testoRicerca.toLowerCase()}%';
+      args.addAll([valore, valore, valore, valore]);
+    }
+
+    final maps = await db.query(
+      'utenti_app',
+      where: condizioni.isEmpty ? null : condizioni.join(' AND '),
+      whereArgs: args.isEmpty ? null : args,
+      orderBy: 'cognome ASC, nome ASC, username ASC',
+    );
+
+    return maps.map((map) => UtenteApp.fromMap(map)).toList();
+  }
+
+  Future<UtenteApp?> getUtenteAppByUsername(String username) async {
+    final db = await database;
+
+    final usernameNormalizzato = username.trim().toLowerCase();
+    if (usernameNormalizzato.isEmpty) {
+      return null;
+    }
+
+    final maps = await db.query(
+      'utenti_app',
+      where: 'LOWER(username) = ?',
+      whereArgs: [usernameNormalizzato],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return UtenteApp.fromMap(maps.first);
+  }
+
+  Future<int> inserisciUtenteApp(UtenteApp utente) async {
+    final db = await database;
+
+    final dati = utente.toMap()
+      ..remove('id')
+      ..remove('created_at')
+      ..['created_at'] = DateTime.now().toIso8601String()
+      ..['updated_at'] = DateTime.now().toIso8601String();
+
+    return db.insert('utenti_app', dati);
+  }
+
+  Future<int> aggiornaUtenteApp(UtenteApp utente) async {
+    final db = await database;
+
+    if (utente.id == null) {
+      throw ArgumentError('ID utente mancante per aggiornamento.');
+    }
+
+    final dati = utente.toMap()
+      ..remove('id')
+      ..remove('created_at')
+      ..['updated_at'] = DateTime.now().toIso8601String();
+
+    return db.update(
+      'utenti_app',
+      dati,
+      where: 'id = ?',
+      whereArgs: [utente.id],
+    );
+  }
+
+  Future<int> aggiornaStatoUtenteApp({
+    required int id,
+    required bool attivo,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'utenti_app',
+      {
+        'attivo': attivo ? 1 : 0,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> aggiornaUltimoAccessoUtenteApp(int id) async {
+    final db = await database;
+
+    return db.update(
+      'utenti_app',
+      {
+        'ultimo_accesso': DateTime.now().toIso8601String(),
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  Future<int> registraLogAccesso({
+    int? utenteId,
+    String? username,
+    required String esito,
+    String? messaggio,
+    String? dispositivo,
+  }) async {
+    final db = await database;
+
+    return db.insert('log_accessi', {
+      'utente_id': utenteId,
+      'username': username,
+      'esito': esito,
+      'messaggio': messaggio,
+      'data_ora': DateTime.now().toIso8601String(),
+      'dispositivo': dispositivo,
+    });
+  }
+
+  Future<int> registraAuditLog({
+    int? utenteId,
+    String? username,
+    required String modulo,
+    required String azione,
+    String? descrizione,
+    int? recordId,
+  }) async {
+    final db = await database;
+
+    return db.insert('audit_log', {
+      'utente_id': utenteId,
+      'username': username,
+      'modulo': modulo,
+      'azione': azione,
+      'descrizione': descrizione,
+      'record_id': recordId,
+      'data_ora': DateTime.now().toIso8601String(),
+    });
   }
 }

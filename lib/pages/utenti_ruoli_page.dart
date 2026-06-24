@@ -735,6 +735,21 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     return 'Utente corrente: ${sessione.nomeVisualizzato}';
   }
 
+  void logoutUtenteCorrente() {
+    final nomeUtente = SessioneUtenteService.instance.nomeVisualizzato;
+
+    SessioneUtenteService.instance.svuotaSessione();
+
+    setState(() {});
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Logout eseguito per $nomeUtente.'),
+        backgroundColor: Colors.orange.shade700,
+      ),
+    );
+  }
+
   Widget badgeStato(bool attivo) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -1031,15 +1046,28 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                           : Colors.grey,
                     ),
                     const SizedBox(width: 8),
-                    Text(
-                      testoUtenteCorrente,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: SessioneUtenteService.instance.utenteLoggato
-                            ? Colors.green.shade800
-                            : Colors.grey.shade700,
+                    Expanded(
+                      child: Text(
+                        testoUtenteCorrente,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: SessioneUtenteService.instance.utenteLoggato
+                              ? Colors.green.shade800
+                              : Colors.grey.shade700,
+                        ),
                       ),
                     ),
+                    if (SessioneUtenteService.instance.utenteLoggato) ...[
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: logoutUtenteCorrente,
+                        icon: const Icon(Icons.logout, size: 18),
+                        label: const Text('Logout'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red.shade700,
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

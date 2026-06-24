@@ -1,9 +1,13 @@
+import 'package:flutter/foundation.dart';
+
 import '../models/utente_app.dart';
 
 class SessioneUtenteService {
   SessioneUtenteService._();
 
   static final SessioneUtenteService instance = SessioneUtenteService._();
+
+  final ValueNotifier<int> notificatoreSessione = ValueNotifier<int>(0);
 
   UtenteApp? _utenteCorrente;
 
@@ -22,9 +26,11 @@ class SessioneUtenteService {
 
   void impostaUtenteCorrente(UtenteApp utente) {
     _utenteCorrente = utente;
+    notificatoreSessione.value++;
   }
 
   void svuotaSessione() {
     _utenteCorrente = null;
+    notificatoreSessione.value++;
   }
 }

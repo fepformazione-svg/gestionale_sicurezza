@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
 import '../services/backup_service.dart';
+import '../services/sessione_utente_service.dart';
 
 import '../widgets/sidebar.dart';
 import '../widgets/kpi_card.dart';
@@ -68,6 +69,10 @@ class _HomePageState extends State<HomePage> {
               setState(() {
                 selectedIndex = index;
 
+                if (index == 0) {
+                  dashboardRefresh++;
+                }
+
                 if (index == 1) {
                   filtroPrenotazioni = 'tutte';
                 }
@@ -131,6 +136,62 @@ class _DashboardPageState extends State<DashboardPage> {
     'da_fatturare': 0,
   };
 
+  String get testoUtenteCorrente {
+    final sessione = SessioneUtenteService.instance;
+
+    if (!sessione.utenteLoggato) {
+      return 'Utente corrente: nessuno';
+    }
+
+    return 'Utente corrente: ${sessione.nomeVisualizzato}';
+  }
+
+  Widget badgeUtenteCorrente() {
+    return ValueListenableBuilder<int>(
+      valueListenable: SessioneUtenteService.instance.notificatoreSessione,
+      builder: (context, value, child) {
+        final utenteLoggato = SessioneUtenteService.instance.utenteLoggato;
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: utenteLoggato ? Colors.green.shade50 : Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(
+              color: utenteLoggato
+                  ? Colors.green.shade200
+                  : Colors.grey.shade300,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                utenteLoggato
+                    ? Icons.verified_user_outlined
+                    : Icons.person_off_outlined,
+                size: 18,
+                color: utenteLoggato
+                    ? Colors.green.shade700
+                    : Colors.grey.shade700,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                testoUtenteCorrente,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: utenteLoggato
+                      ? Colors.green.shade800
+                      : Colors.grey.shade700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -186,24 +247,31 @@ class _DashboardPageState extends State<DashboardPage> {
                   color: Color(0xFF111827),
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: () async {
-                  final file = await BackupService.eseguiBackupManuale();
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  badgeUtenteCorrente(),
+                  const SizedBox(width: 12),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final file = await BackupService.eseguiBackupManuale();
 
-                  if (!context.mounted) return;
+                      if (!context.mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        file != null
-                            ? 'Backup completato con successo'
-                            : 'Errore durante il backup',
-                      ),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.backup),
-                label: const Text('Backup Database'),
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            file != null
+                                ? 'Backup completato con successo'
+                                : 'Errore durante il backup',
+                          ),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.backup),
+                    label: const Text('Backup Database'),
+                  ),
+                ],
               ),
             ],
           ),

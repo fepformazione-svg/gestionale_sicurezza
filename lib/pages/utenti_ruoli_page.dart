@@ -8,6 +8,7 @@ import '../models/ruolo_utente.dart';
 import '../models/utente_app.dart';
 import '../services/app_database.dart';
 import '../services/auth_service.dart';
+import '../services/sessione_utente_service.dart';
 
 class UtentiRuoliPage extends StatefulWidget {
   const UtentiRuoliPage({super.key});
@@ -189,6 +190,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                                   password: passwordController.text,
                                   dispositivo: 'Test login pagina Utenti/Ruoli',
                                 );
+
+                            if (risultato.ok && risultato.utente != null) {
+                              SessioneUtenteService.instance
+                                  .impostaUtenteCorrente(risultato.utente!);
+
+                              if (mounted) {
+                                setState(() {});
+                              }
+                            }
 
                             if (!mounted) return;
 
@@ -701,6 +711,16 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     return attivo ? Colors.green.shade700 : Colors.grey.shade600;
   }
 
+  String get testoUtenteCorrente {
+    final sessione = SessioneUtenteService.instance;
+
+    if (!sessione.utenteLoggato) {
+      return 'Utente corrente: nessuno';
+    }
+
+    return 'Utente corrente: ${sessione.nomeVisualizzato}';
+  }
+
   Widget badgeStato(bool attivo) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -963,6 +983,45 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blueGrey.shade50,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.blueGrey.shade100),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      SessioneUtenteService.instance.utenteLoggato
+                          ? Icons.verified_user
+                          : Icons.person_off,
+                      size: 18,
+                      color: SessioneUtenteService.instance.utenteLoggato
+                          ? Colors.green
+                          : Colors.grey,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      testoUtenteCorrente,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: SessioneUtenteService.instance.utenteLoggato
+                            ? Colors.green.shade800
+                            : Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Card(
               color: Colors.blueGrey.shade50,
               elevation: 2,

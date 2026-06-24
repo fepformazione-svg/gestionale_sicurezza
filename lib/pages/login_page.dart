@@ -4,9 +4,9 @@ import '../services/auth_service.dart';
 import '../services/sessione_utente_service.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, this.loginObbligatorio = false});
+  const LoginPage({super.key, this.onLoginRiuscito});
 
-  final bool loginObbligatorio;
+  final VoidCallback? onLoginRiuscito;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -65,7 +65,11 @@ class _LoginPageState extends State<LoginPage> {
           ),
         );
 
-        navigator.pop(true);
+        if (widget.onLoginRiuscito != null) {
+          widget.onLoginRiuscito!.call();
+        } else {
+          navigator.pop(true);
+        }
       } else {
         messenger.showSnackBar(
           SnackBar(
@@ -98,7 +102,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    final puoChiudere = !widget.loginObbligatorio;
+    final puoChiudere = widget.onLoginRiuscito == null;
 
     return Scaffold(
       appBar: AppBar(

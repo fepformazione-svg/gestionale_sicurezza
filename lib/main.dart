@@ -4,6 +4,11 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'pages/home_page.dart';
 import 'services/backup_service.dart';
 
+import 'config/app_config.dart';
+import 'pages/login_page.dart';
+
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -22,6 +27,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       debugShowCheckedModeBanner: false,
       title: 'Gestionale Sicurezza',
       theme: ThemeData(
@@ -29,7 +35,15 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFF3F4F6),
         useMaterial3: true,
       ),
-      home: const HomePage(),
+      home: AppConfig.loginObbligatorioAllAvvio
+          ? LoginPage(
+              onLoginRiuscito: () {
+                navigatorKey.currentState?.pushReplacement(
+                  MaterialPageRoute(builder: (_) => const HomePage()),
+                );
+              },
+            )
+          : const HomePage(),
     );
   }
 }

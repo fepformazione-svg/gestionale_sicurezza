@@ -231,11 +231,9 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
   }
 
   Future<void> apriLoginPage() async {
-    final esitoLogin = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => const LoginPage(loginObbligatorio: false),
-      ),
-    );
+    final esitoLogin = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const LoginPage()));
 
     if (!mounted) return;
 

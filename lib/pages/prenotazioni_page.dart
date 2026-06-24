@@ -3698,6 +3698,36 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 p,
                                                               ),
 
+                                                          onRegistro: () {
+                                                            showDialog(
+                                                              context: context,
+                                                              builder: (context) {
+                                                                return AlertDialog(
+                                                                  title: const Text(
+                                                                    'Registro presenze',
+                                                                  ),
+                                                                  content: Text(
+                                                                    'Registro presenze per:\n\n'
+                                                                    '${nomeDiscente(p)}\n'
+                                                                    '${testo(p['corso_nome'])}\n'
+                                                                    'Data: ${testo(p['data'])}',
+                                                                  ),
+                                                                  actions: [
+                                                                    TextButton(
+                                                                      onPressed: () =>
+                                                                          Navigator.pop(
+                                                                            context,
+                                                                          ),
+                                                                      child: const Text(
+                                                                        'Chiudi',
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                );
+                                                              },
+                                                            );
+                                                          },
+
                                                           onElimina: () =>
                                                               eliminaPrenotazione(
                                                                 p,
@@ -3743,7 +3773,7 @@ const double colAttrezzature = 150;
 const double colData = 90;
 const double colProt = 60;
 const double colStato = 120;
-const double colAzioni = 90;
+const double colAzioni = 120;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -3752,8 +3782,9 @@ class PrenotazioneRow extends StatefulWidget {
 
   final bool selezionata;
   final VoidCallback onSeleziona;
-
+  final VoidCallback onRegistro;
   final VoidCallback onModifica;
+
   final VoidCallback onElimina;
   final VoidCallback onDoppioClick;
   final void Function(TapDownDetails details) onTastoDestro;
@@ -3770,6 +3801,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.selezionata,
     required this.onSeleziona,
     required this.onModifica,
+    required this.onRegistro,
     required this.onElimina,
     required this.statoPrenotazione,
     required this.nomeDiscente,
@@ -4012,16 +4044,16 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
 
                         SizedBox(
                           width: colAzioni,
-                          child: Wrap(
-                            spacing: 0,
-                            alignment: WrapAlignment.center,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               IconButton(
                                 tooltip: 'Modifica prenotazione',
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
-                                  minWidth: 24,
-                                  minHeight: 24,
+                                  minWidth: 30,
+                                  minHeight: 30,
                                 ),
                                 onPressed: widget.onModifica,
                                 icon: const Icon(
@@ -4032,11 +4064,26 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                               ),
 
                               IconButton(
+                                tooltip: 'Registro presenze',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 30,
+                                  minHeight: 30,
+                                ),
+                                onPressed: widget.onRegistro,
+                                icon: const Icon(
+                                  Icons.assignment_turned_in_outlined,
+                                  size: 19,
+                                  color: Color(0xFFF97316),
+                                ),
+                              ),
+
+                              IconButton(
                                 tooltip: 'Elimina prenotazione',
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(
-                                  minWidth: 36,
-                                  minHeight: 36,
+                                  minWidth: 30,
+                                  minHeight: 30,
                                 ),
                                 onPressed: widget.onElimina,
                                 icon: const Icon(

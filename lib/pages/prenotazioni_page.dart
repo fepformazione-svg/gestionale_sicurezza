@@ -1730,6 +1730,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       bool presente = registro.presente;
 
+      final oraInizioController = TextEditingController(
+        text: registro.oraInizio ?? '',
+      );
+      final oraFineController = TextEditingController(
+        text: registro.oraFine ?? '',
+      );
+      final noteController = TextEditingController(text: registro.note ?? '');
+
       await showDialog(
         context: context,
         builder: (context) {
@@ -1764,6 +1772,45 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         });
                       },
                     ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: oraInizioController,
+                            decoration: const InputDecoration(
+                              labelText: 'Ora inizio',
+                              hintText: 'es. 09:00',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: TextField(
+                            controller: oraFineController,
+                            decoration: const InputDecoration(
+                              labelText: 'Ora fine',
+                              hintText: 'es. 13:00',
+                              border: OutlineInputBorder(),
+                              isDense: true,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: noteController,
+                      maxLines: 3,
+                      decoration: const InputDecoration(
+                        labelText: 'Note',
+                        hintText: 'Eventuali note sul registro presenze',
+                        border: OutlineInputBorder(),
+                        isDense: true,
+                      ),
+                    ),
                   ],
                 ),
                 actions: [
@@ -1775,6 +1822,15 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                     onPressed: () async {
                       final registroAggiornato = registro.copyWith(
                         presente: presente,
+                        oraInizio: oraInizioController.text.trim().isEmpty
+                            ? null
+                            : oraInizioController.text.trim(),
+                        oraFine: oraFineController.text.trim().isEmpty
+                            ? null
+                            : oraFineController.text.trim(),
+                        note: noteController.text.trim().isEmpty
+                            ? null
+                            : noteController.text.trim(),
                       );
 
                       await AppDatabase.instance.aggiornaRegistroPresenza(

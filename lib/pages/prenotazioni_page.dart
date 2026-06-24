@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../database/database_service.dart';
+
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/prenotazione_dialog.dart';
@@ -21,6 +22,8 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:intl/intl.dart';
+
+import '../models/registro_presenza.dart';
 
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
@@ -1682,6 +1685,133 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         ),
       ),
     );
+  }
+
+  Future<void> apriDialogRegistroPresenze(
+    Map<String, dynamic> prenotazione,
+  ) async {
+    final prenotazioneId = prenotazione['id'] as int?;
+
+    if (prenotazioneId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID prenotazione mancante.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    try {
+      var registri = await AppDatabase.instance.getRegistriPresenze(
+        prenotazioneId: prenotazioneId,
+      );
+
+      RegistroPresenza registro;
+
+      if (registri.isEmpty) {
+        final nuovoRegistro = RegistroPresenza(
+          prenotazioneId: prenotazioneId,
+          discenteId: prenotazione['discente_id'] as int?,
+          dataLezione: testo(prenotazione['data']),
+          presente: true,
+        );
+
+        final nuovoId = await AppDatabase.instance.inserisciRegistroPresenza(
+          nuovoRegistro,
+        );
+
+        registro = nuovoRegistro.copyWith(id: nuovoId);
+      } else {
+        registro = registri.first;
+      }
+
+      if (!mounted) return;
+
+      bool presente = registro.presente;
+
+      await showDialog(
+        context: context,
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Registro presenze'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nomeDiscente(prenotazione),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(testo(prenotazione['corso_nome'])),
+                    const SizedBox(height: 6),
+                    Text('Data: ${testo(prenotazione['data'])}'),
+                    const SizedBox(height: 18),
+                    CheckboxListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: presente,
+                      title: const Text('Presente'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (value) {
+                        setDialogState(() {
+                          presente = value ?? false;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text('Annulla'),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final registroAggiornato = registro.copyWith(
+                        presente: presente,
+                      );
+
+                      await AppDatabase.instance.aggiornaRegistroPresenza(
+                        registroAggiornato,
+                      );
+
+                      if (!context.mounted) return;
+                      if (!mounted) return;
+
+                      Navigator.pop(context);
+
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Registro presenze aggiornato.'),
+                          backgroundColor: Color(0xFF16A34A),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.save_outlined, size: 18),
+                    label: const Text('Salva'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore registro presenze: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
   }
 
   Future<void> exportPrenotazioniExcel() async {
@@ -3698,35 +3828,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 p,
                                                               ),
 
-                                                          onRegistro: () {
-                                                            showDialog(
-                                                              context: context,
-                                                              builder: (context) {
-                                                                return AlertDialog(
-                                                                  title: const Text(
-                                                                    'Registro presenze',
-                                                                  ),
-                                                                  content: Text(
-                                                                    'Registro presenze per:\n\n'
-                                                                    '${nomeDiscente(p)}\n'
-                                                                    '${testo(p['corso_nome'])}\n'
-                                                                    'Data: ${testo(p['data'])}',
-                                                                  ),
-                                                                  actions: [
-                                                                    TextButton(
-                                                                      onPressed: () =>
-                                                                          Navigator.pop(
-                                                                            context,
-                                                                          ),
-                                                                      child: const Text(
-                                                                        'Chiudi',
-                                                                      ),
-                                                                    ),
-                                                                  ],
-                                                                );
-                                                              },
-                                                            );
-                                                          },
+                                                          onRegistro: () =>
+                                                              apriDialogRegistroPresenze(
+                                                                p,
+                                                              ),
 
                                                           onElimina: () =>
                                                               eliminaPrenotazione(

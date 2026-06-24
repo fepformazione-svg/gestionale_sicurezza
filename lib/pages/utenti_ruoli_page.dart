@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 
 import '../models/ruolo_utente.dart';
@@ -19,6 +23,17 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
 
   List<UtenteApp> utenti = [];
   List<RuoloUtente> ruoli = [];
+
+  String generaPasswordHash(String password) {
+    final random = Random.secure();
+    final saltBytes = List<int>.generate(16, (_) => random.nextInt(256));
+    final salt = base64UrlEncode(saltBytes);
+
+    final bytes = utf8.encode('$salt:$password');
+    final digest = sha256.convert(bytes).toString();
+
+    return '$salt:$digest';
+  }
 
   @override
   void initState() {
@@ -66,6 +81,8 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     final usernameController = TextEditingController(
       text: utente?.username ?? '',
     );
+    final passwordController = TextEditingController();
+    final confermaPasswordController = TextEditingController();
     final noteController = TextEditingController(text: utente?.note ?? '');
 
     final formKey = GlobalKey<FormState>();
@@ -73,6 +90,8 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     int? ruoloSelezionato =
         utente?.ruoloId ?? (ruoli.isNotEmpty ? ruoli.first.id : null);
     bool utenteAttivo = utente?.isAttivo ?? true;
+    bool mostraPassword = false;
+    bool mostraConfermaPassword = false;
 
     try {
       await showDialog<void>(
@@ -171,6 +190,102 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                           ),
                           const SizedBox(height: 12),
                           TextFormField(
+                            controller: passwordController,
+                            obscureText: !mostraPassword,
+                            decoration: InputDecoration(
+                              labelText: isModifica
+                                  ? 'Nuova password'
+                                  : 'Password iniziale *',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: mostraPassword
+                                    ? 'Nascondi password'
+                                    : 'Mostra password',
+                                icon: Icon(
+                                  mostraPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    mostraPassword = !mostraPassword;
+                                  });
+                                },
+                              ),
+                            ),
+                            validator: (value) {
+                              final testo = value?.trim() ?? '';
+
+                              if (!isModifica && testo.isEmpty) {
+                                return 'Inserisci la password iniziale.';
+                              }
+
+                              if (testo.isNotEmpty && testo.length < 8) {
+                                return 'La password deve avere almeno 8 caratteri.';
+                              }
+
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: confermaPasswordController,
+                            obscureText: !mostraConfermaPassword,
+                            decoration: InputDecoration(
+                              labelText: isModifica
+                                  ? 'Conferma nuova password'
+                                  : 'Conferma password *',
+                              border: const OutlineInputBorder(),
+                              suffixIcon: IconButton(
+                                tooltip: mostraConfermaPassword
+                                    ? 'Nascondi password'
+                                    : 'Mostra password',
+                                icon: Icon(
+                                  mostraConfermaPassword
+                                      ? Icons.visibility_off
+                                      : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setDialogState(() {
+                                    mostraConfermaPassword =
+                                        !mostraConfermaPassword;
+                                  });
+                                },
+                              ),
+                            ),
+                            validator: (value) {
+                              final password = passwordController.text.trim();
+                              final conferma = value?.trim() ?? '';
+
+                              if (!isModifica && conferma.isEmpty) {
+                                return 'Conferma la password iniziale.';
+                              }
+
+                              if (password.isNotEmpty && conferma != password) {
+                                return 'Le password non coincidono.';
+                              }
+
+                              return null;
+                            },
+                          ),
+                          if (isModifica &&
+                              utente.passwordHash != null &&
+                              utente.passwordHash!.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            const Align(
+                              alignment: Alignment.centerLeft,
+                              child: Text(
+                                'Password già impostata. Compila i campi password solo se vuoi cambiarla.',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.black54,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                          TextFormField(
                             controller: noteController,
                             decoration: const InputDecoration(
                               labelText: 'Note',
@@ -190,11 +305,13 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                             },
                           ),
                           const SizedBox(height: 8),
-                          const Align(
+                          Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              '* Campi obbligatori. La password sarà gestita in una fase successiva.',
-                              style: TextStyle(
+                              isModifica
+                                  ? '* Campi obbligatori. Lascia vuota la password per non modificarla.'
+                                  : '* Campi obbligatori. La password sarà usata nella futura fase di login.',
+                              style: const TextStyle(
                                 fontSize: 12,
                                 color: Colors.black54,
                               ),
@@ -245,6 +362,11 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                         return;
                       }
 
+                      final nuovaPassword =
+                          passwordController.text.trim().isEmpty
+                          ? null
+                          : generaPasswordHash(passwordController.text.trim());
+
                       final utenteDaSalvare = UtenteApp(
                         id: utente?.id,
                         nome: nomeController.text.trim(),
@@ -253,7 +375,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                             ? null
                             : emailController.text.trim(),
                         username: usernameNormalizzato,
-                        passwordHash: utente?.passwordHash,
+                        passwordHash: nuovaPassword ?? utente?.passwordHash,
                         ruoloId: ruoloSelezionato,
                         attivo: utenteAttivo ? 1 : 0,
                         ultimoAccesso: utente?.ultimoAccesso,
@@ -304,6 +426,8 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       cognomeController.dispose();
       emailController.dispose();
       usernameController.dispose();
+      passwordController.dispose();
+      confermaPasswordController.dispose();
       noteController.dispose();
     }
   }
@@ -341,6 +465,27 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
           fontSize: 11,
           fontWeight: FontWeight.bold,
           color: coloreStato(attivo),
+        ),
+      ),
+    );
+  }
+
+  Widget badgePassword(bool impostata) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: impostata ? Colors.blue.shade50 : Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: impostata ? Colors.blue.shade300 : Colors.orange.shade300,
+        ),
+      ),
+      child: Text(
+        impostata ? 'IMPOSTATA' : 'NON IMPOSTATA',
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+          color: impostata ? Colors.blue.shade700 : Colors.orange.shade800,
         ),
       ),
     );
@@ -481,6 +626,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                   DataColumn(label: Text('Ruolo')),
                   DataColumn(label: Text('Ultimo accesso')),
                   DataColumn(label: Text('Stato')),
+                  DataColumn(label: Text('Password')),
                   DataColumn(label: Text('Azioni')),
                 ],
                 rows: utenti.map((utente) {
@@ -493,6 +639,12 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                       DataCell(Text(nomeRuolo(utente.ruoloId))),
                       DataCell(Text(utente.ultimoAccesso ?? '-')),
                       DataCell(badgeStato(utente.isAttivo)),
+                      DataCell(
+                        badgePassword(
+                          utente.passwordHash != null &&
+                              utente.passwordHash!.isNotEmpty,
+                        ),
+                      ),
                       DataCell(
                         IconButton(
                           tooltip: 'Modifica utente',

@@ -2425,11 +2425,20 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 pw.SizedBox(height: 24),
 
                 pw.Text(
-                  'Con la presente si dichiara che i lavoratori sotto indicati hanno partecipato al corso:',
-                  style: const pw.TextStyle(fontSize: 11),
+                  'La società F&P S.r.l.s. Formazione e Privacy, in qualità di soggetto formatore, dichiara che i lavoratori sotto indicati hanno partecipato al corso di formazione riportato nella presente dichiarazione.',
+                  textAlign: pw.TextAlign.justify,
+                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 3),
                 ),
 
                 pw.SizedBox(height: 10),
+
+                pw.Text(
+                  'La presente dichiarazione viene rilasciata su richiesta dell\'azienda e attesta esclusivamente la partecipazione dei discenti al corso indicato, in attesa dell\'emissione degli eventuali attestati previsti.',
+                  textAlign: pw.TextAlign.left,
+                  style: const pw.TextStyle(fontSize: 11, lineSpacing: 3),
+                ),
+
+                pw.SizedBox(height: 16),
 
                 pw.Text(
                   nomeCorso.isEmpty ? '-' : nomeCorso,
@@ -2451,7 +2460,23 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      _rigaInfoPdf('Protocollo', protocollo),
+                      pw.Text(
+                        'Dati del corso',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                          color: PdfColors.blueGrey900,
+                        ),
+                      ),
+                      pw.SizedBox(height: 8),
+                      _rigaInfoPdf(
+                        'Corso',
+                        nomeCorso.isEmpty ? '-' : nomeCorso,
+                      ),
+                      _rigaInfoPdf(
+                        'Protocollo',
+                        protocollo.isEmpty ? '-' : protocollo,
+                      ),
                       _rigaInfoPdf(
                         'Data corso',
                         dataCorso.isEmpty ? '-' : dataCorso,
@@ -2467,11 +2492,24 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                 pw.SizedBox(height: 20),
 
-                pw.Text(
-                  'Corsisti partecipanti',
-                  style: pw.TextStyle(
-                    fontSize: 12,
-                    fontWeight: pw.FontWeight.bold,
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 8,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.blueGrey50,
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    'Corsisti partecipanti',
+                    style: pw.TextStyle(
+                      fontSize: 12,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blueGrey900,
+                    ),
                   ),
                 ),
 
@@ -2520,6 +2558,23 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   ),
                 ),
 
+                pw.SizedBox(height: 18),
+
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.grey100,
+                    border: pw.Border.all(color: PdfColors.grey300),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    'La presente dichiarazione non sostituisce l\'attestato di formazione, ove previsto, ma documenta la partecipazione dei corsisti sopra indicati al corso riportato nella presente comunicazione.',
+                    textAlign: pw.TextAlign.left,
+                    style: const pw.TextStyle(fontSize: 10, lineSpacing: 3),
+                  ),
+                ),
+
                 pw.SizedBox(height: 24),
 
                 pw.Text(
@@ -2533,22 +2588,39 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: pw.CrossAxisAlignment.end,
                   children: [
-                    pw.Text(
-                      'Data ____________________',
-                      style: const pw.TextStyle(fontSize: 10),
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          'Luogo e data',
+                          style: pw.TextStyle(
+                            fontSize: 9,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.blueGrey900,
+                          ),
+                        ),
+                        pw.SizedBox(height: 18),
+                        pw.Container(
+                          width: 180,
+                          height: 1,
+                          color: PdfColors.grey700,
+                        ),
+                      ],
                     ),
                     pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.center,
                       children: [
                         pw.Text(
                           intestazioneAzienda.titolo,
                           style: pw.TextStyle(
                             fontSize: 10,
                             fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.blueGrey900,
                           ),
                         ),
-                        pw.SizedBox(height: 30),
+                        pw.SizedBox(height: 28),
                         pw.Container(
-                          width: 170,
+                          width: 180,
                           height: 1,
                           color: PdfColors.grey700,
                         ),

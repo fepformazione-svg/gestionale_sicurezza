@@ -10,6 +10,8 @@ import '../services/app_database.dart';
 import '../services/auth_service.dart';
 import '../services/sessione_utente_service.dart';
 
+import 'login_page.dart';
+
 class UtentiRuoliPage extends StatefulWidget {
   const UtentiRuoliPage({super.key});
 
@@ -225,6 +227,20 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     } finally {
       usernameController.dispose();
       passwordController.dispose();
+    }
+  }
+
+  Future<void> apriLoginPage() async {
+    final esitoLogin = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (_) => const LoginPage(loginObbligatorio: false),
+      ),
+    );
+
+    if (!mounted) return;
+
+    if (esitoLogin == true) {
+      setState(() {});
     }
   }
 
@@ -958,6 +974,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: OutlinedButton.icon(
               icon: const Icon(Icons.login),
+              label: const Text('Login'),
+              onPressed: apriLoginPage,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.verified_user),
               label: const Text('Test login'),
               onPressed: mostraDialogTestLogin,
             ),

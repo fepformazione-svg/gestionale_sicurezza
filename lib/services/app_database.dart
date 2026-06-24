@@ -400,6 +400,62 @@ class AppDatabase {
     updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ruoli_utenti (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL UNIQUE,
+        descrizione TEXT,
+        attivo INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS utenti_app (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        cognome TEXT NOT NULL,
+        email TEXT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT,
+        ruolo_id INTEGER,
+        attivo INTEGER NOT NULL DEFAULT 1,
+        ultimo_accesso TEXT,
+        note TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
+        FOREIGN KEY (ruolo_id) REFERENCES ruoli_utenti (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS log_accessi (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        utente_id INTEGER,
+        username TEXT,
+        esito TEXT NOT NULL,
+        messaggio TEXT,
+        data_ora TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        dispositivo TEXT,
+        FOREIGN KEY (utente_id) REFERENCES utenti_app (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        utente_id INTEGER,
+        username TEXT,
+        modulo TEXT NOT NULL,
+        azione TEXT NOT NULL,
+        descrizione TEXT,
+        record_id INTEGER,
+        data_ora TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (utente_id) REFERENCES utenti_app (id)
+      )
+    ''');
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -667,6 +723,112 @@ class AppDatabase {
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
     });
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ruoli_utenti (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL UNIQUE,
+        descrizione TEXT,
+        attivo INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS utenti_app (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nome TEXT NOT NULL,
+        cognome TEXT NOT NULL,
+        email TEXT,
+        username TEXT NOT NULL UNIQUE,
+        password_hash TEXT,
+        ruolo_id INTEGER,
+        attivo INTEGER NOT NULL DEFAULT 1,
+        ultimo_accesso TEXT,
+        note TEXT,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
+        FOREIGN KEY (ruolo_id) REFERENCES ruoli_utenti (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS log_accessi (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        utente_id INTEGER,
+        username TEXT,
+        esito TEXT NOT NULL,
+        messaggio TEXT,
+        data_ora TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        dispositivo TEXT,
+        FOREIGN KEY (utente_id) REFERENCES utenti_app (id)
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS audit_log (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        utente_id INTEGER,
+        username TEXT,
+        modulo TEXT NOT NULL,
+        azione TEXT NOT NULL,
+        descrizione TEXT,
+        record_id INTEGER,
+        data_ora TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (utente_id) REFERENCES utenti_app (id)
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_ruoli_utenti_nome ON ruoli_utenti(nome)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_utenti_app_username ON utenti_app(username)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_utenti_app_ruolo ON utenti_app(ruolo_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_utenti_app_attivo ON utenti_app(attivo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_log_accessi_utente ON log_accessi(utente_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_log_accessi_data ON log_accessi(data_ora)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_audit_log_modulo ON audit_log(modulo)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_audit_log_data ON audit_log(data_ora)',
+    );
+
+    await db.insert('ruoli_utenti', {
+      'nome': 'Amministratore',
+      'descrizione': 'Accesso completo al gestionale',
+      'attivo': 1,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+
+    await db.insert('ruoli_utenti', {
+      'nome': 'Operatore',
+      'descrizione': 'Accesso operativo alle funzioni principali',
+      'attivo': 1,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
+
+    await db.insert('ruoli_utenti', {
+      'nome': 'Solo lettura',
+      'descrizione': 'Accesso in sola consultazione',
+      'attivo': 1,
+    }, conflictAlgorithm: ConflictAlgorithm.ignore);
   }
 
   Future<void> _ensureColumns(

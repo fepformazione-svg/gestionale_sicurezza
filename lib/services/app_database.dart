@@ -2351,6 +2351,16 @@ class AppDatabase {
     });
   }
 
+  Future<List<Map<String, dynamic>>> getLogAccessi({int limit = 100}) async {
+    final db = await database;
+
+    return db.query(
+      'log_accessi',
+      orderBy: 'data_ora DESC, id DESC',
+      limit: limit,
+    );
+  }
+
   Future<int> registraAuditLog({
     int? utenteId,
     String? username,

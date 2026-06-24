@@ -218,6 +218,95 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     }
   }
 
+  Future<void> mostraDialogLogAccessi() async {
+    final logAccessi = await AppDatabase.instance.getLogAccessi(limit: 100);
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Log accessi'),
+          content: SizedBox(
+            width: 900,
+            height: 520,
+            child: logAccessi.isEmpty
+                ? const Center(child: Text('Nessun log accesso presente.'))
+                : SingleChildScrollView(
+                    child: DataTable(
+                      columnSpacing: 18,
+                      headingRowColor: WidgetStateProperty.all(
+                        Colors.grey.shade200,
+                      ),
+                      columns: const [
+                        DataColumn(label: Text('Data/Ora')),
+                        DataColumn(label: Text('Username')),
+                        DataColumn(label: Text('Esito')),
+                        DataColumn(label: Text('Messaggio')),
+                        DataColumn(label: Text('Dispositivo')),
+                      ],
+                      rows: logAccessi.map((log) {
+                        final dataOra = log['data_ora']?.toString() ?? '-';
+                        final username = log['username']?.toString() ?? '-';
+                        final esito = log['esito']?.toString() ?? '-';
+                        final messaggio = log['messaggio']?.toString() ?? '-';
+                        final dispositivo =
+                            log['dispositivo']?.toString() ?? '-';
+
+                        final esitoOk = esito.toUpperCase() == 'OK';
+
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(dataOra)),
+                            DataCell(Text(username)),
+                            DataCell(
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: esitoOk
+                                      ? Colors.green.shade50
+                                      : Colors.orange.shade50,
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(
+                                    color: esitoOk
+                                        ? Colors.green
+                                        : Colors.orange,
+                                  ),
+                                ),
+                                child: Text(
+                                  esito,
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: esitoOk
+                                        ? Colors.green.shade800
+                                        : Colors.orange.shade800,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            DataCell(Text(messaggio)),
+                            DataCell(Text(dispositivo)),
+                          ],
+                        );
+                      }).toList(),
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> mostraDialogUtente({UtenteApp? utente}) async {
     final isModifica = utente != null;
 
@@ -821,6 +910,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       appBar: AppBar(
         title: const Text('Utenti e Ruoli'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.history),
+              label: const Text('Log accessi'),
+              onPressed: mostraDialogLogAccessi,
+            ),
+          ),
+          const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: OutlinedButton.icon(

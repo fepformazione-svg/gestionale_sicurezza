@@ -55,6 +55,234 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     });
   }
 
+  Future<void> mostraDialogNuovoUtente() async {
+    final nomeController = TextEditingController();
+    final cognomeController = TextEditingController();
+    final emailController = TextEditingController();
+    final usernameController = TextEditingController();
+    final noteController = TextEditingController();
+
+    final formKey = GlobalKey<FormState>();
+
+    int? ruoloSelezionato = ruoli.isNotEmpty ? ruoli.first.id : null;
+    bool utenteAttivo = true;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Nuovo utente'),
+                content: SizedBox(
+                  width: 520,
+                  child: Form(
+                    key: formKey,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: cognomeController,
+                            decoration: const InputDecoration(
+                              labelText: 'Cognome *',
+                              border: OutlineInputBorder(),
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Inserisci il cognome.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: nomeController,
+                            decoration: const InputDecoration(
+                              labelText: 'Nome *',
+                              border: OutlineInputBorder(),
+                            ),
+                            textCapitalization: TextCapitalization.words,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Inserisci il nome.';
+                              }
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: usernameController,
+                            decoration: const InputDecoration(
+                              labelText: 'Username *',
+                              border: OutlineInputBorder(),
+                            ),
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Inserisci lo username.';
+                              }
+
+                              if (value.trim().contains(' ')) {
+                                return 'Lo username non deve contenere spazi.';
+                              }
+
+                              return null;
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: emailController,
+                            decoration: const InputDecoration(
+                              labelText: 'Email',
+                              border: OutlineInputBorder(),
+                            ),
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 12),
+                          DropdownButtonFormField<int>(
+                            initialValue: ruoloSelezionato,
+                            decoration: const InputDecoration(
+                              labelText: 'Ruolo',
+                              border: OutlineInputBorder(),
+                            ),
+                            items: ruoli
+                                .where((ruolo) => ruolo.isAttivo)
+                                .map(
+                                  (ruolo) => DropdownMenuItem<int>(
+                                    value: ruolo.id,
+                                    child: Text(ruolo.nome),
+                                  ),
+                                )
+                                .toList(),
+                            onChanged: (value) {
+                              setDialogState(() {
+                                ruoloSelezionato = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: noteController,
+                            decoration: const InputDecoration(
+                              labelText: 'Note',
+                              border: OutlineInputBorder(),
+                            ),
+                            maxLines: 3,
+                          ),
+                          const SizedBox(height: 12),
+                          SwitchListTile(
+                            value: utenteAttivo,
+                            title: const Text('Utente attivo'),
+                            contentPadding: EdgeInsets.zero,
+                            onChanged: (value) {
+                              setDialogState(() {
+                                utenteAttivo = value;
+                              });
+                            },
+                          ),
+                          const SizedBox(height: 8),
+                          const Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              '* Campi obbligatori. La password sarà gestita in una fase successiva.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.black54,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(dialogContext).pop();
+                    },
+                    child: const Text('Annulla'),
+                  ),
+                  ElevatedButton.icon(
+                    icon: const Icon(Icons.save),
+                    label: const Text('Salva'),
+                    onPressed: () async {
+                      if (!formKey.currentState!.validate()) {
+                        return;
+                      }
+
+                      final usernameNormalizzato = usernameController.text
+                          .trim()
+                          .toLowerCase();
+
+                      final utenteEsistente = await AppDatabase.instance
+                          .getUtenteAppByUsername(usernameNormalizzato);
+
+                      if (!mounted) return;
+
+                      if (utenteEsistente != null) {
+                        ScaffoldMessenger.of(this.context).showSnackBar(
+                          const SnackBar(
+                            backgroundColor: Colors.orange,
+                            content: Text(
+                              'Username già presente. Scegli un altro username.',
+                            ),
+                          ),
+                        );
+                        return;
+                      }
+
+                      final nuovoUtente = UtenteApp(
+                        nome: nomeController.text.trim(),
+                        cognome: cognomeController.text.trim(),
+                        email: emailController.text.trim().isEmpty
+                            ? null
+                            : emailController.text.trim(),
+                        username: usernameNormalizzato,
+                        ruoloId: ruoloSelezionato,
+                        attivo: utenteAttivo ? 1 : 0,
+                        note: noteController.text.trim().isEmpty
+                            ? null
+                            : noteController.text.trim(),
+                      );
+
+                      await AppDatabase.instance.inserisciUtenteApp(
+                        nuovoUtente,
+                      );
+
+                      if (!mounted) return;
+
+                      Navigator.of(this.context).pop();
+
+                      await caricaDati();
+
+                      if (!mounted) return;
+
+                      ScaffoldMessenger.of(this.context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Colors.green,
+                          content: Text('Utente salvato correttamente.'),
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      nomeController.dispose();
+      cognomeController.dispose();
+      emailController.dispose();
+      usernameController.dispose();
+      noteController.dispose();
+    }
+  }
+
   String nomeRuolo(int? ruoloId) {
     if (ruoloId == null) {
       return '-';
@@ -258,6 +486,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       appBar: AppBar(
         title: const Text('Utenti e Ruoli'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.person_add),
+              label: const Text('Nuovo utente'),
+              onPressed: mostraDialogNuovoUtente,
+            ),
+          ),
+          const SizedBox(width: 8),
           IconButton(
             tooltip: 'Ricarica',
             icon: const Icon(Icons.refresh),

@@ -1738,6 +1738,37 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       );
       final noteController = TextEditingController(text: registro.note ?? '');
 
+      String? normalizzaOrario(String valore) {
+        final testo = valore.trim().replaceAll('.', ':');
+
+        if (testo.isEmpty) {
+          return '';
+        }
+
+        final match = RegExp(r'^(\d{1,2}):([0-5]\d)$').firstMatch(testo);
+        if (match == null) {
+          return null;
+        }
+
+        final ore = int.tryParse(match.group(1)!);
+        final minuti = int.tryParse(match.group(2)!);
+
+        if (ore == null || minuti == null) {
+          return null;
+        }
+
+        if (ore < 0 || ore > 23 || minuti < 0 || minuti > 59) {
+          return null;
+        }
+
+        return '${ore.toString().padLeft(2, '0')}:${minuti.toString().padLeft(2, '0')}';
+      }
+
+      int minutiDaOrario(String orario) {
+        final parti = orario.split(':');
+        return int.parse(parti[0]) * 60 + int.parse(parti[1]);
+      }
+
       await showDialog(
         context: context,
         builder: (context) {
@@ -1820,17 +1851,58 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   ),
                   ElevatedButton.icon(
                     onPressed: () async {
+                      final messenger = ScaffoldMessenger.of(context);
+
+                      final oraInizioNormalizzata = normalizzaOrario(
+                        oraInizioController.text,
+                      );
+                      final oraFineNormalizzata = normalizzaOrario(
+                        oraFineController.text,
+                      );
+
+                      if (oraInizioNormalizzata == null) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Formato ora inizio non valido. Usa HH:mm, ad esempio 08:30.',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (oraFineNormalizzata == null) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Formato ora fine non valido. Usa HH:mm, ad esempio 12:30.',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
+
+                      if (oraInizioNormalizzata.isNotEmpty &&
+                          oraFineNormalizzata.isNotEmpty &&
+                          minutiDaOrario(oraFineNormalizzata) <=
+                              minutiDaOrario(oraInizioNormalizzata)) {
+                        messenger.showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              'Ora fine deve essere successiva a Ora inizio.',
+                            ),
+                            backgroundColor: Colors.orange,
+                          ),
+                        );
+                        return;
+                      }
                       final registroAggiornato = registro.copyWith(
                         presente: presente,
-                        oraInizio: oraInizioController.text.trim().isEmpty
-                            ? null
-                            : oraInizioController.text.trim(),
-                        oraFine: oraFineController.text.trim().isEmpty
-                            ? null
-                            : oraFineController.text.trim(),
-                        note: noteController.text.trim().isEmpty
-                            ? null
-                            : noteController.text.trim(),
+                        oraInizio: oraInizioNormalizzata,
+                        oraFine: oraFineNormalizzata,
+                        note: noteController.text.trim(),
                       );
 
                       await AppDatabase.instance.aggiornaRegistroPresenza(

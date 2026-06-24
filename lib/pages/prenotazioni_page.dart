@@ -2240,6 +2240,108 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
+  Future<void> generaDichiarazioneCorso() async {
+    final prenotazioniSelezionate = prenotazioniVisibili
+        .where((p) => prenotazioniSelezionateIds.contains(p['id']))
+        .toList();
+
+    if (prenotazioniSelezionate.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seleziona almeno una prenotazione per generare la dichiarazione corso.',
+          ),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 4),
+        ),
+      );
+
+      ripristinaFocusTabella();
+      return;
+    }
+
+    String campoPrenotazione(
+      Map<String, dynamic> prenotazione,
+      List<String> chiavi,
+    ) {
+      for (final chiave in chiavi) {
+        final valore = prenotazione[chiave];
+
+        if (valore != null && valore.toString().trim().isNotEmpty) {
+          return valore.toString().trim();
+        }
+      }
+
+      return '';
+    }
+
+    final protocolli = prenotazioniSelezionate
+        .map(
+          (p) =>
+              campoPrenotazione(p, ['prot', 'protocollo', 'numero_protocollo']),
+        )
+        .where((protocollo) => protocollo.isNotEmpty)
+        .toSet();
+
+    if (protocolli.length != 1) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Per generare la dichiarazione corso seleziona prenotazioni dello stesso protocollo.',
+          ),
+          backgroundColor: Color(0xFFF97316),
+          duration: Duration(seconds: 5),
+        ),
+      );
+
+      ripristinaFocusTabella();
+      return;
+    }
+
+    final protocollo = protocolli.first;
+
+    final Map<String, List<Map<String, dynamic>>> gruppiPerImpresa = {};
+
+    for (final prenotazione in prenotazioniSelezionate) {
+      final impresa = campoPrenotazione(prenotazione, [
+        'impresa_nome',
+        'impresa',
+        'nome_impresa',
+        'ragione_sociale',
+        'azienda',
+        'azienda_nome',
+        'intestazione',
+        'intestazione_impresa',
+      ]);
+
+      final chiaveImpresa = impresa.isEmpty ? 'Impresa non indicata' : impresa;
+
+      gruppiPerImpresa.putIfAbsent(chiaveImpresa, () => []);
+      gruppiPerImpresa[chiaveImpresa]!.add(prenotazione);
+    }
+
+    if (!mounted) return;
+
+    final numeroImprese = gruppiPerImpresa.length;
+    final numeroPrenotazioni = prenotazioniSelezionate.length;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Protocollo $protocollo - $numeroPrenotazioni prenotazioni selezionate - $numeroImprese imprese trovate.',
+        ),
+        backgroundColor: const Color(0xFF16A34A),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+
+    ripristinaFocusTabella();
+  }
+
   pw.Widget _rigaInfoPdf(String label, String valore) {
     final testo = valore.trim().isEmpty ? '-' : valore.trim();
 
@@ -3767,6 +3869,66 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                         style: ElevatedButton.styleFrom(
                                           backgroundColor: const Color(
                                             0xFF2563EB,
+                                          ),
+                                          foregroundColor: Colors.white,
+                                          disabledBackgroundColor: const Color(
+                                            0xFFE2E8F0,
+                                          ),
+                                          disabledForegroundColor: const Color(
+                                            0xFF94A3B8,
+                                          ),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 16,
+                                          ),
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              14,
+                                            ),
+                                          ),
+                                          elevation: 0,
+                                        ),
+                                      ),
+                                    ),
+
+                                    Tooltip(
+                                      message:
+                                          prenotazioniSelezionateIds.isEmpty
+                                          ? 'Nessuna prenotazione selezionata'
+                                          : prenotazioniSelezionateIds.length ==
+                                                1
+                                          ? 'Genera dichiarazione corso per la prenotazione selezionata'
+                                          : 'Genera dichiarazione corso per ${prenotazioniSelezionateIds.length} prenotazioni selezionate',
+                                      child: ElevatedButton.icon(
+                                        onPressed:
+                                            prenotazioniSelezionateIds.isEmpty
+                                            ? null
+                                            : () async {
+                                                await generaDichiarazioneCorso();
+
+                                                if (!mounted) return;
+
+                                                setState(() {
+                                                  azzeraSelezionePrenotazioni();
+                                                });
+
+                                                ripristinaFocusTabella();
+                                              },
+                                        icon: const Icon(
+                                          Icons.description_outlined,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          prenotazioniSelezionateIds.isEmpty
+                                              ? 'Nessuna selezione'
+                                              : 'Dichiarazione corso (${prenotazioniSelezionateIds.length})',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(
+                                            0xFF7C3AED,
                                           ),
                                           foregroundColor: Colors.white,
                                           disabledBackgroundColor: const Color(

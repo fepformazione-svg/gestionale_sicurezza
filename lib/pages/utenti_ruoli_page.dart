@@ -55,17 +55,24 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     });
   }
 
-  Future<void> mostraDialogNuovoUtente() async {
-    final nomeController = TextEditingController();
-    final cognomeController = TextEditingController();
-    final emailController = TextEditingController();
-    final usernameController = TextEditingController();
-    final noteController = TextEditingController();
+  Future<void> mostraDialogUtente({UtenteApp? utente}) async {
+    final isModifica = utente != null;
+
+    final nomeController = TextEditingController(text: utente?.nome ?? '');
+    final cognomeController = TextEditingController(
+      text: utente?.cognome ?? '',
+    );
+    final emailController = TextEditingController(text: utente?.email ?? '');
+    final usernameController = TextEditingController(
+      text: utente?.username ?? '',
+    );
+    final noteController = TextEditingController(text: utente?.note ?? '');
 
     final formKey = GlobalKey<FormState>();
 
-    int? ruoloSelezionato = ruoli.isNotEmpty ? ruoli.first.id : null;
-    bool utenteAttivo = true;
+    int? ruoloSelezionato =
+        utente?.ruoloId ?? (ruoli.isNotEmpty ? ruoli.first.id : null);
+    bool utenteAttivo = utente?.isAttivo ?? true;
 
     try {
       await showDialog<void>(
@@ -74,7 +81,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
           return StatefulBuilder(
             builder: (context, setDialogState) {
               return AlertDialog(
-                title: const Text('Nuovo utente'),
+                title: Text(isModifica ? 'Modifica utente' : 'Nuovo utente'),
                 content: SizedBox(
                   width: 520,
                   child: Form(
@@ -222,7 +229,11 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
 
                       if (!mounted) return;
 
-                      if (utenteEsistente != null) {
+                      final usernameGiaUsatoDaAltro =
+                          utenteEsistente != null &&
+                          utenteEsistente.id != utente?.id;
+
+                      if (usernameGiaUsatoDaAltro) {
                         ScaffoldMessenger.of(this.context).showSnackBar(
                           const SnackBar(
                             backgroundColor: Colors.orange,
@@ -234,23 +245,33 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                         return;
                       }
 
-                      final nuovoUtente = UtenteApp(
+                      final utenteDaSalvare = UtenteApp(
+                        id: utente?.id,
                         nome: nomeController.text.trim(),
                         cognome: cognomeController.text.trim(),
                         email: emailController.text.trim().isEmpty
                             ? null
                             : emailController.text.trim(),
                         username: usernameNormalizzato,
+                        passwordHash: utente?.passwordHash,
                         ruoloId: ruoloSelezionato,
                         attivo: utenteAttivo ? 1 : 0,
+                        ultimoAccesso: utente?.ultimoAccesso,
                         note: noteController.text.trim().isEmpty
                             ? null
                             : noteController.text.trim(),
+                        createdAt: utente?.createdAt,
                       );
 
-                      await AppDatabase.instance.inserisciUtenteApp(
-                        nuovoUtente,
-                      );
+                      if (isModifica) {
+                        await AppDatabase.instance.aggiornaUtenteApp(
+                          utenteDaSalvare,
+                        );
+                      } else {
+                        await AppDatabase.instance.inserisciUtenteApp(
+                          utenteDaSalvare,
+                        );
+                      }
 
                       if (!mounted) return;
 
@@ -261,9 +282,13 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                       if (!mounted) return;
 
                       ScaffoldMessenger.of(this.context).showSnackBar(
-                        const SnackBar(
+                        SnackBar(
                           backgroundColor: Colors.green,
-                          content: Text('Utente salvato correttamente.'),
+                          content: Text(
+                            isModifica
+                                ? 'Utente aggiornato correttamente.'
+                                : 'Utente salvato correttamente.',
+                          ),
                         ),
                       );
                     },
@@ -456,6 +481,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                   DataColumn(label: Text('Ruolo')),
                   DataColumn(label: Text('Ultimo accesso')),
                   DataColumn(label: Text('Stato')),
+                  DataColumn(label: Text('Azioni')),
                 ],
                 rows: utenti.map((utente) {
                   return DataRow(
@@ -467,6 +493,13 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                       DataCell(Text(nomeRuolo(utente.ruoloId))),
                       DataCell(Text(utente.ultimoAccesso ?? '-')),
                       DataCell(badgeStato(utente.isAttivo)),
+                      DataCell(
+                        IconButton(
+                          tooltip: 'Modifica utente',
+                          icon: const Icon(Icons.edit),
+                          onPressed: () => mostraDialogUtente(utente: utente),
+                        ),
+                      ),
                     ],
                   );
                 }).toList(),
@@ -491,7 +524,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.person_add),
               label: const Text('Nuovo utente'),
-              onPressed: mostraDialogNuovoUtente,
+              onPressed: () => mostraDialogUtente(),
             ),
           ),
           const SizedBox(width: 8),

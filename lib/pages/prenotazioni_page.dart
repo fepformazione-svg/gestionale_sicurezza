@@ -2324,287 +2324,281 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       gruppiPerImpresa[chiaveImpresa]!.add(prenotazione);
     }
 
-    if (gruppiPerImpresa.length > 1) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Protocollo $protocollo - ${prenotazioniSelezionate.length} prenotazioni selezionate - ${gruppiPerImpresa.length} imprese trovate. La generazione multipla sarà aggiunta nello step successivo.',
-          ),
-          backgroundColor: const Color(0xFF16A34A),
-          duration: const Duration(seconds: 6),
-        ),
-      );
-
-      ripristinaFocusTabella();
-      return;
-    }
-
     try {
-      final gruppo = gruppiPerImpresa.entries.first;
-      final nomeImpresa = gruppo.key;
-      final corsisti = gruppo.value;
-      final primaPrenotazione = corsisti.first;
-
-      final nomeCorso = campoPrenotazione(primaPrenotazione, [
-        'corso_nome',
-        'corso',
-        'nome_corso',
-        'denominazione_corso',
-        'titolo_corso',
-        'denominazione',
-        'corso_denominazione',
-      ]);
-
-      final dataCorso = campoPrenotazione(primaPrenotazione, [
-        'data',
-        'data_corso',
-        'data_inizio',
-      ]);
-
-      final docente = campoPrenotazione(primaPrenotazione, [
-        'docente_nome',
-        'docente',
-        'nome_docente',
-      ]);
-
-      final aulaSede = campoPrenotazione(primaPrenotazione, [
-        'aula_sede_nome',
-        'aula_sede',
-        'aula',
-        'sede',
-      ]);
-
       final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+      final directory = await getApplicationDocumentsDirectory();
+      final now = DateTime.now();
 
-      final pdf = pw.Document();
+      final timestamp =
+          '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
+          '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
-      pdf.addPage(
-        pw.MultiPage(
-          pageFormat: PdfPageFormat.a4,
-          margin: const pw.EdgeInsets.fromLTRB(36, 32, 36, 32),
-          footer: (context) {
-            return pw.Container(
-              alignment: pw.Alignment.centerRight,
-              margin: const pw.EdgeInsets.only(top: 10),
-              child: pw.Text(
-                'Pagina ${context.pageNumber} di ${context.pagesCount}',
-                style: const pw.TextStyle(
-                  fontSize: 8,
-                  color: PdfColors.grey600,
-                ),
-              ),
-            );
-          },
-          build: (context) {
-            return [
-              intestazioneAziendaPdfWidget(intestazioneAzienda),
+      final List<File> fileCreati = [];
 
-              pw.SizedBox(height: 22),
+      for (final gruppo in gruppiPerImpresa.entries) {
+        final nomeImpresa = gruppo.key;
+        final corsisti = gruppo.value;
+        final primaPrenotazione = corsisti.first;
 
-              pw.Container(
-                width: double.infinity,
-                padding: const pw.EdgeInsets.symmetric(
-                  vertical: 10,
-                  horizontal: 12,
-                ),
-                decoration: pw.BoxDecoration(
-                  color: PdfColors.blueGrey50,
-                  border: pw.Border.all(color: PdfColors.blueGrey200),
-                  borderRadius: pw.BorderRadius.circular(4),
-                ),
+        final nomeCorso = campoPrenotazione(primaPrenotazione, [
+          'corso_nome',
+          'corso',
+          'nome_corso',
+          'denominazione_corso',
+          'titolo_corso',
+          'denominazione',
+          'corso_denominazione',
+        ]);
+
+        final dataCorso = campoPrenotazione(primaPrenotazione, [
+          'data',
+          'data_corso',
+          'data_inizio',
+        ]);
+
+        final docente = campoPrenotazione(primaPrenotazione, [
+          'docente_nome',
+          'docente',
+          'nome_docente',
+        ]);
+
+        final aulaSede = campoPrenotazione(primaPrenotazione, [
+          'aula_sede_nome',
+          'aula_sede',
+          'aula',
+          'sede',
+        ]);
+
+        final pdf = pw.Document();
+
+        pdf.addPage(
+          pw.MultiPage(
+            pageFormat: PdfPageFormat.a4,
+            margin: const pw.EdgeInsets.fromLTRB(36, 32, 36, 32),
+            footer: (context) {
+              return pw.Container(
+                alignment: pw.Alignment.centerRight,
+                margin: const pw.EdgeInsets.only(top: 10),
                 child: pw.Text(
-                  'DICHIARAZIONE DI PARTECIPAZIONE AL CORSO',
-                  textAlign: pw.TextAlign.center,
+                  'Pagina ${context.pageNumber} di ${context.pagesCount}',
+                  style: const pw.TextStyle(
+                    fontSize: 8,
+                    color: PdfColors.grey600,
+                  ),
+                ),
+              );
+            },
+            build: (context) {
+              return [
+                intestazioneAziendaPdfWidget(intestazioneAzienda),
+
+                pw.SizedBox(height: 22),
+
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 12,
+                  ),
+                  decoration: pw.BoxDecoration(
+                    color: PdfColors.blueGrey50,
+                    border: pw.Border.all(color: PdfColors.blueGrey200),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Text(
+                    'DICHIARAZIONE DI PARTECIPAZIONE AL CORSO',
+                    textAlign: pw.TextAlign.center,
+                    style: pw.TextStyle(
+                      fontSize: 16,
+                      fontWeight: pw.FontWeight.bold,
+                      color: PdfColors.blueGrey900,
+                    ),
+                  ),
+                ),
+
+                pw.SizedBox(height: 24),
+
+                pw.Text('Spett.le', style: const pw.TextStyle(fontSize: 11)),
+                pw.SizedBox(height: 4),
+                pw.Text(
+                  nomeImpresa,
                   style: pw.TextStyle(
-                    fontSize: 16,
+                    fontSize: 13,
                     fontWeight: pw.FontWeight.bold,
-                    color: PdfColors.blueGrey900,
                   ),
                 ),
-              ),
 
-              pw.SizedBox(height: 24),
+                pw.SizedBox(height: 24),
 
-              pw.Text('Spett.le', style: const pw.TextStyle(fontSize: 11)),
-              pw.SizedBox(height: 4),
-              pw.Text(
-                nomeImpresa,
-                style: pw.TextStyle(
-                  fontSize: 13,
-                  fontWeight: pw.FontWeight.bold,
+                pw.Text(
+                  'Con la presente si dichiara che i lavoratori sotto indicati hanno partecipato al corso:',
+                  style: const pw.TextStyle(fontSize: 11),
                 ),
-              ),
 
-              pw.SizedBox(height: 24),
+                pw.SizedBox(height: 10),
 
-              pw.Text(
-                'Con la presente si dichiara che i lavoratori sotto indicati hanno partecipato al corso:',
-                style: const pw.TextStyle(fontSize: 11),
-              ),
-
-              pw.SizedBox(height: 10),
-
-              pw.Text(
-                nomeCorso.isEmpty ? '-' : nomeCorso,
-                style: pw.TextStyle(
-                  fontSize: 13,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-
-              pw.SizedBox(height: 16),
-
-              pw.Container(
-                width: double.infinity,
-                padding: const pw.EdgeInsets.all(10),
-                decoration: pw.BoxDecoration(
-                  border: pw.Border.all(color: PdfColors.grey400),
-                  borderRadius: pw.BorderRadius.circular(4),
-                ),
-                child: pw.Column(
-                  crossAxisAlignment: pw.CrossAxisAlignment.start,
-                  children: [
-                    _rigaInfoPdf('Protocollo', protocollo),
-                    _rigaInfoPdf(
-                      'Data corso',
-                      dataCorso.isEmpty ? '-' : dataCorso,
-                    ),
-                    _rigaInfoPdf('Docente', docente.isEmpty ? '-' : docente),
-                    _rigaInfoPdf(
-                      'Aula/Sede',
-                      aulaSede.isEmpty ? '-' : aulaSede,
-                    ),
-                  ],
-                ),
-              ),
-
-              pw.SizedBox(height: 20),
-
-              pw.Text(
-                'Corsisti partecipanti',
-                style: pw.TextStyle(
-                  fontSize: 12,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-
-              pw.SizedBox(height: 8),
-
-              pw.TableHelper.fromTextArray(
-                headers: const ['N.', 'Cognome e nome', 'Codice fiscale'],
-                data: List.generate(corsisti.length, (index) {
-                  final prenotazione = corsisti[index];
-
-                  final codiceFiscale = campoPrenotazione(prenotazione, [
-                    'codice_fiscale',
-                    'cf',
-                    'codiceFiscale',
-                  ]);
-
-                  return [
-                    '${index + 1}',
-                    nomeDiscente(prenotazione),
-                    codiceFiscale.isEmpty ? '-' : codiceFiscale,
-                  ];
-                }),
-                border: pw.TableBorder.all(
-                  color: PdfColors.grey400,
-                  width: 0.5,
-                ),
-                headerStyle: pw.TextStyle(
-                  fontWeight: pw.FontWeight.bold,
-                  fontSize: 9,
-                  color: PdfColors.white,
-                ),
-                headerDecoration: const pw.BoxDecoration(
-                  color: PdfColors.blueGrey700,
-                ),
-                cellStyle: const pw.TextStyle(fontSize: 9),
-                cellAlignment: pw.Alignment.centerLeft,
-                headerAlignment: pw.Alignment.center,
-                columnWidths: {
-                  0: const pw.FixedColumnWidth(32),
-                  1: const pw.FlexColumnWidth(2.2),
-                  2: const pw.FlexColumnWidth(1.6),
-                },
-                cellPadding: const pw.EdgeInsets.symmetric(
-                  vertical: 6,
-                  horizontal: 5,
-                ),
-              ),
-
-              pw.SizedBox(height: 24),
-
-              pw.Text(
-                "La presente dichiarazione viene rilasciata su richiesta dell'impresa interessata per gli usi consentiti dalla legge.",
-                style: const pw.TextStyle(fontSize: 11),
-              ),
-
-              pw.SizedBox(height: 36),
-
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: pw.CrossAxisAlignment.end,
-                children: [
-                  pw.Text(
-                    'Data ____________________',
-                    style: const pw.TextStyle(fontSize: 10),
+                pw.Text(
+                  nomeCorso.isEmpty ? '-' : nomeCorso,
+                  style: pw.TextStyle(
+                    fontSize: 13,
+                    fontWeight: pw.FontWeight.bold,
                   ),
-                  pw.Column(
+                ),
+
+                pw.SizedBox(height: 16),
+
+                pw.Container(
+                  width: double.infinity,
+                  padding: const pw.EdgeInsets.all(10),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(color: PdfColors.grey400),
+                    borderRadius: pw.BorderRadius.circular(4),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-                      pw.Text(
-                        intestazioneAzienda.titolo,
-                        style: pw.TextStyle(
-                          fontSize: 10,
-                          fontWeight: pw.FontWeight.bold,
-                        ),
+                      _rigaInfoPdf('Protocollo', protocollo),
+                      _rigaInfoPdf(
+                        'Data corso',
+                        dataCorso.isEmpty ? '-' : dataCorso,
                       ),
-                      pw.SizedBox(height: 30),
-                      pw.Container(
-                        width: 170,
-                        height: 1,
-                        color: PdfColors.grey700,
-                      ),
-                      pw.SizedBox(height: 4),
-                      pw.Text(
-                        'Timbro e firma',
-                        style: const pw.TextStyle(fontSize: 9),
+                      _rigaInfoPdf('Docente', docente.isEmpty ? '-' : docente),
+                      _rigaInfoPdf(
+                        'Aula/Sede',
+                        aulaSede.isEmpty ? '-' : aulaSede,
                       ),
                     ],
                   ),
-                ],
-              ),
-            ];
-          },
-        ),
-      );
+                ),
 
-      final directory = await getApplicationDocumentsDirectory();
+                pw.SizedBox(height: 20),
 
-      final timestamp =
-          '${DateTime.now().year}_${DateTime.now().month.toString().padLeft(2, '0')}_${DateTime.now().day.toString().padLeft(2, '0')}_'
-          '${DateTime.now().hour.toString().padLeft(2, '0')}h${DateTime.now().minute.toString().padLeft(2, '0')}';
+                pw.Text(
+                  'Corsisti partecipanti',
+                  style: pw.TextStyle(
+                    fontSize: 12,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
 
-      final nomeImpresaFile = nomeImpresa
-          .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-          .replaceAll(' ', '_');
+                pw.SizedBox(height: 8),
 
-      final nomeFile =
-          'dichiarazione_corso_${protocollo}_${nomeImpresaFile}_$timestamp.pdf';
+                pw.TableHelper.fromTextArray(
+                  headers: const ['N.', 'Cognome e nome', 'Codice fiscale'],
+                  data: List.generate(corsisti.length, (index) {
+                    final prenotazione = corsisti[index];
 
-      final file = File('${directory.path}\\$nomeFile');
+                    final codiceFiscale = campoPrenotazione(prenotazione, [
+                      'codice_fiscale',
+                      'cf',
+                      'codiceFiscale',
+                    ]);
 
-      await file.writeAsBytes(await pdf.save());
+                    return [
+                      '${index + 1}',
+                      nomeDiscente(prenotazione),
+                      codiceFiscale.isEmpty ? '-' : codiceFiscale,
+                    ];
+                  }),
+                  border: pw.TableBorder.all(
+                    color: PdfColors.grey400,
+                    width: 0.5,
+                  ),
+                  headerStyle: pw.TextStyle(
+                    fontWeight: pw.FontWeight.bold,
+                    fontSize: 9,
+                    color: PdfColors.white,
+                  ),
+                  headerDecoration: const pw.BoxDecoration(
+                    color: PdfColors.blueGrey700,
+                  ),
+                  cellStyle: const pw.TextStyle(fontSize: 9),
+                  cellAlignment: pw.Alignment.centerLeft,
+                  headerAlignment: pw.Alignment.center,
+                  columnWidths: {
+                    0: const pw.FixedColumnWidth(32),
+                    1: const pw.FlexColumnWidth(2.2),
+                    2: const pw.FlexColumnWidth(1.6),
+                  },
+                  cellPadding: const pw.EdgeInsets.symmetric(
+                    vertical: 6,
+                    horizontal: 5,
+                  ),
+                ),
 
-      await OpenFile.open(file.path);
+                pw.SizedBox(height: 24),
+
+                pw.Text(
+                  "La presente dichiarazione viene rilasciata su richiesta dell'impresa interessata per gli usi consentiti dalla legge.",
+                  style: const pw.TextStyle(fontSize: 11),
+                ),
+
+                pw.SizedBox(height: 36),
+
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: pw.CrossAxisAlignment.end,
+                  children: [
+                    pw.Text(
+                      'Data ____________________',
+                      style: const pw.TextStyle(fontSize: 10),
+                    ),
+                    pw.Column(
+                      children: [
+                        pw.Text(
+                          intestazioneAzienda.titolo,
+                          style: pw.TextStyle(
+                            fontSize: 10,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                        pw.SizedBox(height: 30),
+                        pw.Container(
+                          width: 170,
+                          height: 1,
+                          color: PdfColors.grey700,
+                        ),
+                        pw.SizedBox(height: 4),
+                        pw.Text(
+                          'Timbro e firma',
+                          style: const pw.TextStyle(fontSize: 9),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ];
+            },
+          ),
+        );
+
+        final nomeImpresaFile = nomeImpresa
+            .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+            .replaceAll(' ', '_');
+
+        final nomeFile =
+            'dichiarazione_corso_${protocollo}_${nomeImpresaFile}_$timestamp.pdf';
+
+        final file = File('${directory.path}\\$nomeFile');
+
+        await file.writeAsBytes(await pdf.save());
+
+        fileCreati.add(file);
+      }
+
+      for (final file in fileCreati) {
+        await OpenFile.open(file.path);
+      }
 
       if (!mounted) return;
 
+      final messaggio = fileCreati.length == 1
+          ? 'Dichiarazione corso creata per 1 impresa.'
+          : 'Dichiarazioni corso create per ${fileCreati.length} imprese.';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Dichiarazione corso creata per $nomeImpresa.'),
+          content: Text(messaggio),
           backgroundColor: const Color(0xFF16A34A),
           duration: const Duration(seconds: 5),
         ),

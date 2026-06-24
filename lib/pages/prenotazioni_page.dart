@@ -1942,20 +1942,267 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
-  void stampaRegistroPresenze(Map<String, dynamic> prenotazione) {
-    final discente = prenotazione['discente_nome']?.toString().trim();
-    final corso = prenotazione['corso_nome']?.toString().trim();
+  Future<void> stampaRegistroPresenze(Map<String, dynamic> prenotazione) async {
+    try {
+      final prenotazioneIdRaw = prenotazione['id'];
+      final prenotazioneId = prenotazioneIdRaw is int
+          ? prenotazioneIdRaw
+          : int.tryParse(prenotazioneIdRaw?.toString() ?? '');
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Stampa registro presenze in preparazione'
-          '${discente != null && discente.isNotEmpty ? ' - $discente' : ''}'
-          '${corso != null && corso.isNotEmpty ? ' / $corso' : ''}.',
+      if (prenotazioneId == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Impossibile stampare il registro: ID prenotazione non valido.',
+            ),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        return;
+      }
+
+      final registri = await AppDatabase.instance.getRegistriPresenze(
+        prenotazioneId: prenotazioneId,
+      );
+
+      String campoPrenotazione(List<String> chiavi) {
+        for (final chiave in chiavi) {
+          final valore = prenotazione[chiave];
+          if (valore != null && valore.toString().trim().isNotEmpty) {
+            return valore.toString().trim();
+          }
+        }
+        return '-';
+      }
+
+      String presenteLabel(dynamic valore) {
+        if (valore == true || valore == 1 || valore.toString() == '1') {
+          return 'Presente';
+        }
+        return 'Assente';
+      }
+
+      final discente = campoPrenotazione([
+        'discente_nome',
+        'discente',
+        'nome_discente',
+        'nominativo_discente',
+      ]);
+
+      final impresa = campoPrenotazione([
+        'impresa_nome',
+        'impresa',
+        'ragione_sociale',
+        'azienda',
+      ]);
+
+      final corso = campoPrenotazione([
+        'corso_nome',
+        'corso',
+        'titolo_corso',
+        'denominazione_corso',
+      ]);
+
+      final docente = campoPrenotazione(['docente_nome', 'docente']);
+
+      final aulaSede = campoPrenotazione([
+        'aula_sede_nome',
+        'aula_sede',
+        'sede',
+        'aula',
+      ]);
+
+      final dataCorso = campoPrenotazione([
+        'data_corso',
+        'data',
+        'data_inizio',
+      ]);
+
+      final protocollo = campoPrenotazione([
+        'protocollo',
+        'prot',
+        'numero_protocollo',
+      ]);
+
+      final pdf = pw.Document();
+
+      pdf.addPage(
+        pw.MultiPage(
+          pageFormat: PdfPageFormat.a4,
+          margin: const pw.EdgeInsets.all(28),
+          footer: (context) => pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          ),
+          build: (context) => [
+            pw.Text(
+              'REGISTRO PRESENZE',
+              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Documento generato dal gestionale F&P Formazione e Prevenzione',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 18),
+
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(10),
+              decoration: pw.BoxDecoration(
+                border: pw.Border.all(color: PdfColors.grey600),
+                borderRadius: pw.BorderRadius.circular(4),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Dati prenotazione',
+                    style: pw.TextStyle(
+                      fontSize: 13,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 8),
+                  pw.Text('Discente: $discente'),
+                  pw.Text('Impresa: $impresa'),
+                  pw.Text('Corso: $corso'),
+                  pw.Text('Docente: $docente'),
+                  pw.Text('Aula / Sede: $aulaSede'),
+                  pw.Text('Data corso: $dataCorso'),
+                  pw.Text('Protocollo: $protocollo'),
+                ],
+              ),
+            ),
+
+            pw.SizedBox(height: 18),
+
+            pw.Text(
+              'Presenze registrate',
+              style: pw.TextStyle(fontSize: 13, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 8),
+
+            if (registri.isEmpty)
+              pw.Container(
+                width: double.infinity,
+                padding: const pw.EdgeInsets.all(10),
+                decoration: pw.BoxDecoration(
+                  border: pw.Border.all(color: PdfColors.grey500),
+                ),
+                child: pw.Text(
+                  'Nessun dato registro presenze salvato per questa prenotazione.',
+                  style: const pw.TextStyle(fontSize: 10),
+                ),
+              )
+            else
+              pw.TableHelper.fromTextArray(
+                headerStyle: pw.TextStyle(
+                  fontWeight: pw.FontWeight.bold,
+                  color: PdfColors.white,
+                  fontSize: 9,
+                ),
+                headerDecoration: const pw.BoxDecoration(
+                  color: PdfColors.blueGrey700,
+                ),
+                cellStyle: const pw.TextStyle(fontSize: 9),
+                cellAlignment: pw.Alignment.centerLeft,
+                headerAlignment: pw.Alignment.centerLeft,
+                columnWidths: {
+                  0: const pw.FlexColumnWidth(1.2),
+                  1: const pw.FlexColumnWidth(1.1),
+                  2: const pw.FlexColumnWidth(1.1),
+                  3: const pw.FlexColumnWidth(1.1),
+                  4: const pw.FlexColumnWidth(2.5),
+                },
+                headers: const [
+                  'Data',
+                  'Ora inizio',
+                  'Ora fine',
+                  'Presenza',
+                  'Note',
+                ],
+                data: registri.map((registro) {
+                  return [
+                    registro.dataLezione?.trim().isNotEmpty == true
+                        ? registro.dataLezione!
+                        : dataCorso,
+                    registro.oraInizio?.trim().isNotEmpty == true
+                        ? registro.oraInizio!
+                        : '-',
+                    registro.oraFine?.trim().isNotEmpty == true
+                        ? registro.oraFine!
+                        : '-',
+                    presenteLabel(registro.presente),
+                    registro.note?.trim().isNotEmpty == true
+                        ? registro.note!
+                        : '-',
+                  ];
+                }).toList(),
+              ),
+
+            pw.SizedBox(height: 34),
+
+            pw.Row(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Firma discente',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 28),
+                      pw.Container(height: 1, color: PdfColors.grey700),
+                    ],
+                  ),
+                ),
+                pw.SizedBox(width: 40),
+                pw.Expanded(
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text(
+                        'Firma docente',
+                        style: pw.TextStyle(
+                          fontSize: 11,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                      pw.SizedBox(height: 28),
+                      pw.Container(height: 1, color: PdfColors.grey700),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
-        backgroundColor: Colors.blue,
-      ),
-    );
+      );
+
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdf.save(),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore stampa registro presenze: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+    }
   }
 
   Future<void> exportPrenotazioniExcel() async {
@@ -4017,17 +4264,17 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 }
 
-const double colDiscente = 230;
-const double colImpresa = 145;
-const double colCorso = 250;
-const double colDocente = 120;
-const double colAulaSede = 130;
-const double colEnteAttestato = 145;
-const double colAttrezzature = 150;
-const double colData = 90;
-const double colProt = 60;
-const double colStato = 120;
-const double colAzioni = 150;
+const double colDiscente = 220;
+const double colImpresa = 130;
+const double colCorso = 230;
+const double colDocente = 105;
+const double colAulaSede = 115;
+const double colEnteAttestato = 125;
+const double colAttrezzature = 130;
+const double colData = 80;
+const double colProt = 45;
+const double colStato = 105;
+const double colAzioni = 145;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;

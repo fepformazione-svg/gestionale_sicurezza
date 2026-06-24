@@ -1942,6 +1942,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
+  void stampaRegistroPresenze(Map<String, dynamic> prenotazione) {
+    final discente = prenotazione['discente_nome']?.toString().trim();
+    final corso = prenotazione['corso_nome']?.toString().trim();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Stampa registro presenze in preparazione'
+          '${discente != null && discente.isNotEmpty ? ' - $discente' : ''}'
+          '${corso != null && corso.isNotEmpty ? ' / $corso' : ''}.',
+        ),
+        backgroundColor: Colors.blue,
+      ),
+    );
+  }
+
   Future<void> exportPrenotazioniExcel() async {
     if (prenotazioniVisibili.isEmpty) {
       if (!mounted) return;
@@ -3961,6 +3977,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 p,
                                                               ),
 
+                                                          onStampaRegistro: () =>
+                                                              stampaRegistroPresenze(
+                                                                p,
+                                                              ),
+
                                                           onElimina: () =>
                                                               eliminaPrenotazione(
                                                                 p,
@@ -4006,7 +4027,7 @@ const double colAttrezzature = 150;
 const double colData = 90;
 const double colProt = 60;
 const double colStato = 120;
-const double colAzioni = 120;
+const double colAzioni = 150;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -4016,6 +4037,7 @@ class PrenotazioneRow extends StatefulWidget {
   final bool selezionata;
   final VoidCallback onSeleziona;
   final VoidCallback onRegistro;
+  final VoidCallback onStampaRegistro;
   final VoidCallback onModifica;
 
   final VoidCallback onElimina;
@@ -4035,6 +4057,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.onSeleziona,
     required this.onModifica,
     required this.onRegistro,
+    required this.onStampaRegistro,
     required this.onElimina,
     required this.statoPrenotazione,
     required this.nomeDiscente,
@@ -4311,6 +4334,20 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                                 ),
                               ),
 
+                              IconButton(
+                                tooltip: 'Stampa registro',
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(
+                                  minWidth: 30,
+                                  minHeight: 30,
+                                ),
+                                onPressed: widget.onStampaRegistro,
+                                icon: const Icon(
+                                  Icons.print_outlined,
+                                  size: 19,
+                                  color: Color(0xFF4F46E5),
+                                ),
+                              ),
                               IconButton(
                                 tooltip: 'Elimina prenotazione',
                                 padding: EdgeInsets.zero,

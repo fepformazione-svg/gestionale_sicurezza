@@ -2326,12 +2326,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     try {
       final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
-      final directory = await getApplicationDocumentsDirectory();
-      final now = DateTime.now();
-
-      final timestamp =
-          '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-          '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
       final List<File> fileCreati = [];
 
@@ -2572,14 +2566,17 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           ),
         );
 
-        final nomeImpresaFile = nomeImpresa
-            .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
-            .replaceAll(' ', '_');
+        final cartellaDichiarazioni = await _cartellaDichiarazioniCorso();
 
-        final nomeFile =
-            'dichiarazione_corso_${protocollo}_${nomeImpresaFile}_$timestamp.pdf';
+        final nomeFile = _nomeFileDichiarazioneCorso(
+          corso: nomeCorso,
+          protocollo: protocollo,
+          impresa: nomeImpresa,
+        );
 
-        final file = File('${directory.path}\\$nomeFile');
+        final file = File(
+          '${cartellaDichiarazioni.path}${Platform.pathSeparator}$nomeFile',
+        );
 
         await file.writeAsBytes(await pdf.save());
 
@@ -2673,6 +2670,48 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         pw.Container(height: 1, color: PdfColors.grey600),
       ],
     );
+  }
+
+  String _sanificaNomeFile(String valore) {
+    final pulito = valore
+        .trim()
+        .replaceAll(RegExp(r'[\\/:*?"<>|]'), ' ')
+        .replaceAll(RegExp(r'\s+'), '_');
+
+    if (pulito.isEmpty) {
+      return 'senza_nome';
+    }
+
+    return pulito;
+  }
+
+  Future<Directory> _cartellaDichiarazioniCorso() async {
+    final directoryDocumenti = await getApplicationDocumentsDirectory();
+
+    final cartella = Directory(
+      '${directoryDocumenti.path}${Platform.pathSeparator}Gestionale Sicurezza'
+      '${Platform.pathSeparator}Dichiarazioni corso',
+    );
+
+    if (!await cartella.exists()) {
+      await cartella.create(recursive: true);
+    }
+
+    return cartella;
+  }
+
+  String _nomeFileDichiarazioneCorso({
+    required String corso,
+    required String protocollo,
+    required String impresa,
+  }) {
+    final dataOra = DateFormat('yyyy_MM_dd_HHmm').format(DateTime.now());
+
+    final corsoPulito = _sanificaNomeFile(corso);
+    final protocolloPulito = _sanificaNomeFile(protocollo);
+    final impresaPulita = _sanificaNomeFile(impresa);
+
+    return 'dichiarazione_corso_${corsoPulito}_protocollo_${protocolloPulito}_azienda_${impresaPulita}_$dataOra.pdf';
   }
 
   Future<void> exportPrenotazioniExcel() async {
@@ -2807,8 +2846,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         ]);
       }
 
-      final directory = await getApplicationDocumentsDirectory();
-
       final timestamp =
           '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
           '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
@@ -2817,6 +2854,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           ? 'prenotazioni_export_filtrato_$timestamp.xlsx'
           : 'prenotazioni_export_$timestamp.xlsx';
 
+      final directory = await getApplicationDocumentsDirectory();
       final path = '${directory.path}/$nomeFileExcel';
 
       final fileBytes = excel.encode();
@@ -2919,6 +2957,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           : '';
 
       final dataOraExport = DateFormat('dd/MM/yyyy HH:mm').format(now);
+      final timestamp = DateFormat('yyyyMMdd_HHmmss').format(now);
+      final directory = await getApplicationDocumentsDirectory();
 
       final pdf = pw.Document();
 
@@ -3049,12 +3089,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           ],
         ),
       );
-
-      final directory = await getApplicationDocumentsDirectory();
-
-      final timestamp =
-          '${now.year}_${now.month.toString().padLeft(2, '0')}_${now.day.toString().padLeft(2, '0')}_'
-          '${now.hour.toString().padLeft(2, '0')}h${now.minute.toString().padLeft(2, '0')}';
 
       final nomeFilePdf = vistaFiltrata
           ? 'prenotazioni_export_filtrato_$timestamp.pdf'

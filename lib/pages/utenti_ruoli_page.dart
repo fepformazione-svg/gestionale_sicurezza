@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import '../models/ruolo_utente.dart';
 import '../models/utente_app.dart';
 import '../services/app_database.dart';
+import '../services/auth_service.dart';
 
 class UtentiRuoliPage extends StatefulWidget {
   const UtentiRuoliPage({super.key});
@@ -17,6 +18,8 @@ class UtentiRuoliPage extends StatefulWidget {
 
 class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
   final TextEditingController ricercaController = TextEditingController();
+
+  final ScrollController tabellaUtentiScrollController = ScrollController();
 
   bool caricamento = true;
   bool soloAttivi = true;
@@ -44,6 +47,7 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
   @override
   void dispose() {
     ricercaController.dispose();
+    tabellaUtentiScrollController.dispose();
     super.dispose();
   }
 
@@ -68,6 +72,150 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       ruoli = ruoliCaricati;
       caricamento = false;
     });
+  }
+
+  Future<void> mostraDialogTestLogin() async {
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    bool mostraPassword = false;
+    bool verificaInCorso = false;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Test login utente'),
+                content: SizedBox(
+                  width: 420,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Verifica tecnica delle credenziali. '
+                          'Il login non è ancora obbligatorio all’avvio.',
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: usernameController,
+                          decoration: const InputDecoration(
+                            labelText: 'Username',
+                            border: OutlineInputBorder(),
+                            prefixIcon: Icon(Icons.person),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Inserisci lo username.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: passwordController,
+                          obscureText: !mostraPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.lock),
+                            suffixIcon: IconButton(
+                              tooltip: mostraPassword
+                                  ? 'Nascondi password'
+                                  : 'Mostra password',
+                              icon: Icon(
+                                mostraPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: () {
+                                setDialogState(() {
+                                  mostraPassword = !mostraPassword;
+                                });
+                              },
+                            ),
+                          ),
+                          validator: (value) {
+                            if (value == null || value.trim().isEmpty) {
+                              return 'Inserisci la password.';
+                            }
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: verificaInCorso
+                        ? null
+                        : () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                    child: const Text('Annulla'),
+                  ),
+                  ElevatedButton.icon(
+                    icon: verificaInCorso
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.login),
+                    label: Text(verificaInCorso ? 'Verifica...' : 'Verifica'),
+                    onPressed: verificaInCorso
+                        ? null
+                        : () async {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+
+                            final navigator = Navigator.of(dialogContext);
+                            final messenger = ScaffoldMessenger.of(context);
+
+                            setDialogState(() {
+                              verificaInCorso = true;
+                            });
+
+                            final risultato = await AuthService.instance
+                                .verificaCredenziali(
+                                  username: usernameController.text,
+                                  password: passwordController.text,
+                                  dispositivo: 'Test login pagina Utenti/Ruoli',
+                                );
+
+                            if (!mounted) return;
+
+                            navigator.pop();
+
+                            messenger.showSnackBar(
+                              SnackBar(
+                                content: Text(risultato.messaggio),
+                                backgroundColor: risultato.ok
+                                    ? Colors.green
+                                    : Colors.orange,
+                              ),
+                            );
+
+                            await caricaDati();
+                          },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      usernameController.dispose();
+      passwordController.dispose();
+    }
   }
 
   Future<void> mostraDialogUtente({UtenteApp? utente}) async {
@@ -611,8 +759,10 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       child: Card(
         elevation: 2,
         child: Scrollbar(
+          controller: tabellaUtentiScrollController,
           thumbVisibility: true,
           child: SingleChildScrollView(
+            controller: tabellaUtentiScrollController,
             scrollDirection: Axis.horizontal,
             child: SingleChildScrollView(
               child: DataTable(
@@ -671,6 +821,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       appBar: AppBar(
         title: const Text('Utenti e Ruoli'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.login),
+              label: const Text('Test login'),
+              onPressed: mostraDialogTestLogin,
+            ),
+          ),
+          const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
             child: ElevatedButton.icon(

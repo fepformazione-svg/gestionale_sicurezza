@@ -641,10 +641,32 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     final pdf = pw.Document();
 
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
     pdf.addPage(
       pw.MultiPage(
         pageFormat: PdfPageFormat.a4,
         margin: const pw.EdgeInsets.all(28),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Registro trattamenti',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Dettaglio singolo trattamento - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(
+              'Trattamento: ${trattamento.nomeTrattamento}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+            pw.Divider(),
+          ],
+        ),
         footer: (context) {
           return pw.Align(
             alignment: pw.Alignment.centerRight,
@@ -656,16 +678,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         },
         build: (context) {
           return [
-            pw.Text(
-              'Registro dei trattamenti',
-              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
-            ),
-            pw.SizedBox(height: 4),
-            pw.Text(
-              'Dettaglio singolo trattamento',
-              style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
-            ),
-            pw.SizedBox(height: 18),
+            pw.SizedBox(height: 12),
 
             sezionePdf('Dati principali', [
               rigaDettaglioPdf('Nome trattamento', trattamento.nomeTrattamento),

@@ -718,10 +718,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         categorieDati: risultato.categorieDati,
         categorieInteressati: risultato.categorieInteressati,
         destinatari: risultato.destinatari,
-        trasferimentoExtraUe: trattamento?.trasferimentoExtraUe ?? '',
+        trasferimentoExtraUe: risultato.trasferimentoExtraUe,
         tempiConservazione: risultato.conservazione,
         misureSicurezza: risultato.misureSicurezza,
-        responsabileInterno: trattamento?.responsabileInterno ?? '',
+        responsabileInterno: risultato.responsabileInterno,
         note: risultato.note,
         attivo: trattamento?.attivo ?? true,
         createdAt: trattamento?.createdAt ?? DateTime.now().toIso8601String(),
@@ -934,8 +934,10 @@ class _NuovoTrattamentoDialogResult {
     required this.categorieInteressati,
     required this.categorieDati,
     required this.destinatari,
+    required this.trasferimentoExtraUe,
     required this.conservazione,
     required this.misureSicurezza,
+    required this.responsabileInterno,
     required this.note,
   });
 
@@ -945,8 +947,10 @@ class _NuovoTrattamentoDialogResult {
   final String categorieInteressati;
   final String categorieDati;
   final String destinatari;
+  final String trasferimentoExtraUe;
   final String conservazione;
   final String misureSicurezza;
+  final String responsabileInterno;
   final String note;
 }
 
@@ -970,7 +974,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
   final TextEditingController _categorieDatiController =
       TextEditingController();
   final TextEditingController _destinatariController = TextEditingController();
+  final TextEditingController _trasferimentoExtraUeController =
+      TextEditingController();
   final TextEditingController _conservazioneController =
+      TextEditingController();
+  final TextEditingController _responsabileInternoController =
       TextEditingController();
   final TextEditingController _misureSicurezzaController =
       TextEditingController();
@@ -994,8 +1002,10 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     _categorieInteressatiController.text = trattamento.categorieInteressati;
     _categorieDatiController.text = trattamento.categorieDati;
     _destinatariController.text = trattamento.destinatari;
+    _trasferimentoExtraUeController.text = trattamento.trasferimentoExtraUe;
     _conservazioneController.text = trattamento.tempiConservazione;
     _misureSicurezzaController.text = trattamento.misureSicurezza;
+    _responsabileInternoController.text = trattamento.responsabileInterno;
     _noteController.text = trattamento.note;
   }
 
@@ -1007,8 +1017,10 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     _categorieInteressatiController.dispose();
     _categorieDatiController.dispose();
     _destinatariController.dispose();
+    _trasferimentoExtraUeController.dispose();
     _conservazioneController.dispose();
     _misureSicurezzaController.dispose();
+    _responsabileInternoController.dispose();
     _noteController.dispose();
     super.dispose();
   }
@@ -1036,8 +1048,10 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
         categorieInteressati: _categorieInteressatiController.text.trim(),
         categorieDati: _categorieDatiController.text.trim(),
         destinatari: _destinatariController.text.trim(),
+        trasferimentoExtraUe: _trasferimentoExtraUeController.text.trim(),
         conservazione: _conservazioneController.text.trim(),
         misureSicurezza: _misureSicurezzaController.text.trim(),
+        responsabileInterno: _responsabileInternoController.text.trim(),
         note: _noteController.text.trim(),
       ),
     );
@@ -1175,6 +1189,15 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                     maxLines: 3,
                   ),
                 ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  controller: _trasferimentoExtraUeController,
+                  label: 'Trasferimento extra UE',
+                  hintText:
+                      'Es. Nessuno / fornitori extra UE / garanzie applicate',
+                  minLines: 2,
+                  maxLines: 3,
+                ),
                 const SizedBox(height: 18),
 
                 titoloSezione(
@@ -1214,12 +1237,21 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                     maxLines: 4,
                   ),
                   secondo: campoTesto(
-                    controller: _misureSicurezzaController,
-                    label: 'Misure di sicurezza',
-                    hintText: 'Es. accessi profilati, backup, antivirus',
+                    controller: _responsabileInternoController,
+                    label: 'Responsabile interno',
+                    hintText:
+                        'Es. titolare, referente privacy, amministrazione',
                     minLines: 2,
                     maxLines: 4,
                   ),
+                ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  controller: _misureSicurezzaController,
+                  label: 'Misure di sicurezza',
+                  hintText: 'Es. accessi profilati, backup, antivirus',
+                  minLines: 2,
+                  maxLines: 4,
                 ),
                 const SizedBox(height: 18),
 

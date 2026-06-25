@@ -3,6 +3,11 @@
 import '../models/registro_trattamento.dart';
 import '../services/app_database.dart';
 
+import 'dart:io';
+
+import 'package:excel/excel.dart' hide Border;
+import 'package:path_provider/path_provider.dart';
+
 class RegistroTrattamentiPage extends StatefulWidget {
   const RegistroTrattamentiPage({super.key});
 
@@ -51,6 +56,123 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
 
     return risultati.toList();
+  }
+
+  Future<void> esportaExcelRegistroTrattamenti() async {
+    final datiDaEsportare = trattamentiFiltrati;
+
+    if (datiDaEsportare.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun trattamento da esportare.')),
+      );
+      return;
+    }
+
+    final excel = Excel.createExcel();
+    const nomeFoglio = 'Registro trattamenti';
+    final sheet = excel[nomeFoglio];
+
+    excel.setDefaultSheet(nomeFoglio);
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    final intestazioni = [
+      'Nome trattamento',
+      'Finalità',
+      'Categorie interessati',
+      'Categorie dati',
+      'Base giuridica',
+      'Destinatari',
+      'Trasferimento extra UE',
+      'Tempi conservazione',
+      'Misure sicurezza',
+      'Responsabile interno',
+      'Stato',
+      'Note',
+    ];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 0))
+          .value = TextCellValue(
+        intestazioni[colonna],
+      );
+    }
+
+    for (var riga = 0; riga < datiDaEsportare.length; riga++) {
+      final trattamento = datiDaEsportare[riga];
+
+      final valori = [
+        trattamento.nomeTrattamento,
+        trattamento.finalita,
+        trattamento.categorieInteressati,
+        trattamento.categorieDati,
+        trattamento.baseGiuridica,
+        trattamento.destinatari,
+        trattamento.trasferimentoExtraUe,
+        trattamento.tempiConservazione,
+        trattamento.misureSicurezza,
+        trattamento.responsabileInterno,
+        trattamento.attivo ? 'Attivo' : 'Non attivo',
+        trattamento.note,
+      ];
+
+      for (var colonna = 0; colonna < valori.length; colonna++) {
+        sheet
+            .cell(
+              CellIndex.indexByColumnRow(
+                columnIndex: colonna,
+                rowIndex: riga + 1,
+              ),
+            )
+            .value = TextCellValue(
+          valori[colonna],
+        );
+      }
+    }
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet.setColumnWidth(colonna, 24);
+    }
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la generazione del file Excel.'),
+        ),
+      );
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${directory.path}\\Gestionale Sicurezza\\Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+
+    final file = File(
+      '${exportDir.path}\\registro_trattamenti_$timestamp.xlsx',
+    );
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text('Excel esportato: ${file.path}')));
   }
 
   @override
@@ -387,6 +509,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       appBar: AppBar(
         title: const Text('Registro trattamenti'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: OutlinedButton.icon(
+              onPressed: esportaExcelRegistroTrattamenti,
+              icon: const Icon(Icons.file_download_outlined, size: 18),
+              label: const Text('Excel'),
+            ),
+          ),
           IconButton(
             tooltip: 'Aggiorna',
             onPressed: caricamento ? null : caricaTrattamenti,

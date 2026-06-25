@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'registro_trattamenti_page.dart';
 
 import '../models/privacy_gdpr.dart';
 import '../services/app_database.dart';
@@ -1127,6 +1128,20 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                   style: TextStyle(
                                     color: Colors.blueGrey.shade600,
                                   ),
+                                ),
+                                const SizedBox(height: 8),
+                                OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) =>
+                                            const RegistroTrattamentiPage(),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.assignment_outlined),
+                                  label: const Text('Registro trattamenti'),
                                 ),
                               ],
                             ),

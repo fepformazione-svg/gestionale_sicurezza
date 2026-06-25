@@ -914,10 +914,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
         child: Scrollbar(
           controller: tabellaUtentiScrollController,
           thumbVisibility: true,
+          notificationPredicate: (notification) {
+            return notification.metrics.axis == Axis.horizontal;
+          },
           child: SingleChildScrollView(
             controller: tabellaUtentiScrollController,
             scrollDirection: Axis.horizontal,
+            primary: false,
             child: SingleChildScrollView(
+              primary: false,
               child: DataTable(
                 columnSpacing: 24,
                 headingRowColor: WidgetStateProperty.all(Colors.grey.shade200),

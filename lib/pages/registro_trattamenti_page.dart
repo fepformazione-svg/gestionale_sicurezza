@@ -792,6 +792,15 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                               mostraDettaglioTrattamento(trattamento),
                         ),
                         IconButton(
+                          tooltip: 'Duplica trattamento',
+                          icon: const Icon(Icons.copy),
+                          color: Colors.indigo.shade700,
+                          onPressed: () => mostraDialogTrattamento(
+                            trattamento: trattamento,
+                            duplica: true,
+                          ),
+                        ),
+                        IconButton(
                           tooltip: 'Modifica trattamento',
                           icon: const Icon(Icons.edit),
                           onPressed: () =>
@@ -841,8 +850,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Future<void> mostraDialogTrattamento({
     RegistroTrattamento? trattamento,
+    bool duplica = false,
   }) async {
     final isModifica = trattamento != null;
+    final isDuplicazione = duplica && trattamento != null;
 
     final risultato = await showDialog<_NuovoTrattamentoDialogResult>(
       context: context,
@@ -856,8 +867,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
 
     try {
+      final now = DateTime.now().toIso8601String();
+
       final trattamentoDaSalvare = RegistroTrattamento(
-        id: trattamento?.id,
+        id: isDuplicazione ? null : trattamento?.id,
         nomeTrattamento: risultato.nome,
         finalita: risultato.finalita,
         baseGiuridica: risultato.baseGiuridica,
@@ -870,11 +883,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         responsabileInterno: risultato.responsabileInterno,
         note: risultato.note,
         attivo: trattamento?.attivo ?? true,
-        createdAt: trattamento?.createdAt ?? DateTime.now().toIso8601String(),
-        updatedAt: DateTime.now().toIso8601String(),
+        createdAt: isDuplicazione ? now : trattamento?.createdAt ?? now,
+        updatedAt: now,
       );
 
-      if (isModifica) {
+      if (isModifica && !isDuplicazione) {
         await AppDatabase.instance.updateRegistroTrattamento(
           trattamentoDaSalvare,
         );

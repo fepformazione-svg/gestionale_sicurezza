@@ -53,10 +53,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         'Nessun trattamento registrato.\n'
         'Il registro è collegato al database, ma non contiene ancora dati.',
         textAlign: TextAlign.center,
-        style: TextStyle(
-          color: Colors.grey,
-          fontSize: 16,
-        ),
+        style: TextStyle(color: Colors.grey, fontSize: 16),
       ),
     );
   }
@@ -70,21 +67,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                color: Colors.red,
-                size: 40,
-              ),
+              const Icon(Icons.error_outline, color: Colors.red, size: 40),
               const SizedBox(height: 12),
               const Text(
                 'Errore durante il caricamento del registro trattamenti',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
-              Text(
-                errore ?? '',
-                textAlign: TextAlign.center,
-              ),
+              Text(errore ?? '', textAlign: TextAlign.center),
               const SizedBox(height: 16),
               ElevatedButton.icon(
                 onPressed: caricaTrattamenti,
@@ -123,10 +113,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     ),
                   ),
                   DataCell(
-                    SizedBox(
-                      width: 260,
-                      child: Text(trattamento.finalita),
-                    ),
+                    SizedBox(width: 260, child: Text(trattamento.finalita)),
                   ),
                   DataCell(
                     SizedBox(
@@ -148,9 +135,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   ),
                   DataCell(
                     Chip(
-                      label: Text(
-                        trattamento.attivo ? 'Attivo' : 'Non attivo',
-                      ),
+                      label: Text(trattamento.attivo ? 'Attivo' : 'Non attivo'),
                       backgroundColor: trattamento.attivo
                           ? Colors.green.shade100
                           : Colors.grey.shade300,
@@ -167,9 +152,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Widget _buildContenuto() {
     if (caricamento) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (errore != null) {
@@ -181,6 +164,67 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
 
     return _buildTabella();
+  }
+
+  Future<void> _mostraDialogNuovoTrattamento() async {
+    final risultato = await showDialog<_NuovoTrattamentoDialogResult>(
+      context: context,
+      builder: (dialogContext) {
+        return const _NuovoTrattamentoDialog();
+      },
+    );
+
+    if (risultato == null) {
+      return;
+    }
+
+    try {
+      final trattamento = RegistroTrattamento(
+        nomeTrattamento: risultato.nome,
+        finalita: risultato.finalita,
+        baseGiuridica: risultato.baseGiuridica,
+        categorieDati: risultato.categorieDati,
+        categorieInteressati: risultato.categorieInteressati,
+        destinatari: risultato.destinatari,
+        trasferimentoExtraUe: '',
+        tempiConservazione: risultato.conservazione,
+        misureSicurezza: risultato.misureSicurezza,
+        responsabileInterno: '',
+        note: risultato.note,
+        attivo: true,
+      );
+
+      await AppDatabase.instance.insertRegistroTrattamento(trattamento);
+
+      if (!mounted) {
+        return;
+      }
+
+      await caricaTrattamenti();
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Trattamento "${risultato.nome}" salvato nel registro.',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.red.shade700,
+          content: Text('Errore durante il salvataggio del trattamento: $e'),
+        ),
+      );
+    }
   }
 
   @override
@@ -212,9 +256,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     Expanded(
                       child: Text(
                         'Trattamenti registrati: ${trattamenti.length}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                   ],
@@ -222,12 +264,234 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               ),
             ),
             const SizedBox(height: 16),
-            Expanded(
-              child: _buildContenuto(),
-            ),
+            Expanded(child: _buildContenuto()),
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _mostraDialogNuovoTrattamento,
+        icon: const Icon(Icons.add),
+        label: const Text('Nuovo trattamento'),
+      ),
+    );
+  }
+}
+
+class _NuovoTrattamentoDialogResult {
+  const _NuovoTrattamentoDialogResult({
+    required this.nome,
+    required this.finalita,
+    required this.baseGiuridica,
+    required this.categorieInteressati,
+    required this.categorieDati,
+    required this.destinatari,
+    required this.conservazione,
+    required this.misureSicurezza,
+    required this.note,
+  });
+
+  final String nome;
+  final String finalita;
+  final String baseGiuridica;
+  final String categorieInteressati;
+  final String categorieDati;
+  final String destinatari;
+  final String conservazione;
+  final String misureSicurezza;
+  final String note;
+}
+
+class _NuovoTrattamentoDialog extends StatefulWidget {
+  const _NuovoTrattamentoDialog();
+
+  @override
+  State<_NuovoTrattamentoDialog> createState() =>
+      _NuovoTrattamentoDialogState();
+}
+
+class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
+  final TextEditingController _nomeController = TextEditingController();
+  final TextEditingController _finalitaController = TextEditingController();
+  final TextEditingController _baseGiuridicaController =
+      TextEditingController();
+  final TextEditingController _categorieInteressatiController =
+      TextEditingController();
+  final TextEditingController _categorieDatiController =
+      TextEditingController();
+  final TextEditingController _destinatariController = TextEditingController();
+  final TextEditingController _conservazioneController =
+      TextEditingController();
+  final TextEditingController _misureSicurezzaController =
+      TextEditingController();
+  final TextEditingController _noteController = TextEditingController();
+
+  String? _erroreNome;
+  String? _erroreFinalita;
+
+  @override
+  void dispose() {
+    _nomeController.dispose();
+    _finalitaController.dispose();
+    _baseGiuridicaController.dispose();
+    _categorieInteressatiController.dispose();
+    _categorieDatiController.dispose();
+    _destinatariController.dispose();
+    _conservazioneController.dispose();
+    _misureSicurezzaController.dispose();
+    _noteController.dispose();
+    super.dispose();
+  }
+
+  void _salva() {
+    final nomeVuoto = _nomeController.text.trim().isEmpty;
+    final finalitaVuota = _finalitaController.text.trim().isEmpty;
+
+    setState(() {
+      _erroreNome = nomeVuoto ? 'Inserisci il nome del trattamento' : null;
+      _erroreFinalita = finalitaVuota
+          ? 'Inserisci la finalità del trattamento'
+          : null;
+    });
+
+    if (nomeVuoto || finalitaVuota) {
+      return;
+    }
+
+    Navigator.of(context).pop(
+      _NuovoTrattamentoDialogResult(
+        nome: _nomeController.text.trim(),
+        finalita: _finalitaController.text.trim(),
+        baseGiuridica: _baseGiuridicaController.text.trim(),
+        categorieInteressati: _categorieInteressatiController.text.trim(),
+        categorieDati: _categorieDatiController.text.trim(),
+        destinatari: _destinatariController.text.trim(),
+        conservazione: _conservazioneController.text.trim(),
+        misureSicurezza: _misureSicurezzaController.text.trim(),
+        note: _noteController.text.trim(),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Nuovo trattamento'),
+      content: SizedBox(
+        width: 640,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nomeController,
+                decoration: InputDecoration(
+                  labelText: 'Nome trattamento *',
+                  border: const OutlineInputBorder(),
+                  errorText: _erroreNome,
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _finalitaController,
+                decoration: InputDecoration(
+                  labelText: 'Finalità *',
+                  border: const OutlineInputBorder(),
+                  errorText: _erroreFinalita,
+                ),
+                minLines: 2,
+                maxLines: 4,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _baseGiuridicaController,
+                decoration: const InputDecoration(
+                  labelText: 'Base giuridica',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _categorieInteressatiController,
+                decoration: const InputDecoration(
+                  labelText: 'Categorie interessati',
+                  border: OutlineInputBorder(),
+                  hintText:
+                      'Es. discenti, lavoratori, imprese clienti, docenti',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _categorieDatiController,
+                decoration: const InputDecoration(
+                  labelText: 'Categorie dati personali',
+                  border: OutlineInputBorder(),
+                  hintText:
+                      'Es. dati anagrafici, contatti, attestati, idoneità sanitarie',
+                ),
+                minLines: 2,
+                maxLines: 4,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _destinatariController,
+                decoration: const InputDecoration(
+                  labelText: 'Destinatari / categorie destinatari',
+                  border: OutlineInputBorder(),
+                  hintText:
+                      'Es. enti attestati, consulenti, medico competente, software house',
+                ),
+                minLines: 1,
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _conservazioneController,
+                decoration: const InputDecoration(
+                  labelText: 'Tempi di conservazione',
+                  border: OutlineInputBorder(),
+                  hintText:
+                      'Es. 10 anni, durata rapporto contrattuale, obblighi di legge',
+                ),
+                minLines: 1,
+                maxLines: 3,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _misureSicurezzaController,
+                decoration: const InputDecoration(
+                  labelText: 'Misure di sicurezza',
+                  border: OutlineInputBorder(),
+                  hintText:
+                      'Es. accessi profilati, backup, antivirus, cifratura, armadi chiusi',
+                ),
+                minLines: 2,
+                maxLines: 4,
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _noteController,
+                decoration: const InputDecoration(
+                  labelText: 'Note',
+                  border: OutlineInputBorder(),
+                ),
+                minLines: 2,
+                maxLines: 4,
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: const Text('Annulla'),
+        ),
+        ElevatedButton.icon(
+          onPressed: _salva,
+          icon: const Icon(Icons.check),
+          label: const Text('Salva'),
+        ),
+      ],
     );
   }
 }

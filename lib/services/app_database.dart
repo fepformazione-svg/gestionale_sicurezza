@@ -952,6 +952,12 @@ class AppDatabase {
       'descrizione': 'Accesso in sola consultazione',
       'attivo': 1,
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
+
+    await _ensureColumns(db, 'registro_trattamenti', {
+      'destinatari': 'TEXT',
+      'trasferimento_extra_ue': 'TEXT',
+      'tempi_conservazione': 'TEXT',
+    });
   }
 
   Future<void> _creaTabellaRegistroTrattamenti(Database db) async {

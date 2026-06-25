@@ -162,10 +162,10 @@ class ImpostazioniPage extends StatelessWidget {
 
           SizedBox(height: 12),
           _SezioneImpostazioniCard(
-            icona: Icons.manage_accounts_rounded,
+            icona: Icons.admin_panel_settings_rounded,
             titolo: 'Utenti e Ruoli',
             descrizione:
-                'Gestione utenti, ruoli, accessi e tracciamento operazioni.',
+                'Area riservata agli amministratori per gestione utenti, ruoli, accessi e permessi.',
             onTap: () => apriUtentiRuoliSeAutorizzato(context),
           ),
           SizedBox(height: 12),

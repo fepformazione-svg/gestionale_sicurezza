@@ -1102,122 +1102,144 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                   Card(
                     child: Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Row(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(
-                            Icons.privacy_tip_outlined,
-                            color: Colors.blueGrey.shade700,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Gestione Privacy / GDPR 679/2016',
-                                  style: TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blueGrey.shade800,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Archivio interno per informative, basi giuridiche, finalità, categorie dati, conservazione e misure di sicurezza.',
-                                  style: TextStyle(
-                                    color: Colors.blueGrey.shade600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                OutlinedButton.icon(
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) =>
-                                            const RegistroTrattamentiPage(),
-                                      ),
-                                    );
-                                  },
-                                  icon: const Icon(Icons.assignment_outlined),
-                                  label: const Text('Registro trattamenti'),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          SizedBox(
-                            width: 360,
-                            child: TextField(
-                              controller: ricercaController,
-                              decoration: InputDecoration(
-                                labelText: 'Cerca Privacy/GDPR',
-                                hintText:
-                                    'Titolo, titolare, referente, base giuridica...',
-                                prefixIcon: const Icon(Icons.search),
-                                suffixIcon: ricercaAttiva
-                                    ? IconButton(
-                                        tooltip: 'Azzera ricerca',
-                                        icon: const Icon(Icons.clear),
-                                        onPressed: () {
-                                          ricercaController.clear();
-                                          setState(() {
-                                            ricerca = '';
-                                          });
-                                        },
-                                      )
-                                    : null,
-                                border: const OutlineInputBorder(),
-                                isDense: true,
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.privacy_tip_outlined,
+                                color: Colors.blueGrey.shade700,
+                                size: 32,
                               ),
-                              onChanged: (valore) {
-                                setState(() {
-                                  ricerca = valore;
-                                });
-                              },
-                            ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Gestione Privacy / GDPR 679/2016',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.blueGrey.shade800,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Archivio interno per informative, basi giuridiche, finalità, categorie dati, conservazione e misure di sicurezza.',
+                                      style: TextStyle(
+                                        color: Colors.blueGrey.shade600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const RegistroTrattamentiPage(),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.assignment_outlined,
+                                      ),
+                                      label: const Text('Registro trattamenti'),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          ElevatedButton.icon(
-                            onPressed: vociPrivacyFiltrate.isEmpty
-                                ? null
-                                : esportaExcelPrivacyGdpr,
-                            icon: const Icon(Icons.table_chart),
-                            label: Text('Excel ($totaleFiltrato)'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            onPressed: vociPrivacyFiltrate.isEmpty
-                                ? null
-                                : esportaPdfPrivacyGdpr,
-                            icon: const Icon(Icons.picture_as_pdf),
-                            label: Text('PDF ($totaleFiltrato)'),
-                          ),
-                          const SizedBox(width: 8),
-                          ElevatedButton.icon(
-                            onPressed: vociPrivacyFiltrate.isEmpty
-                                ? null
-                                : stampaPrivacyGdpr,
-                            icon: const Icon(Icons.print),
-                            label: Text('Stampa ($totaleFiltrato)'),
-                          ),
-                          const SizedBox(width: 8),
-                          FilledButton.icon(
-                            onPressed: mostraDialogNuovaVoce,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Nuova voce'),
-                          ),
-                          const SizedBox(width: 12),
-                          Chip(
-                            avatar: const Icon(Icons.list_alt, size: 18),
-                            label: Text(
-                              ricercaAttiva
-                                  ? '$totaleFiltrato voci trovate'
-                                  : soloAttive
-                                  ? '$totale voci attive'
-                                  : '$totale voci totali',
-                            ),
+                          const SizedBox(height: 14),
+                          LayoutBuilder(
+                            builder: (context, constraints) {
+                              final double larghezzaRicerca =
+                                  constraints.maxWidth < 380
+                                  ? constraints.maxWidth
+                                  : 360;
+
+                              return Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  SizedBox(
+                                    width: larghezzaRicerca,
+                                    child: TextField(
+                                      controller: ricercaController,
+                                      decoration: InputDecoration(
+                                        labelText: 'Cerca Privacy/GDPR',
+                                        hintText:
+                                            'Titolo, titolare, referente, base giuridica...',
+                                        prefixIcon: const Icon(Icons.search),
+                                        suffixIcon: ricercaAttiva
+                                            ? IconButton(
+                                                tooltip: 'Azzera ricerca',
+                                                icon: const Icon(Icons.clear),
+                                                onPressed: () {
+                                                  ricercaController.clear();
+                                                  setState(() {
+                                                    ricerca = '';
+                                                  });
+                                                },
+                                              )
+                                            : null,
+                                        border: const OutlineInputBorder(),
+                                        isDense: true,
+                                      ),
+                                      onChanged: (valore) {
+                                        setState(() {
+                                          ricerca = valore;
+                                        });
+                                      },
+                                    ),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: vociPrivacyFiltrate.isEmpty
+                                        ? null
+                                        : esportaExcelPrivacyGdpr,
+                                    icon: const Icon(Icons.table_chart),
+                                    label: Text('Excel ($totaleFiltrato)'),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: vociPrivacyFiltrate.isEmpty
+                                        ? null
+                                        : esportaPdfPrivacyGdpr,
+                                    icon: const Icon(Icons.picture_as_pdf),
+                                    label: Text('PDF ($totaleFiltrato)'),
+                                  ),
+                                  ElevatedButton.icon(
+                                    onPressed: vociPrivacyFiltrate.isEmpty
+                                        ? null
+                                        : stampaPrivacyGdpr,
+                                    icon: const Icon(Icons.print),
+                                    label: Text('Stampa ($totaleFiltrato)'),
+                                  ),
+                                  FilledButton.icon(
+                                    onPressed: mostraDialogNuovaVoce,
+                                    icon: const Icon(Icons.add),
+                                    label: const Text('Nuova voce'),
+                                  ),
+                                  Chip(
+                                    avatar: const Icon(
+                                      Icons.list_alt,
+                                      size: 18,
+                                    ),
+                                    label: Text(
+                                      ricercaAttiva
+                                          ? '$totaleFiltrato voci trovate'
+                                          : soloAttive
+                                          ? '$totale voci attive'
+                                          : '$totale voci totali',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ],
                       ),

@@ -588,6 +588,188 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
   }
 
+  Future<void> esportaPdfSingoloTrattamento(
+    RegistroTrattamento trattamento,
+  ) async {
+    String valore(String testo) {
+      final valorePulito = testo.trim();
+      return valorePulito.isEmpty ? '-' : valorePulito;
+    }
+
+    String nomeFileSicuro(String testo) {
+      final pulito = testo
+          .trim()
+          .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+          .replaceAll(RegExp(r'\s+'), '_');
+
+      if (pulito.isEmpty) {
+        return 'trattamento';
+      }
+
+      return pulito;
+    }
+
+    pw.Widget rigaDettaglioPdf(String etichetta, String contenuto) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(
+              width: 150,
+              child: pw.Text(
+                etichetta,
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+            ),
+            pw.Expanded(child: pw.Text(valore(contenuto))),
+          ],
+        ),
+      );
+    }
+
+    pw.Widget sezionePdf(String titolo, List<pw.Widget> righe) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 14),
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey400),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              titolo,
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            ...righe,
+          ],
+        ),
+      );
+    }
+
+    final pdf = pw.Document();
+
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Registro trattamenti',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Dettaglio singolo trattamento - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(
+              'Trattamento: ${trattamento.nomeTrattamento}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.SizedBox(height: 12),
+            sezionePdf('Dati principali', [
+              rigaDettaglioPdf('Nome trattamento', trattamento.nomeTrattamento),
+              rigaDettaglioPdf(
+                'Stato',
+                trattamento.attivo ? 'Attivo' : 'Non attivo',
+              ),
+              rigaDettaglioPdf(
+                'Responsabile interno',
+                trattamento.responsabileInterno,
+              ),
+            ]),
+            sezionePdf('Inquadramento GDPR', [
+              rigaDettaglioPdf('Finalità', trattamento.finalita),
+              rigaDettaglioPdf('Base giuridica', trattamento.baseGiuridica),
+              rigaDettaglioPdf(
+                'Tempi di conservazione',
+                trattamento.tempiConservazione,
+              ),
+            ]),
+            sezionePdf('Interessati e dati trattati', [
+              rigaDettaglioPdf(
+                'Categorie interessati',
+                trattamento.categorieInteressati,
+              ),
+              rigaDettaglioPdf('Categorie dati', trattamento.categorieDati),
+            ]),
+            sezionePdf('Destinatari e sicurezza', [
+              rigaDettaglioPdf('Destinatari', trattamento.destinatari),
+              rigaDettaglioPdf(
+                'Trasferimento extra UE',
+                trattamento.trasferimentoExtraUe,
+              ),
+              rigaDettaglioPdf(
+                'Misure di sicurezza',
+                trattamento.misureSicurezza,
+              ),
+            ]),
+            sezionePdf('Annotazioni interne', [
+              rigaDettaglioPdf('Note', trattamento.note),
+            ]),
+          ];
+        },
+      ),
+    );
+
+    final documentiDir = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${documentiDir.path}${Platform.pathSeparator}Gestionale Sicurezza'
+      '${Platform.pathSeparator}Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+
+    final file = File(
+      '${exportDir.path}${Platform.pathSeparator}'
+      'registro_trattamento_${nomeFileSicuro(trattamento.nomeTrattamento)}_$timestamp.pdf',
+    );
+
+    await file.writeAsBytes(await pdf.save());
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('PDF singolo trattamento salvato: ${file.path}')),
+    );
+  }
+
   Future<void> stampaSingoloTrattamento(RegistroTrattamento trattamento) async {
     String valore(String testo) {
       final valorePulito = testo.trim();
@@ -879,6 +1061,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
             OutlinedButton.icon(
               onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop('pdf'),
+              icon: const Icon(Icons.save_alt),
+              label: const Text('PDF'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
                   Navigator.of(context, rootNavigator: true).pop('stampa'),
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('Anteprima'),
@@ -899,6 +1087,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     if (azioneDettaglio == 'modifica') {
       await mostraDialogTrattamento(trattamento: trattamento);
+      return;
+    }
+
+    if (azioneDettaglio == 'pdf') {
+      await esportaPdfSingoloTrattamento(trattamento);
       return;
     }
 

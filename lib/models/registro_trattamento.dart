@@ -1,55 +1,55 @@
-class RegistroTrattamento {
+﻿class RegistroTrattamento {
   final int? id;
   final String nomeTrattamento;
-  final String? finalita;
-  final String? baseGiuridica;
-  final String? categorieInteressati;
-  final String? categorieDati;
-  final String? categorieDestinatari;
-  final String? trasferimentiExtraUe;
-  final String? terminiCancellazione;
-  final String? misureSicurezza;
-  final String? responsabileInterno;
-  final String? note;
+  final String finalita;
+  final String baseGiuridica;
+  final String categorieDati;
+  final String categorieInteressati;
+  final String destinatari;
+  final String trasferimentoExtraUe;
+  final String tempiConservazione;
+  final String misureSicurezza;
+  final String responsabileInterno;
+  final String note;
   final bool attivo;
-  final String createdAt;
-  final String updatedAt;
+  final String? createdAt;
+  final String? updatedAt;
 
   RegistroTrattamento({
     this.id,
     required this.nomeTrattamento,
-    this.finalita,
-    this.baseGiuridica,
-    this.categorieInteressati,
-    this.categorieDati,
-    this.categorieDestinatari,
-    this.trasferimentiExtraUe,
-    this.terminiCancellazione,
-    this.misureSicurezza,
-    this.responsabileInterno,
-    this.note,
+    required this.finalita,
+    required this.baseGiuridica,
+    required this.categorieDati,
+    required this.categorieInteressati,
+    required this.destinatari,
+    required this.trasferimentoExtraUe,
+    required this.tempiConservazione,
+    required this.misureSicurezza,
+    required this.responsabileInterno,
+    required this.note,
     this.attivo = true,
-    required this.createdAt,
-    required this.updatedAt,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory RegistroTrattamento.fromMap(Map<String, dynamic> map) {
     return RegistroTrattamento(
       id: map['id'] as int?,
-      nomeTrattamento: map['nome_trattamento'] as String,
-      finalita: map['finalita'] as String?,
-      baseGiuridica: map['base_giuridica'] as String?,
-      categorieInteressati: map['categorie_interessati'] as String?,
-      categorieDati: map['categorie_dati'] as String?,
-      categorieDestinatari: map['categorie_destinatari'] as String?,
-      trasferimentiExtraUe: map['trasferimenti_extra_ue'] as String?,
-      terminiCancellazione: map['termini_cancellazione'] as String?,
-      misureSicurezza: map['misure_sicurezza'] as String?,
-      responsabileInterno: map['responsabile_interno'] as String?,
-      note: map['note'] as String?,
-      attivo: (map['attivo'] as int? ?? 1) == 1,
-      createdAt: map['created_at'] as String,
-      updatedAt: map['updated_at'] as String,
+      nomeTrattamento: map['nome_trattamento']?.toString() ?? '',
+      finalita: map['finalita']?.toString() ?? '',
+      baseGiuridica: map['base_giuridica']?.toString() ?? '',
+      categorieDati: map['categorie_dati']?.toString() ?? '',
+      categorieInteressati: map['categorie_interessati']?.toString() ?? '',
+      destinatari: map['destinatari']?.toString() ?? '',
+      trasferimentoExtraUe: map['trasferimento_extra_ue']?.toString() ?? '',
+      tempiConservazione: map['tempi_conservazione']?.toString() ?? '',
+      misureSicurezza: map['misure_sicurezza']?.toString() ?? '',
+      responsabileInterno: map['responsabile_interno']?.toString() ?? '',
+      note: map['note']?.toString() ?? '',
+      attivo: map['attivo'] == null ? true : map['attivo'] == 1,
+      createdAt: map['created_at']?.toString(),
+      updatedAt: map['updated_at']?.toString(),
     );
   }
 
@@ -59,11 +59,11 @@ class RegistroTrattamento {
       'nome_trattamento': nomeTrattamento,
       'finalita': finalita,
       'base_giuridica': baseGiuridica,
-      'categorie_interessati': categorieInteressati,
       'categorie_dati': categorieDati,
-      'categorie_destinatari': categorieDestinatari,
-      'trasferimenti_extra_ue': trasferimentiExtraUe,
-      'termini_cancellazione': terminiCancellazione,
+      'categorie_interessati': categorieInteressati,
+      'destinatari': destinatari,
+      'trasferimento_extra_ue': trasferimentoExtraUe,
+      'tempi_conservazione': tempiConservazione,
       'misure_sicurezza': misureSicurezza,
       'responsabile_interno': responsabileInterno,
       'note': note,
@@ -78,11 +78,11 @@ class RegistroTrattamento {
     String? nomeTrattamento,
     String? finalita,
     String? baseGiuridica,
-    String? categorieInteressati,
     String? categorieDati,
-    String? categorieDestinatari,
-    String? trasferimentiExtraUe,
-    String? terminiCancellazione,
+    String? categorieInteressati,
+    String? destinatari,
+    String? trasferimentoExtraUe,
+    String? tempiConservazione,
     String? misureSicurezza,
     String? responsabileInterno,
     String? note,
@@ -95,13 +95,17 @@ class RegistroTrattamento {
       nomeTrattamento: nomeTrattamento ?? this.nomeTrattamento,
       finalita: finalita ?? this.finalita,
       baseGiuridica: baseGiuridica ?? this.baseGiuridica,
-      categorieInteressati: categorieInteressati ?? this.categorieInteressati,
       categorieDati: categorieDati ?? this.categorieDati,
-      categorieDestinatari: categorieDestinatari ?? this.categorieDestinatari,
-      trasferimentiExtraUe: trasferimentiExtraUe ?? this.trasferimentiExtraUe,
-      terminiCancellazione: terminiCancellazione ?? this.terminiCancellazione,
+      categorieInteressati:
+          categorieInteressati ?? this.categorieInteressati,
+      destinatari: destinatari ?? this.destinatari,
+      trasferimentoExtraUe:
+          trasferimentoExtraUe ?? this.trasferimentoExtraUe,
+      tempiConservazione:
+          tempiConservazione ?? this.tempiConservazione,
       misureSicurezza: misureSicurezza ?? this.misureSicurezza,
-      responsabileInterno: responsabileInterno ?? this.responsabileInterno,
+      responsabileInterno:
+          responsabileInterno ?? this.responsabileInterno,
       note: note ?? this.note,
       attivo: attivo ?? this.attivo,
       createdAt: createdAt ?? this.createdAt,

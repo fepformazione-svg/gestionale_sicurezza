@@ -17,17 +17,40 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   List<RegistroTrattamento> trattamenti = [];
 
   String filtroStato = 'tutti';
+  String ricercaRegistro = '';
 
   List<RegistroTrattamento> get trattamentiFiltrati {
+    Iterable<RegistroTrattamento> risultati = trattamenti;
+
     if (filtroStato == 'attivi') {
-      return trattamenti.where((trattamento) => trattamento.attivo).toList();
+      risultati = risultati.where((trattamento) => trattamento.attivo);
+    } else if (filtroStato == 'non_attivi') {
+      risultati = risultati.where((trattamento) => !trattamento.attivo);
     }
 
-    if (filtroStato == 'non_attivi') {
-      return trattamenti.where((trattamento) => !trattamento.attivo).toList();
+    final ricerca = ricercaRegistro.trim().toLowerCase();
+
+    if (ricerca.isNotEmpty) {
+      risultati = risultati.where((trattamento) {
+        final testo = [
+          trattamento.nomeTrattamento,
+          trattamento.finalita,
+          trattamento.categorieInteressati,
+          trattamento.categorieDati,
+          trattamento.baseGiuridica,
+          trattamento.destinatari,
+          trattamento.trasferimentoExtraUe,
+          trattamento.tempiConservazione,
+          trattamento.misureSicurezza,
+          trattamento.responsabileInterno,
+          trattamento.note,
+        ].whereType<String>().join(' ').toLowerCase();
+
+        return testo.contains(ricerca);
+      });
     }
 
-    return trattamenti;
+    return risultati.toList();
   }
 
   @override
@@ -441,6 +464,34 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   ),
                 ),
               ],
+            ),
+
+            const SizedBox(height: 12),
+
+            TextField(
+              decoration: InputDecoration(
+                labelText: 'Cerca nel registro trattamenti',
+                hintText:
+                    'Nome, finalità, base giuridica, dati, responsabile, note...',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: ricercaRegistro.isEmpty
+                    ? null
+                    : IconButton(
+                        tooltip: 'Azzera ricerca',
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          setState(() {
+                            ricercaRegistro = '';
+                          });
+                        },
+                      ),
+                border: const OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  ricercaRegistro = value;
+                });
+              },
             ),
 
             const SizedBox(height: 16),

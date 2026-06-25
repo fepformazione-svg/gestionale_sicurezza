@@ -630,7 +630,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       );
     }
 
-    await showDialog<void>(
+    final apriModifica = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -706,15 +706,24 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
           ),
           actions: [
-            TextButton.icon(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              icon: const Icon(Icons.close),
-              label: const Text('Chiudi'),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop(false),
+              child: const Text('Chiudi'),
+            ),
+            FilledButton.icon(
+              onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop(true),
+              icon: const Icon(Icons.edit),
+              label: const Text('Modifica'),
             ),
           ],
         );
       },
     );
+    if (apriModifica == true && mounted) {
+      await mostraDialogTrattamento(trattamento: trattamento);
+    }
   }
 
   Widget _buildTabella() {

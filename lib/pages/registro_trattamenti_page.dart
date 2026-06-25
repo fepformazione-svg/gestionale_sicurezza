@@ -47,6 +47,74 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
   }
 
+  Future<void> cambiaStatoTrattamento(RegistroTrattamento trattamento) async {
+    final nuovoStatoAttivo = !trattamento.attivo;
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            nuovoStatoAttivo
+                ? 'Riattivare trattamento?'
+                : 'Disattivare trattamento?',
+          ),
+          content: Text(
+            nuovoStatoAttivo
+                ? 'Il trattamento tornerà attivo nel Registro trattamenti.'
+                : 'Il trattamento non verrà cancellato, ma sarà segnato come non attivo.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: Text(nuovoStatoAttivo ? 'Riattiva' : 'Disattiva'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    final trattamentoAggiornato = RegistroTrattamento(
+      id: trattamento.id,
+      nomeTrattamento: trattamento.nomeTrattamento,
+      finalita: trattamento.finalita,
+      categorieInteressati: trattamento.categorieInteressati,
+      categorieDati: trattamento.categorieDati,
+      baseGiuridica: trattamento.baseGiuridica,
+      destinatari: trattamento.destinatari,
+      trasferimentoExtraUe: trattamento.trasferimentoExtraUe,
+      tempiConservazione: trattamento.tempiConservazione,
+      misureSicurezza: trattamento.misureSicurezza,
+      responsabileInterno: trattamento.responsabileInterno,
+      note: trattamento.note,
+      attivo: nuovoStatoAttivo,
+      createdAt: trattamento.createdAt,
+      updatedAt: DateTime.now().toIso8601String(),
+    );
+
+    await AppDatabase.instance.updateRegistroTrattamento(trattamentoAggiornato);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          nuovoStatoAttivo
+              ? 'Trattamento riattivato correttamente.'
+              : 'Trattamento disattivato correttamente.',
+        ),
+      ),
+    );
+
+    await caricaTrattamenti();
+  }
+
   Widget _buildStatoVuoto() {
     return const Center(
       child: Text(
@@ -143,11 +211,30 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     ),
                   ),
                   DataCell(
-                    IconButton(
-                      tooltip: 'Modifica trattamento',
-                      icon: const Icon(Icons.edit_outlined),
-                      onPressed: () =>
-                          mostraDialogTrattamento(trattamento: trattamento),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Modifica trattamento',
+                          icon: const Icon(Icons.edit),
+                          onPressed: () =>
+                              mostraDialogTrattamento(trattamento: trattamento),
+                        ),
+                        IconButton(
+                          tooltip: trattamento.attivo
+                              ? 'Disattiva trattamento'
+                              : 'Riattiva trattamento',
+                          icon: Icon(
+                            trattamento.attivo
+                                ? Icons.visibility_off
+                                : Icons.visibility,
+                          ),
+                          color: trattamento.attivo
+                              ? Colors.orange.shade700
+                              : Colors.green.shade700,
+                          onPressed: () => cambiaStatoTrattamento(trattamento),
+                        ),
+                      ],
                     ),
                   ),
                 ],

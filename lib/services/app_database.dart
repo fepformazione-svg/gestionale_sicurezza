@@ -10,6 +10,7 @@ import '../models/ente_attestato.dart';
 import '../models/registro_presenza.dart';
 import '../models/ruolo_utente.dart';
 import '../models/utente_app.dart';
+import '../models/registro_trattamento.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -45,7 +46,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 3,
+        version: 4,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -458,6 +459,126 @@ class AppDatabase {
         FOREIGN KEY (utente_id) REFERENCES utenti_app (id)
       )
     ''');
+    await _creaTabellaRegistroTrattamenti(db);
+  }
+
+  Future<List<RegistroTrattamento>> getRegistroTrattamenti({
+    String ricerca = '',
+    bool soloAttivi = false,
+  }) async {
+    final db = await database;
+
+    final whereParts = <String>[];
+    final whereArgs = <Object?>[];
+
+    if (soloAttivi) {
+      whereParts.add('attivo = 1');
+    }
+
+    final testoRicerca = ricerca.trim();
+    if (testoRicerca.isNotEmpty) {
+      final like = '%$testoRicerca%';
+
+      whereParts.add('''
+        (
+          nome_trattamento LIKE ? OR
+          finalita LIKE ? OR
+          base_giuridica LIKE ? OR
+          categorie_interessati LIKE ? OR
+          categorie_dati LIKE ? OR
+          categorie_destinatari LIKE ? OR
+          responsabile_interno LIKE ? OR
+          note LIKE ?
+        )
+      ''');
+
+      whereArgs.addAll([like, like, like, like, like, like, like, like]);
+    }
+
+    final maps = await db.query(
+      'registro_trattamenti',
+      where: whereParts.isEmpty ? null : whereParts.join(' AND '),
+      whereArgs: whereArgs.isEmpty ? null : whereArgs,
+      orderBy: 'attivo DESC, nome_trattamento COLLATE NOCASE ASC',
+    );
+
+    return maps.map(RegistroTrattamento.fromMap).toList();
+  }
+
+  Future<RegistroTrattamento?> getRegistroTrattamentoById(int id) async {
+    final db = await database;
+
+    final maps = await db.query(
+      'registro_trattamenti',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+
+    if (maps.isEmpty) {
+      return null;
+    }
+
+    return RegistroTrattamento.fromMap(maps.first);
+  }
+
+  Future<int> insertRegistroTrattamento(RegistroTrattamento trattamento) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    final data = trattamento.copyWith(createdAt: now, updatedAt: now).toMap();
+
+    data.remove('id');
+
+    return db.insert(
+      'registro_trattamenti',
+      data,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> updateRegistroTrattamento(RegistroTrattamento trattamento) async {
+    final db = await database;
+
+    if (trattamento.id == null) {
+      throw ArgumentError('Impossibile aggiornare un trattamento senza id.');
+    }
+
+    final data = trattamento
+        .copyWith(updatedAt: DateTime.now().toIso8601String())
+        .toMap();
+
+    data.remove('id');
+
+    return db.update(
+      'registro_trattamenti',
+      data,
+      where: 'id = ?',
+      whereArgs: [trattamento.id],
+    );
+  }
+
+  Future<int> deleteRegistroTrattamento(int id) async {
+    final db = await database;
+
+    return db.delete('registro_trattamenti', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> cambiaStatoRegistroTrattamento({
+    required int id,
+    required bool attivo,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'registro_trattamenti',
+      {
+        'attivo': attivo ? 1 : 0,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
   }
 
   Future<void> _ensureAllColumns(Database db) async {
@@ -831,6 +952,28 @@ class AppDatabase {
       'descrizione': 'Accesso in sola consultazione',
       'attivo': 1,
     }, conflictAlgorithm: ConflictAlgorithm.ignore);
+  }
+
+  Future<void> _creaTabellaRegistroTrattamenti(Database db) async {
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS registro_trattamenti (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      nome_trattamento TEXT NOT NULL,
+      finalita TEXT,
+      base_giuridica TEXT,
+      categorie_interessati TEXT,
+      categorie_dati TEXT,
+      categorie_destinatari TEXT,
+      trasferimenti_extra_ue TEXT,
+      termini_cancellazione TEXT,
+      misure_sicurezza TEXT,
+      responsabile_interno TEXT,
+      note TEXT,
+      attivo INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  ''');
   }
 
   Future<void> _ensureColumns(

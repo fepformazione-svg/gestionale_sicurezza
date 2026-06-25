@@ -2,11 +2,15 @@
 
 import '../models/registro_trattamento.dart';
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 import 'dart:io';
 
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
 
 class RegistroTrattamentiPage extends StatefulWidget {
   const RegistroTrattamentiPage({super.key});
@@ -173,6 +177,143 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text('Excel esportato: ${file.path}')));
+  }
+
+  Future<void> esportaPdfRegistroTrattamenti() async {
+    final listaDaEsportare = trattamentiFiltrati;
+
+    if (listaDaEsportare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun trattamento da esportare in PDF.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final filtroStatoTesto = switch (filtroStato) {
+      'attivi' => 'Attivi',
+      'non_attivi' => 'Non attivi',
+      _ => 'Tutti',
+    };
+
+    final ricercaTesto = '';
+
+    final infoFiltri = [
+      'Stato: $filtroStatoTesto',
+      if (ricercaTesto.isNotEmpty) 'Ricerca: $ricercaTesto',
+      'Record esportati: ${listaDaEsportare.length}',
+    ].join(' | ');
+
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Registro trattamenti',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Registro dei trattamenti - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(infoFiltri, style: const pw.TextStyle(fontSize: 9)),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 8,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.topLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.all(4),
+              headers: const [
+                'Stato',
+                'Nome trattamento',
+                'Finalità',
+                'Categorie interessati',
+                'Categorie dati',
+                'Base giuridica',
+                'Destinatari',
+                'Extra UE',
+                'Conservazione',
+                'Responsabile',
+              ],
+              data: listaDaEsportare.map((trattamento) {
+                return [
+                  trattamento.attivo ? 'Attivo' : 'Non attivo',
+                  trattamento.nomeTrattamento,
+                  trattamento.finalita,
+                  trattamento.categorieInteressati,
+                  trattamento.categorieDati,
+                  trattamento.baseGiuridica,
+                  trattamento.destinatari,
+                  trattamento.trasferimentoExtraUe,
+                  trattamento.tempiConservazione,
+                  trattamento.responsabileInterno,
+                ];
+              }).toList(),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directoryDocumenti = await getApplicationDocumentsDirectory();
+    final directoryExport = Directory(
+      '${directoryDocumenti.path}${Platform.pathSeparator}Gestionale Sicurezza${Platform.pathSeparator}Export',
+    );
+
+    if (!await directoryExport.exists()) {
+      await directoryExport.create(recursive: true);
+    }
+
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+    final file = File(
+      '${directoryExport.path}${Platform.pathSeparator}registro_trattamenti_$timestamp.pdf',
+    );
+
+    await file.writeAsBytes(await pdf.save());
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('PDF esportato: ${file.path}'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   @override
@@ -515,6 +656,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               onPressed: esportaExcelRegistroTrattamenti,
               icon: const Icon(Icons.file_download_outlined, size: 18),
               label: const Text('Excel'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: OutlinedButton.icon(
+              onPressed: esportaPdfRegistroTrattamenti,
+              icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
+              label: const Text('PDF'),
             ),
           ),
           IconButton(

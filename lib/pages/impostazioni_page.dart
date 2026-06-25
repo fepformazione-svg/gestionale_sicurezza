@@ -8,9 +8,47 @@ import 'attrezzature_page.dart';
 import 'enti_attestati_page.dart';
 import 'privacy_gdpr_page.dart';
 import 'utenti_ruoli_page.dart';
+import 'login_page.dart';
+
+import '../services/app_database.dart';
+import '../services/sessione_utente_service.dart';
 
 class ImpostazioniPage extends StatelessWidget {
   const ImpostazioniPage({super.key});
+
+  Future<void> apriUtentiRuoliSeAutorizzato(BuildContext context) async {
+    final sessione = SessioneUtenteService.instance;
+
+    if (!sessione.utenteLoggato) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+      );
+
+      if (!context.mounted) return;
+    }
+
+    final ruoli = await AppDatabase.instance.getRuoliUtenti(soloAttivi: false);
+
+    final autorizzato = SessioneUtenteService.instance.puoGestireUtenti(ruoli);
+
+    if (!context.mounted) return;
+
+    if (!autorizzato) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.orange,
+          content: Text('Area riservata agli utenti con ruolo Amministratore.'),
+        ),
+      );
+      return;
+    }
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const UtentiRuoliPage()),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -128,12 +166,7 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Utenti e Ruoli',
             descrizione:
                 'Gestione utenti, ruoli, accessi e tracciamento operazioni.',
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const UtentiRuoliPage()),
-              );
-            },
+            onTap: () => apriUtentiRuoliSeAutorizzato(context),
           ),
           SizedBox(height: 12),
           _SezioneImpostazioniCard(

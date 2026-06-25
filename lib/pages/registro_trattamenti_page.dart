@@ -1028,7 +1028,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
       return;
     }
 
-    Navigator.of(context).pop(
+    Navigator.of(context, rootNavigator: true).pop(
       _NuovoTrattamentoDialogResult(
         nome: _nomeController.text.trim(),
         finalita: _finalitaController.text.trim(),
@@ -1045,126 +1045,206 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isModifica = widget.trattamento != null;
+    final screenSize = MediaQuery.of(context).size;
+
+    Widget titoloSezione(String testo, IconData icona) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          children: [
+            Icon(icona, size: 18, color: Colors.blueGrey.shade700),
+            const SizedBox(width: 8),
+            Text(
+              testo,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.blueGrey.shade800,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget campoTesto({
+      required TextEditingController controller,
+      required String label,
+      String? hintText,
+      String? errorText,
+      int minLines = 1,
+      int maxLines = 1,
+    }) {
+      return TextField(
+        controller: controller,
+        minLines: minLines,
+        maxLines: maxLines,
+        textInputAction: maxLines > 1
+            ? TextInputAction.newline
+            : TextInputAction.next,
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hintText,
+          errorText: errorText,
+          border: const OutlineInputBorder(),
+          isDense: true,
+          filled: true,
+          fillColor: Colors.grey.shade50,
+        ),
+      );
+    }
+
+    Widget rigaDoppia({required Widget primo, required Widget secondo}) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          if (constraints.maxWidth < 760) {
+            return Column(
+              children: [primo, const SizedBox(height: 12), secondo],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(child: primo),
+              const SizedBox(width: 12),
+              Expanded(child: secondo),
+            ],
+          );
+        },
+      );
+    }
+
     return AlertDialog(
-      title: Text(
-        widget.trattamento == null
-            ? 'Nuovo trattamento'
-            : 'Modifica trattamento',
+      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
+      contentPadding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+      title: Row(
+        children: [
+          Icon(
+            isModifica ? Icons.edit_note : Icons.playlist_add,
+            color: Colors.blueGrey.shade700,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              isModifica ? 'Modifica trattamento' : 'Nuovo trattamento',
+            ),
+          ),
+        ],
       ),
       content: SizedBox(
-        width: 640,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: _nomeController,
-                decoration: InputDecoration(
-                  labelText: 'Nome trattamento *',
-                  border: const OutlineInputBorder(),
+        width: 900,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxHeight: screenSize.height * 0.78),
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                titoloSezione('Dati principali', Icons.assignment_outlined),
+                campoTesto(
+                  controller: _nomeController,
+                  label: 'Nome trattamento *',
                   errorText: _erroreNome,
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _finalitaController,
-                decoration: InputDecoration(
-                  labelText: 'Finalità *',
-                  border: const OutlineInputBorder(),
+                const SizedBox(height: 12),
+                campoTesto(
+                  controller: _finalitaController,
+                  label: 'Finalità *',
                   errorText: _erroreFinalita,
+                  minLines: 3,
+                  maxLines: 5,
                 ),
-                minLines: 2,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _baseGiuridicaController,
-                decoration: const InputDecoration(
-                  labelText: 'Base giuridica',
-                  border: OutlineInputBorder(),
+                const SizedBox(height: 18),
+
+                titoloSezione('Inquadramento GDPR', Icons.gavel_outlined),
+                rigaDoppia(
+                  primo: campoTesto(
+                    controller: _baseGiuridicaController,
+                    label: 'Base giuridica',
+                    hintText: 'Es. obbligo di legge, contratto, consenso',
+                    minLines: 2,
+                    maxLines: 3,
+                  ),
+                  secondo: campoTesto(
+                    controller: _conservazioneController,
+                    label: 'Tempi di conservazione',
+                    hintText: 'Es. 10 anni, obblighi di legge',
+                    minLines: 2,
+                    maxLines: 3,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _categorieInteressatiController,
-                decoration: const InputDecoration(
-                  labelText: 'Categorie interessati',
-                  border: OutlineInputBorder(),
-                  hintText:
-                      'Es. discenti, lavoratori, imprese clienti, docenti',
+                const SizedBox(height: 18),
+
+                titoloSezione(
+                  'Interessati e dati trattati',
+                  Icons.groups_outlined,
                 ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _categorieDatiController,
-                decoration: const InputDecoration(
-                  labelText: 'Categorie dati personali',
-                  border: OutlineInputBorder(),
-                  hintText:
-                      'Es. dati anagrafici, contatti, attestati, idoneità sanitarie',
+                rigaDoppia(
+                  primo: campoTesto(
+                    controller: _categorieInteressatiController,
+                    label: 'Categorie interessati',
+                    hintText:
+                        'Es. discenti, lavoratori, imprese clienti, docenti',
+                    minLines: 2,
+                    maxLines: 4,
+                  ),
+                  secondo: campoTesto(
+                    controller: _categorieDatiController,
+                    label: 'Categorie dati personali',
+                    hintText: 'Es. dati anagrafici, contatti, attestati',
+                    minLines: 2,
+                    maxLines: 4,
+                  ),
                 ),
-                minLines: 2,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _destinatariController,
-                decoration: const InputDecoration(
-                  labelText: 'Destinatari / categorie destinatari',
-                  border: OutlineInputBorder(),
-                  hintText:
-                      'Es. enti attestati, consulenti, medico competente, software house',
+                const SizedBox(height: 18),
+
+                titoloSezione(
+                  'Destinatari e sicurezza',
+                  Icons.security_outlined,
                 ),
-                minLines: 1,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _conservazioneController,
-                decoration: const InputDecoration(
-                  labelText: 'Tempi di conservazione',
-                  border: OutlineInputBorder(),
-                  hintText:
-                      'Es. 10 anni, durata rapporto contrattuale, obblighi di legge',
+                rigaDoppia(
+                  primo: campoTesto(
+                    controller: _destinatariController,
+                    label: 'Destinatari / categorie destinatari',
+                    hintText:
+                        'Es. enti attestati, consulenti, medico competente',
+                    minLines: 2,
+                    maxLines: 4,
+                  ),
+                  secondo: campoTesto(
+                    controller: _misureSicurezzaController,
+                    label: 'Misure di sicurezza',
+                    hintText: 'Es. accessi profilati, backup, antivirus',
+                    minLines: 2,
+                    maxLines: 4,
+                  ),
                 ),
-                minLines: 1,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _misureSicurezzaController,
-                decoration: const InputDecoration(
-                  labelText: 'Misure di sicurezza',
-                  border: OutlineInputBorder(),
-                  hintText:
-                      'Es. accessi profilati, backup, antivirus, cifratura, armadi chiusi',
+                const SizedBox(height: 18),
+
+                titoloSezione('Annotazioni interne', Icons.notes_outlined),
+                campoTesto(
+                  controller: _noteController,
+                  label: 'Note',
+                  minLines: 3,
+                  maxLines: 5,
                 ),
-                minLines: 2,
-                maxLines: 4,
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: _noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Note',
-                  border: OutlineInputBorder(),
-                ),
-                minLines: 2,
-                maxLines: 4,
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
       actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(false),
-          child: const Text('Annulla'),
+        TextButton.icon(
+          onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
+          icon: const Icon(Icons.close),
+          label: const Text('Annulla'),
         ),
         ElevatedButton.icon(
           onPressed: _salva,
           icon: const Icon(Icons.save),
-          label: Text(widget.trattamento == null ? 'Salva' : 'Salva modifiche'),
+          label: Text(isModifica ? 'Salva modifiche' : 'Salva'),
         ),
       ],
     );

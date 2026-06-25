@@ -1090,14 +1090,66 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                     ),
                     const SizedBox(width: 8),
                     Expanded(
-                      child: Text(
-                        testoUtenteCorrente,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: SessioneUtenteService.instance.utenteLoggato
-                              ? Colors.green.shade800
-                              : Colors.grey.shade700,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            testoUtenteCorrente,
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  SessioneUtenteService.instance.utenteLoggato
+                                  ? Colors.green.shade800
+                                  : Colors.grey.shade700,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color:
+                                  !SessioneUtenteService.instance.utenteLoggato
+                                  ? Colors.grey.shade100
+                                  : puoGestireUtenti
+                                  ? Colors.green.shade50
+                                  : Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(999),
+                              border: Border.all(
+                                color:
+                                    !SessioneUtenteService
+                                        .instance
+                                        .utenteLoggato
+                                    ? Colors.grey.shade400
+                                    : puoGestireUtenti
+                                    ? Colors.green.shade400
+                                    : Colors.orange.shade400,
+                              ),
+                            ),
+                            child: Text(
+                              !SessioneUtenteService.instance.utenteLoggato
+                                  ? 'Nessuna sessione attiva'
+                                  : puoGestireUtenti
+                                  ? 'Gestione abilitata'
+                                  : 'Sola consultazione',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color:
+                                    !SessioneUtenteService
+                                        .instance
+                                        .utenteLoggato
+                                    ? Colors.grey.shade700
+                                    : puoGestireUtenti
+                                    ? Colors.green.shade800
+                                    : Colors.orange.shade800,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                     if (SessioneUtenteService.instance.utenteLoggato) ...[

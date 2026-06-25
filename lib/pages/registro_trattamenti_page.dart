@@ -858,7 +858,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     final risultato = await showDialog<_NuovoTrattamentoDialogResult>(
       context: context,
       builder: (dialogContext) {
-        return _NuovoTrattamentoDialog(trattamento: trattamento);
+        return _NuovoTrattamentoDialog(
+          trattamento: trattamento,
+          duplica: isDuplicazione,
+        );
       },
     );
 
@@ -1114,9 +1117,10 @@ class _NuovoTrattamentoDialogResult {
 }
 
 class _NuovoTrattamentoDialog extends StatefulWidget {
-  const _NuovoTrattamentoDialog({this.trattamento});
-
   final RegistroTrattamento? trattamento;
+  final bool duplica;
+
+  const _NuovoTrattamentoDialog({this.trattamento, this.duplica = false});
 
   @override
   State<_NuovoTrattamentoDialog> createState() =>
@@ -1155,7 +1159,9 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
       return;
     }
 
-    _nomeController.text = trattamento.nomeTrattamento;
+    _nomeController.text = widget.duplica
+        ? 'Copia di ${trattamento.nomeTrattamento}'
+        : trattamento.nomeTrattamento;
     _finalitaController.text = trattamento.finalita;
     _baseGiuridicaController.text = trattamento.baseGiuridica;
     _categorieInteressatiController.text = trattamento.categorieInteressati;
@@ -1301,7 +1307,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isModifica ? 'Modifica trattamento' : 'Nuovo trattamento',
+              widget.duplica
+                  ? 'Duplica trattamento'
+                  : isModifica
+                  ? 'Modifica trattamento'
+                  : 'Nuovo trattamento',
             ),
           ),
         ],

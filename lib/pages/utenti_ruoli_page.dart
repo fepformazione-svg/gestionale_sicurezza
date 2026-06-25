@@ -347,6 +347,11 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
   }
 
   Future<void> mostraDialogUtente({UtenteApp? utente}) async {
+    if (!puoGestireUtenti) {
+      mostraPermessoNegatoGestioneUtenti();
+      return;
+    }
+
     final isModifica = utente != null;
 
     final nomeController = TextEditingController(text: utente?.nome ?? '');
@@ -735,6 +740,21 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     return 'Utente corrente: ${sessione.nomeVisualizzato}';
   }
 
+  bool get puoGestireUtenti {
+    return SessioneUtenteService.instance.puoGestireUtenti(ruoli);
+  }
+
+  void mostraPermessoNegatoGestioneUtenti() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Colors.orange,
+        content: Text(
+          'Operazione riservata agli utenti con ruolo Amministratore.',
+        ),
+      ),
+    );
+  }
+
   void logoutUtenteCorrente() {
     final nomeUtente = SessioneUtenteService.instance.nomeVisualizzato;
 
@@ -955,9 +975,16 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                       ),
                       DataCell(
                         IconButton(
-                          tooltip: 'Modifica utente',
-                          icon: const Icon(Icons.edit),
-                          onPressed: () => mostraDialogUtente(utente: utente),
+                          tooltip: puoGestireUtenti
+                              ? 'Modifica utente'
+                              : 'Modifica riservata agli amministratori',
+                          icon: Icon(
+                            Icons.edit,
+                            color: puoGestireUtenti ? null : Colors.grey,
+                          ),
+                          onPressed: puoGestireUtenti
+                              ? () => mostraDialogUtente(utente: utente)
+                              : mostraPermessoNegatoGestioneUtenti,
                         ),
                       ),
                     ],
@@ -1011,7 +1038,9 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
             child: ElevatedButton.icon(
               icon: const Icon(Icons.person_add),
               label: const Text('Nuovo utente'),
-              onPressed: () => mostraDialogUtente(),
+              onPressed: puoGestireUtenti
+                  ? () => mostraDialogUtente()
+                  : mostraPermessoNegatoGestioneUtenti,
             ),
           ),
           const SizedBox(width: 8),

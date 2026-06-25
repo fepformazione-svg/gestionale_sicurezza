@@ -65,6 +65,73 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     return risultati.toList();
   }
 
+  DateTime? parseDataRevisioneRegistro(String? valore) {
+    if (valore == null || valore.trim().isEmpty) {
+      return null;
+    }
+
+    final testo = valore.trim();
+
+    final parti = testo.split('/');
+    if (parti.length == 3) {
+      final giorno = int.tryParse(parti[0]);
+      final mese = int.tryParse(parti[1]);
+      final anno = int.tryParse(parti[2]);
+
+      if (giorno != null && mese != null && anno != null) {
+        return DateTime(anno, mese, giorno);
+      }
+    }
+
+    return DateTime.tryParse(testo);
+  }
+
+  String statoRevisioneTrattamento(RegistroTrattamento trattamento) {
+    final dataRevisione = trattamento.dataRevisione;
+
+    if (dataRevisione == null || dataRevisione.trim().isEmpty) {
+      return 'Non impostata';
+    }
+
+    final data = parseDataRevisioneRegistro(dataRevisione);
+
+    if (data == null) {
+      return 'Da verificare';
+    }
+
+    final oggi = DateTime.now();
+    final oggiSoloData = DateTime(oggi.year, oggi.month, oggi.day);
+    final revisioneSoloData = DateTime(data.year, data.month, data.day);
+
+    final giorniResidui = revisioneSoloData.difference(oggiSoloData).inDays;
+
+    if (giorniResidui < 0) {
+      return 'Scaduta';
+    }
+
+    if (giorniResidui <= 30) {
+      return 'In scadenza';
+    }
+
+    return 'Programmata';
+  }
+
+  Color coloreStatoRevisione(String stato) {
+    switch (stato) {
+      case 'Scaduta':
+        return Colors.red.shade700;
+      case 'In scadenza':
+        return Colors.orange.shade700;
+      case 'Programmata':
+        return Colors.green.shade700;
+      case 'Da verificare':
+        return Colors.blueGrey.shade700;
+      case 'Non impostata':
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
   Future<void> esportaExcelRegistroTrattamenti() async {
     final datiDaEsportare = trattamentiFiltrati;
 
@@ -987,6 +1054,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             DataColumn(label: Text('Trattamento')),
             DataColumn(label: Text('Azioni')),
             DataColumn(label: Text('Data revisione')),
+            DataColumn(label: Text('Stato revisione')),
             DataColumn(label: Text('Finalità')),
             DataColumn(label: Text('Base giuridica')),
             DataColumn(label: Text('Categorie dati')),
@@ -1049,6 +1117,25 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   SizedBox(
                     width: 130,
                     child: Text(trattamento.dataRevisione ?? ''),
+                  ),
+                ),
+                DataCell(
+                  Builder(
+                    builder: (context) {
+                      final stato = statoRevisioneTrattamento(trattamento);
+
+                      return Chip(
+                        label: Text(
+                          stato,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                        backgroundColor: coloreStatoRevisione(stato),
+                        visualDensity: VisualDensity.compact,
+                      );
+                    },
                   ),
                 ),
                 DataCell(

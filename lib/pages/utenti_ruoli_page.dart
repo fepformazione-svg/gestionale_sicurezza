@@ -743,10 +743,10 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
         : ruoloCorrente;
 
     final testoPermesso = puoGestireUtenti
-        ? 'gestione utenti consentita'
-        : 'gestione utenti non consentita';
+        ? 'Gestione utenti e ruoli abilitata'
+        : 'Area in sola consultazione: gestione riservata agli amministratori';
 
-    return 'Utente corrente: ${sessione.nomeVisualizzato} • Ruolo: $testoRuolo • Permessi: $testoPermesso';
+    return 'Utente corrente: ${sessione.nomeVisualizzato} • Ruolo: $testoRuolo • $testoPermesso';
   }
 
   bool get puoGestireUtenti {

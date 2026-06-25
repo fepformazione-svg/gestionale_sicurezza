@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 class RegistroTrattamentiPage extends StatefulWidget {
   const RegistroTrattamentiPage({super.key});
@@ -587,6 +588,159 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
   }
 
+  Future<void> stampaSingoloTrattamento(RegistroTrattamento trattamento) async {
+    String valore(String testo) {
+      final valorePulito = testo.trim();
+      return valorePulito.isEmpty ? '-' : valorePulito;
+    }
+
+    pw.Widget rigaDettaglioPdf(String etichetta, String contenuto) {
+      return pw.Padding(
+        padding: const pw.EdgeInsets.only(bottom: 6),
+        child: pw.Row(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.SizedBox(
+              width: 150,
+              child: pw.Text(
+                etichetta,
+                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+              ),
+            ),
+            pw.Expanded(child: pw.Text(valore(contenuto))),
+          ],
+        ),
+      );
+    }
+
+    pw.Widget sezionePdf(String titolo, List<pw.Widget> righe) {
+      return pw.Container(
+        margin: const pw.EdgeInsets.only(bottom: 14),
+        padding: const pw.EdgeInsets.all(10),
+        decoration: pw.BoxDecoration(
+          border: pw.Border.all(color: PdfColors.grey400),
+          borderRadius: pw.BorderRadius.circular(6),
+        ),
+        child: pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            pw.Text(
+              titolo,
+              style: pw.TextStyle(
+                fontSize: 13,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            ...righe,
+          ],
+        ),
+      );
+    }
+
+    final pdf = pw.Document();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.Text(
+              'Registro dei trattamenti',
+              style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 4),
+            pw.Text(
+              'Dettaglio singolo trattamento',
+              style: const pw.TextStyle(fontSize: 12, color: PdfColors.grey700),
+            ),
+            pw.SizedBox(height: 18),
+
+            sezionePdf('Dati principali', [
+              rigaDettaglioPdf('Nome trattamento', trattamento.nomeTrattamento),
+              rigaDettaglioPdf(
+                'Stato',
+                trattamento.attivo ? 'Attivo' : 'Non attivo',
+              ),
+              rigaDettaglioPdf(
+                'Responsabile interno',
+                trattamento.responsabileInterno,
+              ),
+            ]),
+
+            sezionePdf('Inquadramento GDPR', [
+              rigaDettaglioPdf('Finalità', trattamento.finalita),
+              rigaDettaglioPdf('Base giuridica', trattamento.baseGiuridica),
+              rigaDettaglioPdf(
+                'Tempi di conservazione',
+                trattamento.tempiConservazione,
+              ),
+            ]),
+
+            sezionePdf('Interessati e dati trattati', [
+              rigaDettaglioPdf(
+                'Categorie interessati',
+                trattamento.categorieInteressati,
+              ),
+              rigaDettaglioPdf('Categorie dati', trattamento.categorieDati),
+            ]),
+
+            sezionePdf('Destinatari e sicurezza', [
+              rigaDettaglioPdf('Destinatari', trattamento.destinatari),
+              rigaDettaglioPdf(
+                'Trasferimento extra UE',
+                trattamento.trasferimentoExtraUe,
+              ),
+              rigaDettaglioPdf(
+                'Misure di sicurezza',
+                trattamento.misureSicurezza,
+              ),
+            ]),
+
+            sezionePdf('Annotazioni interne', [
+              rigaDettaglioPdf('Note', trattamento.note),
+            ]),
+          ];
+        },
+      ),
+    );
+
+    final bytes = await pdf.save();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (context) {
+          return Scaffold(
+            appBar: AppBar(title: const Text('Anteprima trattamento')),
+            body: PdfPreview(
+              build: (format) async => bytes,
+              allowPrinting: false,
+              allowSharing: false,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              canDebug: false,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   Future<void> mostraDettaglioTrattamento(
     RegistroTrattamento trattamento,
   ) async {
@@ -630,7 +784,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       );
     }
 
-    final apriModifica = await showDialog<bool>(
+    final azioneDettaglio = await showDialog<String>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
@@ -707,13 +861,18 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context, rootNavigator: true).pop(false),
+              onPressed: () => Navigator.of(context, rootNavigator: true).pop(),
               child: const Text('Chiudi'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop('stampa'),
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('Anteprima'),
             ),
             FilledButton.icon(
               onPressed: () =>
-                  Navigator.of(context, rootNavigator: true).pop(true),
+                  Navigator.of(context, rootNavigator: true).pop('modifica'),
               icon: const Icon(Icons.edit),
               label: const Text('Modifica'),
             ),
@@ -721,8 +880,17 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         );
       },
     );
-    if (apriModifica == true && mounted) {
+    if (!mounted) {
+      return;
+    }
+
+    if (azioneDettaglio == 'modifica') {
       await mostraDialogTrattamento(trattamento: trattamento);
+      return;
+    }
+
+    if (azioneDettaglio == 'stampa') {
+      await stampaSingoloTrattamento(trattamento);
     }
   }
 

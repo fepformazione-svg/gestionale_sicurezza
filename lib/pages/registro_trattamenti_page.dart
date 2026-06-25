@@ -86,6 +86,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     final intestazioni = [
       'Nome trattamento',
+      'Data revisione',
       'Finalità',
       'Categorie interessati',
       'Categorie dati',
@@ -112,6 +113,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
       final valori = [
         trattamento.nomeTrattamento,
+        trattamento.dataRevisione ?? '',
         trattamento.finalita,
         trattamento.categorieInteressati,
         trattamento.categorieDati,
@@ -264,6 +266,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               headers: const [
                 'Stato',
                 'Nome trattamento',
+                'Data revisione',
                 'Finalità',
                 'Categorie interessati',
                 'Categorie dati',
@@ -277,6 +280,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 return [
                   trattamento.attivo ? 'Attivo' : 'Non attivo',
                   trattamento.nomeTrattamento,
+                  trattamento.dataRevisione ?? '',
                   trattamento.finalita,
                   trattamento.categorieInteressati,
                   trattamento.categorieDati,
@@ -398,6 +402,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               headers: const [
                 'Stato',
                 'Nome trattamento',
+                'Data revisione',
                 'Finalità',
                 'Categorie interessati',
                 'Categorie dati',
@@ -411,6 +416,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 return [
                   trattamento.attivo ? 'Attivo' : 'Non attivo',
                   trattamento.nomeTrattamento,
+                  trattamento.dataRevisione ?? '',
                   trattamento.finalita,
                   trattamento.categorieInteressati,
                   trattamento.categorieDati,

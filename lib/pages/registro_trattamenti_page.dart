@@ -102,6 +102,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               DataColumn(label: Text('Categorie dati')),
               DataColumn(label: Text('Conservazione')),
               DataColumn(label: Text('Stato')),
+              DataColumn(label: Text('Azioni')),
             ],
             rows: trattamenti.map((trattamento) {
               return DataRow(
@@ -141,6 +142,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                           : Colors.grey.shade300,
                     ),
                   ),
+                  DataCell(
+                    IconButton(
+                      tooltip: 'Modifica trattamento',
+                      icon: const Icon(Icons.edit_outlined),
+                      onPressed: () =>
+                          mostraDialogTrattamento(trattamento: trattamento),
+                    ),
+                  ),
                 ],
               );
             }).toList(),
@@ -166,11 +175,15 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     return _buildTabella();
   }
 
-  Future<void> _mostraDialogNuovoTrattamento() async {
+  Future<void> mostraDialogTrattamento({
+    RegistroTrattamento? trattamento,
+  }) async {
+    final isModifica = trattamento != null;
+
     final risultato = await showDialog<_NuovoTrattamentoDialogResult>(
       context: context,
       builder: (dialogContext) {
-        return const _NuovoTrattamentoDialog();
+        return _NuovoTrattamentoDialog(trattamento: trattamento);
       },
     );
 
@@ -179,22 +192,33 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
 
     try {
-      final trattamento = RegistroTrattamento(
+      final trattamentoDaSalvare = RegistroTrattamento(
+        id: trattamento?.id,
         nomeTrattamento: risultato.nome,
         finalita: risultato.finalita,
         baseGiuridica: risultato.baseGiuridica,
         categorieDati: risultato.categorieDati,
         categorieInteressati: risultato.categorieInteressati,
         destinatari: risultato.destinatari,
-        trasferimentoExtraUe: '',
+        trasferimentoExtraUe: trattamento?.trasferimentoExtraUe ?? '',
         tempiConservazione: risultato.conservazione,
         misureSicurezza: risultato.misureSicurezza,
-        responsabileInterno: '',
+        responsabileInterno: trattamento?.responsabileInterno ?? '',
         note: risultato.note,
-        attivo: true,
+        attivo: trattamento?.attivo ?? true,
+        createdAt: trattamento?.createdAt ?? DateTime.now().toIso8601String(),
+        updatedAt: DateTime.now().toIso8601String(),
       );
 
-      await AppDatabase.instance.insertRegistroTrattamento(trattamento);
+      if (isModifica) {
+        await AppDatabase.instance.updateRegistroTrattamento(
+          trattamentoDaSalvare,
+        );
+      } else {
+        await AppDatabase.instance.insertRegistroTrattamento(
+          trattamentoDaSalvare,
+        );
+      }
 
       if (!mounted) {
         return;
@@ -209,7 +233,9 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Trattamento "${risultato.nome}" salvato nel registro.',
+            isModifica
+                ? 'Trattamento "${risultato.nome}" modificato.'
+                : 'Trattamento "${risultato.nome}" salvato nel registro.',
           ),
         ),
       );
@@ -221,7 +247,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           backgroundColor: Colors.red.shade700,
-          content: Text('Errore durante il salvataggio del trattamento: $e'),
+          content: Text(
+            isModifica
+                ? 'Errore durante la modifica del trattamento: $e'
+                : 'Errore durante il salvataggio del trattamento: $e',
+          ),
         ),
       );
     }
@@ -269,7 +299,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: _mostraDialogNuovoTrattamento,
+        onPressed: () => mostraDialogTrattamento(),
         icon: const Icon(Icons.add),
         label: const Text('Nuovo trattamento'),
       ),
@@ -302,7 +332,9 @@ class _NuovoTrattamentoDialogResult {
 }
 
 class _NuovoTrattamentoDialog extends StatefulWidget {
-  const _NuovoTrattamentoDialog();
+  const _NuovoTrattamentoDialog({this.trattamento});
+
+  final RegistroTrattamento? trattamento;
 
   @override
   State<_NuovoTrattamentoDialog> createState() =>
@@ -327,6 +359,26 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
 
   String? _erroreNome;
   String? _erroreFinalita;
+
+  @override
+  void initState() {
+    super.initState();
+
+    final trattamento = widget.trattamento;
+    if (trattamento == null) {
+      return;
+    }
+
+    _nomeController.text = trattamento.nomeTrattamento;
+    _finalitaController.text = trattamento.finalita;
+    _baseGiuridicaController.text = trattamento.baseGiuridica;
+    _categorieInteressatiController.text = trattamento.categorieInteressati;
+    _categorieDatiController.text = trattamento.categorieDati;
+    _destinatariController.text = trattamento.destinatari;
+    _conservazioneController.text = trattamento.tempiConservazione;
+    _misureSicurezzaController.text = trattamento.misureSicurezza;
+    _noteController.text = trattamento.note;
+  }
 
   @override
   void dispose() {
@@ -375,7 +427,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Nuovo trattamento'),
+      title: Text(
+        widget.trattamento == null
+            ? 'Nuovo trattamento'
+            : 'Modifica trattamento',
+      ),
       content: SizedBox(
         width: 640,
         child: SingleChildScrollView(
@@ -488,8 +544,8 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
         ),
         ElevatedButton.icon(
           onPressed: _salva,
-          icon: const Icon(Icons.check),
-          label: const Text('Salva'),
+          icon: const Icon(Icons.save),
+          label: Text(widget.trattamento == null ? 'Salva' : 'Salva modifiche'),
         ),
       ],
     );

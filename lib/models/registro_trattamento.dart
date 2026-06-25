@@ -12,6 +12,7 @@
   final String responsabileInterno;
   final String note;
   final bool attivo;
+  final String? dataRevisione;
   final String? createdAt;
   final String? updatedAt;
 
@@ -29,6 +30,7 @@
     required this.responsabileInterno,
     required this.note,
     this.attivo = true,
+    this.dataRevisione,
     this.createdAt,
     this.updatedAt,
   });
@@ -48,6 +50,7 @@
       responsabileInterno: map['responsabile_interno']?.toString() ?? '',
       note: map['note']?.toString() ?? '',
       attivo: map['attivo'] == null ? true : map['attivo'] == 1,
+      dataRevisione: map['data_revisione']?.toString(),
       createdAt: map['created_at']?.toString(),
       updatedAt: map['updated_at']?.toString(),
     );
@@ -68,6 +71,7 @@
       'responsabile_interno': responsabileInterno,
       'note': note,
       'attivo': attivo ? 1 : 0,
+      'data_revisione': dataRevisione,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -87,6 +91,7 @@
     String? responsabileInterno,
     String? note,
     bool? attivo,
+    String? dataRevisione,
     String? createdAt,
     String? updatedAt,
   }) {
@@ -96,18 +101,15 @@
       finalita: finalita ?? this.finalita,
       baseGiuridica: baseGiuridica ?? this.baseGiuridica,
       categorieDati: categorieDati ?? this.categorieDati,
-      categorieInteressati:
-          categorieInteressati ?? this.categorieInteressati,
+      categorieInteressati: categorieInteressati ?? this.categorieInteressati,
       destinatari: destinatari ?? this.destinatari,
-      trasferimentoExtraUe:
-          trasferimentoExtraUe ?? this.trasferimentoExtraUe,
-      tempiConservazione:
-          tempiConservazione ?? this.tempiConservazione,
+      trasferimentoExtraUe: trasferimentoExtraUe ?? this.trasferimentoExtraUe,
+      tempiConservazione: tempiConservazione ?? this.tempiConservazione,
       misureSicurezza: misureSicurezza ?? this.misureSicurezza,
-      responsabileInterno:
-          responsabileInterno ?? this.responsabileInterno,
+      responsabileInterno: responsabileInterno ?? this.responsabileInterno,
       note: note ?? this.note,
       attivo: attivo ?? this.attivo,
+      dataRevisione: dataRevisione ?? this.dataRevisione,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );

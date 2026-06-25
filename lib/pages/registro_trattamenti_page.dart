@@ -23,6 +23,7 @@ class RegistroTrattamentiPage extends StatefulWidget {
 }
 
 class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
+  final ScrollController _tabellaOrizzontaleController = ScrollController();
   bool caricamento = true;
   String? errore;
   List<RegistroTrattamento> trattamenti = [];
@@ -527,6 +528,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       responsabileInterno: trattamento.responsabileInterno,
       note: trattamento.note,
       attivo: nuovoStatoAttivo,
+      dataRevisione: trattamento.dataRevisione,
       createdAt: trattamento.createdAt,
       updatedAt: DateTime.now().toIso8601String(),
     );
@@ -874,6 +876,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     trattamento.tempiConservazione,
                   ),
                   rigaDettaglio(
+                    'Data revisione',
+                    trattamento.dataRevisione ?? '',
+                  ),
+                  rigaDettaglio(
                     'Trasferimento extra UE',
                     trattamento.trasferimentoExtraUe,
                   ),
@@ -962,105 +968,110 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Widget _buildTabella() {
     return Scrollbar(
+      controller: _tabellaOrizzontaleController,
       thumbVisibility: true,
+      interactive: true,
+      scrollbarOrientation: ScrollbarOrientation.bottom,
       child: SingleChildScrollView(
+        controller: _tabellaOrizzontaleController,
         scrollDirection: Axis.horizontal,
-        child: SingleChildScrollView(
-          child: DataTable(
-            columns: const [
-              DataColumn(label: Text('Trattamento')),
-              DataColumn(label: Text('Azioni')),
-              DataColumn(label: Text('Finalità')),
-              DataColumn(label: Text('Base giuridica')),
-              DataColumn(label: Text('Categorie dati')),
-              DataColumn(label: Text('Conservazione')),
-              DataColumn(label: Text('Stato')),
-            ],
-            rows: trattamentiFiltrati.map((trattamento) {
-              return DataRow(
-                cells: [
-                  DataCell(
-                    SizedBox(
-                      width: 220,
-                      child: Text(trattamento.nomeTrattamento),
-                    ),
+        primary: false,
+        child: DataTable(
+          columns: const [
+            DataColumn(label: Text('Trattamento')),
+            DataColumn(label: Text('Azioni')),
+            DataColumn(label: Text('Data revisione')),
+            DataColumn(label: Text('Finalità')),
+            DataColumn(label: Text('Base giuridica')),
+            DataColumn(label: Text('Categorie dati')),
+            DataColumn(label: Text('Conservazione')),
+            DataColumn(label: Text('Stato')),
+          ],
+          rows: trattamentiFiltrati.map((trattamento) {
+            return DataRow(
+              cells: [
+                DataCell(
+                  SizedBox(
+                    width: 220,
+                    child: Text(trattamento.nomeTrattamento),
                   ),
-                  DataCell(
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Dettaglio trattamento',
-                          icon: const Icon(Icons.description_outlined),
-                          color: Colors.blueGrey.shade700,
-                          onPressed: () =>
-                              mostraDettaglioTrattamento(trattamento),
+                ),
+                DataCell(
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Dettaglio trattamento',
+                        icon: const Icon(Icons.description_outlined),
+                        color: Colors.blueGrey.shade700,
+                        onPressed: () =>
+                            mostraDettaglioTrattamento(trattamento),
+                      ),
+                      IconButton(
+                        tooltip: 'Duplica trattamento',
+                        icon: const Icon(Icons.copy),
+                        color: Colors.indigo.shade700,
+                        onPressed: () => mostraDialogTrattamento(
+                          trattamento: trattamento,
+                          duplica: true,
                         ),
-                        IconButton(
-                          tooltip: 'Duplica trattamento',
-                          icon: const Icon(Icons.copy),
-                          color: Colors.indigo.shade700,
-                          onPressed: () => mostraDialogTrattamento(
-                            trattamento: trattamento,
-                            duplica: true,
-                          ),
+                      ),
+                      IconButton(
+                        tooltip: 'Modifica trattamento',
+                        icon: const Icon(Icons.edit),
+                        onPressed: () =>
+                            mostraDialogTrattamento(trattamento: trattamento),
+                      ),
+                      IconButton(
+                        tooltip: trattamento.attivo
+                            ? 'Disattiva trattamento'
+                            : 'Riattiva trattamento',
+                        icon: Icon(
+                          trattamento.attivo
+                              ? Icons.visibility_off
+                              : Icons.visibility,
                         ),
-                        IconButton(
-                          tooltip: 'Modifica trattamento',
-                          icon: const Icon(Icons.edit),
-                          onPressed: () =>
-                              mostraDialogTrattamento(trattamento: trattamento),
-                        ),
-                        IconButton(
-                          tooltip: trattamento.attivo
-                              ? 'Disattiva trattamento'
-                              : 'Riattiva trattamento',
-                          icon: Icon(
-                            trattamento.attivo
-                                ? Icons.visibility_off
-                                : Icons.visibility,
-                          ),
-                          color: trattamento.attivo
-                              ? Colors.orange.shade700
-                              : Colors.green.shade700,
-                          onPressed: () => cambiaStatoTrattamento(trattamento),
-                        ),
-                      ],
-                    ),
+                        color: trattamento.attivo
+                            ? Colors.orange.shade700
+                            : Colors.green.shade700,
+                        onPressed: () => cambiaStatoTrattamento(trattamento),
+                      ),
+                    ],
                   ),
-                  DataCell(
-                    SizedBox(width: 260, child: Text(trattamento.finalita)),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 130,
+                    child: Text(trattamento.dataRevisione ?? ''),
                   ),
-                  DataCell(
-                    SizedBox(
-                      width: 180,
-                      child: Text(trattamento.baseGiuridica),
-                    ),
+                ),
+                DataCell(
+                  SizedBox(width: 260, child: Text(trattamento.finalita)),
+                ),
+                DataCell(
+                  SizedBox(width: 180, child: Text(trattamento.baseGiuridica)),
+                ),
+                DataCell(
+                  SizedBox(width: 220, child: Text(trattamento.categorieDati)),
+                ),
+                DataCell(
+                  SizedBox(
+                    width: 180,
+                    child: Text(trattamento.tempiConservazione),
                   ),
-                  DataCell(
-                    SizedBox(
-                      width: 220,
-                      child: Text(trattamento.categorieDati),
-                    ),
+                ),
+
+                DataCell(
+                  Chip(
+                    label: Text(trattamento.attivo ? 'Attivo' : 'Non attivo'),
+                    backgroundColor: trattamento.attivo
+                        ? Colors.green.shade100
+                        : Colors.grey.shade300,
                   ),
-                  DataCell(
-                    SizedBox(
-                      width: 180,
-                      child: Text(trattamento.tempiConservazione),
-                    ),
-                  ),
-                  DataCell(
-                    Chip(
-                      label: Text(trattamento.attivo ? 'Attivo' : 'Non attivo'),
-                      backgroundColor: trattamento.attivo
-                          ? Colors.green.shade100
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
-          ),
+                ),
+              ],
+            );
+          }).toList(),
         ),
       ),
     );
@@ -1120,6 +1131,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         responsabileInterno: risultato.responsabileInterno,
         note: risultato.note,
         attivo: trattamento?.attivo ?? true,
+        dataRevisione: risultato.dataRevisione,
         createdAt: isDuplicazione ? now : trattamento?.createdAt ?? now,
         updatedAt: now,
       );
@@ -1169,6 +1181,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         ),
       );
     }
+  }
+
+  @override
+  void dispose() {
+    _tabellaOrizzontaleController.dispose();
+    super.dispose();
   }
 
   @override
@@ -1332,6 +1350,7 @@ class _NuovoTrattamentoDialogResult {
     required this.destinatari,
     required this.trasferimentoExtraUe,
     required this.conservazione,
+    required this.dataRevisione,
     required this.misureSicurezza,
     required this.responsabileInterno,
     required this.note,
@@ -1345,6 +1364,7 @@ class _NuovoTrattamentoDialogResult {
   final String destinatari;
   final String trasferimentoExtraUe;
   final String conservazione;
+  final String dataRevisione;
   final String misureSicurezza;
   final String responsabileInterno;
   final String note;
@@ -1375,6 +1395,8 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
       TextEditingController();
   final TextEditingController _conservazioneController =
       TextEditingController();
+  final TextEditingController _dataRevisioneController =
+      TextEditingController();
   final TextEditingController _responsabileInternoController =
       TextEditingController();
   final TextEditingController _misureSicurezzaController =
@@ -1403,6 +1425,9 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     _destinatariController.text = trattamento.destinatari;
     _trasferimentoExtraUeController.text = trattamento.trasferimentoExtraUe;
     _conservazioneController.text = trattamento.tempiConservazione;
+    _dataRevisioneController.text = widget.duplica
+        ? ''
+        : trattamento.dataRevisione ?? '';
     _misureSicurezzaController.text = trattamento.misureSicurezza;
     _responsabileInternoController.text = trattamento.responsabileInterno;
     _noteController.text = trattamento.note;
@@ -1418,9 +1443,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     _destinatariController.dispose();
     _trasferimentoExtraUeController.dispose();
     _conservazioneController.dispose();
+    _dataRevisioneController.dispose();
     _misureSicurezzaController.dispose();
     _responsabileInternoController.dispose();
     _noteController.dispose();
+
     super.dispose();
   }
 
@@ -1449,6 +1476,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
         destinatari: _destinatariController.text.trim(),
         trasferimentoExtraUe: _trasferimentoExtraUeController.text.trim(),
         conservazione: _conservazioneController.text.trim(),
+        dataRevisione: _dataRevisioneController.text.trim(),
         misureSicurezza: _misureSicurezzaController.text.trim(),
         responsabileInterno: _responsabileInternoController.text.trim(),
         note: _noteController.text.trim(),
@@ -1591,6 +1619,12 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                     minLines: 2,
                     maxLines: 3,
                   ),
+                ),
+                const SizedBox(height: 12),
+                campoTesto(
+                  controller: _dataRevisioneController,
+                  label: 'Data revisione',
+                  hintText: 'Es. 25/06/2026',
                 ),
                 const SizedBox(height: 12),
                 campoTesto(

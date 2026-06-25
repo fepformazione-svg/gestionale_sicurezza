@@ -957,6 +957,7 @@ class AppDatabase {
       'destinatari': 'TEXT',
       'trasferimento_extra_ue': 'TEXT',
       'tempi_conservazione': 'TEXT',
+      'data_revisione': 'TEXT',
     });
   }
 
@@ -976,6 +977,7 @@ class AppDatabase {
       responsabile_interno TEXT,
       note TEXT,
       attivo INTEGER NOT NULL DEFAULT 1,
+      data_revisione TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )

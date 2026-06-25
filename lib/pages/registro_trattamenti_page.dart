@@ -16,6 +16,20 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   String? errore;
   List<RegistroTrattamento> trattamenti = [];
 
+  String filtroStato = 'tutti';
+
+  List<RegistroTrattamento> get trattamentiFiltrati {
+    if (filtroStato == 'attivi') {
+      return trattamenti.where((trattamento) => trattamento.attivo).toList();
+    }
+
+    if (filtroStato == 'non_attivi') {
+      return trattamenti.where((trattamento) => !trattamento.attivo).toList();
+    }
+
+    return trattamenti;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -172,7 +186,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               DataColumn(label: Text('Stato')),
               DataColumn(label: Text('Azioni')),
             ],
-            rows: trattamenti.map((trattamento) {
+            rows: trattamentiFiltrati.map((trattamento) {
               return DataRow(
                 cells: [
                   DataCell(
@@ -380,6 +394,55 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                const Text(
+                  'Filtro stato:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                ChoiceChip(
+                  label: const Text('Tutti'),
+                  selected: filtroStato == 'tutti',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStato = 'tutti';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Attivi'),
+                  selected: filtroStato == 'attivi',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStato = 'attivi';
+                    });
+                  },
+                ),
+                const SizedBox(width: 8),
+                ChoiceChip(
+                  label: const Text('Non attivi'),
+                  selected: filtroStato == 'non_attivi',
+                  onSelected: (_) {
+                    setState(() {
+                      filtroStato = 'non_attivi';
+                    });
+                  },
+                ),
+                const Spacer(),
+                Text(
+                  'Visibili: ${trattamentiFiltrati.length} / ${trattamenti.length}',
+                  style: TextStyle(
+                    color: Colors.grey.shade700,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+
             const SizedBox(height: 16),
             Expanded(child: _buildContenuto()),
           ],

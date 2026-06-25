@@ -316,6 +316,137 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
   }
 
+  Future<void> stampaRegistroTrattamenti() async {
+    final listaDaStampare = trattamentiFiltrati;
+
+    if (listaDaStampare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun trattamento da stampare.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final pdf = pw.Document();
+
+    final filtroStatoTesto = switch (filtroStato) {
+      'attivi' => 'Attivi',
+      'non_attivi' => 'Non attivi',
+      _ => 'Tutti',
+    };
+
+    final infoFiltri = [
+      'Stato: $filtroStatoTesto',
+      'Record stampati: ${listaDaStampare.length}',
+    ].join(' | ');
+
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Registro trattamenti',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Registro dei trattamenti - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(infoFiltri, style: const pw.TextStyle(fontSize: 9)),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 8,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.topLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.all(4),
+              headers: const [
+                'Stato',
+                'Nome trattamento',
+                'Finalità',
+                'Categorie interessati',
+                'Categorie dati',
+                'Base giuridica',
+                'Destinatari',
+                'Extra UE',
+                'Conservazione',
+                'Responsabile',
+              ],
+              data: listaDaStampare.map((trattamento) {
+                return [
+                  trattamento.attivo ? 'Attivo' : 'Non attivo',
+                  trattamento.nomeTrattamento,
+                  trattamento.finalita,
+                  trattamento.categorieInteressati,
+                  trattamento.categorieDati,
+                  trattamento.baseGiuridica,
+                  trattamento.destinatari,
+                  trattamento.trasferimentoExtraUe,
+                  trattamento.tempiConservazione,
+                  trattamento.responsabileInterno,
+                ];
+              }).toList(),
+            ),
+          ];
+        },
+      ),
+    );
+
+    final directoryTemp = await getTemporaryDirectory();
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+
+    final file = File(
+      '${directoryTemp.path}${Platform.pathSeparator}registro_trattamenti_stampa_$timestamp.pdf',
+    );
+
+    await file.writeAsBytes(await pdf.save());
+
+    await Process.run('cmd', ['/c', 'start', '', file.path], runInShell: true);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text(
+          'PDF di stampa aperto. Puoi stampare dal visualizzatore PDF.',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   @override
   void initState() {
     super.initState();
@@ -664,6 +795,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               onPressed: esportaPdfRegistroTrattamenti,
               icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
               label: const Text('PDF'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+            child: OutlinedButton.icon(
+              onPressed: stampaRegistroTrattamenti,
+              icon: const Icon(Icons.print_outlined, size: 18),
+              label: const Text('Stampa'),
             ),
           ),
           IconButton(

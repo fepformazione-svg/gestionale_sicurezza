@@ -734,10 +734,19 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
     final sessione = SessioneUtenteService.instance;
 
     if (!sessione.utenteLoggato) {
-      return 'Utente corrente: nessuno';
+      return 'Utente corrente: nessuno • Permessi: gestione utenti non consentita';
     }
 
-    return 'Utente corrente: ${sessione.nomeVisualizzato}';
+    final ruoloCorrente = sessione.nomeRuoloCorrente(ruoli);
+    final testoRuolo = ruoloCorrente.isEmpty
+        ? 'ruolo non definito'
+        : ruoloCorrente;
+
+    final testoPermesso = puoGestireUtenti
+        ? 'gestione utenti consentita'
+        : 'gestione utenti non consentita';
+
+    return 'Utente corrente: ${sessione.nomeVisualizzato} • Ruolo: $testoRuolo • Permessi: $testoPermesso';
   }
 
   bool get puoGestireUtenti {

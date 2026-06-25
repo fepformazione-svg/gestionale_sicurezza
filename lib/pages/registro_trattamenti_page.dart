@@ -587,6 +587,136 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
   }
 
+  Future<void> mostraDettaglioTrattamento(
+    RegistroTrattamento trattamento,
+  ) async {
+    Widget rigaDettaglio(String etichetta, String valore) {
+      final testo = valore.trim().isEmpty ? '-' : valore.trim();
+
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 190,
+              child: Text(
+                etichetta,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            Expanded(child: Text(testo)),
+          ],
+        ),
+      );
+    }
+
+    Widget titoloSezione(String testo, IconData icona) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 8, bottom: 12),
+        child: Row(
+          children: [
+            Icon(icona, size: 18, color: Colors.blueGrey.shade700),
+            const SizedBox(width: 8),
+            Text(
+              testo,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Colors.blueGrey.shade800,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.description_outlined, color: Colors.blueGrey.shade700),
+              const SizedBox(width: 10),
+              const Expanded(child: Text('Dettaglio trattamento')),
+            ],
+          ),
+          content: SizedBox(
+            width: 820,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  titoloSezione('Dati principali', Icons.assignment_outlined),
+                  rigaDettaglio('Trattamento', trattamento.nomeTrattamento),
+                  rigaDettaglio('Finalità', trattamento.finalita),
+                  rigaDettaglio(
+                    'Stato',
+                    trattamento.attivo ? 'Attivo' : 'Non attivo',
+                  ),
+
+                  const Divider(height: 28),
+
+                  titoloSezione('Inquadramento GDPR', Icons.gavel_outlined),
+                  rigaDettaglio('Base giuridica', trattamento.baseGiuridica),
+                  rigaDettaglio(
+                    'Tempi conservazione',
+                    trattamento.tempiConservazione,
+                  ),
+                  rigaDettaglio(
+                    'Trasferimento extra UE',
+                    trattamento.trasferimentoExtraUe,
+                  ),
+
+                  const Divider(height: 28),
+
+                  titoloSezione(
+                    'Interessati e dati trattati',
+                    Icons.groups_outlined,
+                  ),
+                  rigaDettaglio(
+                    'Categorie interessati',
+                    trattamento.categorieInteressati,
+                  ),
+                  rigaDettaglio('Categorie dati', trattamento.categorieDati),
+
+                  const Divider(height: 28),
+
+                  titoloSezione(
+                    'Destinatari e sicurezza',
+                    Icons.security_outlined,
+                  ),
+                  rigaDettaglio('Destinatari', trattamento.destinatari),
+                  rigaDettaglio(
+                    'Responsabile interno',
+                    trattamento.responsabileInterno,
+                  ),
+                  rigaDettaglio(
+                    'Misure sicurezza',
+                    trattamento.misureSicurezza,
+                  ),
+
+                  const Divider(height: 28),
+
+                  titoloSezione('Annotazioni interne', Icons.notes_outlined),
+                  rigaDettaglio('Note', trattamento.note),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              icon: const Icon(Icons.close),
+              label: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Widget _buildTabella() {
     return Scrollbar(
       thumbVisibility: true,
@@ -645,6 +775,13 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          tooltip: 'Dettaglio trattamento',
+                          icon: const Icon(Icons.description_outlined),
+                          color: Colors.blueGrey.shade700,
+                          onPressed: () =>
+                              mostraDettaglioTrattamento(trattamento),
+                        ),
                         IconButton(
                           tooltip: 'Modifica trattamento',
                           icon: const Icon(Icons.edit),

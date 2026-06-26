@@ -1647,7 +1647,9 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         SnackBar(
           backgroundColor: Colors.red.shade700,
           content: Text(
-            isModifica
+            isDuplicazione
+                ? 'Errore durante la duplicazione del trattamento: $e'
+                : isModifica
                 ? 'Errore durante la modifica del trattamento: $e'
                 : 'Errore durante il salvataggio del trattamento: $e',
           ),
@@ -2067,6 +2069,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
   @override
   Widget build(BuildContext context) {
     final isModifica = widget.trattamento != null;
+    final isDuplicazione = widget.duplica && widget.trattamento != null;
     final screenSize = MediaQuery.of(context).size;
 
     Widget titoloSezione(String testo, IconData icona) {
@@ -2143,7 +2146,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
       title: Row(
         children: [
           Icon(
-            isModifica ? Icons.edit_note : Icons.playlist_add,
+            isDuplicazione
+                ? Icons.copy
+                : isModifica
+                ? Icons.edit_note
+                : Icons.playlist_add,
             color: Colors.blueGrey.shade700,
           ),
           const SizedBox(width: 10),
@@ -2292,8 +2299,14 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
         ),
         ElevatedButton.icon(
           onPressed: _salva,
-          icon: const Icon(Icons.save),
-          label: Text(isModifica ? 'Salva modifiche' : 'Salva'),
+          icon: Icon(isDuplicazione ? Icons.copy : Icons.save),
+          label: Text(
+            isDuplicazione
+                ? 'Duplica trattamento'
+                : isModifica
+                ? 'Salva modifiche'
+                : 'Salva',
+          ),
         ),
       ],
     );

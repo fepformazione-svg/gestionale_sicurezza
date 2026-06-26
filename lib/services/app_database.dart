@@ -11,6 +11,7 @@ import '../models/registro_presenza.dart';
 import '../models/ruolo_utente.dart';
 import '../models/utente_app.dart';
 import '../models/registro_trattamento.dart';
+import '../models/registro_trattamento_log.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -581,6 +582,48 @@ class AppDatabase {
     );
   }
 
+  Future<int> insertRegistroTrattamentoLog(RegistroTrattamentoLog log) async {
+    final db = await database;
+
+    return db.insert('registro_trattamenti_log', log.toMap());
+  }
+
+  Future<List<RegistroTrattamentoLog>> getRegistroTrattamentiLog({
+    int? trattamentoId,
+  }) async {
+    final db = await database;
+
+    final maps = await db.query(
+      'registro_trattamenti_log',
+      where: trattamentoId != null ? 'trattamento_id = ?' : null,
+      whereArgs: trattamentoId != null ? [trattamentoId] : null,
+      orderBy: 'data_ora DESC, id DESC',
+    );
+
+    return maps.map((map) => RegistroTrattamentoLog.fromMap(map)).toList();
+  }
+
+  Future<void> registraLogRegistroTrattamento({
+    int? trattamentoId,
+    required String azione,
+    required String descrizione,
+    String? datiPrima,
+    String? datiDopo,
+    String? utente,
+  }) async {
+    await insertRegistroTrattamentoLog(
+      RegistroTrattamentoLog(
+        trattamentoId: trattamentoId,
+        azione: azione,
+        descrizione: descrizione,
+        datiPrima: datiPrima,
+        datiDopo: datiDopo,
+        utente: utente,
+        dataOra: DateTime.now().toIso8601String(),
+      ),
+    );
+  }
+
   Future<void> _ensureAllColumns(Database db) async {
     await _ensureColumns(db, 'imprese', {
       'partita_iva': 'TEXT',
@@ -959,6 +1002,19 @@ class AppDatabase {
       'tempi_conservazione': 'TEXT',
       'data_revisione': 'TEXT',
     });
+
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS registro_trattamenti_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      trattamento_id INTEGER,
+      azione TEXT NOT NULL,
+      descrizione TEXT NOT NULL,
+      dati_prima TEXT,
+      dati_dopo TEXT,
+      utente TEXT,
+      data_ora TEXT NOT NULL
+    )
+  ''');
   }
 
   Future<void> _creaTabellaRegistroTrattamenti(Database db) async {
@@ -980,6 +1036,19 @@ class AppDatabase {
       data_revisione TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS registro_trattamenti_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      trattamento_id INTEGER,
+      azione TEXT NOT NULL,
+      descrizione TEXT NOT NULL,
+      dati_prima TEXT,
+      dati_dopo TEXT,
+      utente TEXT,
+      data_ora TEXT NOT NULL
     )
   ''');
   }

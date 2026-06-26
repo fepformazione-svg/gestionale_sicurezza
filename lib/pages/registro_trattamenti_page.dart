@@ -2033,7 +2033,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     _conservazioneController.text = trattamento.tempiConservazione;
     _dataRevisioneController.text = widget.duplica
         ? ''
-        : trattamento.dataRevisione ?? '';
+        : _normalizzaDataRevisione(trattamento.dataRevisione ?? '');
     _misureSicurezzaController.text = trattamento.misureSicurezza;
     _responsabileInternoController.text = trattamento.responsabileInterno;
     _noteController.text = trattamento.note;
@@ -2079,6 +2079,33 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     return DateTime.tryParse(testo) != null;
   }
 
+  String _normalizzaDataRevisione(String valore) {
+    final testo = valore.trim();
+
+    if (testo.isEmpty) {
+      return '';
+    }
+
+    try {
+      final data = DateFormat('dd/MM/yyyy').parseStrict(testo);
+      return DateFormat('dd/MM/yyyy').format(data);
+    } catch (_) {
+      // Prova formato tecnico ISO solo data: yyyy-MM-dd
+    }
+
+    final formatoIsoSoloData = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+    if (!formatoIsoSoloData.hasMatch(testo)) {
+      return testo;
+    }
+
+    final data = DateTime.tryParse(testo);
+    if (data == null) {
+      return testo;
+    }
+
+    return DateFormat('dd/MM/yyyy').format(data);
+  }
+
   void _salva() {
     final nomeVuoto = _nomeController.text.trim().isEmpty;
     final finalitaVuota = _finalitaController.text.trim().isEmpty;
@@ -2110,7 +2137,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
         destinatari: _destinatariController.text.trim(),
         trasferimentoExtraUe: _trasferimentoExtraUeController.text.trim(),
         conservazione: _conservazioneController.text.trim(),
-        dataRevisione: _dataRevisioneController.text.trim(),
+        dataRevisione: _normalizzaDataRevisione(_dataRevisioneController.text),
         misureSicurezza: _misureSicurezzaController.text.trim(),
         responsabileInterno: _responsabileInternoController.text.trim(),
         note: _noteController.text.trim(),

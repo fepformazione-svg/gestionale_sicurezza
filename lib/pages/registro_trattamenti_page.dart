@@ -1,7 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 
 import '../models/registro_trattamento.dart';
+import '../models/registro_trattamento_log.dart';
+
 import '../services/app_database.dart';
+
 import '../utils/pdf_azienda_helper.dart';
 
 import 'dart:io';
@@ -486,6 +489,154 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     } catch (e) {
       debugPrint('Errore log Registro trattamenti: $e');
     }
+  }
+
+  String formattaDataOraLogRegistro(String? valore) {
+    if (valore == null || valore.trim().isEmpty) {
+      return '-';
+    }
+
+    final data = DateTime.tryParse(valore);
+    if (data == null) {
+      return valore;
+    }
+
+    String dueCifre(int numero) => numero.toString().padLeft(2, '0');
+
+    return '${dueCifre(data.day)}/${dueCifre(data.month)}/${data.year} '
+        '${dueCifre(data.hour)}:${dueCifre(data.minute)}';
+  }
+
+  IconData iconaLogRegistro(String azione) {
+    final valore = azione.toLowerCase();
+
+    if (valore.contains('crea') || valore.contains('inser')) {
+      return Icons.add_circle_outline;
+    }
+
+    if (valore.contains('modif')) {
+      return Icons.edit_outlined;
+    }
+
+    if (valore.contains('duplic')) {
+      return Icons.copy_outlined;
+    }
+
+    if (valore.contains('disatt')) {
+      return Icons.visibility_off_outlined;
+    }
+
+    if (valore.contains('riatt') || valore.contains('attiv')) {
+      return Icons.visibility_outlined;
+    }
+
+    if (valore.contains('export') ||
+        valore.contains('pdf') ||
+        valore.contains('excel') ||
+        valore.contains('stampa')) {
+      return Icons.file_download_outlined;
+    }
+
+    return Icons.history_outlined;
+  }
+
+  Future<void> mostraLogTrattamento(RegistroTrattamento trattamento) async {
+    if (trattamento.id == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossibile leggere i log: trattamento non salvato.'),
+        ),
+      );
+      return;
+    }
+
+    final List<RegistroTrattamentoLog> logs = await AppDatabase.instance
+        .getRegistroTrattamentiLog(trattamentoId: trattamento.id!);
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final larghezzaSchermo = MediaQuery.of(dialogContext).size.width;
+        final larghezzaDialog = larghezzaSchermo > 900
+            ? 760.0
+            : larghezzaSchermo * 0.90;
+
+        return AlertDialog(
+          title: const Text('Log trattamento'),
+          content: SizedBox(
+            width: larghezzaDialog,
+            child: logs.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Nessun log disponibile per questo trattamento.',
+                    ),
+                  )
+                : ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 460),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: logs.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        final log = logs[index];
+                        final descrizione = log.descrizione.trim();
+                        final utente = log.utente?.trim() ?? '';
+                        final datiPrima = log.datiPrima?.trim() ?? '';
+                        final datiDopo = log.datiDopo?.trim() ?? '';
+
+                        return ListTile(
+                          leading: Icon(iconaLogRegistro(log.azione)),
+                          title: Text(
+                            log.azione,
+                            style: const TextStyle(fontWeight: FontWeight.w600),
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (descrizione.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(descrizione),
+                                ),
+                              Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Text(
+                                  'Data: ${formattaDataOraLogRegistro(log.dataOra)}',
+                                ),
+                              ),
+                              if (utente.isNotEmpty) Text('Utente: $utente'),
+                              if (datiPrima.isNotEmpty || datiDopo.isNotEmpty)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 4),
+                                  child: Text(
+                                    'Dettagli tecnici disponibili',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade700,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> esportaExcelRegistroTrattamenti() async {
@@ -1431,6 +1582,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
             OutlinedButton.icon(
               onPressed: () =>
+                  Navigator.of(context, rootNavigator: true).pop('log'),
+              icon: const Icon(Icons.history),
+              label: const Text('Log'),
+            ),
+            OutlinedButton.icon(
+              onPressed: () =>
                   Navigator.of(context, rootNavigator: true).pop('pdf'),
               icon: const Icon(Icons.save_alt),
               label: const Text('PDF'),
@@ -1452,6 +1609,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       },
     );
     if (!mounted) {
+      return;
+    }
+
+    if (azioneDettaglio == 'log') {
+      await mostraLogTrattamento(trattamento);
       return;
     }
 

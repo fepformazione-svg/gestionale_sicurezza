@@ -35,6 +35,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   String filtroStatoRevisione = 'tutti';
   String ricercaRegistro = '';
 
+  // GDPR021A - Ordinamento Registro trattamenti
+  String campoOrdinamentoRegistro = 'dataRevisione';
+  bool ordinamentoRegistroCrescente = true;
+
   List<RegistroTrattamento> get trattamentiFiltrati {
     Iterable<RegistroTrattamento> risultati = trattamenti;
 
@@ -81,7 +85,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       });
     }
 
-    return risultati.toList();
+    final listaOrdinata = risultati.toList();
+    ordinaRegistroTrattamenti(listaOrdinata);
+
+    return listaOrdinata;
   }
 
   DateTime? parseDataRevisioneRegistro(String? valore) {
@@ -103,6 +110,131 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
 
     return DateTime.tryParse(testo);
+  }
+
+  // GDPR021A - Ordinamento Registro trattamenti
+  void cambiaOrdinamentoRegistro(String campo) {
+    setState(() {
+      if (campoOrdinamentoRegistro == campo) {
+        ordinamentoRegistroCrescente = !ordinamentoRegistroCrescente;
+      } else {
+        campoOrdinamentoRegistro = campo;
+        ordinamentoRegistroCrescente = true;
+      }
+    });
+  }
+
+  String _testoOrdinabileRegistro(String? valore) {
+    return (valore ?? '').trim().toLowerCase();
+  }
+
+  int _confrontaStringheRegistro(String? a, String? b) {
+    return _testoOrdinabileRegistro(a).compareTo(_testoOrdinabileRegistro(b));
+  }
+
+  int _confrontaDateRegistro(String? a, String? b) {
+    final dataA = parseDataRevisioneRegistro(a);
+    final dataB = parseDataRevisioneRegistro(b);
+
+    if (dataA == null && dataB == null) return 0;
+    if (dataA == null) return 1;
+    if (dataB == null) return -1;
+
+    return dataA.compareTo(dataB);
+  }
+
+  void ordinaRegistroTrattamenti(List<RegistroTrattamento> lista) {
+    lista.sort((a, b) {
+      int risultato;
+
+      switch (campoOrdinamentoRegistro) {
+        case 'nomeTrattamento':
+          risultato = _confrontaStringheRegistro(
+            a.nomeTrattamento,
+            b.nomeTrattamento,
+          );
+          break;
+
+        case 'dataRevisione':
+          risultato = _confrontaDateRegistro(a.dataRevisione, b.dataRevisione);
+          break;
+
+        case 'statoRevisione':
+          risultato = _confrontaStringheRegistro(
+            statoRevisioneTrattamento(a),
+            statoRevisioneTrattamento(b),
+          );
+          break;
+
+        case 'finalita':
+          risultato = _confrontaStringheRegistro(a.finalita, b.finalita);
+          break;
+
+        case 'baseGiuridica':
+          risultato = _confrontaStringheRegistro(
+            a.baseGiuridica,
+            b.baseGiuridica,
+          );
+          break;
+
+        case 'categorieDati':
+          risultato = _confrontaStringheRegistro(
+            a.categorieDati,
+            b.categorieDati,
+          );
+          break;
+
+        case 'tempiConservazione':
+          risultato = _confrontaStringheRegistro(
+            a.tempiConservazione,
+            b.tempiConservazione,
+          );
+          break;
+
+        case 'stato':
+          risultato = _confrontaStringheRegistro(
+            a.attivo ? 'Attivo' : 'Non attivo',
+            b.attivo ? 'Attivo' : 'Non attivo',
+          );
+          break;
+
+        default:
+          risultato = _confrontaStringheRegistro(
+            a.nomeTrattamento,
+            b.nomeTrattamento,
+          );
+      }
+
+      return ordinamentoRegistroCrescente ? risultato : -risultato;
+    });
+  }
+
+  Widget intestazioneOrdinabileRegistro(String testo, String campo) {
+    final attivo = campoOrdinamentoRegistro == campo;
+
+    return InkWell(
+      onTap: () => cambiaOrdinamentoRegistro(campo),
+      borderRadius: BorderRadius.circular(4),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(testo, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(width: 4),
+            Icon(
+              attivo
+                  ? ordinamentoRegistroCrescente
+                        ? Icons.arrow_upward
+                        : Icons.arrow_downward
+                  : Icons.unfold_more,
+              size: 16,
+              color: attivo ? Colors.blueGrey.shade700 : Colors.grey.shade500,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   String statoRevisioneTrattamento(RegistroTrattamento trattamento) {
@@ -1174,16 +1306,48 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         scrollDirection: Axis.horizontal,
         primary: false,
         child: DataTable(
-          columns: const [
-            DataColumn(label: Text('Trattamento')),
-            DataColumn(label: Text('Azioni')),
-            DataColumn(label: Text('Data revisione')),
-            DataColumn(label: Text('Stato revisione')),
-            DataColumn(label: Text('Finalità')),
-            DataColumn(label: Text('Base giuridica')),
-            DataColumn(label: Text('Categorie dati')),
-            DataColumn(label: Text('Conservazione')),
-            DataColumn(label: Text('Stato')),
+          columns: [
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Trattamento',
+                'nomeTrattamento',
+              ),
+            ),
+            const DataColumn(label: Text('Azioni')),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Data revisione',
+                'dataRevisione',
+              ),
+            ),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Stato revisione',
+                'statoRevisione',
+              ),
+            ),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro('Finalità', 'finalita'),
+            ),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Base giuridica',
+                'baseGiuridica',
+              ),
+            ),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Categorie dati',
+                'categorieDati',
+              ),
+            ),
+            DataColumn(
+              label: intestazioneOrdinabileRegistro(
+                'Conservazione',
+                'tempiConservazione',
+              ),
+            ),
+            DataColumn(label: intestazioneOrdinabileRegistro('Stato', 'stato')),
           ],
           rows: trattamentiFiltrati.map((trattamento) {
             return DataRow(

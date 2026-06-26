@@ -1987,6 +1987,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
 
   String? _erroreNome;
   String? _erroreFinalita;
+  String? _erroreDataRevisione;
 
   @override
   void initState() {
@@ -2033,18 +2034,46 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     super.dispose();
   }
 
+  bool _dataRevisioneValida(String valore) {
+    final testo = valore.trim();
+
+    if (testo.isEmpty) {
+      return true;
+    }
+
+    try {
+      DateFormat('dd/MM/yyyy').parseStrict(testo);
+      return true;
+    } catch (_) {
+      // Prova formato tecnico ISO solo data: yyyy-MM-dd
+    }
+
+    final formatoIsoSoloData = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+    if (!formatoIsoSoloData.hasMatch(testo)) {
+      return false;
+    }
+
+    return DateTime.tryParse(testo) != null;
+  }
+
   void _salva() {
     final nomeVuoto = _nomeController.text.trim().isEmpty;
     final finalitaVuota = _finalitaController.text.trim().isEmpty;
+    final dataRevisioneNonValida = !_dataRevisioneValida(
+      _dataRevisioneController.text,
+    );
 
     setState(() {
       _erroreNome = nomeVuoto ? 'Inserisci il nome del trattamento' : null;
       _erroreFinalita = finalitaVuota
           ? 'Inserisci la finalità del trattamento'
           : null;
+      _erroreDataRevisione = dataRevisioneNonValida
+          ? 'Inserisci una data valida nel formato gg/mm/aaaa'
+          : null;
     });
 
-    if (nomeVuoto || finalitaVuota) {
+    if (nomeVuoto || finalitaVuota || dataRevisioneNonValida) {
       return;
     }
 
@@ -2212,6 +2241,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                   controller: _dataRevisioneController,
                   label: 'Data revisione',
                   hintText: 'Es. 25/06/2026',
+                  errorText: _erroreDataRevisione,
                 ),
                 const SizedBox(height: 12),
                 campoTesto(

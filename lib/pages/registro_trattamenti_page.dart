@@ -557,88 +557,249 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     if (!mounted) return;
 
-    await showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        final larghezzaSchermo = MediaQuery.of(dialogContext).size.width;
-        final larghezzaDialog = larghezzaSchermo > 900
-            ? 760.0
-            : larghezzaSchermo * 0.90;
+    final ricercaLogController = TextEditingController();
+    String filtroAzioneLog = 'Tutte';
 
-        return AlertDialog(
-          title: const Text('Log trattamento'),
-          content: SizedBox(
-            width: larghezzaDialog,
-            child: logs.isEmpty
-                ? const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      'Nessun log disponibile per questo trattamento.',
-                    ),
-                  )
-                : ConstrainedBox(
-                    constraints: const BoxConstraints(maxHeight: 460),
-                    child: ListView.separated(
-                      shrinkWrap: true,
-                      itemCount: logs.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, index) {
-                        final log = logs[index];
-                        final descrizione = log.descrizione.trim();
-                        final utente = log.utente?.trim() ?? '';
-                        final datiPrima = log.datiPrima?.trim() ?? '';
-                        final datiDopo = log.datiDopo?.trim() ?? '';
+    final azioniDisponibili = logs
+        .map((log) => log.azione.trim())
+        .where((azione) => azione.isNotEmpty)
+        .toSet()
+        .toList()
+      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
-                        return ListTile(
-                          leading: Icon(iconaLogRegistro(log.azione)),
-                          title: Text(
-                            log.azione,
-                            style: const TextStyle(fontWeight: FontWeight.w600),
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          final dimensioniSchermo = MediaQuery.of(dialogContext).size;
+          final larghezzaSchermo = dimensioniSchermo.width;
+          final altezzaSchermo = dimensioniSchermo.height;
+          final larghezzaDialog = larghezzaSchermo > 900
+              ? 820.0
+              : larghezzaSchermo * 0.92;
+          final altezzaDialog = altezzaSchermo > 760
+              ? 520.0
+              : altezzaSchermo * 0.62;
+
+          return StatefulBuilder(
+            builder: (context, setStateDialog) {
+              final ricerca = ricercaLogController.text.trim().toLowerCase();
+
+              final logsFiltrati = logs.where((log) {
+                final azione = log.azione.trim();
+                final descrizione = log.descrizione.trim();
+                final utente = log.utente?.trim() ?? '';
+                final datiPrima = log.datiPrima?.trim() ?? '';
+                final datiDopo = log.datiDopo?.trim() ?? '';
+                final dataFormattata = formattaDataOraLogRegistro(log.dataOra);
+
+                final passaFiltroAzione =
+                    filtroAzioneLog == 'Tutte' || azione == filtroAzioneLog;
+
+                final testoRicerca = [
+                  azione,
+                  descrizione,
+                  utente,
+                  datiPrima,
+                  datiDopo,
+                  dataFormattata,
+                ].join(' ').toLowerCase();
+
+                final passaRicerca =
+                    ricerca.isEmpty || testoRicerca.contains(ricerca);
+
+                return passaFiltroAzione && passaRicerca;
+              }).toList()
+                ..sort((a, b) => b.dataOra.compareTo(a.dataOra));
+
+              final filtriAttivi =
+                  ricerca.isNotEmpty || filtroAzioneLog != 'Tutte';
+
+              return AlertDialog(
+                title: const Text('Log trattamento'),
+                content: SizedBox(
+                  width: larghezzaDialog,
+                  height: logs.isEmpty ? null : altezzaDialog,
+                  child: logs.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: Text(
+                            'Nessun log disponibile per questo trattamento.',
                           ),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (descrizione.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Text(descrizione),
+                        )
+                      : Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  flex: 3,
+                                  child: TextField(
+                                    controller: ricercaLogController,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Cerca nei log',
+                                      prefixIcon: Icon(Icons.search),
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    onChanged: (_) => setStateDialog(() {}),
+                                  ),
                                 ),
-                              Padding(
-                                padding: const EdgeInsets.only(top: 4),
-                                child: Text(
-                                  'Data: ${formattaDataOraLogRegistro(log.dataOra)}',
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  flex: 2,
+                                  child: DropdownButtonFormField<String>(
+                                    key: ValueKey(filtroAzioneLog),
+                                    initialValue: filtroAzioneLog,
+                                    decoration: const InputDecoration(
+                                      labelText: 'Azione',
+                                      border: OutlineInputBorder(),
+                                      isDense: true,
+                                    ),
+                                    items: [
+                                      const DropdownMenuItem(
+                                        value: 'Tutte',
+                                        child: Text('Tutte'),
+                                      ),
+                                      ...azioniDisponibili.map(
+                                        (azione) => DropdownMenuItem(
+                                          value: azione,
+                                          child: Text(azione),
+                                        ),
+                                      ),
+                                    ],
+                                    onChanged: (value) {
+                                      if (value == null) return;
+                                      setStateDialog(() {
+                                        filtroAzioneLog = value;
+                                      });
+                                    },
+                                  ),
                                 ),
-                              ),
-                              if (utente.isNotEmpty) Text('Utente: $utente'),
-                              if (datiPrima.isNotEmpty || datiDopo.isNotEmpty)
-                                Padding(
-                                  padding: const EdgeInsets.only(top: 4),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Row(
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    'Dettagli tecnici disponibili',
+                                    'Risultati: ${logsFiltrati.length} di ${logs.length}',
                                     style: TextStyle(
                                       color: Colors.grey.shade700,
                                       fontSize: 12,
                                     ),
                                   ),
                                 ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('Chiudi'),
-            ),
-          ],
-        );
-      },
-    );
-  }
+                                TextButton.icon(
+                                  onPressed: filtriAttivi
+                                      ? () {
+                                          setStateDialog(() {
+                                            ricercaLogController.clear();
+                                            filtroAzioneLog = 'Tutte';
+                                          });
+                                        }
+                                      : null,
+                                  icon: const Icon(Icons.filter_alt_off),
+                                  label: const Text('Azzera filtri'),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
+                            Expanded(
+                              child: logsFiltrati.isEmpty
+                                  ? const Padding(
+                                      padding: EdgeInsets.all(16),
+                                      child: Text(
+                                        'Nessun log trovato con i filtri attivi.',
+                                      ),
+                                    )
+                                  : ListView.separated(
+                                      shrinkWrap: true,
+                                      itemCount: logsFiltrati.length,
+                                      separatorBuilder: (_, _) =>
+                                          const Divider(height: 1),
+                                      itemBuilder: (context, index) {
+                                        final log = logsFiltrati[index];
+                                        final descrizione =
+                                            log.descrizione.trim();
+                                        final utente = log.utente?.trim() ?? '';
+                                        final datiPrima =
+                                            log.datiPrima?.trim() ?? '';
+                                        final datiDopo =
+                                            log.datiDopo?.trim() ?? '';
 
+                                        return ListTile(
+                                          leading: Icon(
+                                            iconaLogRegistro(log.azione),
+                                          ),
+                                          title: Text(
+                                            log.azione,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                          ),
+                                          subtitle: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              if (descrizione.isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                    top: 4,
+                                                  ),
+                                                  child: Text(descrizione),
+                                                ),
+                                              Padding(
+                                                padding: const EdgeInsets.only(
+                                                  top: 4,
+                                                ),
+                                                child: Text(
+                                                  'Data: ${formattaDataOraLogRegistro(log.dataOra)}',
+                                                ),
+                                              ),
+                                              if (utente.isNotEmpty)
+                                                Text('Utente: $utente'),
+                                              if (datiPrima.isNotEmpty ||
+                                                  datiDopo.isNotEmpty)
+                                                Padding(
+                                                  padding:
+                                                      const EdgeInsets.only(
+                                                    top: 4,
+                                                  ),
+                                                  child: Text(
+                                                    'Dettagli tecnici disponibili',
+                                                    style: TextStyle(
+                                                      color:
+                                                          Colors.grey.shade700,
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                            ),
+                          ],
+                        ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text('Chiudi'),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      ricercaLogController.dispose();
+    }
+  }
   Future<void> esportaExcelRegistroTrattamenti() async {
     final datiDaEsportare = trattamentiFiltrati;
 
@@ -2832,3 +2993,6 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     );
   }
 }
+
+
+

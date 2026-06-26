@@ -24,6 +24,7 @@ class RegistroTrattamentiPage extends StatefulWidget {
 
 class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   final ScrollController _tabellaOrizzontaleController = ScrollController();
+  final ScrollController _tabellaVerticaleController = ScrollController();
   final TextEditingController ricercaRegistroController =
       TextEditingController();
 
@@ -1389,165 +1390,186 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Widget _buildTabella() {
     return Scrollbar(
-      controller: _tabellaOrizzontaleController,
+      controller: _tabellaVerticaleController,
       thumbVisibility: true,
       interactive: true,
-      scrollbarOrientation: ScrollbarOrientation.bottom,
       child: SingleChildScrollView(
-        controller: _tabellaOrizzontaleController,
-        scrollDirection: Axis.horizontal,
+        controller: _tabellaVerticaleController,
         primary: false,
-        child: DataTable(
-          columns: [
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Trattamento',
-                'nomeTrattamento',
-              ),
-            ),
-            const DataColumn(label: Text('Azioni')),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Data revisione',
-                'dataRevisione',
-              ),
-            ),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Stato revisione',
-                'statoRevisione',
-              ),
-            ),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro('Finalità', 'finalita'),
-            ),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Base giuridica',
-                'baseGiuridica',
-              ),
-            ),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Categorie dati',
-                'categorieDati',
-              ),
-            ),
-            DataColumn(
-              label: intestazioneOrdinabileRegistro(
-                'Conservazione',
-                'tempiConservazione',
-              ),
-            ),
-            DataColumn(label: intestazioneOrdinabileRegistro('Stato', 'stato')),
-          ],
-          rows: trattamentiFiltrati.map((trattamento) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  SizedBox(
-                    width: 220,
-                    child: Text(trattamento.nomeTrattamento),
+        child: Scrollbar(
+          controller: _tabellaOrizzontaleController,
+          thumbVisibility: true,
+          interactive: true,
+          scrollbarOrientation: ScrollbarOrientation.bottom,
+          child: SingleChildScrollView(
+            controller: _tabellaOrizzontaleController,
+            scrollDirection: Axis.horizontal,
+            primary: false,
+            child: DataTable(
+              columns: [
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Trattamento',
+                    'nomeTrattamento',
                   ),
                 ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'Dettaglio trattamento',
-                        icon: const Icon(Icons.description_outlined),
-                        color: Colors.blueGrey.shade700,
-                        onPressed: () =>
-                            mostraDettaglioTrattamento(trattamento),
-                      ),
-                      IconButton(
-                        tooltip: 'Duplica trattamento',
-                        icon: const Icon(Icons.copy),
-                        color: Colors.indigo.shade700,
-                        onPressed: () => mostraDialogTrattamento(
-                          trattamento: trattamento,
-                          duplica: true,
-                        ),
-                      ),
-                      IconButton(
-                        tooltip: 'Modifica trattamento',
-                        icon: const Icon(Icons.edit),
-                        onPressed: () =>
-                            mostraDialogTrattamento(trattamento: trattamento),
-                      ),
-                      IconButton(
-                        tooltip: trattamento.attivo
-                            ? 'Disattiva trattamento'
-                            : 'Riattiva trattamento',
-                        icon: Icon(
-                          trattamento.attivo
-                              ? Icons.visibility_off
-                              : Icons.visibility,
-                        ),
-                        color: trattamento.attivo
-                            ? Colors.orange.shade700
-                            : Colors.green.shade700,
-                        onPressed: () => cambiaStatoTrattamento(trattamento),
-                      ),
-                    ],
+                const DataColumn(label: Text('Azioni')),
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Data revisione',
+                    'dataRevisione',
                   ),
                 ),
-                DataCell(
-                  SizedBox(
-                    width: 130,
-                    child: Text(trattamento.dataRevisione ?? ''),
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Stato revisione',
+                    'statoRevisione',
                   ),
                 ),
-                DataCell(
-                  Builder(
-                    builder: (context) {
-                      final stato = statoRevisioneTrattamento(trattamento);
-
-                      return Chip(
-                        label: Text(
-                          stato,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                        backgroundColor: coloreStatoRevisione(stato),
-                        visualDensity: VisualDensity.compact,
-                      );
-                    },
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro('Finalità', 'finalita'),
+                ),
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Base giuridica',
+                    'baseGiuridica',
                   ),
                 ),
-                DataCell(
-                  SizedBox(width: 260, child: Text(trattamento.finalita)),
-                ),
-                DataCell(
-                  SizedBox(width: 180, child: Text(trattamento.baseGiuridica)),
-                ),
-                DataCell(
-                  SizedBox(width: 220, child: Text(trattamento.categorieDati)),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 180,
-                    child: Text(trattamento.tempiConservazione),
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Categorie dati',
+                    'categorieDati',
                   ),
                 ),
-
-                DataCell(
-                  Chip(
-                    label: Text(trattamento.attivo ? 'Attivo' : 'Non attivo'),
-                    backgroundColor: trattamento.attivo
-                        ? Colors.green.shade100
-                        : Colors.grey.shade300,
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro(
+                    'Conservazione',
+                    'tempiConservazione',
                   ),
+                ),
+                DataColumn(
+                  label: intestazioneOrdinabileRegistro('Stato', 'stato'),
                 ),
               ],
-            );
-          }).toList(),
-        ),
-      ),
-    );
+              rows: trattamentiFiltrati.map((trattamento) {
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      SizedBox(
+                        width: 220,
+                        child: Text(trattamento.nomeTrattamento),
+                      ),
+                    ),
+                    DataCell(
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            tooltip: 'Dettaglio trattamento',
+                            icon: const Icon(Icons.description_outlined),
+                            color: Colors.blueGrey.shade700,
+                            onPressed: () =>
+                                mostraDettaglioTrattamento(trattamento),
+                          ),
+                          IconButton(
+                            tooltip: 'Duplica trattamento',
+                            icon: const Icon(Icons.copy),
+                            color: Colors.indigo.shade700,
+                            onPressed: () => mostraDialogTrattamento(
+                              trattamento: trattamento,
+                              duplica: true,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: 'Modifica trattamento',
+                            icon: const Icon(Icons.edit),
+                            onPressed: () => mostraDialogTrattamento(
+                              trattamento: trattamento,
+                            ),
+                          ),
+                          IconButton(
+                            tooltip: trattamento.attivo
+                                ? 'Disattiva trattamento'
+                                : 'Riattiva trattamento',
+                            icon: Icon(
+                              trattamento.attivo
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            color: trattamento.attivo
+                                ? Colors.orange.shade700
+                                : Colors.green.shade700,
+                            onPressed: () =>
+                                cambiaStatoTrattamento(trattamento),
+                          ),
+                        ],
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 130,
+                        child: Text(trattamento.dataRevisione ?? ''),
+                      ),
+                    ),
+                    DataCell(
+                      Builder(
+                        builder: (context) {
+                          final stato = statoRevisioneTrattamento(trattamento);
+
+                          return Chip(
+                            label: Text(
+                              stato,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            backgroundColor: coloreStatoRevisione(stato),
+                            visualDensity: VisualDensity.compact,
+                          );
+                        },
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(width: 260, child: Text(trattamento.finalita)),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 180,
+                        child: Text(trattamento.baseGiuridica),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 220,
+                        child: Text(trattamento.categorieDati),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 180,
+                        child: Text(trattamento.tempiConservazione),
+                      ),
+                    ),
+
+                    DataCell(
+                      Chip(
+                        label: Text(
+                          trattamento.attivo ? 'Attivo' : 'Non attivo',
+                        ),
+                        backgroundColor: trattamento.attivo
+                            ? Colors.green.shade100
+                            : Colors.grey.shade300,
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ), // DataTable
+          ), // SingleChildScrollView orizzontale
+        ), // Scrollbar orizzontale
+      ), // SingleChildScrollView verticale
+    ); // Scrollbar verticale
   }
 
   Widget _buildContenuto() {
@@ -1661,6 +1683,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   @override
   void dispose() {
     _tabellaOrizzontaleController.dispose();
+    _tabellaVerticaleController.dispose();
     ricercaRegistroController.dispose();
     super.dispose();
   }

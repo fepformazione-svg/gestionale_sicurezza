@@ -165,6 +165,73 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
   }
 
+  int conteggioRevisioniPerStato(String stato) {
+    return trattamenti.where((trattamento) {
+      return statoRevisioneTrattamento(trattamento) == stato;
+    }).length;
+  }
+
+  Widget cardRiepilogoRevisione({
+    required String titolo,
+    required int valore,
+    required String filtro,
+    required Color colore,
+    required Color sfondo,
+    required IconData icona,
+  }) {
+    final selezionato = filtroStatoRevisione == filtro;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(14),
+      onTap: () {
+        setState(() {
+          filtroStatoRevisione = filtro;
+        });
+      },
+      child: Container(
+        width: 190,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: selezionato ? sfondo : Colors.grey.shade50,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selezionato ? colore : Colors.grey.shade300,
+            width: selezionato ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icona, color: colore),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titolo,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    valore.toString(),
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: colore,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> esportaExcelRegistroTrattamenti() async {
     final datiDaEsportare = trattamentiFiltrati;
 
@@ -1383,6 +1450,54 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
             const SizedBox(height: 16),
 
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                cardRiepilogoRevisione(
+                  titolo: 'Scadute',
+                  valore: conteggioRevisioniPerStato('Scaduta'),
+                  filtro: 'scadute',
+                  colore: Colors.red.shade700,
+                  sfondo: Colors.red.shade50,
+                  icona: Icons.error_outline,
+                ),
+                cardRiepilogoRevisione(
+                  titolo: 'In scadenza',
+                  valore: conteggioRevisioniPerStato('In scadenza'),
+                  filtro: 'in_scadenza',
+                  colore: Colors.orange.shade700,
+                  sfondo: Colors.orange.shade50,
+                  icona: Icons.warning_amber_outlined,
+                ),
+                cardRiepilogoRevisione(
+                  titolo: 'Programmate',
+                  valore: conteggioRevisioniPerStato('Programmata'),
+                  filtro: 'programmate',
+                  colore: Colors.green.shade700,
+                  sfondo: Colors.green.shade50,
+                  icona: Icons.event_available_outlined,
+                ),
+                cardRiepilogoRevisione(
+                  titolo: 'Non impostate',
+                  valore: conteggioRevisioniPerStato('Non impostata'),
+                  filtro: 'non_impostate',
+                  colore: Colors.grey.shade700,
+                  sfondo: Colors.grey.shade100,
+                  icona: Icons.event_busy_outlined,
+                ),
+                cardRiepilogoRevisione(
+                  titolo: 'Da verificare',
+                  valore: conteggioRevisioniPerStato('Da verificare'),
+                  filtro: 'da_verificare',
+                  colore: Colors.blueGrey.shade700,
+                  sfondo: Colors.blueGrey.shade50,
+                  icona: Icons.manage_search_outlined,
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             Row(
               children: [
                 const Text(

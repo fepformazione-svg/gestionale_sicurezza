@@ -24,6 +24,9 @@ class RegistroTrattamentiPage extends StatefulWidget {
 
 class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   final ScrollController _tabellaOrizzontaleController = ScrollController();
+  final TextEditingController ricercaRegistroController =
+      TextEditingController();
+
   bool caricamento = true;
   String? errore;
   List<RegistroTrattamento> trattamenti = [];
@@ -230,6 +233,21 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         ),
       ),
     );
+  }
+
+  bool get filtriRegistroAttivi {
+    return filtroStato != 'tutti' ||
+        filtroStatoRevisione != 'tutti' ||
+        ricercaRegistro.trim().isNotEmpty;
+  }
+
+  void azzeraFiltriRegistro() {
+    setState(() {
+      filtroStato = 'tutti';
+      filtroStatoRevisione = 'tutti';
+      ricercaRegistro = '';
+      ricercaRegistroController.clear();
+    });
   }
 
   Future<void> esportaExcelRegistroTrattamenti() async {
@@ -1385,6 +1403,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   @override
   void dispose() {
     _tabellaOrizzontaleController.dispose();
+    ricercaRegistroController.dispose();
     super.dispose();
   }
 
@@ -1587,7 +1606,19 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
             const SizedBox(height: 12),
 
+            Align(
+              alignment: Alignment.centerRight,
+              child: OutlinedButton.icon(
+                onPressed: filtriRegistroAttivi ? azzeraFiltriRegistro : null,
+                icon: const Icon(Icons.filter_alt_off),
+                label: const Text('Azzera filtri'),
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
             TextField(
+              controller: ricercaRegistroController,
               decoration: InputDecoration(
                 labelText: 'Cerca nel registro trattamenti',
                 hintText:
@@ -1601,6 +1632,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                         onPressed: () {
                           setState(() {
                             ricercaRegistro = '';
+                            ricercaRegistroController.clear();
                           });
                         },
                       ),

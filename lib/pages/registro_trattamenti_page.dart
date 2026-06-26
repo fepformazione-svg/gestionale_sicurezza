@@ -223,7 +223,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       case 'statoRevisione':
         return 'Stato revisione';
       case 'finalita':
-        return 'Finalità';
+        return 'FinalitÃ ';
       case 'baseGiuridica':
         return 'Base giuridica';
       case 'categorieDati':
@@ -560,12 +560,13 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     final ricercaLogController = TextEditingController();
     String filtroAzioneLog = 'Tutte';
 
-    final azioniDisponibili = logs
-        .map((log) => log.azione.trim())
-        .where((azione) => azione.isNotEmpty)
-        .toSet()
-        .toList()
-      ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
+    final azioniDisponibili =
+        logs
+            .map((log) => log.azione.trim())
+            .where((azione) => azione.isNotEmpty)
+            .toSet()
+            .toList()
+          ..sort((a, b) => a.toLowerCase().compareTo(b.toLowerCase()));
 
     try {
       await showDialog<void>(
@@ -609,8 +610,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     ricerca.isEmpty || testoRicerca.contains(ricerca);
 
                 return passaFiltroAzione && passaRicerca;
-              }).toList()
-                ..sort((a, b) => b.dataOra.compareTo(a.dataOra));
+              }).toList()..sort((a, b) => b.dataOra.compareTo(a.dataOra));
 
               final filtriAttivi =
                   ricerca.isNotEmpty || filtroAzioneLog != 'Tutte';
@@ -720,8 +720,8 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                                           const Divider(height: 1),
                                       itemBuilder: (context, index) {
                                         final log = logsFiltrati[index];
-                                        final descrizione =
-                                            log.descrizione.trim();
+                                        final descrizione = log.descrizione
+                                            .trim();
                                         final utente = log.utente?.trim() ?? '';
                                         final datiPrima =
                                             log.datiPrima?.trim() ?? '';
@@ -746,8 +746,8 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                    top: 4,
-                                                  ),
+                                                        top: 4,
+                                                      ),
                                                   child: Text(descrizione),
                                                 ),
                                               Padding(
@@ -765,8 +765,8 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                                                 Padding(
                                                   padding:
                                                       const EdgeInsets.only(
-                                                    top: 4,
-                                                  ),
+                                                        top: 4,
+                                                      ),
                                                   child: Text(
                                                     'Dettagli tecnici disponibili',
                                                     style: TextStyle(
@@ -786,6 +786,48 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                         ),
                 ),
                 actions: [
+                  TextButton.icon(
+                    onPressed: logsFiltrati.isEmpty
+                        ? null
+                        : () async {
+                            await esportaExcelLogTrattamento(
+                              trattamento: trattamento,
+                              logsDaEsportare: logsFiltrati,
+                              filtroAzioneLog: filtroAzioneLog,
+                              ricercaLog: ricercaLogController.text.trim(),
+                            );
+                          },
+                    icon: const Icon(Icons.table_chart_outlined),
+                    label: const Text('Excel'),
+                  ),
+                  TextButton.icon(
+                    onPressed: logsFiltrati.isEmpty
+                        ? null
+                        : () async {
+                            await esportaPdfLogTrattamento(
+                              trattamento: trattamento,
+                              logsDaEsportare: logsFiltrati,
+                              filtroAzioneLog: filtroAzioneLog,
+                              ricercaLog: ricercaLogController.text.trim(),
+                            );
+                          },
+                    icon: const Icon(Icons.picture_as_pdf_outlined),
+                    label: const Text('PDF'),
+                  ),
+                  TextButton.icon(
+                    onPressed: logsFiltrati.isEmpty
+                        ? null
+                        : () async {
+                            await stampaLogTrattamento(
+                              trattamento: trattamento,
+                              logsDaStampare: logsFiltrati,
+                              filtroAzioneLog: filtroAzioneLog,
+                              ricercaLog: ricercaLogController.text.trim(),
+                            );
+                          },
+                    icon: const Icon(Icons.print_outlined),
+                    label: const Text('Stampa'),
+                  ),
                   TextButton(
                     onPressed: () => Navigator.pop(dialogContext),
                     child: const Text('Chiudi'),
@@ -800,6 +842,380 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       ricercaLogController.dispose();
     }
   }
+
+  String nomeFileSicuroRegistro(String testo) {
+    final pulito = testo
+        .trim()
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '_')
+        .replaceAll(RegExp(r'_+'), '_')
+        .replaceAll(RegExp(r'^_|_$'), '');
+
+    return pulito.isEmpty ? 'trattamento' : pulito;
+  }
+
+  String valoreTestoLogRegistro(String? valore) {
+    final testo = valore?.trim() ?? '';
+    return testo.isEmpty ? '-' : testo;
+  }
+
+  Future<void> esportaExcelLogTrattamento({
+    required RegistroTrattamento trattamento,
+    required List<RegistroTrattamentoLog> logsDaEsportare,
+    required String filtroAzioneLog,
+    required String ricercaLog,
+  }) async {
+    if (logsDaEsportare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun log da esportare in Excel.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final logsOrdinati = [...logsDaEsportare]
+      ..sort((a, b) => b.dataOra.compareTo(a.dataOra));
+
+    final excel = Excel.createExcel();
+    const nomeFoglio = 'Log trattamento';
+    final sheet = excel[nomeFoglio];
+
+    excel.setDefaultSheet(nomeFoglio);
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    final intestazioni = [
+      'Data',
+      'Azione',
+      'Descrizione',
+      'Utente',
+      'Dati prima',
+      'Dati dopo',
+    ];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 0))
+          .value = TextCellValue(
+        intestazioni[colonna],
+      );
+    }
+
+    for (var riga = 0; riga < logsOrdinati.length; riga++) {
+      final log = logsOrdinati[riga];
+
+      final valori = [
+        formattaDataOraLogRegistro(log.dataOra),
+        valoreTestoLogRegistro(log.azione),
+        valoreTestoLogRegistro(log.descrizione),
+        valoreTestoLogRegistro(log.utente),
+        valoreTestoLogRegistro(log.datiPrima),
+        valoreTestoLogRegistro(log.datiDopo),
+      ];
+
+      for (var colonna = 0; colonna < valori.length; colonna++) {
+        sheet
+            .cell(
+              CellIndex.indexByColumnRow(
+                columnIndex: colonna,
+                rowIndex: riga + 1,
+              ),
+            )
+            .value = TextCellValue(
+          valori[colonna],
+        );
+      }
+    }
+
+    final larghezze = [22.0, 26.0, 48.0, 24.0, 60.0, 60.0];
+    for (var colonna = 0; colonna < larghezze.length; colonna++) {
+      sheet.setColumnWidth(colonna, larghezze[colonna]);
+    }
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la generazione del file Excel log.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final documentiDir = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${documentiDir.path}${Platform.pathSeparator}Gestionale Sicurezza${Platform.pathSeparator}Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+
+    final file = File(
+      '${exportDir.path}${Platform.pathSeparator}'
+      'log_trattamento_${nomeFileSicuroRegistro(trattamento.nomeTrattamento)}_$timestamp.xlsx',
+    );
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamento.id,
+      azione: 'ESPORTAZIONE_EXCEL_LOG_TRATTAMENTO',
+      descrizione:
+          'Esportato log trattamento "${trattamento.nomeTrattamento}" in Excel. Record esportati: ${logsOrdinati.length}.',
+      datiDopo: trattamento,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Excel log esportato: ${file.path}')),
+    );
+  }
+
+  Future<Uint8List> generaPdfLogTrattamentoBytes({
+    required RegistroTrattamento trattamento,
+    required List<RegistroTrattamentoLog> logs,
+    required String filtroAzioneLog,
+    required String ricercaLog,
+    required String tipoOutput,
+  }) async {
+    final logsOrdinati = [...logs]
+      ..sort((a, b) => b.dataOra.compareTo(a.dataOra));
+
+    final pdf = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    final ricercaTesto = ricercaLog.trim();
+
+    final infoFiltri = [
+      'Azione: $filtroAzioneLog',
+      if (ricercaTesto.isNotEmpty) 'Ricerca: $ricercaTesto',
+      '$tipoOutput: ${logsOrdinati.length}',
+    ].join(' | ');
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Log trattamento',
+              style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Registro attivitÃ  singolo trattamento - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(
+              'Trattamento: ${trattamento.nomeTrattamento}',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(infoFiltri, style: const pw.TextStyle(fontSize: 9)),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            pw.SizedBox(height: 12),
+            pw.TableHelper.fromTextArray(
+              border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                fontSize: 8,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellAlignment: pw.Alignment.topLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.all(4),
+              headers: const [
+                'Data',
+                'Azione',
+                'Utente',
+                'Descrizione',
+                'Dati prima',
+                'Dati dopo',
+              ],
+              data: logsOrdinati.map((log) {
+                return [
+                  formattaDataOraLogRegistro(log.dataOra),
+                  valoreTestoLogRegistro(log.azione),
+                  valoreTestoLogRegistro(log.utente),
+                  valoreTestoLogRegistro(log.descrizione),
+                  valoreTestoLogRegistro(log.datiPrima),
+                  valoreTestoLogRegistro(log.datiDopo),
+                ];
+              }).toList(),
+            ),
+          ];
+        },
+      ),
+    );
+
+    return pdf.save();
+  }
+
+  Future<void> esportaPdfLogTrattamento({
+    required RegistroTrattamento trattamento,
+    required List<RegistroTrattamentoLog> logsDaEsportare,
+    required String filtroAzioneLog,
+    required String ricercaLog,
+  }) async {
+    if (logsDaEsportare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun log da esportare in PDF.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfLogTrattamentoBytes(
+      trattamento: trattamento,
+      logs: logsDaEsportare,
+      filtroAzioneLog: filtroAzioneLog,
+      ricercaLog: ricercaLog,
+      tipoOutput: 'Record esportati',
+    );
+
+    final documentiDir = await getApplicationDocumentsDirectory();
+    final exportDir = Directory(
+      '${documentiDir.path}${Platform.pathSeparator}Gestionale Sicurezza${Platform.pathSeparator}Export',
+    );
+
+    if (!await exportDir.exists()) {
+      await exportDir.create(recursive: true);
+    }
+
+    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
+
+    final file = File(
+      '${exportDir.path}${Platform.pathSeparator}'
+      'log_trattamento_${nomeFileSicuroRegistro(trattamento.nomeTrattamento)}_$timestamp.pdf',
+    );
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamento.id,
+      azione: 'ESPORTAZIONE_PDF_LOG_TRATTAMENTO',
+      descrizione:
+          'Esportato log trattamento "${trattamento.nomeTrattamento}" in PDF. Record esportati: ${logsDaEsportare.length}.',
+      datiDopo: trattamento,
+    );
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('PDF log esportato: ${file.path}'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> stampaLogTrattamento({
+    required RegistroTrattamento trattamento,
+    required List<RegistroTrattamentoLog> logsDaStampare,
+    required String filtroAzioneLog,
+    required String ricercaLog,
+  }) async {
+    if (logsDaStampare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun log da stampare.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfLogTrattamentoBytes(
+      trattamento: trattamento,
+      logs: logsDaStampare,
+      filtroAzioneLog: filtroAzioneLog,
+      ricercaLog: ricercaLog,
+      tipoOutput: 'Record in anteprima',
+    );
+
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamento.id,
+      azione: 'ANTEPRIMA_STAMPA_LOG_TRATTAMENTO',
+      descrizione:
+          'Aperta anteprima stampa log trattamento "${trattamento.nomeTrattamento}". Record in anteprima: ${logsDaStampare.length}.',
+      datiDopo: trattamento,
+    );
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (previewContext) {
+        final dimensioniSchermo = MediaQuery.of(previewContext).size;
+        final larghezzaDialog = dimensioniSchermo.width > 1100
+            ? 1000.0
+            : dimensioniSchermo.width * 0.92;
+        final altezzaDialog = dimensioniSchermo.height > 800
+            ? 720.0
+            : dimensioniSchermo.height * 0.86;
+
+        return AlertDialog(
+          title: const Text('Anteprima stampa log trattamento'),
+          content: SizedBox(
+            width: larghezzaDialog,
+            height: altezzaDialog,
+            child: PdfPreview(
+              build: (_) async => bytes,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              allowSharing: false,
+              allowPrinting: true,
+              initialPageFormat: PdfPageFormat.a4.landscape,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(previewContext),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> esportaExcelRegistroTrattamenti() async {
     final datiDaEsportare = trattamentiFiltrati;
 
@@ -823,7 +1239,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       'Nome trattamento',
       'Data revisione',
       'Stato revisione',
-      'Finalità',
+      'FinalitÃ ',
       'Categorie interessati',
       'Categorie dati',
       'Base giuridica',
@@ -1022,7 +1438,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 'Nome trattamento',
                 'Data revisione',
                 'Stato rev.',
-                'Finalità',
+                'FinalitÃ ',
                 'Categorie interessati',
                 'Categorie dati',
                 'Base giuridica',
@@ -1180,7 +1596,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 'Nome trattamento',
                 'Data revisione',
                 'Stato rev.',
-                'Finalità',
+                'FinalitÃ ',
                 'Categorie interessati',
                 'Categorie dati',
                 'Base giuridica',
@@ -1285,8 +1701,8 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ),
           content: Text(
             nuovoStatoAttivo
-                ? 'Il trattamento tornerà attivo nel Registro trattamenti.'
-                : 'Il trattamento non verrà cancellato, ma sarà segnato come non attivo.',
+                ? 'Il trattamento tornerÃ  attivo nel Registro trattamenti.'
+                : 'Il trattamento non verrÃ  cancellato, ma sarÃ  segnato come non attivo.',
           ),
           actions: [
             TextButton(
@@ -1354,7 +1770,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     return const Center(
       child: Text(
         'Nessun trattamento registrato.\n'
-        'Il registro è collegato al database, ma non contiene ancora dati.',
+        'Il registro Ã¨ collegato al database, ma non contiene ancora dati.',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.grey, fontSize: 16),
       ),
@@ -1495,7 +1911,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               ),
             ]),
             sezionePdf('Inquadramento GDPR', [
-              rigaDettaglioPdf('Finalità', trattamento.finalita),
+              rigaDettaglioPdf('FinalitÃ ', trattamento.finalita),
               rigaDettaglioPdf('Base giuridica', trattamento.baseGiuridica),
               rigaDettaglioPdf(
                 'Tempi di conservazione',
@@ -1677,7 +2093,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 children: [
                   titoloSezione('Dati principali', Icons.assignment_outlined),
                   rigaDettaglio('Trattamento', trattamento.nomeTrattamento),
-                  rigaDettaglio('Finalità', trattamento.finalita),
+                  rigaDettaglio('FinalitÃ ', trattamento.finalita),
                   rigaDettaglio(
                     'Stato',
                     trattamento.attivo ? 'Attivo' : 'Non attivo',
@@ -1832,7 +2248,10 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   ),
                 ),
                 DataColumn(
-                  label: intestazioneOrdinabileRegistro('Finalità', 'finalita'),
+                  label: intestazioneOrdinabileRegistro(
+                    'FinalitÃ ',
+                    'finalita',
+                  ),
                 ),
                 DataColumn(
                   label: intestazioneOrdinabileRegistro(
@@ -2126,7 +2545,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   _SezioneGuidaRegistro(
                     titolo: '1. Ricerca e filtri',
                     testo:
-                        'Usa la ricerca testuale per trovare rapidamente trattamenti per nome, finalità, categorie di dati, base giuridica, destinatari, responsabile interno, note e altri campi. '
+                        'Usa la ricerca testuale per trovare rapidamente trattamenti per nome, finalitÃ , categorie di dati, base giuridica, destinatari, responsabile interno, note e altri campi. '
                         'I filtri per stato e revisione possono essere combinati con la ricerca.',
                   ),
                   _SezioneGuidaRegistro(
@@ -2139,7 +2558,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     titolo: '3. Ordinamento',
                     testo:
                         'Clicca sulle intestazioni della tabella per ordinare i trattamenti. '
-                        'Un secondo click sulla stessa colonna inverte l’ordinamento. '
+                        'Un secondo click sulla stessa colonna inverte lâ€™ordinamento. '
                         'Il riepilogo sopra la tabella mostra il criterio attivo.',
                   ),
                   _SezioneGuidaRegistro(
@@ -2152,14 +2571,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   _SezioneGuidaRegistro(
                     titolo: '5. Data revisione',
                     testo:
-                        'La data revisione può essere scritta manualmente oppure selezionata dal calendario. '
+                        'La data revisione puÃ² essere scritta manualmente oppure selezionata dal calendario. '
                         'Il formato viene normalizzato in gg/mm/aaaa.',
                   ),
                   _SezioneGuidaRegistro(
                     titolo: '6. Dettaglio trattamento',
                     testo:
-                        'L’azione Dettaglio apre una vista in sola lettura con tutti i campi del trattamento. '
-                        'Da lì è possibile generare o salvare il PDF del singolo trattamento.',
+                        'Lâ€™azione Dettaglio apre una vista in sola lettura con tutti i campi del trattamento. '
+                        'Da lÃ¬ Ã¨ possibile generare o salvare il PDF del singolo trattamento.',
                   ),
                   _SezioneGuidaRegistro(
                     titolo: '7. Excel, PDF e stampa',
@@ -2410,7 +2829,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               decoration: InputDecoration(
                 labelText: 'Cerca nel registro trattamenti',
                 hintText:
-                    'Nome, finalità, base giuridica, dati, responsabile, note...',
+                    'Nome, finalitÃ , base giuridica, dati, responsabile, note...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: ricercaRegistro.isEmpty
                     ? null
@@ -2710,7 +3129,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     setState(() {
       _erroreNome = nomeVuoto ? 'Inserisci il nome del trattamento' : null;
       _erroreFinalita = finalitaVuota
-          ? 'Inserisci la finalità del trattamento'
+          ? 'Inserisci la finalitÃ  del trattamento'
           : null;
       _erroreDataRevisione = dataRevisioneNonValida
           ? 'Inserisci una data valida nel formato gg/mm/aaaa'
@@ -2858,7 +3277,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                 const SizedBox(height: 12),
                 campoTesto(
                   controller: _finalitaController,
-                  label: 'Finalità *',
+                  label: 'FinalitÃ  *',
                   errorText: _erroreFinalita,
                   minLines: 3,
                   maxLines: 5,
@@ -2993,6 +3412,3 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     );
   }
 }
-
-
-

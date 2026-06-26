@@ -209,6 +209,49 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     });
   }
 
+  String etichettaCampoOrdinamentoRegistro(String campo) {
+    switch (campo) {
+      case 'nomeTrattamento':
+        return 'Trattamento';
+      case 'dataRevisione':
+        return 'Data revisione';
+      case 'statoRevisione':
+        return 'Stato revisione';
+      case 'finalita':
+        return 'Finalità';
+      case 'baseGiuridica':
+        return 'Base giuridica';
+      case 'categorieDati':
+        return 'Categorie dati';
+      case 'tempiConservazione':
+        return 'Conservazione';
+      case 'stato':
+        return 'Stato';
+      default:
+        return 'Trattamento';
+    }
+  }
+
+  String get descrizioneOrdinamentoRegistro {
+    final direzione = ordinamentoRegistroCrescente
+        ? 'crescente'
+        : 'decrescente';
+
+    return '${etichettaCampoOrdinamentoRegistro(campoOrdinamentoRegistro)} - $direzione';
+  }
+
+  bool get ordinamentoRegistroPredefinito {
+    return campoOrdinamentoRegistro == 'dataRevisione' &&
+        ordinamentoRegistroCrescente;
+  }
+
+  void ripristinaOrdinamentoRegistro() {
+    setState(() {
+      campoOrdinamentoRegistro = 'dataRevisione';
+      ordinamentoRegistroCrescente = true;
+    });
+  }
+
   Widget intestazioneOrdinabileRegistro(String testo, String campo) {
     final attivo = campoOrdinamentoRegistro == campo;
 
@@ -234,6 +277,30 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget riepilogoOrdinamentoRegistro() {
+    return Row(
+      children: [
+        Icon(Icons.sort, size: 18, color: Colors.blueGrey.shade700),
+        const SizedBox(width: 8),
+        Text(
+          'Ordinato per: $descrizioneOrdinamentoRegistro',
+          style: TextStyle(
+            color: Colors.blueGrey.shade800,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
+        OutlinedButton.icon(
+          onPressed: ordinamentoRegistroPredefinito
+              ? null
+              : ripristinaOrdinamentoRegistro,
+          icon: const Icon(Icons.restart_alt, size: 18),
+          label: const Text('Ripristina ordinamento'),
+        ),
+      ],
     );
   }
 
@@ -526,11 +593,22 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       _ => 'Tutti',
     };
 
-    final ricercaTesto = '';
+    final filtroRevisioneTesto = switch (filtroStatoRevisione) {
+      'scadute' => 'Scadute',
+      'in_scadenza' => 'In scadenza',
+      'programmate' => 'Programmate',
+      'non_impostate' => 'Non impostate',
+      'da_verificare' => 'Da verificare',
+      _ => 'Tutte',
+    };
+
+    final ricercaTesto = ricercaRegistro.trim();
 
     final infoFiltri = [
       'Stato: $filtroStatoTesto',
+      'Revisione: $filtroRevisioneTesto',
       if (ricercaTesto.isNotEmpty) 'Ricerca: $ricercaTesto',
+      'Ordinamento: $descrizioneOrdinamentoRegistro',
       'Record esportati: ${listaDaEsportare.length}',
     ].join(' | ');
 
@@ -667,8 +745,22 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       _ => 'Tutti',
     };
 
+    final filtroRevisioneTesto = switch (filtroStatoRevisione) {
+      'scadute' => 'Scadute',
+      'in_scadenza' => 'In scadenza',
+      'programmate' => 'Programmate',
+      'non_impostate' => 'Non impostate',
+      'da_verificare' => 'Da verificare',
+      _ => 'Tutte',
+    };
+
+    final ricercaTesto = ricercaRegistro.trim();
+
     final infoFiltri = [
       'Stato: $filtroStatoTesto',
+      'Revisione: $filtroRevisioneTesto',
+      if (ricercaTesto.isNotEmpty) 'Ricerca: $ricercaTesto',
+      'Ordinamento: $descrizioneOrdinamentoRegistro',
       'Record stampati: ${listaDaStampare.length}',
     ].join(' | ');
 
@@ -1810,6 +1902,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
 
             const SizedBox(height: 16),
+
+            riepilogoOrdinamentoRegistro(),
+
+            const SizedBox(height: 8),
+
             Expanded(child: _buildContenuto()),
           ],
         ),

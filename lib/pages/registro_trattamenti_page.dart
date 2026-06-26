@@ -29,6 +29,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
   List<RegistroTrattamento> trattamenti = [];
 
   String filtroStato = 'tutti';
+  String filtroStatoRevisione = 'tutti';
   String ricercaRegistro = '';
 
   List<RegistroTrattamento> get trattamentiFiltrati {
@@ -38,6 +39,21 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       risultati = risultati.where((trattamento) => trattamento.attivo);
     } else if (filtroStato == 'non_attivi') {
       risultati = risultati.where((trattamento) => !trattamento.attivo);
+    }
+
+    if (filtroStatoRevisione != 'tutti') {
+      risultati = risultati.where((trattamento) {
+        final statoRevisione = statoRevisioneTrattamento(trattamento);
+
+        return switch (filtroStatoRevisione) {
+          'scadute' => statoRevisione == 'Scaduta',
+          'in_scadenza' => statoRevisione == 'In scadenza',
+          'programmate' => statoRevisione == 'Programmata',
+          'non_impostate' => statoRevisione == 'Non impostata',
+          'da_verificare' => statoRevisione == 'Da verificare',
+          _ => true,
+        };
+      });
     }
 
     final ricerca = ricercaRegistro.trim().toLowerCase();
@@ -130,6 +146,23 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       default:
         return Colors.grey.shade700;
     }
+  }
+
+  Widget chipFiltroRevisione({
+    required String valore,
+    required String etichetta,
+  }) {
+    final selezionato = filtroStatoRevisione == valore;
+
+    return ChoiceChip(
+      selected: selezionato,
+      label: Text(etichetta),
+      onSelected: (_) {
+        setState(() {
+          filtroStatoRevisione = valore;
+        });
+      },
+    );
   }
 
   Future<void> esportaExcelRegistroTrattamenti() async {
@@ -1386,6 +1419,46 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   style: TextStyle(
                     color: Colors.grey.shade700,
                     fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                const Text(
+                  'Filtro revisione:',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      chipFiltroRevisione(valore: 'tutti', etichetta: 'Tutte'),
+                      chipFiltroRevisione(
+                        valore: 'scadute',
+                        etichetta: 'Scadute',
+                      ),
+                      chipFiltroRevisione(
+                        valore: 'in_scadenza',
+                        etichetta: 'In scadenza',
+                      ),
+                      chipFiltroRevisione(
+                        valore: 'programmate',
+                        etichetta: 'Programmate',
+                      ),
+                      chipFiltroRevisione(
+                        valore: 'non_impostate',
+                        etichetta: 'Non impostate',
+                      ),
+                      chipFiltroRevisione(
+                        valore: 'da_verificare',
+                        etichetta: 'Da verificare',
+                      ),
+                    ],
                   ),
                 ),
               ],

@@ -1629,15 +1629,15 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         return;
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            isModifica
-                ? 'Trattamento "${risultato.nome}" modificato.'
-                : 'Trattamento "${risultato.nome}" salvato nel registro.',
-          ),
-        ),
-      );
+      final messaggioSalvataggio = isDuplicazione
+          ? 'Trattamento "${risultato.nome}" duplicato nel registro.'
+          : isModifica
+          ? 'Trattamento "${risultato.nome}" modificato.'
+          : 'Trattamento "${risultato.nome}" salvato nel registro.';
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(messaggioSalvataggio)));
     } catch (e) {
       if (!mounted) {
         return;

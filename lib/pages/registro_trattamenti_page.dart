@@ -252,6 +252,30 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     });
   }
 
+  Widget riepilogoOrdinamentoRegistro() {
+    return Row(
+      children: [
+        Icon(Icons.sort, size: 18, color: Colors.blueGrey.shade700),
+        const SizedBox(width: 8),
+        Text(
+          'Ordinato per: $descrizioneOrdinamentoRegistro',
+          style: TextStyle(
+            color: Colors.blueGrey.shade800,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        const Spacer(),
+        OutlinedButton.icon(
+          onPressed: ordinamentoRegistroPredefinito
+              ? null
+              : ripristinaOrdinamentoRegistro,
+          icon: const Icon(Icons.restart_alt, size: 18),
+          label: const Text('Ripristina ordinamento'),
+        ),
+      ],
+    );
+  }
+
   Widget intestazioneOrdinabileRegistro(String testo, String campo) {
     final attivo = campoOrdinamentoRegistro == campo;
 
@@ -277,30 +301,6 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ],
         ),
       ),
-    );
-  }
-
-  Widget riepilogoOrdinamentoRegistro() {
-    return Row(
-      children: [
-        Icon(Icons.sort, size: 18, color: Colors.blueGrey.shade700),
-        const SizedBox(width: 8),
-        Text(
-          'Ordinato per: $descrizioneOrdinamentoRegistro',
-          style: TextStyle(
-            color: Colors.blueGrey.shade800,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        const Spacer(),
-        OutlinedButton.icon(
-          onPressed: ordinamentoRegistroPredefinito
-              ? null
-              : ripristinaOrdinamentoRegistro,
-          icon: const Icon(Icons.restart_alt, size: 18),
-          label: const Text('Ripristina ordinamento'),
-        ),
-      ],
     );
   }
 

@@ -1680,6 +1680,88 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     }
   }
 
+  void mostraGuidaRapidaRegistroTrattamenti() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.help_outline, color: Colors.blue),
+              SizedBox(width: 8),
+              Text('Guida rapida Registro trattamenti'),
+            ],
+          ),
+          content: SizedBox(
+            width: 760,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SezioneGuidaRegistro(
+                    titolo: '1. Ricerca e filtri',
+                    testo:
+                        'Usa la ricerca testuale per trovare rapidamente trattamenti per nome, finalità, categorie di dati, base giuridica, destinatari, responsabile interno, note e altri campi. '
+                        'I filtri per stato e revisione possono essere combinati con la ricerca.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '2. Riepilogo revisioni',
+                    testo:
+                        'Le card Scadute, In scadenza, Programmate, Non impostate e Da verificare riepilogano la situazione delle revisioni. '
+                        'Cliccando una card viene applicato automaticamente il filtro corrispondente.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '3. Ordinamento',
+                    testo:
+                        'Clicca sulle intestazioni della tabella per ordinare i trattamenti. '
+                        'Un secondo click sulla stessa colonna inverte l’ordinamento. '
+                        'Il riepilogo sopra la tabella mostra il criterio attivo.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '4. Nuovo, modifica e duplica',
+                    testo:
+                        'Il pulsante Nuovo trattamento apre il dialog di inserimento. '
+                        'La matita modifica un trattamento esistente. '
+                        'Il pulsante Duplica crea una nuova scheda partendo dai dati del trattamento selezionato.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '5. Data revisione',
+                    testo:
+                        'La data revisione può essere scritta manualmente oppure selezionata dal calendario. '
+                        'Il formato viene normalizzato in gg/mm/aaaa.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '6. Dettaglio trattamento',
+                    testo:
+                        'L’azione Dettaglio apre una vista in sola lettura con tutti i campi del trattamento. '
+                        'Da lì è possibile generare o salvare il PDF del singolo trattamento.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '7. Excel, PDF e stampa',
+                    testo:
+                        'Gli export Excel, PDF e la stampa rispettano la vista corrente: filtri, ricerca e ordinamento attivi.',
+                  ),
+                  _SezioneGuidaRegistro(
+                    titolo: '8. Azzera filtri',
+                    testo:
+                        'Il pulsante Azzera filtri ripristina rapidamente la vista completa, svuotando ricerca e filtri attivi.',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.check),
+              label: const Text('Ho capito'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   void dispose() {
     _tabellaOrizzontaleController.dispose();
@@ -1936,10 +2018,49 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => mostraDialogTrattamento(),
-        icon: const Icon(Icons.add),
-        label: const Text('Nuovo trattamento'),
+      floatingActionButton: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          FloatingActionButton.extended(
+            heroTag: 'guidaRegistroTrattamenti',
+            onPressed: mostraGuidaRapidaRegistroTrattamenti,
+            icon: const Icon(Icons.help_outline),
+            label: const Text('Guida'),
+          ),
+          const SizedBox(height: 12),
+          FloatingActionButton.extended(
+            heroTag: 'nuovoRegistroTrattamenti',
+            onPressed: () => mostraDialogTrattamento(),
+            icon: const Icon(Icons.add),
+            label: const Text('Nuovo trattamento'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SezioneGuidaRegistro extends StatelessWidget {
+  final String titolo;
+  final String testo;
+
+  const _SezioneGuidaRegistro({required this.titolo, required this.testo});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            titolo,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          ),
+          const SizedBox(height: 4),
+          Text(testo, style: const TextStyle(fontSize: 13, height: 1.35)),
+        ],
       ),
     );
   }

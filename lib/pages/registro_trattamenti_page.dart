@@ -2106,6 +2106,54 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     return DateFormat('dd/MM/yyyy').format(data);
   }
 
+  DateTime? _parseDataRevisioneDialog(String valore) {
+    final testo = valore.trim();
+
+    if (testo.isEmpty) {
+      return null;
+    }
+
+    try {
+      return DateFormat('dd/MM/yyyy').parseStrict(testo);
+    } catch (_) {
+      // Prova formato tecnico ISO solo data: yyyy-MM-dd
+    }
+
+    final formatoIsoSoloData = RegExp(r'^\d{4}-\d{2}-\d{2}$');
+    if (!formatoIsoSoloData.hasMatch(testo)) {
+      return null;
+    }
+
+    return DateTime.tryParse(testo);
+  }
+
+  Future<void> _selezionaDataRevisione() async {
+    final dataAttuale =
+        _parseDataRevisioneDialog(_dataRevisioneController.text) ??
+        DateTime.now();
+
+    final dataScelta = await showDatePicker(
+      context: context,
+      initialDate: dataAttuale,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
+      helpText: 'Seleziona data revisione',
+      cancelText: 'Annulla',
+      confirmText: 'Conferma',
+    );
+
+    if (dataScelta == null) {
+      return;
+    }
+
+    setState(() {
+      _dataRevisioneController.text = DateFormat(
+        'dd/MM/yyyy',
+      ).format(dataScelta);
+      _erroreDataRevisione = null;
+    });
+  }
+
   void _salva() {
     final nomeVuoto = _nomeController.text.trim().isEmpty;
     final finalitaVuota = _finalitaController.text.trim().isEmpty;
@@ -2175,6 +2223,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
       required String label,
       String? hintText,
       String? errorText,
+      Widget? suffixIcon,
       int minLines = 1,
       int maxLines = 1,
     }) {
@@ -2193,6 +2242,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
           isDense: true,
           filled: true,
           fillColor: Colors.grey.shade50,
+          suffixIcon: suffixIcon,
         ),
       );
     }
@@ -2292,6 +2342,11 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                   label: 'Data revisione',
                   hintText: 'Es. 25/06/2026',
                   errorText: _erroreDataRevisione,
+                  suffixIcon: IconButton(
+                    tooltip: 'Seleziona data revisione',
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    onPressed: _selezionaDataRevisione,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 campoTesto(

@@ -6,6 +6,7 @@ import '../utils/pdf_azienda_helper.dart';
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
@@ -450,6 +451,43 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     });
   }
 
+  String _trattamentoLogJson(
+    RegistroTrattamento trattamento, {
+    int? idForzato,
+  }) {
+    final dati = Map<String, dynamic>.from(trattamento.toMap());
+
+    if (idForzato != null) {
+      dati['id'] = idForzato;
+    }
+
+    return const JsonEncoder.withIndent('  ').convert(dati);
+  }
+
+  Future<void> registraLogAzioneRegistro({
+    int? trattamentoId,
+    required String azione,
+    required String descrizione,
+    RegistroTrattamento? datiPrima,
+    RegistroTrattamento? datiDopo,
+    int? idDopoForzato,
+  }) async {
+    try {
+      await AppDatabase.instance.registraLogRegistroTrattamento(
+        trattamentoId: trattamentoId,
+        azione: azione,
+        descrizione: descrizione,
+        datiPrima: datiPrima == null ? null : _trattamentoLogJson(datiPrima),
+        datiDopo: datiDopo == null
+            ? null
+            : _trattamentoLogJson(datiDopo, idForzato: idDopoForzato),
+        utente: 'Operatore locale',
+      );
+    } catch (e) {
+      debugPrint('Errore log Registro trattamenti: $e');
+    }
+  }
+
   Future<void> esportaExcelRegistroTrattamenti() async {
     final datiDaEsportare = trattamentiFiltrati;
 
@@ -563,6 +601,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
 
     await file.writeAsBytes(bytes, flush: true);
+
+    await registraLogAzioneRegistro(
+      azione: 'ESPORTAZIONE_EXCEL',
+      descrizione:
+          'Esportato Registro trattamenti in Excel. Record esportati: ${datiDaEsportare.length}.',
+    );
 
     if (!mounted) return;
 
@@ -713,6 +757,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     await file.writeAsBytes(await pdf.save());
 
+    await registraLogAzioneRegistro(
+      azione: 'ESPORTAZIONE_PDF',
+      descrizione:
+          'Esportato Registro trattamenti in PDF. Record esportati: ${listaDaEsportare.length}.',
+    );
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -860,6 +910,12 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     await Process.run('cmd', ['/c', 'start', '', file.path], runInShell: true);
 
+    await registraLogAzioneRegistro(
+      azione: 'STAMPA',
+      descrizione:
+          'Generato PDF di stampa Registro trattamenti. Record stampati: ${listaDaStampare.length}.',
+    );
+
     if (!mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
@@ -956,6 +1012,16 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     );
 
     await AppDatabase.instance.updateRegistroTrattamento(trattamentoAggiornato);
+
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamentoAggiornato.id,
+      azione: nuovoStatoAttivo ? 'RIATTIVAZIONE' : 'DISATTIVAZIONE',
+      descrizione: nuovoStatoAttivo
+          ? 'Riattivato trattamento "${trattamentoAggiornato.nomeTrattamento}".'
+          : 'Disattivato trattamento "${trattamentoAggiornato.nomeTrattamento}".',
+      datiPrima: trattamento,
+      datiDopo: trattamentoAggiornato,
+    );
 
     if (!mounted) return;
 
@@ -1187,6 +1253,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
     await file.writeAsBytes(bytes);
 
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamento.id,
+      azione: 'ESPORTAZIONE_PDF_SINGOLO',
+      descrizione:
+          'Esportato PDF singolo trattamento "${trattamento.nomeTrattamento}".',
+      datiDopo: trattamento,
+    );
+
     if (!mounted) {
       return;
     }
@@ -1198,6 +1272,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Future<void> stampaSingoloTrattamento(RegistroTrattamento trattamento) async {
     final bytes = await generaPdfSingoloTrattamentoBytes(trattamento);
+
+    await registraLogAzioneRegistro(
+      trattamentoId: trattamento.id,
+      azione: 'ANTEPRIMA_PDF_SINGOLO',
+      descrizione:
+          'Aperta anteprima PDF del trattamento "${trattamento.nomeTrattamento}".',
+      datiDopo: trattamento,
+    );
 
     if (!mounted) {
       return;
@@ -1635,9 +1717,29 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         await AppDatabase.instance.updateRegistroTrattamento(
           trattamentoDaSalvare,
         );
+
+        await registraLogAzioneRegistro(
+          trattamentoId: trattamentoDaSalvare.id,
+          azione: 'MODIFICA',
+          descrizione:
+              'Modificato trattamento "${trattamentoDaSalvare.nomeTrattamento}".',
+          datiPrima: trattamento,
+          datiDopo: trattamentoDaSalvare,
+        );
       } else {
-        await AppDatabase.instance.insertRegistroTrattamento(
+        final nuovoId = await AppDatabase.instance.insertRegistroTrattamento(
           trattamentoDaSalvare,
+        );
+
+        await registraLogAzioneRegistro(
+          trattamentoId: nuovoId,
+          azione: isDuplicazione ? 'DUPLICAZIONE' : 'CREAZIONE',
+          descrizione: isDuplicazione
+              ? 'Duplicato trattamento "${trattamento.nomeTrattamento}" in "${trattamentoDaSalvare.nomeTrattamento}".'
+              : 'Creato trattamento "${trattamentoDaSalvare.nomeTrattamento}".',
+          datiPrima: isDuplicazione ? trattamento : null,
+          datiDopo: trattamentoDaSalvare,
+          idDopoForzato: nuovoId,
         );
       }
 

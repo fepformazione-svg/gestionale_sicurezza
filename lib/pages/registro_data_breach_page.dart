@@ -117,6 +117,119 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     ).showSnackBar(const SnackBar(content: Text('Data breach eliminato')));
   }
 
+  Future<void> mostraDettaglioDataBreach(DataBreach elemento) async {
+    String valore(String testo) {
+      final pulito = testo.trim();
+      return pulito.isEmpty ? '-' : pulito;
+    }
+
+    String siNo(bool valore) => valore ? 'Sì' : 'No';
+
+    Widget sezione(String titolo) {
+      return Padding(
+        padding: const EdgeInsets.only(top: 18, bottom: 8),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            titolo,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
+    Widget riga(String etichetta, String contenuto) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 230,
+              child: Text(
+                etichetta,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+            Expanded(child: SelectableText(valore(contenuto))),
+          ],
+        ),
+      );
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Dettaglio data breach'),
+        content: SizedBox(
+          width: 850,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      badge(elemento.rischio, coloreRischio(elemento.rischio)),
+                      badge(elemento.stato, coloreStato(elemento.stato)),
+                    ],
+                  ),
+                ),
+                sezione('Evento'),
+                riga('Data evento', elemento.dataEvento),
+                riga('Data rilevazione', elemento.dataRilevazione),
+                riga('Descrizione dell’evento', elemento.descrizione),
+                riga('Categorie dati coinvolti', elemento.categorieDati),
+                riga('Categorie interessati', elemento.categorieInteressati),
+                riga(
+                  'Numero interessati/record coinvolti',
+                  elemento.numeroInteressati,
+                ),
+                sezione('Valutazione e misure'),
+                riga('Conseguenze probabili', elemento.conseguenze),
+                riga('Misure adottate o proposte', elemento.misureAdottate),
+                riga('Rischio', elemento.rischio),
+                sezione('Notifiche GDPR'),
+                riga('Notificato al Garante', siNo(elemento.notificatoGarante)),
+                riga('Data notifica Garante', elemento.dataNotificaGarante),
+                riga(
+                  'Comunicazione agli interessati',
+                  siNo(elemento.comunicatoInteressati),
+                ),
+                riga(
+                  'Data comunicazione interessati',
+                  elemento.dataComunicazioneInteressati,
+                ),
+                riga(
+                  'Motivazione mancata notifica/comunicazione',
+                  elemento.motivazioneMancataNotifica,
+                ),
+                sezione('Gestione interna'),
+                riga('Responsabile interno', elemento.responsabileInterno),
+                riga('Stato', elemento.stato),
+                riga('Note', elemento.note),
+                sezione('Tracciamento'),
+                riga('Creato il', elemento.createdAt),
+                riga('Aggiornato il', elemento.updatedAt),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void azzeraFiltri() {
     ricercaController.clear();
     setState(() {
@@ -292,7 +405,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                         child: SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: SizedBox(
-                            width: 1450,
+                            width: 1510,
                             child: Column(
                               children: [
                                 Container(
@@ -378,7 +491,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                         ),
                                       ),
                                       SizedBox(
-                                        width: 130,
+                                        width: 190,
                                         child: Text(
                                           'Azioni',
                                           style: TextStyle(
@@ -470,9 +583,19 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                 ),
                                               ),
                                               SizedBox(
-                                                width: 130,
+                                                width: 190,
                                                 child: Row(
                                                   children: [
+                                                    IconButton(
+                                                      tooltip: 'Dettaglio',
+                                                      icon: const Icon(
+                                                        Icons.visibility,
+                                                      ),
+                                                      onPressed: () =>
+                                                          mostraDettaglioDataBreach(
+                                                            elemento,
+                                                          ),
+                                                    ),
                                                     IconButton(
                                                       tooltip: 'Modifica',
                                                       icon: const Icon(

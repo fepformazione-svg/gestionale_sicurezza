@@ -12,6 +12,7 @@ import '../models/ruolo_utente.dart';
 import '../models/utente_app.dart';
 import '../models/registro_trattamento.dart';
 import '../models/registro_trattamento_log.dart';
+import '../models/data_breach.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -47,7 +48,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 4,
+        version: 5,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -461,6 +462,113 @@ class AppDatabase {
       )
     ''');
     await _creaTabellaRegistroTrattamenti(db);
+    await _createRegistroDataBreachTable(db);
+  }
+
+  Future<void> _createRegistroDataBreachTable(Database db) async {
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS registro_data_breach (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data_evento TEXT NOT NULL DEFAULT '',
+      data_rilevazione TEXT NOT NULL DEFAULT '',
+      descrizione TEXT NOT NULL DEFAULT '',
+      categorie_dati TEXT NOT NULL DEFAULT '',
+      categorie_interessati TEXT NOT NULL DEFAULT '',
+      numero_interessati TEXT NOT NULL DEFAULT '',
+      conseguenze TEXT NOT NULL DEFAULT '',
+      misure_adottate TEXT NOT NULL DEFAULT '',
+      rischio TEXT NOT NULL DEFAULT 'Da valutare',
+      notificato_garante INTEGER NOT NULL DEFAULT 0,
+      data_notifica_garante TEXT NOT NULL DEFAULT '',
+      comunicato_interessati INTEGER NOT NULL DEFAULT 0,
+      data_comunicazione_interessati TEXT NOT NULL DEFAULT '',
+      motivazione_mancata_notifica TEXT NOT NULL DEFAULT '',
+      responsabile_interno TEXT NOT NULL DEFAULT '',
+      stato TEXT NOT NULL DEFAULT 'Aperto',
+      note TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT '',
+      updated_at TEXT NOT NULL DEFAULT ''
+    )
+  ''');
+  }
+
+  Future<List<DataBreach>> getDataBreach({
+    String? filtroStato,
+    String? ricerca,
+  }) async {
+    final db = await database;
+
+    final whereParts = <String>[];
+    final whereArgs = <Object?>[];
+
+    if (filtroStato != null &&
+        filtroStato.trim().isNotEmpty &&
+        filtroStato != 'Tutti') {
+      whereParts.add('stato = ?');
+      whereArgs.add(filtroStato);
+    }
+
+    final testoRicerca = ricerca?.trim() ?? '';
+    if (testoRicerca.isNotEmpty) {
+      whereParts.add('''
+      (
+        descrizione LIKE ?
+        OR categorie_dati LIKE ?
+        OR categorie_interessati LIKE ?
+        OR conseguenze LIKE ?
+        OR misure_adottate LIKE ?
+        OR rischio LIKE ?
+        OR responsabile_interno LIKE ?
+        OR stato LIKE ?
+        OR note LIKE ?
+      )
+    ''');
+
+      final like = '%$testoRicerca%';
+      whereArgs.addAll([like, like, like, like, like, like, like, like, like]);
+    }
+
+    final maps = await db.query(
+      'registro_data_breach',
+      where: whereParts.isEmpty ? null : whereParts.join(' AND '),
+      whereArgs: whereArgs,
+      orderBy: 'id DESC',
+    );
+
+    return maps.map(DataBreach.fromMap).toList();
+  }
+
+  Future<int> insertDataBreach(DataBreach dataBreach) async {
+    final db = await database;
+    final map = dataBreach.toMap();
+    map.remove('id');
+
+    return db.insert(
+      'registro_data_breach',
+      map,
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<int> updateDataBreach(DataBreach dataBreach) async {
+    final db = await database;
+
+    if (dataBreach.id == null) {
+      throw Exception('ID data breach mancante per aggiornamento');
+    }
+
+    return db.update(
+      'registro_data_breach',
+      dataBreach.toMap(),
+      where: 'id = ?',
+      whereArgs: [dataBreach.id],
+    );
+  }
+
+  Future<int> deleteDataBreach(int id) async {
+    final db = await database;
+
+    return db.delete('registro_data_breach', where: 'id = ?', whereArgs: [id]);
   }
 
   Future<List<RegistroTrattamento>> getRegistroTrattamenti({

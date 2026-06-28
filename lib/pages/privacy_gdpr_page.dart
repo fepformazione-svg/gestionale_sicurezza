@@ -8,7 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import 'registro_trattamenti_page.dart';
+import 'registro_data_breach_page.dart';
 
 import '../models/privacy_gdpr.dart';
 import '../services/app_database.dart';
@@ -1148,6 +1150,22 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                         Icons.assignment_outlined,
                                       ),
                                       label: const Text('Registro trattamenti'),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    OutlinedButton.icon(
+                                      onPressed: () {
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                const RegistroDataBreachPage(),
+                                          ),
+                                        );
+                                      },
+                                      icon: const Icon(
+                                        Icons.warning_amber_rounded,
+                                      ),
+                                      label: const Text('Registro Data Breach'),
                                     ),
                                   ],
                                 ),

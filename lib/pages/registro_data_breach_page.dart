@@ -202,6 +202,65 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     return valore ? 1 : 0;
   }
 
+  String etichettaCampoOrdinamentoDataBreach() {
+    switch (campoOrdinamentoDataBreach) {
+      case 'dataEvento':
+        return 'Data evento';
+      case 'dataRilevazione':
+        return 'Rilevazione';
+      case 'descrizione':
+        return 'Descrizione';
+      case 'categorieDati':
+        return 'Categorie dati';
+      case 'rischio':
+        return 'Rischio';
+      case 'notificatoGarante':
+        return 'Garante';
+      case 'comunicatoInteressati':
+        return 'Comunicazione interessati';
+      case 'numeroInteressati':
+        return 'Numero interessati/record';
+      case 'stato':
+        return 'Stato';
+      default:
+        return 'Descrizione';
+    }
+  }
+
+  String etichettaVersoOrdinamentoDataBreach() {
+    if (campoOrdinamentoDataBreach == 'notificatoGarante' ||
+        campoOrdinamentoDataBreach == 'comunicatoInteressati') {
+      return ordinamentoDataBreachCrescente ? 'No → Sì' : 'Sì → No';
+    }
+
+    return ordinamentoDataBreachCrescente ? 'crescente' : 'decrescente';
+  }
+
+  Widget riepilogoOrdinamentoDataBreach() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.sort, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Ordinato per ${etichettaCampoOrdinamentoDataBreach()} '
+              '${etichettaVersoOrdinamentoDataBreach()}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget intestazioneOrdinabileDataBreach(
     String titolo,
     String campo, {
@@ -1413,220 +1472,244 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                           style: TextStyle(fontSize: 16),
                         ),
                       )
-                    : Scrollbar(
-                        thumbVisibility: true,
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: SizedBox(
-                            width: 1510,
-                            child: Column(
-                              children: [
-                                Container(
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.surfaceContainerHighest,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 10,
-                                  ),
-                                  child: Row(
+                    : Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(12),
+                            child: riepilogoOrdinamentoDataBreach(),
+                          ),
+                          Expanded(
+                            child: Scrollbar(
+                              thumbVisibility: true,
+                              child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: 1510,
+                                  child: Column(
                                     children: [
-                                      SizedBox(
-                                        width: 120,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Data evento',
-                                          'dataEvento',
+                                      Container(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.surfaceContainerHighest,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 10,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            SizedBox(
+                                              width: 120,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Data evento',
+                                                    'dataEvento',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 130,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Rilevazione',
+                                                    'dataRilevazione',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 290,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Descrizione',
+                                                    'descrizione',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 170,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Categorie dati',
+                                                    'categorieDati',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 120,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Rischio',
+                                                    'rischio',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 130,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Garante',
+                                                    'notificatoGarante',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 140,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Interessati',
+                                                    'comunicatoInteressati',
+                                                  ),
+                                            ),
+                                            SizedBox(
+                                              width: 140,
+                                              child:
+                                                  intestazioneOrdinabileDataBreach(
+                                                    'Stato',
+                                                    'stato',
+                                                  ),
+                                            ),
+                                            const SizedBox(
+                                              width: 190,
+                                              child: Text(
+                                                'Azioni',
+                                                style: TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      SizedBox(
-                                        width: 130,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Rilevazione',
-                                          'dataRilevazione',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 290,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Descrizione',
-                                          'descrizione',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 170,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Categorie dati',
-                                          'categorieDati',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 120,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Rischio',
-                                          'rischio',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 130,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Garante',
-                                          'notificatoGarante',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 140,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Interessati',
-                                          'comunicatoInteressati',
-                                        ),
-                                      ),
-                                      SizedBox(
-                                        width: 140,
-                                        child: intestazioneOrdinabileDataBreach(
-                                          'Stato',
-                                          'stato',
-                                        ),
-                                      ),
-                                      const SizedBox(
-                                        width: 190,
-                                        child: Text(
-                                          'Azioni',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Scrollbar(
+                                          thumbVisibility: true,
+                                          child: ListView.separated(
+                                            itemCount: elencoDataBreach.length,
+                                            separatorBuilder: (_, _) =>
+                                                const Divider(height: 1),
+                                            itemBuilder: (context, index) {
+                                              final elemento =
+                                                  elencoDataBreach[index];
+
+                                              return Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 10,
+                                                    ),
+                                                child: Row(
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 120,
+                                                      child: Text(
+                                                        elemento.dataEvento,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 130,
+                                                      child: Text(
+                                                        elemento
+                                                            .dataRilevazione,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 290,
+                                                      child: Text(
+                                                        elemento.descrizione,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 170,
+                                                      child: Text(
+                                                        elemento.categorieDati,
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 120,
+                                                      child: badge(
+                                                        elemento.rischio,
+                                                        coloreRischio(
+                                                          elemento.rischio,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 130,
+                                                      child: Text(
+                                                        elemento.notificatoGarante
+                                                            ? 'Sì'
+                                                            : 'No',
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 140,
+                                                      child: Text(
+                                                        elemento.comunicatoInteressati
+                                                            ? 'Sì'
+                                                            : 'No',
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 140,
+                                                      child: badge(
+                                                        elemento.stato,
+                                                        coloreStato(
+                                                          elemento.stato,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                    SizedBox(
+                                                      width: 190,
+                                                      child: Row(
+                                                        children: [
+                                                          IconButton(
+                                                            tooltip:
+                                                                'Dettaglio',
+                                                            icon: const Icon(
+                                                              Icons.visibility,
+                                                            ),
+                                                            onPressed: () =>
+                                                                mostraDettaglioDataBreach(
+                                                                  elemento,
+                                                                ),
+                                                          ),
+                                                          IconButton(
+                                                            tooltip: 'Modifica',
+                                                            icon: const Icon(
+                                                              Icons.edit,
+                                                            ),
+                                                            onPressed: () =>
+                                                                mostraDialogDataBreach(
+                                                                  elemento:
+                                                                      elemento,
+                                                                ),
+                                                          ),
+                                                          IconButton(
+                                                            tooltip: 'Elimina',
+                                                            icon: const Icon(
+                                                              Icons.delete,
+                                                            ),
+                                                            onPressed: () =>
+                                                                eliminaDataBreach(
+                                                                  elemento,
+                                                                ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ),
                                       ),
                                     ],
                                   ),
                                 ),
-                                Expanded(
-                                  child: Scrollbar(
-                                    thumbVisibility: true,
-                                    child: ListView.separated(
-                                      itemCount: elencoDataBreach.length,
-                                      separatorBuilder: (_, _) =>
-                                          const Divider(height: 1),
-                                      itemBuilder: (context, index) {
-                                        final elemento =
-                                            elencoDataBreach[index];
-
-                                        return Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12,
-                                            vertical: 10,
-                                          ),
-                                          child: Row(
-                                            children: [
-                                              SizedBox(
-                                                width: 120,
-                                                child: Text(
-                                                  elemento.dataEvento,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 130,
-                                                child: Text(
-                                                  elemento.dataRilevazione,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 290,
-                                                child: Text(
-                                                  elemento.descrizione,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 170,
-                                                child: Text(
-                                                  elemento.categorieDati,
-                                                  maxLines: 2,
-                                                  overflow:
-                                                      TextOverflow.ellipsis,
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 120,
-                                                child: badge(
-                                                  elemento.rischio,
-                                                  coloreRischio(
-                                                    elemento.rischio,
-                                                  ),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 130,
-                                                child: Text(
-                                                  elemento.notificatoGarante
-                                                      ? 'Sì'
-                                                      : 'No',
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 140,
-                                                child: Text(
-                                                  elemento.comunicatoInteressati
-                                                      ? 'Sì'
-                                                      : 'No',
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 140,
-                                                child: badge(
-                                                  elemento.stato,
-                                                  coloreStato(elemento.stato),
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 190,
-                                                child: Row(
-                                                  children: [
-                                                    IconButton(
-                                                      tooltip: 'Dettaglio',
-                                                      icon: const Icon(
-                                                        Icons.visibility,
-                                                      ),
-                                                      onPressed: () =>
-                                                          mostraDettaglioDataBreach(
-                                                            elemento,
-                                                          ),
-                                                    ),
-                                                    IconButton(
-                                                      tooltip: 'Modifica',
-                                                      icon: const Icon(
-                                                        Icons.edit,
-                                                      ),
-                                                      onPressed: () =>
-                                                          mostraDialogDataBreach(
-                                                            elemento: elemento,
-                                                          ),
-                                                    ),
-                                                    IconButton(
-                                                      tooltip: 'Elimina',
-                                                      icon: const Icon(
-                                                        Icons.delete,
-                                                      ),
-                                                      onPressed: () =>
-                                                          eliminaDataBreach(
-                                                            elemento,
-                                                          ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
                           ),
-                        ),
+                        ],
                       ),
               ),
             ),

@@ -1065,6 +1065,323 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         '${dueCifre(locale.hour)}:${dueCifre(locale.minute)}';
   }
 
+  Future<void> esportaExcelLogDataBreach(
+    DataBreach elemento,
+    List<DataBreachLog> logs,
+  ) async {
+    if (logs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun log Data Breach da esportare')),
+      );
+      return;
+    }
+
+    try {
+      final documento = excel.Excel.createExcel();
+      const nomeFoglio = 'Log Data Breach';
+      final foglio = documento[nomeFoglio];
+
+      documento.setDefaultSheet(nomeFoglio);
+      if (documento.sheets.containsKey('Sheet1')) {
+        documento.delete('Sheet1');
+      }
+
+      String valore(String? testo) => valoreLogDataBreach(testo);
+
+      String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+      final now = DateTime.now();
+      final generatoIl =
+          '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+          '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+      foglio.appendRow([excel.TextCellValue('Log Data Breach')]);
+      foglio.appendRow([
+        excel.TextCellValue(
+          'Data Breach ID: ${elemento.id} - Data evento: ${valore(elemento.dataEvento)} - Stato: ${valore(elemento.stato)}',
+        ),
+      ]);
+      foglio.appendRow([
+        excel.TextCellValue(
+          'Generato il: $generatoIl - Record log esportati: ${logs.length}',
+        ),
+      ]);
+      foglio.appendRow([]);
+
+      foglio.appendRow(
+        [
+          'ID Log',
+          'ID Data Breach',
+          'Data/Ora',
+          'Azione',
+          'Descrizione',
+          'Utente',
+          'Dati prima',
+          'Dati dopo',
+        ].map((testo) => excel.TextCellValue(testo)).toList(),
+      );
+
+      for (final log in logs) {
+        foglio.appendRow(
+          [
+            valore(log.id?.toString()),
+            valore(log.dataBreachId?.toString()),
+            formattaDataOraLogDataBreach(log.dataOra),
+            valore(log.azione),
+            valore(log.descrizione),
+            valore(log.utente),
+            valore(log.datiPrima),
+            valore(log.datiDopo),
+          ].map((testo) => excel.TextCellValue(testo)).toList(),
+        );
+      }
+
+      final bytes = documento.save();
+
+      if (bytes == null) {
+        throw Exception('Generazione file Excel non riuscita');
+      }
+
+      final timestamp =
+          '${now.year}${dueCifre(now.month)}${dueCifre(now.day)}_'
+          '${dueCifre(now.hour)}${dueCifre(now.minute)}';
+
+      final cartella = Directory(
+        '${Platform.environment['USERPROFILE']}\\Documents\\Gestionale Sicurezza',
+      );
+
+      if (!await cartella.exists()) {
+        await cartella.create(recursive: true);
+      }
+
+      final percorso =
+          '${cartella.path}\\log_data_breach_${elemento.id}_$timestamp.xlsx';
+
+      await File(percorso).writeAsBytes(bytes);
+      await Process.run('cmd', ['/c', 'start', '', percorso]);
+
+      await AppDatabase.instance.registraLogDataBreach(
+        dataBreachId: elemento.id,
+        azione: 'ESPORTAZIONE_EXCEL_LOG',
+        descrizione:
+            'Esportato log Data Breach ID ${elemento.id} in Excel. Record esportati: ${logs.length}.',
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Excel log Data Breach esportato: $percorso')),
+      );
+    } catch (errore) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore export Excel log Data Breach: $errore')),
+      );
+    }
+  }
+
+  Future<Uint8List> generaPdfLogDataBreachBytes(
+    DataBreach elemento,
+    List<DataBreachLog> logs,
+  ) async {
+    String valore(String? testo) => valoreLogDataBreach(testo);
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final now = DateTime.now();
+    final generatoIl =
+        '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+        '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+    final documento = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    documento.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Log Data Breach',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Tracciamento azioni e modifiche - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Text(
+              'Data Breach ID: ${elemento.id} - Data evento: ${valore(elemento.dataEvento)} - Stato: ${valore(elemento.stato)}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          ),
+        ),
+        build: (context) => [
+          pw.Text(
+            'Generato il: $generatoIl - Record log: ${logs.length}',
+            style: const pw.TextStyle(fontSize: 9),
+          ),
+          pw.SizedBox(height: 12),
+          pw.TableHelper.fromTextArray(
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 8,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 7),
+            cellAlignment: pw.Alignment.topLeft,
+            headerAlignment: pw.Alignment.centerLeft,
+            headers: const [
+              'Data/Ora',
+              'Azione',
+              'Descrizione',
+              'Utente',
+              'Dati prima',
+              'Dati dopo',
+            ],
+            data: logs
+                .map(
+                  (log) => [
+                    formattaDataOraLogDataBreach(log.dataOra),
+                    valore(log.azione),
+                    valore(log.descrizione),
+                    valore(log.utente),
+                    valore(log.datiPrima),
+                    valore(log.datiDopo),
+                  ],
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+
+    return documento.save();
+  }
+
+  Future<void> mostraAnteprimaPdfLogDataBreach(
+    DataBreach elemento,
+    List<DataBreachLog> logs,
+  ) async {
+    if (logs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun log Data Breach da esportare')),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfLogDataBreachBytes(elemento, logs);
+
+    if (!mounted) return;
+
+    final dimensioni = MediaQuery.of(context).size;
+    final larghezzaDialog = dimensioni.width * 0.92;
+    final altezzaDialog = dimensioni.height * 0.88;
+
+    await AppDatabase.instance.registraLogDataBreach(
+      dataBreachId: elemento.id,
+      azione: 'ANTEPRIMA_PDF_LOG',
+      descrizione:
+          'Aperta anteprima PDF log Data Breach ID ${elemento.id}. Record in anteprima: ${logs.length}.',
+    );
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Anteprima PDF log Data Breach'),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        content: SizedBox(
+          width: larghezzaDialog,
+          height: altezzaDialog,
+          child: PdfPreview(
+            build: (_) async => bytes,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            allowSharing: true,
+            allowPrinting: true,
+            pdfFileName: 'log_data_breach_${elemento.id}.pdf',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> stampaLogDataBreach(
+    DataBreach elemento,
+    List<DataBreachLog> logs,
+  ) async {
+    if (logs.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun log Data Breach da stampare')),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfLogDataBreachBytes(elemento, logs);
+
+    if (!mounted) return;
+
+    final dimensioni = MediaQuery.of(context).size;
+    final larghezzaDialog = dimensioni.width * 0.92;
+    final altezzaDialog = dimensioni.height * 0.88;
+
+    await AppDatabase.instance.registraLogDataBreach(
+      dataBreachId: elemento.id,
+      azione: 'ANTEPRIMA_STAMPA_LOG',
+      descrizione:
+          'Aperta anteprima stampa log Data Breach ID ${elemento.id}. Record in anteprima: ${logs.length}.',
+    );
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Anteprima stampa log Data Breach'),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        content: SizedBox(
+          width: larghezzaDialog,
+          height: altezzaDialog,
+          child: PdfPreview(
+            build: (_) async => bytes,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            allowSharing: false,
+            allowPrinting: true,
+            pdfFileName: 'log_data_breach_${elemento.id}.pdf',
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> mostraLogDataBreach(DataBreach elemento) async {
     if (elemento.id == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1164,6 +1481,27 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                 ),
         ),
         actions: [
+          TextButton.icon(
+            onPressed: logs.isEmpty
+                ? null
+                : () async => esportaExcelLogDataBreach(elemento, logs),
+            icon: const Icon(Icons.table_view),
+            label: const Text('Excel'),
+          ),
+          TextButton.icon(
+            onPressed: logs.isEmpty
+                ? null
+                : () async => mostraAnteprimaPdfLogDataBreach(elemento, logs),
+            icon: const Icon(Icons.picture_as_pdf),
+            label: const Text('PDF'),
+          ),
+          TextButton.icon(
+            onPressed: logs.isEmpty
+                ? null
+                : () async => stampaLogDataBreach(elemento, logs),
+            icon: const Icon(Icons.print),
+            label: const Text('Stampa'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Chiudi'),

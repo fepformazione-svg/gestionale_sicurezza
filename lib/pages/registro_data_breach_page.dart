@@ -394,6 +394,49 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     );
   }
 
+  Future<void> stampaRegistroDataBreach() async {
+    if (elencoDataBreach.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun data breach da stampare')),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfRegistroDataBreachBytes();
+
+    if (!mounted) return;
+
+    final dimensioni = MediaQuery.of(context).size;
+    final larghezzaDialog = dimensioni.width * 0.92;
+    final altezzaDialog = dimensioni.height * 0.88;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Anteprima stampa Registro Data Breach'),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        content: SizedBox(
+          width: larghezzaDialog,
+          height: altezzaDialog,
+          child: PdfPreview(
+            build: (_) async => bytes,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            allowSharing: false,
+            allowPrinting: true,
+            initialPageFormat: PdfPageFormat.a4.landscape,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> mostraDettaglioDataBreach(DataBreach elemento) async {
     String valore(String testo) {
       final pulito = testo.trim();
@@ -585,6 +628,16 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                   : mostraAnteprimaPdfDataBreach,
               icon: const Icon(Icons.picture_as_pdf_outlined),
               label: const Text('PDF'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: OutlinedButton.icon(
+              onPressed: caricamento || elencoDataBreach.isEmpty
+                  ? null
+                  : stampaRegistroDataBreach,
+              icon: const Icon(Icons.print),
+              label: const Text('Stampa'),
             ),
           ),
           Padding(

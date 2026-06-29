@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:excel/excel.dart' as excel;
 import 'package:flutter/material.dart';
 
 import '../models/data_breach.dart';
@@ -115,6 +118,129 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('Data breach eliminato')));
+  }
+
+  Future<void> esportaExcelDataBreach() async {
+    if (elencoDataBreach.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun data breach da esportare')),
+      );
+      return;
+    }
+
+    String valore(String testo) {
+      final pulito = testo.trim();
+      return pulito.isEmpty ? '-' : pulito;
+    }
+
+    String siNo(bool valore) => valore ? 'Sì' : 'No';
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    try {
+      final documento = excel.Excel.createExcel();
+      const nomeFoglio = 'Registro Data Breach';
+      final foglio = documento[nomeFoglio];
+
+      if (documento.sheets.containsKey('Sheet1')) {
+        documento.delete('Sheet1');
+      }
+
+      foglio.appendRow(
+        [
+          'ID',
+          'Data evento',
+          'Data rilevazione',
+          'Descrizione evento',
+          'Categorie dati coinvolti',
+          'Categorie interessati',
+          'Numero interessati/record coinvolti',
+          'Conseguenze probabili',
+          'Misure adottate o proposte',
+          'Rischio',
+          'Notificato al Garante',
+          'Data notifica Garante',
+          'Comunicazione agli interessati',
+          'Data comunicazione interessati',
+          'Motivazione mancata notifica/comunicazione',
+          'Responsabile interno',
+          'Stato',
+          'Note',
+          'Creato il',
+          'Aggiornato il',
+        ].map((testo) => excel.TextCellValue(testo)).toList(),
+      );
+
+      for (final elemento in elencoDataBreach) {
+        foglio.appendRow(
+          [
+            elemento.id?.toString() ?? '-',
+            valore(elemento.dataEvento),
+            valore(elemento.dataRilevazione),
+            valore(elemento.descrizione),
+            valore(elemento.categorieDati),
+            valore(elemento.categorieInteressati),
+            valore(elemento.numeroInteressati),
+            valore(elemento.conseguenze),
+            valore(elemento.misureAdottate),
+            valore(elemento.rischio),
+            siNo(elemento.notificatoGarante),
+            valore(elemento.dataNotificaGarante),
+            siNo(elemento.comunicatoInteressati),
+            valore(elemento.dataComunicazioneInteressati),
+            valore(elemento.motivazioneMancataNotifica),
+            valore(elemento.responsabileInterno),
+            valore(elemento.stato),
+            valore(elemento.note),
+            valore(elemento.createdAt),
+            valore(elemento.updatedAt),
+          ].map((testo) => excel.TextCellValue(testo)).toList(),
+        );
+      }
+
+      final bytes = documento.save();
+
+      if (bytes == null) {
+        throw Exception('Generazione file Excel non riuscita');
+      }
+
+      final now = DateTime.now();
+      final timestamp =
+          '${now.year}-${dueCifre(now.month)}-${dueCifre(now.day)}_'
+          '${dueCifre(now.hour)}-${dueCifre(now.minute)}-${dueCifre(now.second)}';
+
+      final cartellaExport = Directory(
+        '${Platform.environment['USERPROFILE'] ?? Directory.current.path}'
+        '${Platform.pathSeparator}Documents'
+        '${Platform.pathSeparator}Gestionale Sicurezza',
+      );
+
+      if (!await cartellaExport.exists()) {
+        await cartellaExport.create(recursive: true);
+      }
+
+      final percorso =
+          '${cartellaExport.path}${Platform.pathSeparator}registro_data_breach_$timestamp.xlsx';
+
+      final file = File(percorso);
+      await file.writeAsBytes(bytes, flush: true);
+
+      await Process.run('cmd', ['/c', 'start', '', percorso]);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Excel Registro Data Breach esportato: $percorso'),
+        ),
+      );
+    } catch (errore) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Errore export Excel: $errore')));
+    }
   }
 
   Future<void> mostraDettaglioDataBreach(DataBreach elemento) async {
@@ -290,6 +416,16 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       appBar: AppBar(
         title: const Text('Registro Data Breach'),
         actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: OutlinedButton.icon(
+              onPressed: caricamento || elencoDataBreach.isEmpty
+                  ? null
+                  : esportaExcelDataBreach,
+              icon: const Icon(Icons.table_view),
+              label: const Text('Excel'),
+            ),
+          ),
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilledButton.icon(

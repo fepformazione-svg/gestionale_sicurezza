@@ -38,6 +38,9 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
   List<DataBreach> elencoDataBreach = [];
   List<DataBreach> elencoRiepilogoDataBreach = [];
 
+  String campoOrdinamentoDataBreach = 'dataEvento';
+  bool ordinamentoDataBreachCrescente = false;
+
   String _normalizzaStatoDataBreach(String valore) {
     return valore.trim().toLowerCase();
   }
@@ -57,6 +60,181 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     return elencoRiepilogoDataBreach
         .where((breach) => breach.notificatoGarante)
         .length;
+  }
+
+  void cambiaOrdinamentoDataBreach(String campo) {
+    setState(() {
+      if (campoOrdinamentoDataBreach == campo) {
+        ordinamentoDataBreachCrescente = !ordinamentoDataBreachCrescente;
+      } else {
+        campoOrdinamentoDataBreach = campo;
+
+        if (campo == 'dataEvento' || campo == 'dataRilevazione') {
+          ordinamentoDataBreachCrescente = false;
+        } else {
+          ordinamentoDataBreachCrescente = true;
+        }
+      }
+
+      ordinaElencoDataBreach(elencoDataBreach);
+    });
+  }
+
+  void ordinaElencoDataBreach(List<DataBreach> lista) {
+    lista.sort((a, b) {
+      final confronto = confrontaDataBreach(a, b, campoOrdinamentoDataBreach);
+      return ordinamentoDataBreachCrescente ? confronto : -confronto;
+    });
+  }
+
+  int confrontaDataBreach(DataBreach a, DataBreach b, String campo) {
+    switch (campo) {
+      case 'dataEvento':
+        return confrontaDateDataBreach(a.dataEvento, b.dataEvento);
+
+      case 'dataRilevazione':
+        return confrontaDateDataBreach(a.dataRilevazione, b.dataRilevazione);
+
+      case 'descrizione':
+        return a.descrizione.toLowerCase().compareTo(
+          b.descrizione.toLowerCase(),
+        );
+
+      case 'categorieDati':
+        return a.categorieDati.toLowerCase().compareTo(
+          b.categorieDati.toLowerCase(),
+        );
+
+      case 'rischio':
+        return ordineRischioDataBreach(
+          a.rischio,
+        ).compareTo(ordineRischioDataBreach(b.rischio));
+
+      case 'stato':
+        return ordineStatoDataBreach(
+          a.stato,
+        ).compareTo(ordineStatoDataBreach(b.stato));
+
+      case 'numeroInteressati':
+        return a.numeroInteressati.compareTo(b.numeroInteressati);
+
+      case 'notificatoGarante':
+        return boolDataBreach(
+          a.notificatoGarante,
+        ).compareTo(boolDataBreach(b.notificatoGarante));
+
+      case 'comunicatoInteressati':
+        return boolDataBreach(
+          a.comunicatoInteressati,
+        ).compareTo(boolDataBreach(b.comunicatoInteressati));
+
+      default:
+        return a.descrizione.toLowerCase().compareTo(
+          b.descrizione.toLowerCase(),
+        );
+    }
+  }
+
+  int confrontaDateDataBreach(String? valoreA, String? valoreB) {
+    final dataA = parseDataDataBreach(valoreA);
+    final dataB = parseDataDataBreach(valoreB);
+
+    if (dataA == null && dataB == null) return 0;
+    if (dataA == null) return 1;
+    if (dataB == null) return -1;
+
+    return dataA.compareTo(dataB);
+  }
+
+  DateTime? parseDataDataBreach(String? valore) {
+    if (valore == null || valore.trim().isEmpty) return null;
+
+    final testo = valore.trim();
+
+    final formatoItaliano = RegExp(r'^\d{2}/\d{2}/\d{4}$');
+    if (formatoItaliano.hasMatch(testo)) {
+      final parti = testo.split('/');
+      return DateTime(
+        int.parse(parti[2]),
+        int.parse(parti[1]),
+        int.parse(parti[0]),
+      );
+    }
+
+    return DateTime.tryParse(testo);
+  }
+
+  int ordineRischioDataBreach(String rischio) {
+    switch (rischio.toLowerCase()) {
+      case 'basso':
+      case 'bassa':
+        return 1;
+      case 'medio':
+      case 'media':
+        return 2;
+      case 'alto':
+      case 'alta':
+        return 3;
+      case 'critico':
+      case 'critica':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
+  int ordineStatoDataBreach(String stato) {
+    switch (stato.toLowerCase()) {
+      case 'aperto':
+        return 1;
+      case 'in valutazione':
+        return 2;
+      case 'notificato':
+        return 3;
+      case 'chiuso':
+        return 4;
+      default:
+        return 0;
+    }
+  }
+
+  int boolDataBreach(bool valore) {
+    return valore ? 1 : 0;
+  }
+
+  Widget intestazioneOrdinabileDataBreach(
+    String titolo,
+    String campo, {
+    TextAlign textAlign = TextAlign.left,
+  }) {
+    final attivo = campoOrdinamentoDataBreach == campo;
+
+    return InkWell(
+      onTap: () => cambiaOrdinamentoDataBreach(campo),
+      child: Row(
+        mainAxisAlignment: textAlign == TextAlign.center
+            ? MainAxisAlignment.center
+            : MainAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Text(
+              titolo,
+              textAlign: textAlign,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            attivo
+                ? ordinamentoDataBreachCrescente
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward
+                : Icons.unfold_more,
+            size: 16,
+          ),
+        ],
+      ),
+    );
   }
 
   void _applicaFiltroRiepilogoDataBreach(String stato) {
@@ -172,6 +350,8 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     }).toList();
 
     if (!mounted) return;
+
+    ordinaElencoDataBreach(elenco);
 
     setState(() {
       elencoRiepilogoDataBreach = elencoRiepilogo;
@@ -1249,81 +1429,65 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                     horizontal: 12,
                                     vertical: 10,
                                   ),
-                                  child: const Row(
+                                  child: Row(
                                     children: [
                                       SizedBox(
                                         width: 120,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Data evento',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'dataEvento',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 130,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Rilevazione',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'dataRilevazione',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 290,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Descrizione',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'descrizione',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 170,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Categorie dati',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'categorieDati',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 120,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Rischio',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'rischio',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 130,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Garante',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'notificatoGarante',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 140,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Interessati',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'comunicatoInteressati',
                                         ),
                                       ),
                                       SizedBox(
                                         width: 140,
-                                        child: Text(
+                                        child: intestazioneOrdinabileDataBreach(
                                           'Stato',
-                                          style: TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
+                                          'stato',
                                         ),
                                       ),
-                                      SizedBox(
+                                      const SizedBox(
                                         width: 190,
                                         child: Text(
                                           'Azioni',

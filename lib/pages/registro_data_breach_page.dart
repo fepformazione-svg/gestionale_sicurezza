@@ -8,6 +8,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../models/data_breach.dart';
+import '../models/data_breach_log.dart';
 import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
 
@@ -1006,6 +1007,140 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     );
   }
 
+  String valoreLogDataBreach(String? valore) {
+    final testo = valore?.trim() ?? '';
+    return testo.isEmpty ? '-' : testo;
+  }
+
+  String formattaDataOraLogDataBreach(String dataOra) {
+    final testo = dataOra.trim();
+
+    if (testo.isEmpty) {
+      return '-';
+    }
+
+    final data = DateTime.tryParse(testo);
+
+    if (data == null) {
+      return testo;
+    }
+
+    final locale = data.toLocal();
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    return '${dueCifre(locale.day)}/${dueCifre(locale.month)}/${locale.year} '
+        '${dueCifre(locale.hour)}:${dueCifre(locale.minute)}';
+  }
+
+  Future<void> mostraLogDataBreach(DataBreach elemento) async {
+    if (elemento.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Log non disponibile: ID Data Breach mancante.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    final logs = await AppDatabase.instance.getDataBreachLog(
+      dataBreachId: elemento.id,
+    );
+
+    if (!mounted) return;
+
+    final dimensioni = MediaQuery.of(context).size;
+    final larghezzaDialog = dimensioni.width > 1000
+        ? 900.0
+        : dimensioni.width * 0.92;
+    final altezzaDialog = dimensioni.height > 760
+        ? 620.0
+        : dimensioni.height * 0.82;
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.history, color: Colors.blueGrey.shade700),
+            const SizedBox(width: 8),
+            const Expanded(child: Text('Log Data Breach')),
+          ],
+        ),
+        content: SizedBox(
+          width: larghezzaDialog,
+          height: altezzaDialog,
+          child: logs.isEmpty
+              ? const Center(
+                  child: Text('Nessun log disponibile per questo Data Breach.'),
+                )
+              : ListView.separated(
+                  itemCount: logs.length,
+                  separatorBuilder: (_, _) => const Divider(height: 16),
+                  itemBuilder: (_, index) {
+                    final DataBreachLog log = logs[index];
+                    final utente = valoreLogDataBreach(log.utente);
+                    final datiPrima = valoreLogDataBreach(log.datiPrima);
+                    final datiDopo = valoreLogDataBreach(log.datiDopo);
+
+                    return Card(
+                      elevation: 0,
+                      color: Colors.blueGrey.shade50,
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              valoreLogDataBreach(log.azione),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 15,
+                              ),
+                            ),
+                            const SizedBox(height: 6),
+                            Text(
+                              'Data: ${formattaDataOraLogDataBreach(log.dataOra)}',
+                            ),
+                            if (utente != '-') Text('Utente: $utente'),
+                            const SizedBox(height: 6),
+                            SelectableText(
+                              valoreLogDataBreach(log.descrizione),
+                            ),
+                            if (datiPrima != '-') ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Dati prima:',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              SelectableText(datiPrima),
+                            ],
+                            if (datiDopo != '-') ...[
+                              const SizedBox(height: 8),
+                              const Text(
+                                'Dati dopo:',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              SelectableText(datiDopo),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> mostraDettaglioDataBreach(DataBreach elemento) async {
     String valore(String testo) {
       final pulito = testo.trim();
@@ -1110,6 +1245,14 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
           ),
         ),
         actions: [
+          OutlinedButton.icon(
+            onPressed: () async {
+              Navigator.pop(context);
+              await mostraLogDataBreach(elemento);
+            },
+            icon: const Icon(Icons.history),
+            label: const Text('Log'),
+          ),
           OutlinedButton.icon(
             onPressed: () async {
               Navigator.pop(context);

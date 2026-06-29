@@ -236,6 +236,25 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     return ordinamentoDataBreachCrescente ? 'crescente' : 'decrescente';
   }
 
+  String riepilogoExportDataBreach({
+    required int recordEsportati,
+    String? generatoIl,
+  }) {
+    final ricercaTesto = ricercaController.text.trim();
+
+    return [
+      'Stato: $filtroStato',
+      'Rischio: $filtroGravita',
+      'Notifica Garante: $filtroNotificaGarante',
+      'Comunicazione interessati: $filtroComunicazioneInteressati',
+      if (filtroSoloNotificatiGarante) 'Solo notificati Garante: Sì',
+      if (ricercaTesto.isNotEmpty) 'Ricerca: "$ricercaTesto"',
+      'Ordinamento: ${etichettaCampoOrdinamentoDataBreach()} ${etichettaVersoOrdinamentoDataBreach()}',
+      'Record esportati: $recordEsportati',
+      if (generatoIl != null) 'Generato il: $generatoIl',
+    ].join(' | ');
+  }
+
   Widget riepilogoOrdinamentoDataBreach() {
     return Container(
       width: double.infinity,
@@ -504,9 +523,27 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       const nomeFoglio = 'Registro Data Breach';
       final foglio = documento[nomeFoglio];
 
+      final listaDaEsportare = elencoDataBreach;
+      final now = DateTime.now();
+      final generatoIl =
+          '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+          '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+      final riepilogoExport = riepilogoExportDataBreach(
+        recordEsportati: listaDaEsportare.length,
+        generatoIl: generatoIl,
+      );
+
       if (documento.sheets.containsKey('Sheet1')) {
         documento.delete('Sheet1');
       }
+
+      foglio.appendRow([excel.TextCellValue('Registro Data Breach')]);
+      foglio.appendRow([
+        excel.TextCellValue('Vista corrente filtrata/ricercata/ordinata'),
+      ]);
+      foglio.appendRow([excel.TextCellValue(riepilogoExport)]);
+      foglio.appendRow([]);
 
       foglio.appendRow(
         [
@@ -533,7 +570,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         ].map((testo) => excel.TextCellValue(testo)).toList(),
       );
 
-      for (final elemento in elencoDataBreach) {
+      for (final elemento in listaDaEsportare) {
         foglio.appendRow(
           [
             elemento.id?.toString() ?? '-',
@@ -566,7 +603,6 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         throw Exception('Generazione file Excel non riuscita');
       }
 
-      final now = DateTime.now();
       final timestamp =
           '${now.year}-${dueCifre(now.month)}-${dueCifre(now.day)}_'
           '${dueCifre(now.hour)}-${dueCifre(now.minute)}-${dueCifre(now.second)}';
@@ -622,18 +658,10 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
         '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
 
-    final ricercaTesto = ricercaController.text.trim();
-
-    final riepilogoFiltro = [
-      'Stato: $filtroStato',
-      'Rischio: $filtroGravita',
-      'Notifica Garante: $filtroNotificaGarante',
-      'Comunicazione interessati: $filtroComunicazioneInteressati',
-      if (filtroSoloNotificatiGarante) 'Solo notificati Garante: Sì',
-      if (ricercaTesto.isNotEmpty) 'Ricerca: "$ricercaTesto"',
-      'Record esportati: ${listaDaEsportare.length}',
-      'Generato il: $generatoIl',
-    ].join(' | ');
+    final riepilogoFiltro = riepilogoExportDataBreach(
+      recordEsportati: listaDaEsportare.length,
+      generatoIl: generatoIl,
+    );
 
     final documento = pw.Document();
     final intestazioneAzienda = await caricaIntestazioneAziendaPdf();

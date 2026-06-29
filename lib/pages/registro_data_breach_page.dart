@@ -29,6 +29,10 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
   ];
 
   String filtroStato = 'Tutti';
+  String filtroGravita = 'Tutte';
+  String filtroNotificaGarante = 'Tutte';
+  String filtroComunicazioneInteressati = 'Tutte';
+
   bool filtroSoloNotificatiGarante = false;
   bool caricamento = true;
   List<DataBreach> elencoDataBreach = [];
@@ -62,6 +66,61 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     });
 
     caricaDataBreach();
+  }
+
+  bool get filtriAvanzatiDataBreachAttivi {
+    return filtroStato != 'Tutti' ||
+        filtroGravita != 'Tutte' ||
+        filtroNotificaGarante != 'Tutte' ||
+        filtroComunicazioneInteressati != 'Tutte' ||
+        filtroSoloNotificatiGarante;
+  }
+
+  void azzeraFiltriDataBreach() {
+    setState(() {
+      filtroStato = 'Tutti';
+      filtroGravita = 'Tutte';
+      filtroNotificaGarante = 'Tutte';
+      filtroComunicazioneInteressati = 'Tutte';
+      filtroSoloNotificatiGarante = false;
+    });
+
+    caricaDataBreach();
+  }
+
+  bool passaFiltroGravitaDataBreach(DataBreach breach) {
+    if (filtroGravita == 'Tutte') return true;
+
+    return breach.rischio.trim().toLowerCase() ==
+        filtroGravita.trim().toLowerCase();
+  }
+
+  bool passaFiltroNotificaGaranteDataBreach(DataBreach breach) {
+    if (filtroNotificaGarante == 'Tutte') return true;
+
+    if (filtroNotificaGarante == 'Notificati') {
+      return breach.notificatoGarante;
+    }
+
+    if (filtroNotificaGarante == 'Non notificati') {
+      return !breach.notificatoGarante;
+    }
+
+    return true;
+  }
+
+  bool passaFiltroComunicazioneInteressatiDataBreach(DataBreach breach) {
+    if (filtroComunicazioneInteressati == 'Tutte') return true;
+
+    if (filtroComunicazioneInteressati == 'Comunicati') {
+      return breach.comunicatoInteressati;
+    }
+
+    if (filtroComunicazioneInteressati == 'Non comunicati') {
+      return !breach.comunicatoInteressati;
+    }
+
+    return true;
   }
 
   void _applicaFiltroNotificatiGarante() {
@@ -100,11 +159,17 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       ricerca: ricercaController.text,
     );
 
-    final elenco = filtroSoloNotificatiGarante
+    final elencoBase = filtroSoloNotificatiGarante
         ? elencoFiltrato
               .where((elemento) => elemento.notificatoGarante)
               .toList()
         : elencoFiltrato;
+
+    final elenco = elencoBase.where((elemento) {
+      return passaFiltroGravitaDataBreach(elemento) &&
+          passaFiltroNotificaGaranteDataBreach(elemento) &&
+          passaFiltroComunicazioneInteressatiDataBreach(elemento);
+    }).toList();
 
     if (!mounted) return;
 
@@ -322,6 +387,10 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
 
     final riepilogoFiltro = [
       'Stato: $filtroStato',
+      'Rischio: $filtroGravita',
+      'Notifica Garante: $filtroNotificaGarante',
+      'Comunicazione interessati: $filtroComunicazioneInteressati',
+      if (filtroSoloNotificatiGarante) 'Solo notificati Garante: Sì',
       if (ricercaTesto.isNotEmpty) 'Ricerca: "$ricercaTesto"',
       'Record esportati: ${listaDaEsportare.length}',
       'Generato il: $generatoIl',
@@ -697,9 +766,161 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     ricercaController.clear();
     setState(() {
       filtroStato = 'Tutti';
+      filtroGravita = 'Tutte';
+      filtroNotificaGarante = 'Tutte';
+      filtroComunicazioneInteressati = 'Tutte';
       filtroSoloNotificatiGarante = false;
     });
     caricaDataBreach();
+  }
+
+  Widget buildFiltriAvanzatiDataBreach() {
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Wrap(
+          spacing: 12,
+          runSpacing: 12,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            SizedBox(
+              width: 180,
+              child: DropdownButtonFormField<String>(
+                initialValue: filtroStato,
+                decoration: const InputDecoration(
+                  labelText: 'Stato',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: stati
+                    .map(
+                      (stato) => DropdownMenuItem<String>(
+                        value: stato,
+                        child: Text(stato),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (value) {
+                  if (value == null) return;
+
+                  setState(() {
+                    filtroStato = value;
+                    filtroSoloNotificatiGarante = false;
+                  });
+
+                  caricaDataBreach();
+                },
+              ),
+            ),
+            SizedBox(
+              width: 180,
+              child: DropdownButtonFormField<String>(
+                initialValue: filtroGravita,
+                decoration: const InputDecoration(
+                  labelText: 'Rischio',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Tutte', child: Text('Tutte')),
+                  DropdownMenuItem(
+                    value: 'Da valutare',
+                    child: Text('Da valutare'),
+                  ),
+                  DropdownMenuItem(value: 'Basso', child: Text('Basso')),
+                  DropdownMenuItem(value: 'Medio', child: Text('Medio')),
+                  DropdownMenuItem(value: 'Alto', child: Text('Alto')),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+
+                  setState(() {
+                    filtroGravita = value;
+                  });
+
+                  caricaDataBreach();
+                },
+              ),
+            ),
+            SizedBox(
+              width: 220,
+              child: DropdownButtonFormField<String>(
+                initialValue: filtroNotificaGarante,
+                decoration: const InputDecoration(
+                  labelText: 'Notifica Garante',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Tutte', child: Text('Tutte')),
+                  DropdownMenuItem(
+                    value: 'Notificati',
+                    child: Text('Notificati'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Non notificati',
+                    child: Text('Non notificati'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+
+                  setState(() {
+                    filtroNotificaGarante = value;
+                    filtroSoloNotificatiGarante = false;
+                  });
+
+                  caricaDataBreach();
+                },
+              ),
+            ),
+            SizedBox(
+              width: 260,
+              child: DropdownButtonFormField<String>(
+                initialValue: filtroComunicazioneInteressati,
+                decoration: const InputDecoration(
+                  labelText: 'Comunicazione interessati',
+                  border: OutlineInputBorder(),
+                  isDense: true,
+                ),
+                items: const [
+                  DropdownMenuItem(value: 'Tutte', child: Text('Tutte')),
+                  DropdownMenuItem(
+                    value: 'Comunicati',
+                    child: Text('Comunicati'),
+                  ),
+                  DropdownMenuItem(
+                    value: 'Non comunicati',
+                    child: Text('Non comunicati'),
+                  ),
+                ],
+                onChanged: (value) {
+                  if (value == null) return;
+
+                  setState(() {
+                    filtroComunicazioneInteressati = value;
+                  });
+
+                  caricaDataBreach();
+                },
+              ),
+            ),
+            OutlinedButton.icon(
+              onPressed: filtriAvanzatiDataBreachAttivi ? azzeraFiltri : null,
+              icon: const Icon(Icons.filter_alt_off),
+              label: const Text('Azzera filtri'),
+            ),
+            if (filtriAvanzatiDataBreachAttivi)
+              const Chip(
+                avatar: Icon(Icons.filter_alt, size: 18),
+                label: Text('Filtri attivi'),
+                visualDensity: VisualDensity.compact,
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Color coloreRischio(String rischio) {
@@ -899,11 +1120,6 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
 
   @override
   Widget build(BuildContext context) {
-    final filtroAttivo =
-        filtroStato != 'Tutti' ||
-        filtroSoloNotificatiGarante ||
-        ricercaController.text.trim().isNotEmpty;
-
     return Scaffold(
       appBar: AppBar(title: const Text('Registro Data Breach')),
       floatingActionButton: FloatingActionButton.extended(
@@ -981,87 +1197,29 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compatto = constraints.maxWidth < 850;
-
-                    final ricerca = TextField(
-                      controller: ricercaController,
-                      decoration: InputDecoration(
-                        labelText: 'Cerca',
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: ricercaController.text.trim().isEmpty
-                            ? null
-                            : IconButton(
-                                tooltip: 'Svuota ricerca',
-                                icon: const Icon(Icons.clear),
-                                onPressed: () {
-                                  ricercaController.clear();
-                                  caricaDataBreach();
-                                },
-                              ),
-                        border: const OutlineInputBorder(),
-                      ),
-                      onChanged: (_) => caricaDataBreach(),
-                    );
-
-                    final filtro = DropdownButtonFormField<String>(
-                      initialValue: filtroStato,
-                      decoration: const InputDecoration(
-                        labelText: 'Stato',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: stati
-                          .map(
-                            (stato) => DropdownMenuItem(
-                              value: stato,
-                              child: Text(stato),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (valore) {
-                        setState(() {
-                          filtroStato = valore ?? 'Tutti';
-                          filtroSoloNotificatiGarante = false;
-                        });
-                        caricaDataBreach();
-                      },
-                    );
-
-                    final azzera = OutlinedButton.icon(
-                      onPressed: filtroAttivo ? azzeraFiltri : null,
-                      icon: const Icon(Icons.filter_alt_off),
-                      label: const Text('Azzera filtri'),
-                    );
-
-                    if (compatto) {
-                      return Column(
-                        children: [
-                          ricerca,
-                          const SizedBox(height: 12),
-                          filtro,
-                          const SizedBox(height: 12),
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: azzera,
+                child: TextField(
+                  controller: ricercaController,
+                  decoration: InputDecoration(
+                    labelText: 'Cerca',
+                    prefixIcon: const Icon(Icons.search),
+                    suffixIcon: ricercaController.text.trim().isEmpty
+                        ? null
+                        : IconButton(
+                            tooltip: 'Svuota ricerca',
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              ricercaController.clear();
+                              caricaDataBreach();
+                            },
                           ),
-                        ],
-                      );
-                    }
-
-                    return Row(
-                      children: [
-                        Expanded(flex: 3, child: ricerca),
-                        const SizedBox(width: 12),
-                        SizedBox(width: 220, child: filtro),
-                        const SizedBox(width: 12),
-                        azzera,
-                      ],
-                    );
-                  },
+                    border: const OutlineInputBorder(),
+                  ),
+                  onChanged: (_) => caricaDataBreach(),
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            buildFiltriAvanzatiDataBreach(),
             const SizedBox(height: 12),
             Expanded(
               child: Card(

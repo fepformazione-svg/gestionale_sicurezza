@@ -447,9 +447,27 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     if (risultato == null) return;
 
     if (elemento == null) {
-      await AppDatabase.instance.insertDataBreach(risultato);
+      final nuovoId = await AppDatabase.instance.insertDataBreach(risultato);
+
+      final datiDopo = Map<String, dynamic>.from(risultato.toMap())
+        ..['id'] = nuovoId;
+
+      await AppDatabase.instance.registraLogDataBreach(
+        dataBreachId: nuovoId,
+        azione: 'CREAZIONE',
+        descrizione: 'Creata registrazione Data Breach ID $nuovoId.',
+        datiDopo: datiDopo.toString(),
+      );
     } else {
       await AppDatabase.instance.updateDataBreach(risultato);
+
+      await AppDatabase.instance.registraLogDataBreach(
+        dataBreachId: risultato.id,
+        azione: 'MODIFICA',
+        descrizione: 'Modificata registrazione Data Breach ID ${risultato.id}.',
+        datiPrima: elemento.toMap().toString(),
+        datiDopo: risultato.toMap().toString(),
+      );
     }
 
     await caricaDataBreach();
@@ -492,6 +510,13 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     if (conferma != true || elemento.id == null) return;
 
     await AppDatabase.instance.deleteDataBreach(elemento.id!);
+
+    await AppDatabase.instance.registraLogDataBreach(
+      dataBreachId: elemento.id,
+      azione: 'ELIMINAZIONE',
+      descrizione: 'Eliminata registrazione Data Breach ID ${elemento.id}.',
+      datiPrima: elemento.toMap().toString(),
+    );
     await caricaDataBreach();
 
     if (!mounted) return;

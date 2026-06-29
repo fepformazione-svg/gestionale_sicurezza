@@ -13,6 +13,7 @@ import '../models/utente_app.dart';
 import '../models/registro_trattamento.dart';
 import '../models/registro_trattamento_log.dart';
 import '../models/data_breach.dart';
+import '../models/data_breach_log.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -48,7 +49,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 5,
+        version: 6,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -490,6 +491,18 @@ class AppDatabase {
       updated_at TEXT NOT NULL DEFAULT ''
     )
   ''');
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS data_breach_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      data_breach_id INTEGER,
+      azione TEXT NOT NULL DEFAULT '',
+      descrizione TEXT NOT NULL DEFAULT '',
+      dati_prima TEXT,
+      dati_dopo TEXT,
+      utente TEXT,
+      data_ora TEXT NOT NULL DEFAULT ''
+    )
+  ''');
   }
 
   Future<List<DataBreach>> getDataBreach({
@@ -569,6 +582,46 @@ class AppDatabase {
     final db = await database;
 
     return db.delete('registro_data_breach', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> insertDataBreachLog(DataBreachLog log) async {
+    final db = await database;
+
+    return db.insert('data_breach_log', log.toMap());
+  }
+
+  Future<List<DataBreachLog>> getDataBreachLog({int? dataBreachId}) async {
+    final db = await database;
+
+    final maps = await db.query(
+      'data_breach_log',
+      where: dataBreachId != null ? 'data_breach_id = ?' : null,
+      whereArgs: dataBreachId != null ? [dataBreachId] : null,
+      orderBy: 'data_ora DESC, id DESC',
+    );
+
+    return maps.map((map) => DataBreachLog.fromMap(map)).toList();
+  }
+
+  Future<void> registraLogDataBreach({
+    int? dataBreachId,
+    required String azione,
+    required String descrizione,
+    String? datiPrima,
+    String? datiDopo,
+    String? utente,
+  }) async {
+    await insertDataBreachLog(
+      DataBreachLog(
+        dataBreachId: dataBreachId,
+        azione: azione,
+        descrizione: descrizione,
+        datiPrima: datiPrima,
+        datiDopo: datiDopo,
+        utente: utente,
+        dataOra: DateTime.now().toIso8601String(),
+      ),
+    );
   }
 
   Future<List<RegistroTrattamento>> getRegistroTrattamenti({

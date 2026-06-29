@@ -550,6 +550,96 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     );
   }
 
+  Future<void> mostraGuidaRapidaDataBreach() async {
+    Widget sezione(String titolo, String testo) {
+      return Card(
+        margin: const EdgeInsets.only(bottom: 12),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                titolo,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(testo, style: const TextStyle(height: 1.35)),
+            ],
+          ),
+        ),
+      );
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Guida rapida Registro Data Breach'),
+        content: SizedBox(
+          width: 850,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                sezione(
+                  '1. A cosa serve il Registro Data Breach',
+                  'Il Registro Data Breach consente di documentare gli eventi di violazione dei dati personali, anche quando non viene effettuata la notifica al Garante. '
+                      'La registrazione interna aiuta a dimostrare la valutazione svolta, le misure adottate e le decisioni prese.',
+                ),
+                sezione(
+                  '2. Nuovo data breach',
+                  'Usa il pulsante "Nuovo data breach" per inserire una nuova registrazione. '
+                      'Compila almeno la descrizione dell’evento e, quando disponibili, data evento, data rilevazione, categorie di dati, categorie di interessati e numero di soggetti o record coinvolti.',
+                ),
+                sezione(
+                  '3. Valutazione del rischio',
+                  'Il campo "Rischio" permette di classificare l’evento come Da valutare, Basso, Medio o Alto. '
+                      'La classificazione deve essere coerente con le conseguenze probabili per gli interessati e con le misure già adottate o pianificate.',
+                ),
+                sezione(
+                  '4. Notifica al Garante e comunicazione agli interessati',
+                  'Le caselle "Notificato al Garante" e "Comunicazione agli interessati" indicano le azioni intraprese. '
+                      'Quando una notifica o comunicazione non viene effettuata, è opportuno indicare la motivazione nel campo dedicato.',
+                ),
+                sezione(
+                  '5. Stato della registrazione',
+                  'Lo stato può essere Aperto, In valutazione o Chiuso. '
+                      'Usa "Aperto" per eventi appena registrati, "In valutazione" quando sono in corso verifiche interne e "Chiuso" quando valutazione, misure e decisioni sono state completate.',
+                ),
+                sezione(
+                  '6. Ricerca e filtri',
+                  'La ricerca e il filtro Stato lavorano insieme. '
+                      'Il pulsante "Azzera filtri" riporta la vista completa. Gli export Excel, PDF e la stampa rispettano sempre la vista corrente filtrata o ricercata.',
+                ),
+                sezione(
+                  '7. Dettaglio, modifica ed eliminazione',
+                  'L’icona occhio apre il dettaglio completo in sola lettura. '
+                      'La matita modifica la registrazione. Il cestino elimina definitivamente il data breach dopo conferma.',
+                ),
+                sezione(
+                  '8. Excel, PDF e stampa',
+                  'Il pulsante Excel genera un file nella cartella Documenti\\Gestionale Sicurezza e lo apre automaticamente. '
+                      'Il pulsante PDF apre l’anteprima con intestazione aziendale/logo. Il pulsante Stampa apre la stessa anteprima abilitando la stampa.',
+                ),
+                sezione(
+                  '9. Buona prassi operativa',
+                  'Per ogni evento conserva una traccia chiara: cosa è accaduto, quando è stato rilevato, quali dati sono coinvolti, quali conseguenze sono possibili, quali misure sono state adottate e perché è stata presa una determinata decisione sulla notifica.',
+                ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   void azzeraFiltri() {
     ricercaController.clear();
     setState(() {
@@ -649,6 +739,11 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
             ),
           ),
         ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: mostraGuidaRapidaDataBreach,
+        icon: const Icon(Icons.help_outline),
+        label: const Text('Guida'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

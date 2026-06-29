@@ -1,10 +1,15 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:excel/excel.dart' as excel;
 import 'package:flutter/material.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/data_breach.dart';
 import '../services/app_database.dart';
+import '../utils/pdf_azienda_helper.dart';
 
 class RegistroDataBreachPage extends StatefulWidget {
   const RegistroDataBreachPage({super.key});
@@ -243,6 +248,152 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     }
   }
 
+  Future<Uint8List> generaPdfRegistroDataBreachBytes() async {
+    final listaDaEsportare = elencoDataBreach;
+
+    String valore(String testo) {
+      final pulito = testo.trim();
+      return pulito.isEmpty ? '-' : pulito;
+    }
+
+    String siNo(bool valore) => valore ? 'Sì' : 'No';
+
+    String dueCifre(int valore) => valore.toString().padLeft(2, '0');
+
+    final now = DateTime.now();
+    final generatoIl =
+        '${dueCifre(now.day)}/${dueCifre(now.month)}/${now.year} '
+        '${dueCifre(now.hour)}:${dueCifre(now.minute)}';
+
+    final ricercaTesto = ricercaController.text.trim();
+
+    final riepilogoFiltro = [
+      'Stato: $filtroStato',
+      if (ricercaTesto.isNotEmpty) 'Ricerca: "$ricercaTesto"',
+      'Record esportati: ${listaDaEsportare.length}',
+      'Generato il: $generatoIl',
+    ].join(' | ');
+
+    final documento = pw.Document();
+    final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
+
+    documento.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        header: (context) => pw.Column(
+          crossAxisAlignment: pw.CrossAxisAlignment.start,
+          children: [
+            intestazioneAziendaPdfWidget(intestazioneAzienda),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Registro Data Breach',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Vista corrente filtrata/ricercata - GDPR 679/2016',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.Divider(),
+          ],
+        ),
+        footer: (context) => pw.Align(
+          alignment: pw.Alignment.centerRight,
+          child: pw.Text(
+            'Pagina ${context.pageNumber} di ${context.pagesCount}',
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+          ),
+        ),
+        build: (context) => [
+          pw.Text(riepilogoFiltro, style: const pw.TextStyle(fontSize: 9)),
+          pw.SizedBox(height: 12),
+          pw.TableHelper.fromTextArray(
+            border: pw.TableBorder.all(color: PdfColors.grey400, width: 0.5),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+            headerStyle: pw.TextStyle(
+              fontWeight: pw.FontWeight.bold,
+              fontSize: 8,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 7),
+            cellAlignment: pw.Alignment.topLeft,
+            headerAlignment: pw.Alignment.centerLeft,
+            headers: const [
+              'Data evento',
+              'Rilevazione',
+              'Descrizione',
+              'Categorie dati',
+              'Rischio',
+              'Garante',
+              'Interessati',
+              'Stato',
+              'Responsabile',
+            ],
+            data: listaDaEsportare
+                .map(
+                  (elemento) => [
+                    valore(elemento.dataEvento),
+                    valore(elemento.dataRilevazione),
+                    valore(elemento.descrizione),
+                    valore(elemento.categorieDati),
+                    valore(elemento.rischio),
+                    siNo(elemento.notificatoGarante),
+                    siNo(elemento.comunicatoInteressati),
+                    valore(elemento.stato),
+                    valore(elemento.responsabileInterno),
+                  ],
+                )
+                .toList(),
+          ),
+        ],
+      ),
+    );
+
+    return documento.save();
+  }
+
+  Future<void> mostraAnteprimaPdfDataBreach() async {
+    if (elencoDataBreach.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun data breach da esportare in PDF')),
+      );
+      return;
+    }
+
+    final bytes = await generaPdfRegistroDataBreachBytes();
+
+    if (!mounted) return;
+
+    final dimensioni = MediaQuery.of(context).size;
+    final larghezzaDialog = dimensioni.width * 0.92;
+    final altezzaDialog = dimensioni.height * 0.88;
+
+    await showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Anteprima PDF Registro Data Breach'),
+        contentPadding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        content: SizedBox(
+          width: larghezzaDialog,
+          height: altezzaDialog,
+          child: PdfPreview(
+            build: (_) async => bytes,
+            canChangePageFormat: false,
+            canChangeOrientation: false,
+            allowSharing: false,
+            allowPrinting: true,
+            initialPageFormat: PdfPageFormat.a4.landscape,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Chiudi'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> mostraDettaglioDataBreach(DataBreach elemento) async {
     String valore(String testo) {
       final pulito = testo.trim();
@@ -424,6 +575,16 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                   : esportaExcelDataBreach,
               icon: const Icon(Icons.table_view),
               label: const Text('Excel'),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: OutlinedButton.icon(
+              onPressed: caricamento || elencoDataBreach.isEmpty
+                  ? null
+                  : mostraAnteprimaPdfDataBreach,
+              icon: const Icon(Icons.picture_as_pdf_outlined),
+              label: const Text('PDF'),
             ),
           ),
           Padding(

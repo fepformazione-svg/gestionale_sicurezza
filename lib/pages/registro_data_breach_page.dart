@@ -651,6 +651,12 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
 
       await Process.run('cmd', ['/c', 'start', '', percorso]);
 
+      await AppDatabase.instance.registraLogDataBreach(
+        azione: 'ESPORTAZIONE_EXCEL',
+        descrizione:
+            'Esportato Registro Data Breach in Excel. Record esportati: ${elencoDataBreach.length}.',
+      );
+
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -782,6 +788,14 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     final larghezzaDialog = dimensioni.width * 0.92;
     final altezzaDialog = dimensioni.height * 0.88;
 
+    await AppDatabase.instance.registraLogDataBreach(
+      azione: 'ANTEPRIMA_STAMPA',
+      descrizione:
+          'Aperta anteprima stampa Registro Data Breach. Record in anteprima: ${elencoDataBreach.length}.',
+    );
+
+    if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (_) => AlertDialog(
@@ -824,6 +838,14 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     final dimensioni = MediaQuery.of(context).size;
     final larghezzaDialog = dimensioni.width * 0.92;
     final altezzaDialog = dimensioni.height * 0.88;
+
+    await AppDatabase.instance.registraLogDataBreach(
+      azione: 'ANTEPRIMA_PDF',
+      descrizione:
+          'Aperta anteprima PDF Registro Data Breach. Record in anteprima: ${elencoDataBreach.length}.',
+    );
+
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,
@@ -979,6 +1001,16 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     final dimensioni = MediaQuery.of(context).size;
     final larghezzaDialog = dimensioni.width * 0.86;
     final altezzaDialog = dimensioni.height * 0.88;
+
+    await AppDatabase.instance.registraLogDataBreach(
+      dataBreachId: elemento.id,
+      azione: 'ANTEPRIMA_PDF_SINGOLO',
+      descrizione:
+          'Aperta anteprima PDF singolo Data Breach ID ${elemento.id}.',
+      datiDopo: elemento.toMap().toString(),
+    );
+
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,

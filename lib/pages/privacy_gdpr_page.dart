@@ -13,7 +13,11 @@ import 'registro_trattamenti_page.dart';
 import 'registro_data_breach_page.dart';
 
 import '../models/privacy_gdpr.dart';
+import '../models/registro_trattamento.dart';
+import '../models/data_breach.dart';
+
 import '../services/app_database.dart';
+
 import '../utils/pdf_azienda_helper.dart';
 
 class PrivacyGdprPage extends StatefulWidget {
@@ -25,6 +29,12 @@ class PrivacyGdprPage extends StatefulWidget {
 
 class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   List<PrivacyGdpr> vociPrivacy = [];
+  List<RegistroTrattamento> trattamentiAuditGdpr = [];
+  List<DataBreach> dataBreachAuditGdpr = [];
+
+  int totaleLogRegistroTrattamentiAudit = 0;
+  int totaleLogDataBreachAudit = 0;
+
   bool caricamento = true;
   bool soloAttive = true;
   String ricerca = '';
@@ -38,6 +48,69 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   void initState() {
     super.initState();
     caricaPrivacyGdpr();
+    caricaAuditGdpr();
+  }
+
+  Future<void> caricaAuditGdpr() async {
+    final trattamenti = await AppDatabase.instance.getRegistroTrattamenti(
+      soloAttivi: false,
+    );
+    final dataBreach = await AppDatabase.instance.getDataBreach();
+    final logTrattamenti = await AppDatabase.instance
+        .getRegistroTrattamentiLog();
+    final logDataBreach = await AppDatabase.instance.getDataBreachLog();
+
+    if (!mounted) return;
+
+    setState(() {
+      trattamentiAuditGdpr = trattamenti;
+      dataBreachAuditGdpr = dataBreach;
+      totaleLogRegistroTrattamentiAudit = logTrattamenti.length;
+      totaleLogDataBreachAudit = logDataBreach.length;
+    });
+  }
+
+  DateTime? parseDataAuditGdpr(String? valore) {
+    if (valore == null || valore.trim().isEmpty) {
+      return null;
+    }
+
+    final testo = valore.trim();
+
+    try {
+      return DateFormat('dd/MM/yyyy').parseStrict(testo);
+    } catch (_) {
+      return DateTime.tryParse(testo);
+    }
+  }
+
+  bool revisioneScadutaAuditGdpr(RegistroTrattamento trattamento) {
+    final data = parseDataAuditGdpr(trattamento.dataRevisione);
+    if (data == null) return false;
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final dataPulita = DateTime(data.year, data.month, data.day);
+
+    return dataPulita.isBefore(oggiPulito);
+  }
+
+  bool revisioneInScadenzaAuditGdpr(RegistroTrattamento trattamento) {
+    final data = parseDataAuditGdpr(trattamento.dataRevisione);
+    if (data == null) return false;
+
+    final oggi = DateTime.now();
+    final oggiPulito = DateTime(oggi.year, oggi.month, oggi.day);
+    final dataPulita = DateTime(data.year, data.month, data.day);
+    final limite = oggiPulito.add(const Duration(days: 60));
+
+    return !dataPulita.isBefore(oggiPulito) && !dataPulita.isAfter(limite);
+  }
+
+  bool revisioneNonImpostataAuditGdpr(RegistroTrattamento trattamento) {
+    return trattamento.dataRevisione == null ||
+        trattamento.dataRevisione!.trim().isEmpty ||
+        parseDataAuditGdpr(trattamento.dataRevisione) == null;
   }
 
   @override
@@ -915,6 +988,261 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     );
   }
 
+  Widget cardAuditGdpr({
+    required IconData icona,
+    required String titolo,
+    required String valore,
+    required String descrizione,
+    required Color colore,
+  }) {
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: colore.withValues(alpha: 0.10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icona, color: colore),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    titolo,
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade700,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    valore,
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade900,
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    descrizione,
+                    style: TextStyle(
+                      color: Colors.blueGrey.shade500,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget riepilogoAuditGdpr() {
+    final trattamentiTotali = trattamentiAuditGdpr.length;
+    final trattamentiAttivi = trattamentiAuditGdpr
+        .where((elemento) => elemento.attivo)
+        .length;
+    final trattamentiNonAttivi = trattamentiTotali - trattamentiAttivi;
+
+    final revisioniScadute = trattamentiAuditGdpr
+        .where(revisioneScadutaAuditGdpr)
+        .length;
+    final revisioniInScadenza = trattamentiAuditGdpr
+        .where(revisioneInScadenzaAuditGdpr)
+        .length;
+    final revisioniNonImpostate = trattamentiAuditGdpr
+        .where(revisioneNonImpostataAuditGdpr)
+        .length;
+
+    final breachTotali = dataBreachAuditGdpr.length;
+    final breachAperti = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('aperto'))
+        .length;
+    final breachInGestione = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('gestione'))
+        .length;
+    final breachChiusi = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('chiuso'))
+        .length;
+    final breachRischioAlto = dataBreachAuditGdpr
+        .where((elemento) => elemento.rischio.toLowerCase().contains('alto'))
+        .length;
+    final notificheGarante = dataBreachAuditGdpr
+        .where((elemento) => elemento.notificatoGarante)
+        .length;
+    final comunicazioniInteressati = dataBreachAuditGdpr
+        .where((elemento) => elemento.comunicatoInteressati)
+        .length;
+
+    final totaleLog =
+        totaleLogRegistroTrattamentiAudit + totaleLogDataBreachAudit;
+
+    final criticita =
+        revisioniScadute +
+        revisioniNonImpostate +
+        breachAperti +
+        breachInGestione +
+        breachRischioAlto;
+
+    final auditOk = trattamentiTotali > 0 && totaleLog > 0 && criticita == 0;
+
+    return Card(
+      elevation: 1,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.fact_check_outlined,
+                  color: Colors.blueGrey.shade700,
+                  size: 30,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riepilogo audit GDPR',
+                        style: TextStyle(
+                          color: Colors.blueGrey.shade800,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Quadro sintetico di registri, data breach, revisioni e tracciabilità operativa.',
+                        style: TextStyle(color: Colors.blueGrey.shade600),
+                      ),
+                    ],
+                  ),
+                ),
+                Chip(
+                  avatar: Icon(
+                    auditOk
+                        ? Icons.verified_outlined
+                        : Icons.warning_amber_rounded,
+                    size: 18,
+                  ),
+                  label: Text(auditOk ? 'Auditabile' : 'Da verificare'),
+                  backgroundColor: auditOk
+                      ? Colors.green.shade50
+                      : Colors.orange.shade50,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final larghezza = constraints.maxWidth;
+                final cardWidth = larghezza < 720
+                    ? larghezza
+                    : (larghezza - 24) / 3;
+
+                return Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.assignment_outlined,
+                        titolo: 'Registro trattamenti',
+                        valore: '$trattamentiTotali',
+                        descrizione:
+                            '$trattamentiAttivi attivi, $trattamentiNonAttivi non attivi',
+                        colore: Colors.blueGrey.shade700,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.event_busy_outlined,
+                        titolo: 'Revisioni',
+                        valore: '${revisioniScadute + revisioniInScadenza}',
+                        descrizione:
+                            '$revisioniScadute scadute, $revisioniInScadenza in scadenza, $revisioniNonImpostate non impostate',
+                        colore: revisioniScadute > 0
+                            ? Colors.red.shade700
+                            : Colors.orange.shade700,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.warning_amber_rounded,
+                        titolo: 'Data breach',
+                        valore: '$breachTotali',
+                        descrizione:
+                            '$breachAperti aperti, $breachInGestione in gestione, $breachChiusi chiusi',
+                        colore: breachAperti > 0 || breachInGestione > 0
+                            ? Colors.orange.shade700
+                            : Colors.green.shade700,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.priority_high_outlined,
+                        titolo: 'Rischio alto',
+                        valore: '$breachRischioAlto',
+                        descrizione: 'Eventi Data Breach con rischio alto',
+                        colore: breachRischioAlto > 0
+                            ? Colors.red.shade700
+                            : Colors.green.shade700,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.outgoing_mail,
+                        titolo: 'Notifiche',
+                        valore:
+                            '${notificheGarante + comunicazioniInteressati}',
+                        descrizione:
+                            '$notificheGarante Garante, $comunicazioniInteressati interessati',
+                        colore: Colors.indigo.shade700,
+                      ),
+                    ),
+                    SizedBox(
+                      width: cardWidth,
+                      child: cardAuditGdpr(
+                        icona: Icons.history,
+                        titolo: 'Log tracciabilità',
+                        valore: '$totaleLog',
+                        descrizione:
+                            '$totaleLogRegistroTrattamentiAudit log trattamenti, $totaleLogDataBreachAudit log data breach',
+                        colore: totaleLog > 0
+                            ? Colors.green.shade700
+                            : Colors.grey.shade700,
+                      ),
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget statoVuoto() {
     return Center(
       child: Card(
@@ -1137,14 +1465,17 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     OutlinedButton.icon(
-                                      onPressed: () {
-                                        Navigator.push(
+                                      onPressed: () async {
+                                        await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
                                                 const RegistroTrattamentiPage(),
                                           ),
                                         );
+
+                                        await caricaPrivacyGdpr();
+                                        await caricaAuditGdpr();
                                       },
                                       icon: const Icon(
                                         Icons.assignment_outlined,
@@ -1153,14 +1484,17 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                     ),
                                     const SizedBox(height: 8),
                                     OutlinedButton.icon(
-                                      onPressed: () {
-                                        Navigator.push(
+                                      onPressed: () async {
+                                        await Navigator.push(
                                           context,
                                           MaterialPageRoute(
                                             builder: (_) =>
                                                 const RegistroDataBreachPage(),
                                           ),
                                         );
+
+                                        await caricaPrivacyGdpr();
+                                        await caricaAuditGdpr();
                                       },
                                       icon: const Icon(
                                         Icons.warning_amber_rounded,
@@ -1263,6 +1597,8 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 12),
+                  riepilogoAuditGdpr(),
                   const SizedBox(height: 12),
                   Expanded(
                     child: vociPrivacyFiltrate.isEmpty

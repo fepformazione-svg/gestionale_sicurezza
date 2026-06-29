@@ -29,8 +29,49 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
   ];
 
   String filtroStato = 'Tutti';
+  bool filtroSoloNotificatiGarante = false;
   bool caricamento = true;
   List<DataBreach> elencoDataBreach = [];
+  List<DataBreach> elencoRiepilogoDataBreach = [];
+
+  String _normalizzaStatoDataBreach(String valore) {
+    return valore.trim().toLowerCase();
+  }
+
+  int _conteggioDataBreachPerStato(String stato) {
+    final statoNormalizzato = _normalizzaStatoDataBreach(stato);
+
+    return elencoRiepilogoDataBreach
+        .where(
+          (breach) =>
+              _normalizzaStatoDataBreach(breach.stato) == statoNormalizzato,
+        )
+        .length;
+  }
+
+  int _conteggioDataBreachNotificatiGarante() {
+    return elencoRiepilogoDataBreach
+        .where((breach) => breach.notificatoGarante)
+        .length;
+  }
+
+  void _applicaFiltroRiepilogoDataBreach(String stato) {
+    setState(() {
+      filtroStato = stato;
+      filtroSoloNotificatiGarante = false;
+    });
+
+    caricaDataBreach();
+  }
+
+  void _applicaFiltroNotificatiGarante() {
+    setState(() {
+      filtroStato = 'Tutti';
+      filtroSoloNotificatiGarante = true;
+    });
+
+    caricaDataBreach();
+  }
 
   @override
   void initState() {
@@ -49,14 +90,26 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       caricamento = true;
     });
 
-    final elenco = await AppDatabase.instance.getDataBreach(
+    final elencoRiepilogo = await AppDatabase.instance.getDataBreach(
+      filtroStato: 'Tutti',
+      ricerca: ricercaController.text,
+    );
+
+    final elencoFiltrato = await AppDatabase.instance.getDataBreach(
       filtroStato: filtroStato,
       ricerca: ricercaController.text,
     );
 
+    final elenco = filtroSoloNotificatiGarante
+        ? elencoFiltrato
+              .where((elemento) => elemento.notificatoGarante)
+              .toList()
+        : elencoFiltrato;
+
     if (!mounted) return;
 
     setState(() {
+      elencoRiepilogoDataBreach = elencoRiepilogo;
       elencoDataBreach = elenco;
       caricamento = false;
     });
@@ -644,6 +697,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     ricercaController.clear();
     setState(() {
       filtroStato = 'Tutti';
+      filtroSoloNotificatiGarante = false;
     });
     caricaDataBreach();
   }
@@ -691,10 +745,164 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
     );
   }
 
+  Widget _riepilogoDataBreach() {
+    final totale = elencoRiepilogoDataBreach.length;
+    final aperti = _conteggioDataBreachPerStato('Aperto');
+    final inValutazione = _conteggioDataBreachPerStato('In valutazione');
+    final notificati = _conteggioDataBreachNotificatiGarante();
+    final chiusi = _conteggioDataBreachPerStato('Chiuso');
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compatto = constraints.maxWidth < 720;
+            final larghezzaCard = compatto
+                ? constraints.maxWidth
+                : (constraints.maxWidth - 48) / 5;
+
+            return Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: [
+                _cardRiepilogoDataBreach(
+                  titolo: 'Totali',
+                  valore: totale,
+                  icona: Icons.fact_check_outlined,
+                  colore: Colors.blueGrey,
+                  larghezza: larghezzaCard,
+                  attiva:
+                      filtroStato == 'Tutti' && !filtroSoloNotificatiGarante,
+                  onTap: () => _applicaFiltroRiepilogoDataBreach('Tutti'),
+                ),
+                _cardRiepilogoDataBreach(
+                  titolo: 'Aperti',
+                  valore: aperti,
+                  icona: Icons.warning_amber_outlined,
+                  colore: Colors.red,
+                  larghezza: larghezzaCard,
+                  attiva:
+                      filtroStato == 'Aperto' && !filtroSoloNotificatiGarante,
+                  onTap: () => _applicaFiltroRiepilogoDataBreach('Aperto'),
+                ),
+                _cardRiepilogoDataBreach(
+                  titolo: 'In valutazione',
+                  valore: inValutazione,
+                  icona: Icons.manage_search_outlined,
+                  colore: Colors.orange,
+                  larghezza: larghezzaCard,
+                  attiva:
+                      filtroStato == 'In valutazione' &&
+                      !filtroSoloNotificatiGarante,
+                  onTap: () =>
+                      _applicaFiltroRiepilogoDataBreach('In valutazione'),
+                ),
+                _cardRiepilogoDataBreach(
+                  titolo: 'Notificati',
+                  valore: notificati,
+                  icona: Icons.outgoing_mail,
+                  colore: Colors.deepPurple,
+                  larghezza: larghezzaCard,
+                  attiva: filtroSoloNotificatiGarante,
+                  onTap: _applicaFiltroNotificatiGarante,
+                ),
+                _cardRiepilogoDataBreach(
+                  titolo: 'Chiusi',
+                  valore: chiusi,
+                  icona: Icons.verified_outlined,
+                  colore: Colors.green,
+                  larghezza: larghezzaCard,
+                  attiva:
+                      filtroStato == 'Chiuso' && !filtroSoloNotificatiGarante,
+                  onTap: () => _applicaFiltroRiepilogoDataBreach('Chiuso'),
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _cardRiepilogoDataBreach({
+    required String titolo,
+    required int valore,
+    required IconData icona,
+    required Color colore,
+    required double larghezza,
+    required bool attiva,
+    required VoidCallback onTap,
+  }) {
+    return SizedBox(
+      width: larghezza,
+      child: Card(
+        elevation: attiva ? 4 : 1,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+          side: BorderSide(
+            color: attiva ? colore : Colors.grey.shade300,
+            width: attiva ? 1.8 : 1,
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: colore.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icona, color: colore, size: 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        titolo,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontWeight: attiva
+                              ? FontWeight.w700
+                              : FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        valore.toString(),
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                          color: colore,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final filtroAttivo =
-        filtroStato != 'Tutti' || ricercaController.text.trim().isNotEmpty;
+        filtroStato != 'Tutti' ||
+        filtroSoloNotificatiGarante ||
+        ricercaController.text.trim().isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Registro Data Breach')),
@@ -768,6 +976,8 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
               ),
             ),
             const SizedBox(height: 12),
+            _riepilogoDataBreach(),
+            const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -812,6 +1022,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                       onChanged: (valore) {
                         setState(() {
                           filtroStato = valore ?? 'Tutti';
+                          filtroSoloNotificatiGarante = false;
                         });
                         caricaDataBreach();
                       },

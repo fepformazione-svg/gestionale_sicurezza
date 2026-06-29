@@ -697,49 +697,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         filtroStato != 'Tutti' || ricercaController.text.trim().isNotEmpty;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Registro Data Breach'),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: OutlinedButton.icon(
-              onPressed: caricamento || elencoDataBreach.isEmpty
-                  ? null
-                  : esportaExcelDataBreach,
-              icon: const Icon(Icons.table_view),
-              label: const Text('Excel'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: OutlinedButton.icon(
-              onPressed: caricamento || elencoDataBreach.isEmpty
-                  ? null
-                  : mostraAnteprimaPdfDataBreach,
-              icon: const Icon(Icons.picture_as_pdf_outlined),
-              label: const Text('PDF'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: OutlinedButton.icon(
-              onPressed: caricamento || elencoDataBreach.isEmpty
-                  ? null
-                  : stampaRegistroDataBreach,
-              icon: const Icon(Icons.print),
-              label: const Text('Stampa'),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilledButton.icon(
-              onPressed: () => mostraDialogDataBreach(),
-              icon: const Icon(Icons.add),
-              label: const Text('Nuovo data breach'),
-            ),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Registro Data Breach')),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: mostraGuidaRapidaDataBreach,
         icon: const Icon(Icons.help_outline),
@@ -749,6 +707,67 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compatto = constraints.maxWidth < 720;
+                    final larghezzaPulsante = compatto
+                        ? constraints.maxWidth
+                        : null;
+
+                    return Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      alignment: WrapAlignment.end,
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: larghezzaPulsante,
+                          child: OutlinedButton.icon(
+                            onPressed: caricamento || elencoDataBreach.isEmpty
+                                ? null
+                                : esportaExcelDataBreach,
+                            icon: const Icon(Icons.table_view),
+                            label: const Text('Excel'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: larghezzaPulsante,
+                          child: OutlinedButton.icon(
+                            onPressed: caricamento || elencoDataBreach.isEmpty
+                                ? null
+                                : mostraAnteprimaPdfDataBreach,
+                            icon: const Icon(Icons.picture_as_pdf_outlined),
+                            label: const Text('PDF'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: larghezzaPulsante,
+                          child: OutlinedButton.icon(
+                            onPressed: caricamento || elencoDataBreach.isEmpty
+                                ? null
+                                : stampaRegistroDataBreach,
+                            icon: const Icon(Icons.print),
+                            label: const Text('Stampa'),
+                          ),
+                        ),
+                        SizedBox(
+                          width: larghezzaPulsante,
+                          child: FilledButton.icon(
+                            onPressed: () => mostraDialogDataBreach(),
+                            icon: const Icon(Icons.add),
+                            label: const Text('Nuovo data breach'),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(12),

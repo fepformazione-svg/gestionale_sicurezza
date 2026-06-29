@@ -230,7 +230,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
   String etichettaVersoOrdinamentoDataBreach() {
     if (campoOrdinamentoDataBreach == 'notificatoGarante' ||
         campoOrdinamentoDataBreach == 'comunicatoInteressati') {
-      return ordinamentoDataBreachCrescente ? 'No → Sì' : 'Sì → No';
+      return ordinamentoDataBreachCrescente ? 'No â†’ SÃ¬' : 'SÃ¬ â†’ No';
     }
 
     return ordinamentoDataBreachCrescente ? 'crescente' : 'decrescente';
@@ -247,7 +247,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       'Rischio: $filtroGravita',
       'Notifica Garante: $filtroNotificaGarante',
       'Comunicazione interessati: $filtroComunicazioneInteressati',
-      if (filtroSoloNotificatiGarante) 'Solo notificati Garante: Sì',
+      if (filtroSoloNotificatiGarante) 'Solo notificati Garante: SÃ¬',
       if (ricercaTesto.isNotEmpty) 'Ricerca: "$ricercaTesto"',
       'Ordinamento: ${etichettaCampoOrdinamentoDataBreach()} ${etichettaVersoOrdinamentoDataBreach()}',
       'Record esportati: $recordEsportati',
@@ -514,7 +514,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       return pulito.isEmpty ? '-' : pulito;
     }
 
-    String siNo(bool valore) => valore ? 'Sì' : 'No';
+    String siNo(bool valore) => valore ? 'SÃ¬' : 'No';
 
     String dueCifre(int valore) => valore.toString().padLeft(2, '0');
 
@@ -649,7 +649,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       return pulito.isEmpty ? '-' : pulito;
     }
 
-    String siNo(bool valore) => valore ? 'Sì' : 'No';
+    String siNo(bool valore) => valore ? 'SÃ¬' : 'No';
 
     String dueCifre(int valore) => valore.toString().padLeft(2, '0');
 
@@ -680,7 +680,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
               style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(
-              'Vista corrente filtrata/ricercata - GDPR 679/2016',
+              'Vista corrente filtrata/ricercata/ordinata - GDPR 679/2016',
               style: const pw.TextStyle(fontSize: 10),
             ),
             pw.Divider(),
@@ -832,7 +832,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
       return pulito.isEmpty ? '-' : pulito;
     }
 
-    String siNo(bool valore) => valore ? 'Sì' : 'No';
+    String siNo(bool valore) => valore ? 'SÃ¬' : 'No';
 
     Widget sezione(String titolo) {
       return Padding(
@@ -892,7 +892,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                 sezione('Evento'),
                 riga('Data evento', elemento.dataEvento),
                 riga('Data rilevazione', elemento.dataRilevazione),
-                riga('Descrizione dell’evento', elemento.descrizione),
+                riga('Descrizione dellâ€™evento', elemento.descrizione),
                 riga('Categorie dati coinvolti', elemento.categorieDati),
                 riga('Categorie interessati', elemento.categorieInteressati),
                 riga(
@@ -979,41 +979,41 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                 sezione(
                   '2. Nuovo data breach',
                   'Usa il pulsante "Nuovo data breach" per inserire una nuova registrazione. '
-                      'Compila almeno la descrizione dell’evento e, quando disponibili, data evento, data rilevazione, categorie di dati, categorie di interessati e numero di soggetti o record coinvolti.',
+                      'Compila almeno la descrizione dellâ€™evento e, quando disponibili, data evento, data rilevazione, categorie di dati, categorie di interessati e numero di soggetti o record coinvolti.',
                 ),
                 sezione(
                   '3. Valutazione del rischio',
-                  'Il campo "Rischio" permette di classificare l’evento come Da valutare, Basso, Medio o Alto. '
-                      'La classificazione deve essere coerente con le conseguenze probabili per gli interessati e con le misure già adottate o pianificate.',
+                  'Il campo "Rischio" permette di classificare lâ€™evento come Da valutare, Basso, Medio o Alto. '
+                      'La classificazione deve essere coerente con le conseguenze probabili per gli interessati e con le misure giÃ  adottate o pianificate.',
                 ),
                 sezione(
                   '4. Notifica al Garante e comunicazione agli interessati',
                   'Le caselle "Notificato al Garante" e "Comunicazione agli interessati" indicano le azioni intraprese. '
-                      'Quando una notifica o comunicazione non viene effettuata, è opportuno indicare la motivazione nel campo dedicato.',
+                      'Quando una notifica o comunicazione non viene effettuata, Ã¨ opportuno indicare la motivazione nel campo dedicato.',
                 ),
                 sezione(
                   '5. Stato della registrazione',
-                  'Lo stato può essere Aperto, In valutazione o Chiuso. '
+                  'Lo stato puÃ² essere Aperto, In valutazione o Chiuso. '
                       'Usa "Aperto" per eventi appena registrati, "In valutazione" quando sono in corso verifiche interne e "Chiuso" quando valutazione, misure e decisioni sono state completate.',
                 ),
                 sezione(
                   '6. Ricerca e filtri',
                   'La ricerca e il filtro Stato lavorano insieme. '
-                      'Il pulsante "Azzera filtri" riporta la vista completa. Gli export Excel, PDF e la stampa rispettano sempre la vista corrente filtrata o ricercata.',
+                      'Il pulsante "Azzera filtri" riporta la vista completa. Gli export Excel, PDF e la stampa rispettano sempre la vista corrente filtrata, ricercata e ordinata.',
                 ),
                 sezione(
                   '7. Dettaglio, modifica ed eliminazione',
-                  'L’icona occhio apre il dettaglio completo in sola lettura. '
+                  'Lâ€™icona occhio apre il dettaglio completo in sola lettura. '
                       'La matita modifica la registrazione. Il cestino elimina definitivamente il data breach dopo conferma.',
                 ),
                 sezione(
                   '8. Excel, PDF e stampa',
                   'Il pulsante Excel genera un file nella cartella Documenti\\Gestionale Sicurezza e lo apre automaticamente. '
-                      'Il pulsante PDF apre l’anteprima con intestazione aziendale/logo. Il pulsante Stampa apre la stessa anteprima abilitando la stampa.',
+                      'Il pulsante PDF apre lâ€™anteprima con intestazione aziendale/logo. Il pulsante Stampa apre la stessa anteprima abilitando la stampa.',
                 ),
                 sezione(
                   '9. Buona prassi operativa',
-                  'Per ogni evento conserva una traccia chiara: cosa è accaduto, quando è stato rilevato, quali dati sono coinvolti, quali conseguenze sono possibili, quali misure sono state adottate e perché è stata presa una determinata decisione sulla notifica.',
+                  'Per ogni evento conserva una traccia chiara: cosa Ã¨ accaduto, quando Ã¨ stato rilevato, quali dati sono coinvolti, quali conseguenze sono possibili, quali misure sono state adottate e perchÃ© Ã¨ stata presa una determinata decisione sulla notifica.',
                 ),
               ],
             ),
@@ -1664,7 +1664,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                       width: 130,
                                                       child: Text(
                                                         elemento.notificatoGarante
-                                                            ? 'Sì'
+                                                            ? 'SÃ¬'
                                                             : 'No',
                                                       ),
                                                     ),
@@ -1672,7 +1672,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                       width: 140,
                                                       child: Text(
                                                         elemento.comunicatoInteressati
-                                                            ? 'Sì'
+                                                            ? 'SÃ¬'
                                                             : 'No',
                                                       ),
                                                     ),
@@ -1910,7 +1910,7 @@ class _DataBreachDialogState extends State<_DataBreachDialog> {
                 const SizedBox(height: 12),
                 campo(
                   descrizioneController,
-                  'Descrizione dell’evento',
+                  'Descrizione dellâ€™evento',
                   maxLines: 3,
                   obbligatorio: true,
                 ),

@@ -14,6 +14,7 @@ import '../models/registro_trattamento.dart';
 import '../models/registro_trattamento_log.dart';
 import '../models/data_breach.dart';
 import '../models/data_breach_log.dart';
+import '../models/consenso_privacy.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -49,7 +50,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 6,
+        version: 7,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -57,6 +58,32 @@ class AppDatabase {
     );
 
     return _database!;
+  }
+
+  Future<void> createConsensiPrivacyTable(Database db) async {
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS consensi_privacy (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      tipo_soggetto TEXT NOT NULL DEFAULT 'Altro',
+      soggetto_id INTEGER,
+      nominativo TEXT NOT NULL,
+      codice_fiscale TEXT,
+      email TEXT,
+      telefono TEXT,
+      finalita TEXT NOT NULL,
+      base_giuridica TEXT,
+      versione_informativa TEXT,
+      canale_raccolta TEXT,
+      stato TEXT NOT NULL DEFAULT 'ATTIVO',
+      data_consenso TEXT NOT NULL,
+      data_revoca TEXT,
+      data_scadenza TEXT,
+      documento_riferimento TEXT,
+      note TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  ''');
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -464,6 +491,7 @@ class AppDatabase {
     ''');
     await _creaTabellaRegistroTrattamenti(db);
     await _createRegistroDataBreachTable(db);
+    await createConsensiPrivacyTable(db);
   }
 
   Future<void> _createRegistroDataBreachTable(Database db) async {
@@ -2761,5 +2789,121 @@ class AppDatabase {
       'record_id': recordId,
       'data_ora': DateTime.now().toIso8601String(),
     });
+  }
+  // -----------------------------
+  // GDPR031A - Registro consensi/privacy
+  // -----------------------------
+
+  Future<List<ConsensoPrivacy>> getConsensiPrivacy({
+    String ricerca = '',
+    String stato = 'Tutti',
+    String tipoSoggetto = 'Tutti',
+  }) async {
+    final db = await database;
+
+    final where = <String>[];
+    final args = <Object?>[];
+
+    final ricercaPulita = ricerca.trim();
+
+    if (ricercaPulita.isNotEmpty) {
+      where.add('''
+      (
+        nominativo LIKE ?
+        OR codice_fiscale LIKE ?
+        OR email LIKE ?
+        OR telefono LIKE ?
+        OR finalita LIKE ?
+        OR versione_informativa LIKE ?
+        OR documento_riferimento LIKE ?
+        OR note LIKE ?
+      )
+    ''');
+
+      final valore = '%$ricercaPulita%';
+      args.addAll([
+        valore,
+        valore,
+        valore,
+        valore,
+        valore,
+        valore,
+        valore,
+        valore,
+      ]);
+    }
+
+    if (stato != 'Tutti') {
+      where.add('stato = ?');
+      args.add(stato);
+    }
+
+    if (tipoSoggetto != 'Tutti') {
+      where.add('tipo_soggetto = ?');
+      args.add(tipoSoggetto);
+    }
+
+    final maps = await db.query(
+      'consensi_privacy',
+      where: where.isEmpty ? null : where.join(' AND '),
+      whereArgs: args,
+      orderBy: 'data_consenso DESC, id DESC',
+    );
+
+    return maps.map(ConsensoPrivacy.fromMap).toList();
+  }
+
+  Future<int> insertConsensoPrivacy(ConsensoPrivacy consenso) async {
+    final db = await database;
+    final map = consenso.toMap()..remove('id');
+
+    return db.insert('consensi_privacy', map);
+  }
+
+  Future<int> updateConsensoPrivacy(ConsensoPrivacy consenso) async {
+    final db = await database;
+
+    if (consenso.id == null) {
+      throw Exception('ID consenso mancante per aggiornamento');
+    }
+
+    final map = consenso.toMap()..remove('id');
+
+    return db.update(
+      'consensi_privacy',
+      map,
+      where: 'id = ?',
+      whereArgs: [consenso.id],
+    );
+  }
+
+  Future<int> deleteConsensoPrivacy(int id) async {
+    final db = await database;
+
+    return db.delete('consensi_privacy', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> revocaConsensoPrivacy(int id) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    return db.update(
+      'consensi_privacy',
+      {
+        'stato': 'REVOCATO',
+        'data_revoca': _formattaDataItalianaConsensoPrivacy(DateTime.now()),
+        'updated_at': now,
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  String _formattaDataItalianaConsensoPrivacy(DateTime data) {
+    final giorno = data.day.toString().padLeft(2, '0');
+    final mese = data.month.toString().padLeft(2, '0');
+    final anno = data.year.toString();
+
+    return '$giorno/$mese/$anno';
   }
 }

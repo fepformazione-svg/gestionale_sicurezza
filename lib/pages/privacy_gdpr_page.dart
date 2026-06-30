@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import 'registro_trattamenti_page.dart';
 import 'registro_data_breach_page.dart';
+import 'registro_consensi_privacy_page.dart';
 
 import '../models/privacy_gdpr.dart';
 import '../models/registro_trattamento.dart';
@@ -2155,6 +2156,21 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                     icon: const Icon(Icons.print_outlined),
                                     label: const Text('Stampa audit'),
                                   ),
+                                  ElevatedButton.icon(
+                                    icon: const Icon(Icons.fact_check_outlined),
+                                    label: const Text(
+                                      'Registro consensi/privacy',
+                                    ),
+                                    onPressed: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (_) =>
+                                              const RegistroConsensiPrivacyPage(),
+                                        ),
+                                      );
+                                    },
+                                  ),
+
                                   FilledButton.icon(
                                     onPressed: mostraDialogNuovaVoce,
                                     icon: const Icon(Icons.add),

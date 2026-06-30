@@ -868,6 +868,11 @@ class _RegistroConsensiPrivacyPageState
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('PDF'),
             ),
+            FilledButton.icon(
+              onPressed: () => stampaRegistroConsensiPrivacy(consensi),
+              icon: const Icon(Icons.print),
+              label: const Text('Stampa'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -1305,6 +1310,70 @@ class _RegistroConsensiPrivacyPageState
                     allowPrinting: false,
                     allowSharing: false,
                     pdfFileName: 'registro_consensi_privacy.pdf',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> stampaRegistroConsensiPrivacy(
+    List<ConsensoPrivacy> elementiDaStampare,
+  ) async {
+    if (elementiDaStampare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun consenso/privacy da stampare.')),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: 1100,
+            height: 760,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Anteprima stampa Registro consensi/privacy',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Chiudi',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: PdfPreview(
+                    build: (format) => generaPdfRegistroConsensiPrivacyBytes(
+                      elementiDaStampare,
+                    ),
+                    canChangeOrientation: false,
+                    canChangePageFormat: false,
+                    allowPrinting: true,
+                    allowSharing: false,
+                    pdfFileName: 'registro_consensi_privacy_stampa.pdf',
                   ),
                 ),
               ],

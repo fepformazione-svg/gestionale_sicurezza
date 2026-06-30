@@ -1124,6 +1124,288 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     );
   }
 
+  Future<void> stampaRiepilogoAuditGdpr() async {
+    final pdf = pw.Document();
+    final intestazionePdf = await caricaIntestazioneAziendaPdf();
+
+    final now = DateTime.now();
+    final dataGenerazione = DateFormat('dd/MM/yyyy HH:mm').format(now);
+
+    final trattamentiTotali = trattamentiAuditGdpr.length;
+    final trattamentiAttivi = trattamentiAuditGdpr
+        .where((elemento) => elemento.attivo)
+        .length;
+    final trattamentiNonAttivi = trattamentiTotali - trattamentiAttivi;
+
+    final revisioniScadute = trattamentiAuditGdpr
+        .where(revisioneScadutaAuditGdpr)
+        .length;
+    final revisioniInScadenza = trattamentiAuditGdpr
+        .where(revisioneInScadenzaAuditGdpr)
+        .length;
+    final revisioniNonImpostate = trattamentiAuditGdpr
+        .where(revisioneNonImpostataAuditGdpr)
+        .length;
+
+    final breachTotali = dataBreachAuditGdpr.length;
+    final breachAperti = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('aperto'))
+        .length;
+    final breachInGestione = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('gestione'))
+        .length;
+    final breachChiusi = dataBreachAuditGdpr
+        .where((elemento) => elemento.stato.toLowerCase().contains('chiuso'))
+        .length;
+    final breachRischioAlto = dataBreachAuditGdpr
+        .where((elemento) => elemento.rischio.toLowerCase().contains('alto'))
+        .length;
+    final notificheGarante = dataBreachAuditGdpr
+        .where((elemento) => elemento.notificatoGarante)
+        .length;
+    final comunicazioniInteressati = dataBreachAuditGdpr
+        .where((elemento) => elemento.comunicatoInteressati)
+        .length;
+
+    final totaleLog =
+        totaleLogRegistroTrattamentiAudit + totaleLogDataBreachAudit;
+
+    final criticita =
+        revisioniScadute +
+        revisioniInScadenza +
+        revisioniNonImpostate +
+        breachAperti +
+        breachInGestione +
+        breachRischioAlto;
+
+    final auditOk = trattamentiTotali > 0 && totaleLog > 0 && criticita == 0;
+    final statoAudit = auditOk ? 'Auditabile' : 'Da verificare';
+
+    pdf.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4,
+        margin: const pw.EdgeInsets.all(28),
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+          );
+        },
+        build: (context) {
+          return [
+            intestazioneAziendaPdfWidget(intestazionePdf),
+            pw.SizedBox(height: 14),
+            pw.Text(
+              'RIEPILOGO AUDIT GDPR',
+              style: pw.TextStyle(
+                fontSize: 20,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Generato il: $dataGenerazione',
+              style: const pw.TextStyle(fontSize: 10),
+            ),
+            pw.SizedBox(height: 14),
+            pw.Container(
+              width: double.infinity,
+              padding: const pw.EdgeInsets.all(12),
+              decoration: pw.BoxDecoration(
+                color: auditOk ? PdfColors.green50 : PdfColors.orange50,
+                border: pw.Border.all(
+                  color: auditOk ? PdfColors.green700 : PdfColors.orange700,
+                ),
+                borderRadius: pw.BorderRadius.circular(6),
+              ),
+              child: pw.Column(
+                crossAxisAlignment: pw.CrossAxisAlignment.start,
+                children: [
+                  pw.Text(
+                    'Stato audit: $statoAudit',
+                    style: pw.TextStyle(
+                      fontSize: 14,
+                      fontWeight: pw.FontWeight.bold,
+                      color: auditOk ? PdfColors.green800 : PdfColors.orange800,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  pw.Text(
+                    auditOk
+                        ? 'Il riepilogo non evidenzia criticita principali nei dati attualmente registrati.'
+                        : 'Il riepilogo evidenzia elementi da verificare prima di considerare completa la posizione GDPR.',
+                    style: const pw.TextStyle(fontSize: 10),
+                  ),
+                ],
+              ),
+            ),
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Sintesi generale',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.TableHelper.fromTextArray(
+              headers: const ['Area', 'Valore', 'Dettaglio'],
+              data: [
+                [
+                  'Registro trattamenti',
+                  '$trattamentiTotali',
+                  '$trattamentiAttivi attivi, $trattamentiNonAttivi non attivi',
+                ],
+                [
+                  'Revisioni',
+                  '${revisioniScadute + revisioniInScadenza}',
+                  '$revisioniScadute scadute, $revisioniInScadenza in scadenza, $revisioniNonImpostate non impostate',
+                ],
+                [
+                  'Data breach',
+                  '$breachTotali',
+                  '$breachAperti aperti, $breachInGestione in gestione, $breachChiusi chiusi',
+                ],
+                [
+                  'Rischio alto',
+                  '$breachRischioAlto',
+                  'Data breach classificati con rischio alto',
+                ],
+                [
+                  'Notifiche GDPR',
+                  '${notificheGarante + comunicazioniInteressati}',
+                  '$notificheGarante notifiche al Garante, $comunicazioniInteressati comunicazioni agli interessati',
+                ],
+                [
+                  'Log tracciabilita',
+                  '$totaleLog',
+                  '$totaleLogRegistroTrattamentiAudit log trattamenti, $totaleLogDataBreachAudit log data breach',
+                ],
+                [
+                  'Criticita complessive',
+                  '$criticita',
+                  'Somma di revisioni critiche, breach aperti/in gestione e rischio alto',
+                ],
+              ],
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 10,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 9),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.7),
+                1: const pw.FlexColumnWidth(0.8),
+                2: const pw.FlexColumnWidth(3.2),
+              },
+            ),
+            pw.SizedBox(height: 16),
+            pw.Text(
+              'Elementi da verificare',
+              style: pw.TextStyle(
+                fontSize: 14,
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.blueGrey800,
+              ),
+            ),
+            pw.SizedBox(height: 8),
+            pw.TableHelper.fromTextArray(
+              headers: const ['Voce', 'Quantita', 'Priorita'],
+              data: [
+                [
+                  'Revisioni scadute',
+                  '$revisioniScadute',
+                  revisioniScadute > 0 ? 'Alta' : 'Nessuna',
+                ],
+                [
+                  'Revisioni in scadenza',
+                  '$revisioniInScadenza',
+                  revisioniInScadenza > 0 ? 'Media' : 'Nessuna',
+                ],
+                [
+                  'Revisioni non impostate',
+                  '$revisioniNonImpostate',
+                  revisioniNonImpostate > 0 ? 'Media' : 'Nessuna',
+                ],
+                [
+                  'Data breach aperti',
+                  '$breachAperti',
+                  breachAperti > 0 ? 'Alta' : 'Nessuna',
+                ],
+                [
+                  'Data breach in gestione',
+                  '$breachInGestione',
+                  breachInGestione > 0 ? 'Alta' : 'Nessuna',
+                ],
+                [
+                  'Data breach rischio alto',
+                  '$breachRischioAlto',
+                  breachRischioAlto > 0 ? 'Alta' : 'Nessuna',
+                ],
+                [
+                  'Log tracciabilita assenti',
+                  totaleLog == 0 ? '1' : '0',
+                  totaleLog == 0 ? 'Media' : 'Nessuna',
+                ],
+              ],
+              headerStyle: pw.TextStyle(
+                fontWeight: pw.FontWeight.bold,
+                color: PdfColors.white,
+                fontSize: 10,
+              ),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey700,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 9),
+              cellAlignment: pw.Alignment.centerLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              cellPadding: const pw.EdgeInsets.symmetric(
+                horizontal: 6,
+                vertical: 5,
+              ),
+              oddRowDecoration: const pw.BoxDecoration(
+                color: PdfColors.blueGrey50,
+              ),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(2.2),
+                1: const pw.FlexColumnWidth(0.8),
+                2: const pw.FlexColumnWidth(1.0),
+              },
+            ),
+          ];
+        },
+      ),
+    );
+
+    await Printing.layoutPdf(onLayout: (format) async => pdf.save());
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Stampa riepilogo audit GDPR avviata: $statoAudit.'),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   Future<void> stampaPrivacyGdpr() async {
     final vociDaStampare = vociPrivacyFiltrate;
 
@@ -1868,6 +2150,11 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                     icon: const Icon(Icons.assessment_outlined),
                                     label: const Text('PDF audit'),
                                   ),
+                                  ElevatedButton.icon(
+                                    onPressed: stampaRiepilogoAuditGdpr,
+                                    icon: const Icon(Icons.print_outlined),
+                                    label: const Text('Stampa audit'),
+                                  ),
                                   FilledButton.icon(
                                     onPressed: mostraDialogNuovaVoce,
                                     icon: const Icon(Icons.add),
@@ -1895,9 +2182,13 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  riepilogoAuditGdpr(),
+                  Flexible(
+                    flex: 2,
+                    child: SingleChildScrollView(child: riepilogoAuditGdpr()),
+                  ),
                   const SizedBox(height: 12),
                   Expanded(
+                    flex: 3,
                     child: vociPrivacyFiltrate.isEmpty
                         ? statoVuoto()
                         : tabellaPrivacy(),

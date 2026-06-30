@@ -29,6 +29,8 @@ class _RegistroConsensiPrivacyPageState
 
   String filtroStato = 'Tutti';
   String filtroTipoSoggetto = 'Tutti';
+  String campoOrdinamentoConsensiPrivacy = 'dataConsenso';
+  bool ordinamentoConsensiPrivacyCrescente = false;
 
   static const List<String> statiFiltro = [
     'Tutti',
@@ -725,6 +727,169 @@ class _RegistroConsensiPrivacyPageState
     );
   }
 
+  String normalizzaTestoOrdinamentoConsensiPrivacy(String valore) {
+    return valore.trim().toLowerCase();
+  }
+
+  DateTime? dataOrdinamentoConsensiPrivacy(dynamic valore) {
+    final testo = valore?.toString().trim() ?? '';
+
+    if (testo.isEmpty) {
+      return null;
+    }
+
+    if (valore is DateTime) {
+      return valore;
+    }
+
+    return DateTime.tryParse(testo);
+  }
+
+  int confrontaTestoConsensiPrivacy(String a, String b) {
+    return normalizzaTestoOrdinamentoConsensiPrivacy(
+      a,
+    ).compareTo(normalizzaTestoOrdinamentoConsensiPrivacy(b));
+  }
+
+  int confrontaDateConsensiPrivacy(dynamic a, dynamic b) {
+    final dataA = dataOrdinamentoConsensiPrivacy(a);
+    final dataB = dataOrdinamentoConsensiPrivacy(b);
+
+    if (dataA == null && dataB == null) {
+      return 0;
+    }
+
+    if (dataA == null) {
+      return 1;
+    }
+
+    if (dataB == null) {
+      return -1;
+    }
+
+    return dataA.compareTo(dataB);
+  }
+
+  List<ConsensoPrivacy> ordinaConsensiPrivacy(List<ConsensoPrivacy> consensi) {
+    final ordinati = List<ConsensoPrivacy>.from(consensi);
+
+    ordinati.sort((a, b) {
+      var risultato = 0;
+
+      switch (campoOrdinamentoConsensiPrivacy) {
+        case 'nominativo':
+          risultato = confrontaTestoConsensiPrivacy(a.nominativo, b.nominativo);
+          break;
+        case 'tipoSoggetto':
+          risultato = confrontaTestoConsensiPrivacy(
+            a.tipoSoggetto,
+            b.tipoSoggetto,
+          );
+          break;
+        case 'finalita':
+          risultato = confrontaTestoConsensiPrivacy(a.finalita, b.finalita);
+          break;
+        case 'baseGiuridica':
+          risultato = confrontaTestoConsensiPrivacy(
+            a.baseGiuridica,
+            b.baseGiuridica,
+          );
+          break;
+        case 'versioneInformativa':
+          risultato = confrontaTestoConsensiPrivacy(
+            a.versioneInformativa,
+            b.versioneInformativa,
+          );
+          break;
+        case 'canaleRaccolta':
+          risultato = confrontaTestoConsensiPrivacy(
+            a.canaleRaccolta,
+            b.canaleRaccolta,
+          );
+          break;
+        case 'dataConsenso':
+          risultato = confrontaDateConsensiPrivacy(
+            a.dataConsenso,
+            b.dataConsenso,
+          );
+          break;
+        case 'dataRevoca':
+          risultato = confrontaDateConsensiPrivacy(a.dataRevoca, b.dataRevoca);
+          break;
+        case 'stato':
+          risultato = confrontaTestoConsensiPrivacy(a.stato, b.stato);
+          break;
+        default:
+          risultato = confrontaDateConsensiPrivacy(
+            a.dataConsenso,
+            b.dataConsenso,
+          );
+      }
+
+      if (risultato == 0) {
+        risultato = confrontaTestoConsensiPrivacy(a.nominativo, b.nominativo);
+      }
+
+      return ordinamentoConsensiPrivacyCrescente ? risultato : -risultato;
+    });
+
+    return ordinati;
+  }
+
+  Widget intestazioneOrdinabileConsensiPrivacy(
+    String campo,
+    String etichetta, {
+    double? larghezza,
+  }) {
+    final attivo = campoOrdinamentoConsensiPrivacy == campo;
+
+    final contenuto = InkWell(
+      onTap: () {
+        setState(() {
+          if (campoOrdinamentoConsensiPrivacy == campo) {
+            ordinamentoConsensiPrivacyCrescente =
+                !ordinamentoConsensiPrivacyCrescente;
+          } else {
+            campoOrdinamentoConsensiPrivacy = campo;
+
+            if (campo == 'dataConsenso' || campo == 'dataRevoca') {
+              ordinamentoConsensiPrivacyCrescente = false;
+            } else {
+              ordinamentoConsensiPrivacyCrescente = true;
+            }
+          }
+        });
+      },
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              etichetta,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Icon(
+            attivo
+                ? ordinamentoConsensiPrivacyCrescente
+                      ? Icons.arrow_upward
+                      : Icons.arrow_downward
+                : Icons.unfold_more,
+            size: 16,
+          ),
+        ],
+      ),
+    );
+
+    if (larghezza == null) {
+      return contenuto;
+    }
+
+    return SizedBox(width: larghezza, child: contenuto);
+  }
+
   Widget buildTabella(List<ConsensoPrivacy> consensi) {
     if (consensi.isEmpty) {
       return const Card(
@@ -749,17 +914,71 @@ class _RegistroConsensiPrivacyPageState
             headingRowHeight: 46,
             dataRowMinHeight: 48,
             dataRowMaxHeight: 58,
-            columns: const [
-              DataColumn(label: Text('Data consenso')),
-              DataColumn(label: Text('Soggetto')),
-              DataColumn(label: Text('Nominativo')),
-              DataColumn(label: Text('Finalità')),
-              DataColumn(label: Text('Base giuridica')),
-              DataColumn(label: Text('Informativa')),
-              DataColumn(label: Text('Canale')),
-              DataColumn(label: Text('Stato')),
-              DataColumn(label: Text('Revoca')),
-              DataColumn(label: Text('Azioni')),
+            columns: [
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'dataConsenso',
+                  'Data consenso',
+                  larghezza: 130,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'tipoSoggetto',
+                  'Soggetto',
+                  larghezza: 130,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'nominativo',
+                  'Nominativo',
+                  larghezza: 180,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'finalita',
+                  'Finalità',
+                  larghezza: 180,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'baseGiuridica',
+                  'Base giuridica',
+                  larghezza: 160,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'versioneInformativa',
+                  'Informativa',
+                  larghezza: 130,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'canaleRaccolta',
+                  'Canale',
+                  larghezza: 120,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'stato',
+                  'Stato',
+                  larghezza: 100,
+                ),
+              ),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'dataRevoca',
+                  'Revoca',
+                  larghezza: 120,
+                ),
+              ),
+              const DataColumn(label: Text('Azioni')),
             ],
             rows: consensi.map((consenso) {
               DataCell cellaDettaglio(Widget child) {
@@ -837,6 +1056,8 @@ class _RegistroConsensiPrivacyPageState
   }
 
   Widget buildContenuto(List<ConsensoPrivacy> consensi) {
+    final consensiOrdinati = ordinaConsensiPrivacy(consensi);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -858,18 +1079,19 @@ class _RegistroConsensiPrivacyPageState
           runSpacing: 8,
           children: [
             FilledButton.icon(
-              onPressed: () => esportaExcelRegistroConsensiPrivacy(consensi),
+              onPressed: () =>
+                  esportaExcelRegistroConsensiPrivacy(consensiOrdinati),
               icon: const Icon(Icons.table_chart),
               label: const Text('Excel'),
             ),
             FilledButton.icon(
               onPressed: () =>
-                  mostraAnteprimaPdfRegistroConsensiPrivacy(consensi),
+                  mostraAnteprimaPdfRegistroConsensiPrivacy(consensiOrdinati),
               icon: const Icon(Icons.picture_as_pdf),
               label: const Text('PDF'),
             ),
             FilledButton.icon(
-              onPressed: () => stampaRegistroConsensiPrivacy(consensi),
+              onPressed: () => stampaRegistroConsensiPrivacy(consensiOrdinati),
               icon: const Icon(Icons.print),
               label: const Text('Stampa'),
             ),
@@ -881,7 +1103,7 @@ class _RegistroConsensiPrivacyPageState
           ],
         ),
         const SizedBox(height: 16),
-        Expanded(child: buildTabella(consensi)),
+        Expanded(child: buildTabella(consensiOrdinati)),
       ],
     );
   }

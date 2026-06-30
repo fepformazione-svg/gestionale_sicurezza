@@ -753,11 +753,18 @@ class _RegistroConsensiPrivacyPageState
               DataColumn(label: Text('Azioni')),
             ],
             rows: consensi.map((consenso) {
+              DataCell cellaDettaglio(Widget child) {
+                return DataCell(
+                  child,
+                  onDoubleTap: () => mostraDettaglioConsensoPrivacy(consenso),
+                );
+              }
+
               return DataRow(
                 cells: [
-                  DataCell(Text(consenso.dataConsenso)),
-                  DataCell(Text(consenso.tipoSoggetto)),
-                  DataCell(
+                  cellaDettaglio(Text(consenso.dataConsenso)),
+                  cellaDettaglio(Text(consenso.tipoSoggetto)),
+                  cellaDettaglio(
                     SizedBox(
                       width: 240,
                       child: Text(
@@ -766,7 +773,7 @@ class _RegistroConsensiPrivacyPageState
                       ),
                     ),
                   ),
-                  DataCell(
+                  cellaDettaglio(
                     SizedBox(
                       width: 280,
                       child: Text(
@@ -775,15 +782,21 @@ class _RegistroConsensiPrivacyPageState
                       ),
                     ),
                   ),
-                  DataCell(Text(consenso.baseGiuridica)),
-                  DataCell(Text(consenso.versioneInformativa)),
-                  DataCell(Text(consenso.canaleRaccolta)),
-                  DataCell(badgeStato(consenso.stato)),
-                  DataCell(Text(consenso.dataRevoca)),
+                  cellaDettaglio(Text(consenso.baseGiuridica)),
+                  cellaDettaglio(Text(consenso.versioneInformativa)),
+                  cellaDettaglio(Text(consenso.canaleRaccolta)),
+                  cellaDettaglio(badgeStato(consenso.stato)),
+                  cellaDettaglio(Text(consenso.dataRevoca)),
                   DataCell(
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        IconButton(
+                          tooltip: 'Dettaglio',
+                          icon: const Icon(Icons.visibility_outlined),
+                          onPressed: () =>
+                              mostraDettaglioConsensoPrivacy(consenso),
+                        ),
                         IconButton(
                           tooltip: 'Modifica',
                           icon: const Icon(Icons.edit_outlined),
@@ -833,6 +846,222 @@ class _RegistroConsensiPrivacyPageState
         const SizedBox(height: 16),
         Expanded(child: buildTabella(consensi)),
       ],
+    );
+  }
+
+  String valoreDettaglioConsensoPrivacy(String valore) {
+    final testo = valore.trim();
+    return testo.isEmpty ? '—' : testo;
+  }
+
+  Widget rigaDettaglioConsensoPrivacy(
+    String etichetta,
+    String valore, {
+    bool evidenziata = false,
+  }) {
+    final tema = Theme.of(context);
+    final testo = valoreDettaglioConsensoPrivacy(valore);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compatto = constraints.maxWidth < 520;
+
+          final label = Text(
+            etichetta,
+            style: tema.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: Colors.grey.shade700,
+            ),
+          );
+
+          final contenuto = SelectableText(
+            testo,
+            style: tema.textTheme.bodyMedium?.copyWith(
+              fontWeight: evidenziata ? FontWeight.w700 : FontWeight.w400,
+            ),
+          );
+
+          if (compatto) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [label, const SizedBox(height: 3), contenuto],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(width: 190, child: label),
+              Expanded(child: contenuto),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget sezioneDettaglioConsensoPrivacy(String titolo, List<Widget> righe) {
+    final tema = Theme.of(context);
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              titolo,
+              style: tema.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+            const SizedBox(height: 10),
+            ...righe,
+          ],
+        ),
+      ),
+    );
+  }
+
+  void mostraDettaglioConsensoPrivacy(ConsensoPrivacy consenso) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        final larghezzaSchermo = MediaQuery.of(dialogContext).size.width;
+        final altezzaSchermo = MediaQuery.of(dialogContext).size.height;
+
+        final larghezzaDialog = larghezzaSchermo >= 1100
+            ? 900.0
+            : larghezzaSchermo >= 760
+            ? 720.0
+            : larghezzaSchermo * 0.94;
+
+        return AlertDialog(
+          title: Row(
+            children: [
+              const Icon(Icons.privacy_tip_outlined),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Dettaglio consenso/privacy',
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: larghezzaDialog,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(maxHeight: altezzaSchermo * 0.78),
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    sezioneDettaglioConsensoPrivacy('Identificazione', [
+                      rigaDettaglioConsensoPrivacy(
+                        'ID consenso',
+                        consenso.id?.toString() ?? '',
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Tipo soggetto',
+                        consenso.tipoSoggetto,
+                        evidenziata: true,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'ID soggetto collegato',
+                        consenso.soggettoId?.toString() ?? '',
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Nominativo',
+                        consenso.nominativo,
+                        evidenziata: true,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Codice fiscale',
+                        consenso.codiceFiscale,
+                      ),
+                      rigaDettaglioConsensoPrivacy('Email', consenso.email),
+                      rigaDettaglioConsensoPrivacy(
+                        'Telefono',
+                        consenso.telefono,
+                      ),
+                    ]),
+                    sezioneDettaglioConsensoPrivacy(
+                      'Consenso e base giuridica',
+                      [
+                        rigaDettaglioConsensoPrivacy(
+                          'Finalità',
+                          consenso.finalita,
+                          evidenziata: true,
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'Base giuridica',
+                          consenso.baseGiuridica,
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'Versione informativa',
+                          consenso.versioneInformativa,
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'Canale raccolta',
+                          consenso.canaleRaccolta,
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'Stato',
+                          consenso.stato,
+                          evidenziata: true,
+                        ),
+                      ],
+                    ),
+                    sezioneDettaglioConsensoPrivacy('Date', [
+                      rigaDettaglioConsensoPrivacy(
+                        'Data consenso',
+                        consenso.dataConsenso,
+                        evidenziata: true,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Data revoca',
+                        consenso.dataRevoca,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Data scadenza',
+                        consenso.dataScadenza,
+                      ),
+                    ]),
+                    sezioneDettaglioConsensoPrivacy('Documentazione e note', [
+                      rigaDettaglioConsensoPrivacy(
+                        'Documento riferimento',
+                        consenso.documentoRiferimento,
+                      ),
+                      rigaDettaglioConsensoPrivacy('Note', consenso.note),
+                    ]),
+                    sezioneDettaglioConsensoPrivacy('Tracciamento tecnico', [
+                      rigaDettaglioConsensoPrivacy(
+                        'Creato il',
+                        consenso.createdAt,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Ultimo aggiornamento',
+                        consenso.updatedAt,
+                      ),
+                    ]),
+                  ],
+                ),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton.icon(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              icon: const Icon(Icons.close),
+              label: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
     );
   }
 

@@ -15,6 +15,7 @@ import '../models/registro_trattamento_log.dart';
 import '../models/data_breach.dart';
 import '../models/data_breach_log.dart';
 import '../models/consenso_privacy.dart';
+import '../models/consenso_privacy_log.dart';
 
 class AppDatabase {
   AppDatabase._();
@@ -50,7 +51,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 7,
+        version: 8,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -82,6 +83,20 @@ class AppDatabase {
       note TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE IF NOT EXISTS consensi_privacy_log (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      consenso_privacy_id INTEGER,
+      azione TEXT NOT NULL,
+      descrizione TEXT NOT NULL,
+      dati_prima TEXT,
+      dati_dopo TEXT,
+      utente TEXT NOT NULL,
+      data_ora TEXT NOT NULL,
+      FOREIGN KEY (consenso_privacy_id) REFERENCES consensi_privacy (id) ON DELETE SET NULL
     )
   ''');
   }
@@ -2905,5 +2920,46 @@ class AppDatabase {
     final anno = data.year.toString();
 
     return '$giorno/$mese/$anno';
+  }
+
+  Future<int> insertConsensoPrivacyLog(ConsensoPrivacyLog log) async {
+    final db = await database;
+    return db.insert('consensi_privacy_log', log.toMap());
+  }
+
+  Future<List<ConsensoPrivacyLog>> getConsensiPrivacyLog({
+    int? consensoPrivacyId,
+  }) async {
+    final db = await database;
+
+    final maps = await db.query(
+      'consensi_privacy_log',
+      where: consensoPrivacyId != null ? 'consenso_privacy_id = ?' : null,
+      whereArgs: consensoPrivacyId != null ? [consensoPrivacyId] : null,
+      orderBy: 'data_ora DESC, id DESC',
+    );
+
+    return maps.map((map) => ConsensoPrivacyLog.fromMap(map)).toList();
+  }
+
+  Future<void> registraLogConsensoPrivacy({
+    int? consensoPrivacyId,
+    required String azione,
+    required String descrizione,
+    String? datiPrima,
+    String? datiDopo,
+    String utente = 'Sistema',
+  }) async {
+    await insertConsensoPrivacyLog(
+      ConsensoPrivacyLog(
+        consensoPrivacyId: consensoPrivacyId,
+        azione: azione,
+        descrizione: descrizione,
+        datiPrima: datiPrima,
+        datiDopo: datiDopo,
+        utente: utente,
+        dataOra: DateTime.now(),
+      ),
+    );
   }
 }

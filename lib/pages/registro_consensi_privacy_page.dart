@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
-import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -11,6 +10,7 @@ import '../services/app_database.dart';
 
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 
 class RegistroConsensiPrivacyPage extends StatefulWidget {
   const RegistroConsensiPrivacyPage({super.key});
@@ -455,9 +455,29 @@ class _RegistroConsensiPrivacyPageState
                     );
 
                     if (consenso == null) {
-                      await AppDatabase.instance.insertConsensoPrivacy(record);
+                      final nuovoId = await AppDatabase.instance
+                          .insertConsensoPrivacy(record);
+
+                      await AppDatabase.instance.registraLogConsensoPrivacy(
+                        consensoPrivacyId: nuovoId,
+                        azione: 'CREAZIONE',
+                        descrizione:
+                            'Creato consenso privacy - ${descrizioneLogConsensoPrivacy(record)}',
+                        datiDopo: datiLogConsensoPrivacy(record),
+                      );
                     } else {
+                      final datiPrima = datiLogConsensoPrivacy(consenso);
+
                       await AppDatabase.instance.updateConsensoPrivacy(record);
+
+                      await AppDatabase.instance.registraLogConsensoPrivacy(
+                        consensoPrivacyId: consenso.id,
+                        azione: 'MODIFICA',
+                        descrizione:
+                            'Modificato consenso privacy - ${descrizioneLogConsensoPrivacy(record)}',
+                        datiPrima: datiPrima,
+                        datiDopo: datiLogConsensoPrivacy(record),
+                      );
                     }
 
                     if (!dialogContext.mounted) return;
@@ -519,7 +539,17 @@ class _RegistroConsensiPrivacyPageState
 
     if (conferma != true) return;
 
+    final datiPrima = datiLogConsensoPrivacy(consenso);
+
     await AppDatabase.instance.revocaConsensoPrivacy(consenso.id!);
+
+    await AppDatabase.instance.registraLogConsensoPrivacy(
+      consensoPrivacyId: consenso.id,
+      azione: 'REVOCA',
+      descrizione:
+          'Revocato consenso privacy - ${descrizioneLogConsensoPrivacy(consenso)}',
+      datiPrima: datiPrima,
+    );
 
     if (!mounted) return;
 
@@ -557,6 +587,16 @@ class _RegistroConsensiPrivacyPageState
     );
 
     if (conferma != true) return;
+
+    final datiPrima = datiLogConsensoPrivacy(consenso);
+
+    await AppDatabase.instance.registraLogConsensoPrivacy(
+      consensoPrivacyId: consenso.id,
+      azione: 'ELIMINAZIONE',
+      descrizione:
+          'Eliminato consenso privacy - ${descrizioneLogConsensoPrivacy(consenso)}',
+      datiPrima: datiPrima,
+    );
 
     await AppDatabase.instance.deleteConsensoPrivacy(consenso.id!);
 
@@ -1185,6 +1225,19 @@ class _RegistroConsensiPrivacyPageState
     );
   }
 
+  String datiLogConsensoPrivacy(ConsensoPrivacy consenso) {
+    return const JsonEncoder.withIndent('  ').convert(consenso.toMap());
+  }
+
+  String descrizioneLogConsensoPrivacy(ConsensoPrivacy consenso) {
+    return [
+      'Nominativo: ${consenso.nominativo}',
+      'Tipo soggetto: ${consenso.tipoSoggetto}',
+      'Finalità: ${consenso.finalita}',
+      'Stato: ${consenso.stato}',
+    ].join(' | ');
+  }
+
   void mostraDettaglioConsensoPrivacy(ConsensoPrivacy consenso) {
     showDialog<void>(
       context: context,
@@ -1495,6 +1548,14 @@ class _RegistroConsensiPrivacyPageState
       return;
     }
 
+    await AppDatabase.instance.registraLogConsensoPrivacy(
+      azione: 'ANTEPRIMA_PDF',
+      descrizione:
+          'Aperta anteprima PDF Registro consensi/privacy - elementi: ${elementiDaEsportare.length}',
+    );
+
+    if (!mounted) return;
+
     await showDialog<void>(
       context: context,
       builder: (context) {
@@ -1558,6 +1619,14 @@ class _RegistroConsensiPrivacyPageState
       );
       return;
     }
+
+    await AppDatabase.instance.registraLogConsensoPrivacy(
+      azione: 'STAMPA',
+      descrizione:
+          'Aperta anteprima stampa Registro consensi/privacy - elementi: ${elementiDaStampare.length}',
+    );
+
+    if (!mounted) return;
 
     await showDialog<void>(
       context: context,
@@ -1720,9 +1789,17 @@ class _RegistroConsensiPrivacyPageState
 
     await file.writeAsBytes(bytes, flush: true);
 
-    await OpenFile.open(file.path);
+    await AppDatabase.instance.registraLogConsensoPrivacy(
+      azione: 'EXPORT_EXCEL',
+      descrizione:
+          'Esportato Excel Registro consensi/privacy - elementi: ${elementiDaEsportare.length} - file: ${file.path}',
+    );
 
     if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Export Excel creato: ${file.path}')),
+    );
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Export Excel creato: ${file.path}')),

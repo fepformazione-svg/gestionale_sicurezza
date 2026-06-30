@@ -2,11 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
 
 import '../models/consenso_privacy.dart';
 import '../services/app_database.dart';
 
 import 'dart:io';
+import 'dart:typed_data';
 
 class RegistroConsensiPrivacyPage extends StatefulWidget {
   const RegistroConsensiPrivacyPage({super.key});
@@ -858,6 +862,12 @@ class _RegistroConsensiPrivacyPageState
               icon: const Icon(Icons.table_chart),
               label: const Text('Excel'),
             ),
+            FilledButton.icon(
+              onPressed: () =>
+                  mostraAnteprimaPdfRegistroConsensiPrivacy(consensi),
+              icon: const Icon(Icons.picture_as_pdf),
+              label: const Text('PDF'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -1142,6 +1152,167 @@ class _RegistroConsensiPrivacyPageState
     final anno = data.year.toString();
 
     return '$giorno/$mese/$anno';
+  }
+
+  Future<Uint8List> generaPdfRegistroConsensiPrivacyBytes(
+    List<ConsensoPrivacy> elementiDaEsportare,
+  ) async {
+    final documento = pw.Document();
+
+    documento.addPage(
+      pw.MultiPage(
+        pageFormat: PdfPageFormat.a4.landscape,
+        margin: const pw.EdgeInsets.all(24),
+        build: (context) {
+          return [
+            pw.Text(
+              'Registro consensi/privacy',
+              style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 6),
+            pw.Text(
+              'Archivio centralizzato consensi, informative privacy, finalità, base giuridica, revoche e riferimenti documentali.',
+              style: const pw.TextStyle(fontSize: 9),
+            ),
+            pw.SizedBox(height: 10),
+            pw.Text(
+              'Elementi esportati: ${elementiDaEsportare.length}',
+              style: pw.TextStyle(fontSize: 9, fontWeight: pw.FontWeight.bold),
+            ),
+            pw.SizedBox(height: 14),
+            pw.TableHelper.fromTextArray(
+              headers: const [
+                'Interessato',
+                'Contesto',
+                'Finalità',
+                'Base giuridica',
+                'Consenso',
+                'Data consenso',
+                'Data revoca',
+                'Stato',
+                'Note',
+              ],
+              data: elementiDaEsportare.map((consenso) {
+                final stato = consenso.stato.trim();
+                final consensoPrestato = stato.toLowerCase() == 'attivo'
+                    ? 'Sì'
+                    : 'No';
+
+                return [
+                  consenso.nominativo,
+                  consenso.tipoSoggetto,
+                  consenso.finalita,
+                  consenso.baseGiuridica,
+                  consensoPrestato,
+                  formattaDataConsensoPrivacy(consenso.dataConsenso),
+                  formattaDataConsensoPrivacy(consenso.dataRevoca),
+                  stato,
+                  consenso.note,
+                ];
+              }).toList(),
+              headerStyle: pw.TextStyle(
+                fontSize: 7,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 7),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
+              cellAlignment: pw.Alignment.topLeft,
+              headerAlignment: pw.Alignment.centerLeft,
+              columnWidths: const {
+                0: pw.FlexColumnWidth(1.6),
+                1: pw.FlexColumnWidth(1.2),
+                2: pw.FlexColumnWidth(1.8),
+                3: pw.FlexColumnWidth(1.5),
+                4: pw.FlexColumnWidth(0.8),
+                5: pw.FlexColumnWidth(1.0),
+                6: pw.FlexColumnWidth(1.0),
+                7: pw.FlexColumnWidth(0.9),
+                8: pw.FlexColumnWidth(1.7),
+              },
+            ),
+          ];
+        },
+        footer: (context) {
+          return pw.Align(
+            alignment: pw.Alignment.centerRight,
+            child: pw.Text(
+              'Pagina ${context.pageNumber} di ${context.pagesCount}',
+              style: const pw.TextStyle(fontSize: 8),
+            ),
+          );
+        },
+      ),
+    );
+
+    return documento.save();
+  }
+
+  Future<void> mostraAnteprimaPdfRegistroConsensiPrivacy(
+    List<ConsensoPrivacy> elementiDaEsportare,
+  ) async {
+    if (elementiDaEsportare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nessun consenso/privacy da esportare in PDF.'),
+        ),
+      );
+      return;
+    }
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: SizedBox(
+            width: 1100,
+            height: 760,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Anteprima PDF Registro consensi/privacy',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Chiudi',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Expanded(
+                  child: PdfPreview(
+                    build: (format) => generaPdfRegistroConsensiPrivacyBytes(
+                      elementiDaEsportare,
+                    ),
+                    canChangeOrientation: false,
+                    canChangePageFormat: false,
+                    allowPrinting: false,
+                    allowSharing: false,
+                    pdfFileName: 'registro_consensi_privacy.pdf',
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   Future<void> esportaExcelRegistroConsensiPrivacy(

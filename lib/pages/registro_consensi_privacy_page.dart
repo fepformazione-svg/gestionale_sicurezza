@@ -873,6 +873,11 @@ class _RegistroConsensiPrivacyPageState
               icon: const Icon(Icons.print),
               label: const Text('Stampa'),
             ),
+            OutlinedButton.icon(
+              onPressed: mostraGuidaRegistroConsensiPrivacy,
+              icon: const Icon(Icons.help_outline),
+              label: const Text('Guida'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -1499,6 +1504,168 @@ class _RegistroConsensiPrivacyPageState
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Export Excel creato: ${file.path}')),
+    );
+  }
+
+  Future<void> mostraGuidaRegistroConsensiPrivacy() async {
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return Dialog(
+          insetPadding: const EdgeInsets.all(16),
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 760, maxHeight: 720),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 8, 8),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          'Guida rapida Registro consensi/privacy',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Chiudi',
+                        onPressed: () => Navigator.of(context).pop(),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: const [
+                        Text(
+                          'A cosa serve',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Il registro consensi/privacy consente di mantenere un archivio centralizzato dei consensi, delle informative privacy, delle finalità di trattamento, della base giuridica e delle eventuali revoche.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Gestione dei consensi',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Ogni riga rappresenta un consenso o una registrazione privacy collegata a un soggetto. È possibile registrare nominativo, tipo soggetto, finalità, base giuridica, data consenso, stato, eventuale revoca e note interne.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Stati principali',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'ATTIVO: consenso valido o registrazione privacy attiva.\n'
+                          'REVOCATO: consenso revocato o non più utilizzabile.\n'
+                          'Gli stati aiutano a distinguere rapidamente le posizioni valide da quelle non più operative.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Ricerca e filtri',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Usare la ricerca e i filtri disponibili per individuare rapidamente consensi per nominativo, tipologia soggetto, finalità, base giuridica o stato. Il pulsante di azzeramento filtri consente di tornare alla vista completa.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Dettaglio consenso/privacy',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Il dettaglio in sola lettura permette di verificare tutti i dati del consenso senza modificare accidentalmente il record. Può essere aperto dalla riga o dal pulsante dedicato, se presente.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Revoca',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'La revoca deve essere usata quando un consenso non è più valido. La registrazione della data di revoca permette di conservare la tracciabilità storica della scelta dell’interessato.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Export e stampa',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Excel: esporta il registro in formato .xlsx.\n'
+                          'PDF: apre l’anteprima del registro in formato PDF.\n'
+                          'Stampa: apre l’anteprima di stampa e consente l’invio alla stampante.',
+                        ),
+                        SizedBox(height: 18),
+                        Text(
+                          'Nota operativa GDPR',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        SizedBox(height: 6),
+                        Text(
+                          'Il registro non sostituisce l’informativa privacy o il registro dei trattamenti, ma aiuta a documentare in modo ordinato le evidenze relative ai consensi e alle basi giuridiche collegate.',
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const Divider(height: 1),
+                Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: () => Navigator.of(context).pop(),
+                      icon: const Icon(Icons.check),
+                      label: const Text('Ho capito'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:excel/excel.dart';
+import 'package:open_file/open_file.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../models/consenso_privacy.dart';
 import '../services/app_database.dart';
+
+import 'dart:io';
 
 class RegistroConsensiPrivacyPage extends StatefulWidget {
   const RegistroConsensiPrivacyPage({super.key});
@@ -843,6 +848,18 @@ class _RegistroConsensiPrivacyPageState
         buildRiepilogo(consensi),
         const SizedBox(height: 16),
         buildFiltri(),
+        const SizedBox(height: 12),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            FilledButton.icon(
+              onPressed: () => esportaExcelRegistroConsensiPrivacy(consensi),
+              icon: const Icon(Icons.table_chart),
+              label: const Text('Excel'),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
         Expanded(child: buildTabella(consensi)),
       ],
@@ -1104,6 +1121,144 @@ class _RegistroConsensiPrivacyPageState
           },
         ),
       ),
+    );
+  }
+
+  String formattaDataConsensoPrivacy(dynamic valore) {
+    final testo = valore?.toString().trim() ?? '';
+
+    if (testo.isEmpty) {
+      return '';
+    }
+
+    final data = valore is DateTime ? valore : DateTime.tryParse(testo);
+
+    if (data == null) {
+      return testo;
+    }
+
+    final giorno = data.day.toString().padLeft(2, '0');
+    final mese = data.month.toString().padLeft(2, '0');
+    final anno = data.year.toString();
+
+    return '$giorno/$mese/$anno';
+  }
+
+  Future<void> esportaExcelRegistroConsensiPrivacy(
+    List<ConsensoPrivacy> elementiDaEsportare,
+  ) async {
+    if (elementiDaEsportare.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nessun consenso/privacy da esportare.')),
+      );
+      return;
+    }
+
+    final excel = Excel.createExcel();
+    final sheet = excel['Registro consensi privacy'];
+
+    if (excel.sheets.containsKey('Sheet1')) {
+      excel.delete('Sheet1');
+    }
+
+    final intestazioni = <String>[
+      'Interessato',
+      'Contesto',
+      'Finalità',
+      'Base giuridica',
+      'Consenso prestato',
+      'Data consenso',
+      'Data revoca',
+      'Stato',
+      'Note',
+    ];
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet
+          .cell(CellIndex.indexByColumnRow(columnIndex: colonna, rowIndex: 0))
+          .value = TextCellValue(
+        intestazioni[colonna],
+      );
+    }
+
+    for (var riga = 0; riga < elementiDaEsportare.length; riga++) {
+      final consenso = elementiDaEsportare[riga];
+      final rowIndex = riga + 1;
+
+      final stato = consenso.stato.trim();
+      final consensoPrestato = stato.toLowerCase() == 'attivo' ? 'Sì' : 'No';
+
+      final valori = <String>[
+        consenso.nominativo,
+        consenso.tipoSoggetto,
+        consenso.finalita,
+        consenso.baseGiuridica,
+        consensoPrestato,
+        formattaDataConsensoPrivacy(consenso.dataConsenso),
+        formattaDataConsensoPrivacy(consenso.dataRevoca),
+        stato,
+        consenso.note,
+      ];
+
+      for (var colonna = 0; colonna < valori.length; colonna++) {
+        sheet
+            .cell(
+              CellIndex.indexByColumnRow(
+                columnIndex: colonna,
+                rowIndex: rowIndex,
+              ),
+            )
+            .value = TextCellValue(
+          valori[colonna],
+        );
+      }
+    }
+
+    for (var colonna = 0; colonna < intestazioni.length; colonna++) {
+      sheet.setColumnWidth(colonna, 24);
+    }
+
+    final bytes = excel.encode();
+
+    if (bytes == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Errore durante la generazione del file Excel.'),
+        ),
+      );
+      return;
+    }
+
+    final directory = await getApplicationDocumentsDirectory();
+    final exportDirectory = Directory(
+      '${directory.path}${Platform.pathSeparator}Gestionale Sicurezza${Platform.pathSeparator}Export',
+    );
+
+    if (!await exportDirectory.exists()) {
+      await exportDirectory.create(recursive: true);
+    }
+
+    final timestamp = DateTime.now()
+        .toIso8601String()
+        .replaceAll(':', '-')
+        .replaceAll('.', '-');
+
+    final file = File(
+      '${exportDirectory.path}${Platform.pathSeparator}registro_consensi_privacy_$timestamp.xlsx',
+    );
+
+    await file.writeAsBytes(bytes, flush: true);
+
+    await OpenFile.open(file.path);
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Export Excel creato: ${file.path}')),
     );
   }
 }

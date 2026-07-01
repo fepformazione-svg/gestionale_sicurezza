@@ -6,6 +6,7 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../models/consenso_privacy.dart';
+import '../models/consenso_privacy_log.dart';
 import '../services/app_database.dart';
 
 import 'dart:io';
@@ -1238,6 +1239,150 @@ class _RegistroConsensiPrivacyPageState
     ].join(' | ');
   }
 
+  String valoreLogConsensoPrivacy(String? valore) {
+    final testo = valore?.trim() ?? '';
+    if (testo.isEmpty) {
+      return '-';
+    }
+    return testo;
+  }
+
+  String formattaDataOraLogConsensoPrivacy(DateTime data) {
+    final giorno = data.day.toString().padLeft(2, '0');
+    final mese = data.month.toString().padLeft(2, '0');
+    final anno = data.year.toString();
+    final ora = data.hour.toString().padLeft(2, '0');
+    final minuti = data.minute.toString().padLeft(2, '0');
+
+    return '$giorno/$mese/$anno $ora:$minuti';
+  }
+
+  Future<void> mostraLogConsensoPrivacy(ConsensoPrivacy consenso) async {
+    final id = consenso.id;
+
+    if (id == null) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Log non disponibile per un consenso non salvato.'),
+        ),
+      );
+      return;
+    }
+
+    final List<ConsensoPrivacyLog> logs = await AppDatabase.instance
+        .getConsensiPrivacyLog(consensoPrivacyId: id);
+
+    if (!mounted) return;
+
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Log consenso/privacy'),
+          content: SizedBox(
+            width: 760,
+            child: logs.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text('Nessun log disponibile per questo consenso.'),
+                  )
+                : ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 520),
+                    child: ListView.separated(
+                      shrinkWrap: true,
+                      itemCount: logs.length,
+                      separatorBuilder: (context, index) =>
+                          const Divider(height: 24),
+                      itemBuilder: (context, index) {
+                        final log = logs[index];
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Wrap(
+                              spacing: 8,
+                              runSpacing: 8,
+                              crossAxisAlignment: WrapCrossAlignment.center,
+                              children: [
+                                Chip(
+                                  label: Text(
+                                    valoreLogConsensoPrivacy(log.azione),
+                                  ),
+                                ),
+                                Text(
+                                  formattaDataOraLogConsensoPrivacy(
+                                    log.dataOra,
+                                  ),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                                Text(
+                                  'Utente: ${valoreLogConsensoPrivacy(log.utente)}',
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              valoreLogConsensoPrivacy(log.descrizione),
+                              style: Theme.of(context).textTheme.titleSmall,
+                            ),
+                            if ((log.datiPrima?.trim().isNotEmpty ?? false) ||
+                                (log.datiDopo?.trim().isNotEmpty ?? false)) ...[
+                              const SizedBox(height: 12),
+                              ExpansionTile(
+                                tilePadding: EdgeInsets.zero,
+                                childrenPadding: EdgeInsets.zero,
+                                title: const Text('Dati modifica'),
+                                children: [
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Prima:',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SelectableText(
+                                    valoreLogConsensoPrivacy(log.datiPrima),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      'Dopo:',
+                                      style: Theme.of(
+                                        context,
+                                      ).textTheme.labelLarge,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  SelectableText(
+                                    valoreLogConsensoPrivacy(log.datiDopo),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void mostraDettaglioConsensoPrivacy(ConsensoPrivacy consenso) {
     showDialog<void>(
       context: context,
@@ -1366,6 +1511,14 @@ class _RegistroConsensiPrivacyPageState
             ),
           ),
           actions: [
+            OutlinedButton.icon(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                mostraLogConsensoPrivacy(consenso);
+              },
+              icon: const Icon(Icons.history),
+              label: const Text('Log'),
+            ),
             TextButton.icon(
               onPressed: () => Navigator.of(dialogContext).pop(),
               icon: const Icon(Icons.close),

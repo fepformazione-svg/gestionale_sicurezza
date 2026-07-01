@@ -18,6 +18,11 @@ class ConsensoPrivacy {
   final String note;
   final String createdAt;
   final String updatedAt;
+  final bool soggettoMinorenne;
+  final String consensoPrestatoDa;
+  final String? genitoreTutoreNome;
+  final String? genitoreTutoreCodiceFiscale;
+  final String? genitoreTutoreQualifica;
 
   const ConsensoPrivacy({
     this.id,
@@ -39,6 +44,11 @@ class ConsensoPrivacy {
     required this.note,
     required this.createdAt,
     required this.updatedAt,
+    this.soggettoMinorenne = false,
+    this.consensoPrestatoDa = 'discente',
+    this.genitoreTutoreNome,
+    this.genitoreTutoreCodiceFiscale,
+    this.genitoreTutoreQualifica,
   });
 
   factory ConsensoPrivacy.fromMap(Map<String, dynamic> map) {
@@ -62,6 +72,12 @@ class ConsensoPrivacy {
       note: map['note'] as String? ?? '',
       createdAt: map['created_at'] as String? ?? '',
       updatedAt: map['updated_at'] as String? ?? '',
+      soggettoMinorenne: (map['soggetto_minorenne'] as int? ?? 0) == 1,
+      consensoPrestatoDa: map['consenso_prestato_da'] as String? ?? 'discente',
+      genitoreTutoreNome: map['genitore_tutore_nome'] as String?,
+      genitoreTutoreCodiceFiscale:
+          map['genitore_tutore_codice_fiscale'] as String?,
+      genitoreTutoreQualifica: map['genitore_tutore_qualifica'] as String?,
     );
   }
 
@@ -86,6 +102,11 @@ class ConsensoPrivacy {
       'note': note,
       'created_at': createdAt,
       'updated_at': updatedAt,
+      'soggetto_minorenne': soggettoMinorenne ? 1 : 0,
+      'consenso_prestato_da': consensoPrestatoDa,
+      'genitore_tutore_nome': genitoreTutoreNome,
+      'genitore_tutore_codice_fiscale': genitoreTutoreCodiceFiscale,
+      'genitore_tutore_qualifica': genitoreTutoreQualifica,
     };
   }
 
@@ -109,6 +130,11 @@ class ConsensoPrivacy {
     String? note,
     String? createdAt,
     String? updatedAt,
+    bool? soggettoMinorenne,
+    String? consensoPrestatoDa,
+    String? genitoreTutoreNome,
+    String? genitoreTutoreCodiceFiscale,
+    String? genitoreTutoreQualifica,
   }) {
     return ConsensoPrivacy(
       id: id ?? this.id,
@@ -130,6 +156,13 @@ class ConsensoPrivacy {
       note: note ?? this.note,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      soggettoMinorenne: soggettoMinorenne ?? this.soggettoMinorenne,
+      consensoPrestatoDa: consensoPrestatoDa ?? this.consensoPrestatoDa,
+      genitoreTutoreNome: genitoreTutoreNome ?? this.genitoreTutoreNome,
+      genitoreTutoreCodiceFiscale:
+          genitoreTutoreCodiceFiscale ?? this.genitoreTutoreCodiceFiscale,
+      genitoreTutoreQualifica:
+          genitoreTutoreQualifica ?? this.genitoreTutoreQualifica,
     );
   }
 }

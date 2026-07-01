@@ -51,7 +51,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 8,
+        version: 9,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -81,6 +81,11 @@ class AppDatabase {
       data_scadenza TEXT,
       documento_riferimento TEXT,
       note TEXT,
+      soggetto_minorenne INTEGER NOT NULL DEFAULT 0,
+      consenso_prestato_da TEXT NOT NULL DEFAULT 'discente',
+      genitore_tutore_nome TEXT,
+      genitore_tutore_codice_fiscale TEXT,
+      genitore_tutore_qualifica TEXT,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
     )
@@ -1219,6 +1224,14 @@ class AppDatabase {
       data_ora TEXT NOT NULL
     )
   ''');
+
+    await _ensureColumns(db, 'consensi_privacy', {
+      'soggetto_minorenne': 'INTEGER NOT NULL DEFAULT 0',
+      'consenso_prestato_da': "TEXT NOT NULL DEFAULT 'discente'",
+      'genitore_tutore_nome': 'TEXT',
+      'genitore_tutore_codice_fiscale': 'TEXT',
+      'genitore_tutore_qualifica': 'TEXT',
+    });
   }
 
   Future<void> _creaTabellaRegistroTrattamenti(Database db) async {

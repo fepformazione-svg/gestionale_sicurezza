@@ -1626,6 +1626,38 @@ class _RegistroConsensiPrivacyPageState
                         consenso.telefono,
                       ),
                     ]),
+                    sezioneDettaglioConsensoPrivacy('Soggetto minorenne', [
+                      rigaDettaglioConsensoPrivacy(
+                        'Soggetto minorenne',
+                        consenso.soggettoMinorenne ? 'Sì' : 'No',
+                        evidenziata: consenso.soggettoMinorenne,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Consenso prestato da',
+                        consenso.consensoPrestatoDa == 'genitore'
+                            ? 'Genitore'
+                            : consenso.consensoPrestatoDa == 'tutore'
+                            ? 'Tutore'
+                            : 'Discente',
+                        evidenziata: consenso.soggettoMinorenne,
+                      ),
+                      if (consenso.soggettoMinorenne) ...[
+                        rigaDettaglioConsensoPrivacy(
+                          'Nome genitore/tutore',
+                          consenso.genitoreTutoreNome ?? '',
+                          evidenziata: true,
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'CF genitore/tutore',
+                          consenso.genitoreTutoreCodiceFiscale ?? '',
+                        ),
+                        rigaDettaglioConsensoPrivacy(
+                          'Qualifica',
+                          consenso.genitoreTutoreQualifica ?? '',
+                          evidenziata: true,
+                        ),
+                      ],
+                    ]),
                     sezioneDettaglioConsensoPrivacy(
                       'Consenso e base giuridica',
                       [

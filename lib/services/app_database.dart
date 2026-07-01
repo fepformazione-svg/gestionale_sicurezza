@@ -51,7 +51,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 9,
+        version: 10,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -84,10 +84,14 @@ class AppDatabase {
       soggetto_minorenne INTEGER NOT NULL DEFAULT 0,
       consenso_prestato_da TEXT NOT NULL DEFAULT 'discente',
       genitore_tutore_nome TEXT,
-      genitore_tutore_codice_fiscale TEXT,
-      genitore_tutore_qualifica TEXT,
-      created_at TEXT NOT NULL,
-      updated_at TEXT NOT NULL
+genitore_tutore_codice_fiscale TEXT,
+genitore_tutore_qualifica TEXT,
+data_fine_conservazione TEXT,
+motivo_retention TEXT,
+retention_bloccata INTEGER NOT NULL DEFAULT 0,
+note_retention TEXT,
+created_at TEXT NOT NULL,
+updated_at TEXT NOT NULL
     )
   ''');
 
@@ -1231,6 +1235,10 @@ class AppDatabase {
       'genitore_tutore_nome': 'TEXT',
       'genitore_tutore_codice_fiscale': 'TEXT',
       'genitore_tutore_qualifica': 'TEXT',
+      'data_fine_conservazione': 'TEXT',
+      'motivo_retention': 'TEXT',
+      'retention_bloccata': 'INTEGER NOT NULL DEFAULT 0',
+      'note_retention': 'TEXT',
     });
   }
 

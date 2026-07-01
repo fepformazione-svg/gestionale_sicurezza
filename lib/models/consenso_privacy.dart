@@ -23,6 +23,10 @@ class ConsensoPrivacy {
   final String? genitoreTutoreNome;
   final String? genitoreTutoreCodiceFiscale;
   final String? genitoreTutoreQualifica;
+  final String dataFineConservazione;
+  final String motivoRetention;
+  final bool retentionBloccata;
+  final String noteRetention;
 
   const ConsensoPrivacy({
     this.id,
@@ -49,6 +53,10 @@ class ConsensoPrivacy {
     this.genitoreTutoreNome,
     this.genitoreTutoreCodiceFiscale,
     this.genitoreTutoreQualifica,
+    this.dataFineConservazione = '',
+    this.motivoRetention = '',
+    this.retentionBloccata = false,
+    this.noteRetention = '',
   });
 
   factory ConsensoPrivacy.fromMap(Map<String, dynamic> map) {
@@ -78,6 +86,10 @@ class ConsensoPrivacy {
       genitoreTutoreCodiceFiscale:
           map['genitore_tutore_codice_fiscale'] as String?,
       genitoreTutoreQualifica: map['genitore_tutore_qualifica'] as String?,
+      dataFineConservazione: map['data_fine_conservazione'] as String? ?? '',
+      motivoRetention: map['motivo_retention'] as String? ?? '',
+      retentionBloccata: (map['retention_bloccata'] as int? ?? 0) == 1,
+      noteRetention: map['note_retention'] as String? ?? '',
     );
   }
 
@@ -107,6 +119,10 @@ class ConsensoPrivacy {
       'genitore_tutore_nome': genitoreTutoreNome,
       'genitore_tutore_codice_fiscale': genitoreTutoreCodiceFiscale,
       'genitore_tutore_qualifica': genitoreTutoreQualifica,
+      'data_fine_conservazione': dataFineConservazione,
+      'motivo_retention': motivoRetention,
+      'retention_bloccata': retentionBloccata ? 1 : 0,
+      'note_retention': noteRetention,
     };
   }
 
@@ -135,6 +151,10 @@ class ConsensoPrivacy {
     String? genitoreTutoreNome,
     String? genitoreTutoreCodiceFiscale,
     String? genitoreTutoreQualifica,
+    String? dataFineConservazione,
+    String? motivoRetention,
+    bool? retentionBloccata,
+    String? noteRetention,
   }) {
     return ConsensoPrivacy(
       id: id ?? this.id,
@@ -163,6 +183,11 @@ class ConsensoPrivacy {
           genitoreTutoreCodiceFiscale ?? this.genitoreTutoreCodiceFiscale,
       genitoreTutoreQualifica:
           genitoreTutoreQualifica ?? this.genitoreTutoreQualifica,
+      dataFineConservazione:
+          dataFineConservazione ?? this.dataFineConservazione,
+      motivoRetention: motivoRetention ?? this.motivoRetention,
+      retentionBloccata: retentionBloccata ?? this.retentionBloccata,
+      noteRetention: noteRetention ?? this.noteRetention,
     );
   }
 }

@@ -148,6 +148,15 @@ class _RegistroConsensiPrivacyPageState
     final genitoreTutoreQualificaController = TextEditingController(
       text: consenso?.genitoreTutoreQualifica ?? '',
     );
+    final dataFineConservazioneController = TextEditingController(
+      text: consenso?.dataFineConservazione ?? '',
+    );
+    final motivoRetentionController = TextEditingController(
+      text: consenso?.motivoRetention ?? '',
+    );
+    final noteRetentionController = TextEditingController(
+      text: consenso?.noteRetention ?? '',
+    );
 
     String tipoSoggetto = consenso?.tipoSoggetto ?? 'Altro';
     String finalita = consenso?.finalita ?? 'Formazione e gestione corsi';
@@ -155,6 +164,7 @@ class _RegistroConsensiPrivacyPageState
     String canaleRaccolta = consenso?.canaleRaccolta ?? 'Gestionale';
     String stato = consenso?.stato ?? 'ATTIVO';
     bool soggettoMinorenne = consenso?.soggettoMinorenne ?? false;
+    bool retentionBloccata = consenso?.retentionBloccata ?? false;
     String consensoPrestatoDa = consenso?.consensoPrestatoDa ?? 'discente';
 
     if (!['discente', 'genitore', 'tutore'].contains(consensoPrestatoDa)) {
@@ -539,9 +549,91 @@ class _RegistroConsensiPrivacyPageState
                           child: TextFormField(
                             controller: dataScadenzaController,
                             decoration: const InputDecoration(
-                              labelText: 'Data scadenza/retention',
+                              labelText: 'Data scadenza',
                               hintText: 'gg/mm/aaaa',
                               border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 752,
+                          child: Card(
+                            margin: EdgeInsets.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Retention dati/privacy',
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleSmall
+                                        ?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Wrap(
+                                    spacing: 12,
+                                    runSpacing: 12,
+                                    children: [
+                                      SizedBox(
+                                        width: 220,
+                                        child: TextFormField(
+                                          controller:
+                                              dataFineConservazioneController,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Fine conservazione',
+                                            hintText: 'gg/mm/aaaa',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 490,
+                                        child: TextFormField(
+                                          controller: motivoRetentionController,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Motivo retention',
+                                            hintText:
+                                                'es. obbligo normativo, difesa diritti, verifica interna',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 700,
+                                        child: CheckboxListTile(
+                                          value: retentionBloccata,
+                                          contentPadding: EdgeInsets.zero,
+                                          title: const Text(
+                                            'Blocca verifica retention',
+                                          ),
+                                          subtitle: const Text(
+                                            'Usa questa opzione se il dato non deve essere incluso nelle verifiche automatiche future.',
+                                          ),
+                                          onChanged: (value) {
+                                            setModalState(() {
+                                              retentionBloccata =
+                                                  value ?? false;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                      SizedBox(
+                                        width: 730,
+                                        child: TextFormField(
+                                          controller: noteRetentionController,
+                                          maxLines: 2,
+                                          decoration: const InputDecoration(
+                                            labelText: 'Note retention',
+                                            border: OutlineInputBorder(),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -629,6 +721,12 @@ class _RegistroConsensiPrivacyPageState
                       genitoreTutoreQualifica: soggettoMinorenne
                           ? genitoreTutoreQualificaController.text.trim()
                           : null,
+                      dataFineConservazione: dataFineConservazioneController
+                          .text
+                          .trim(),
+                      motivoRetention: motivoRetentionController.text.trim(),
+                      retentionBloccata: retentionBloccata,
+                      noteRetention: noteRetentionController.text.trim(),
                       createdAt: consenso?.createdAt ?? now,
                       updatedAt: now,
                     );
@@ -683,6 +781,9 @@ class _RegistroConsensiPrivacyPageState
     genitoreTutoreNomeController.dispose();
     genitoreTutoreCodiceFiscaleController.dispose();
     genitoreTutoreQualificaController.dispose();
+    dataFineConservazioneController.dispose();
+    motivoRetentionController.dispose();
+    noteRetentionController.dispose();
 
     if (salvato == true && mounted) {
       ricaricaConsensi();
@@ -1245,6 +1346,9 @@ class _RegistroConsensiPrivacyPageState
                   larghezza: 100,
                 ),
               ),
+              const DataColumn(
+                label: SizedBox(width: 130, child: Text('Retention')),
+              ),
               DataColumn(
                 label: intestazioneOrdinabileConsensiPrivacy(
                   'dataRevoca',
@@ -1289,6 +1393,7 @@ class _RegistroConsensiPrivacyPageState
                   cellaDettaglio(Text(consenso.versioneInformativa)),
                   cellaDettaglio(Text(consenso.canaleRaccolta)),
                   cellaDettaglio(badgeStato(consenso.stato)),
+                  cellaDettaglio(chipStatoRetentionConsensoPrivacy(consenso)),
                   cellaDettaglio(Text(consenso.dataRevoca)),
                   DataCell(
                     Row(
@@ -1988,6 +2093,36 @@ class _RegistroConsensiPrivacyPageState
                         consenso.dataScadenza,
                       ),
                     ]),
+                    sezioneDettaglioConsensoPrivacy('Retention dati/privacy', [
+                      rigaDettaglioConsensoPrivacy(
+                        'Stato retention',
+                        statoRetentionConsensoPrivacy(consenso),
+                        evidenziata:
+                            statoRetentionConsensoPrivacy(consenso) !=
+                            'NON IMPOSTATA',
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Fine conservazione',
+                        consenso.dataFineConservazione.trim().isEmpty
+                            ? 'Non impostata'
+                            : formattaDataConsensoPrivacy(
+                                consenso.dataFineConservazione,
+                              ),
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Retention bloccata',
+                        consenso.retentionBloccata ? 'Sì' : 'No',
+                        evidenziata: consenso.retentionBloccata,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Motivo retention',
+                        consenso.motivoRetention,
+                      ),
+                      rigaDettaglioConsensoPrivacy(
+                        'Note retention',
+                        consenso.noteRetention,
+                      ),
+                    ]),
                     sezioneDettaglioConsensoPrivacy('Documentazione e note', [
                       rigaDettaglioConsensoPrivacy(
                         'Documento riferimento',
@@ -2092,6 +2227,93 @@ class _RegistroConsensiPrivacyPageState
     return '$giorno/$mese/$anno';
   }
 
+  DateTime? parseDataRetentionConsensoPrivacy(String valore) {
+    final testo = valore.trim();
+    if (testo.isEmpty) {
+      return null;
+    }
+
+    final dataIso = DateTime.tryParse(testo);
+    if (dataIso != null) {
+      return dataIso;
+    }
+
+    final parti = testo.split('/');
+    if (parti.length == 3) {
+      final giorno = int.tryParse(parti[0]);
+      final mese = int.tryParse(parti[1]);
+      final anno = int.tryParse(parti[2]);
+
+      if (giorno != null && mese != null && anno != null) {
+        return DateTime(anno, mese, giorno);
+      }
+    }
+
+    return null;
+  }
+
+  String statoRetentionConsensoPrivacy(ConsensoPrivacy consenso) {
+    if (consenso.retentionBloccata) {
+      return 'BLOCCATA';
+    }
+
+    final dataFine = parseDataRetentionConsensoPrivacy(
+      consenso.dataFineConservazione,
+    );
+
+    if (dataFine == null) {
+      return 'NON IMPOSTATA';
+    }
+
+    final oggi = DateTime.now();
+    final oggiSoloData = DateTime(oggi.year, oggi.month, oggi.day);
+    final fineSoloData = DateTime(dataFine.year, dataFine.month, dataFine.day);
+
+    if (fineSoloData.isBefore(oggiSoloData)) {
+      return 'SCADUTA';
+    }
+
+    final giorniResidui = fineSoloData.difference(oggiSoloData).inDays;
+    if (giorniResidui <= 90) {
+      return 'IN SCADENZA';
+    }
+
+    return 'OK';
+  }
+
+  Color coloreStatoRetentionConsensoPrivacy(String stato) {
+    switch (stato) {
+      case 'SCADUTA':
+        return Colors.red.shade700;
+      case 'IN SCADENZA':
+        return Colors.orange.shade700;
+      case 'BLOCCATA':
+        return Colors.blueGrey.shade700;
+      case 'OK':
+        return Colors.green.shade700;
+      default:
+        return Colors.grey.shade700;
+    }
+  }
+
+  Widget chipStatoRetentionConsensoPrivacy(ConsensoPrivacy consenso) {
+    final stato = statoRetentionConsensoPrivacy(consenso);
+
+    return Chip(
+      label: Text(
+        stato,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 12,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      backgroundColor: coloreStatoRetentionConsensoPrivacy(stato),
+      visualDensity: VisualDensity.compact,
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    );
+  }
+
   Future<Uint8List> generaPdfRegistroConsensiPrivacyBytes(
     List<ConsensoPrivacy> elementiDaEsportare,
   ) async {
@@ -2129,6 +2351,11 @@ class _RegistroConsensiPrivacyPageState
                 'Data consenso',
                 'Data revoca',
                 'Stato',
+                'Fine conserv.',
+                'Retention',
+                'Blocc.',
+                'Motivo ret.',
+                'Note ret.',
                 'Note',
               ],
               data: elementiDaEsportare.map((consenso) {
@@ -2147,30 +2374,40 @@ class _RegistroConsensiPrivacyPageState
                   formattaDataConsensoPrivacy(consenso.dataConsenso),
                   formattaDataConsensoPrivacy(consenso.dataRevoca),
                   stato,
+                  formattaDataConsensoPrivacy(consenso.dataFineConservazione),
+                  statoRetentionConsensoPrivacy(consenso),
+                  consenso.retentionBloccata ? 'Sì' : 'No',
+                  consenso.motivoRetention,
+                  consenso.noteRetention,
                   consenso.note,
                 ];
               }).toList(),
               headerStyle: pw.TextStyle(
-                fontSize: 7,
+                fontSize: 6,
                 fontWeight: pw.FontWeight.bold,
               ),
-              cellStyle: const pw.TextStyle(fontSize: 7),
+              cellStyle: const pw.TextStyle(fontSize: 6),
               headerDecoration: const pw.BoxDecoration(
                 color: PdfColors.grey300,
               ),
               cellAlignment: pw.Alignment.topLeft,
               headerAlignment: pw.Alignment.centerLeft,
               columnWidths: const {
-                0: pw.FlexColumnWidth(1.45),
-                1: pw.FlexColumnWidth(1.35),
-                2: pw.FlexColumnWidth(1.0),
-                3: pw.FlexColumnWidth(1.65),
-                4: pw.FlexColumnWidth(1.3),
-                5: pw.FlexColumnWidth(0.75),
-                6: pw.FlexColumnWidth(0.95),
-                7: pw.FlexColumnWidth(0.95),
-                8: pw.FlexColumnWidth(0.8),
-                9: pw.FlexColumnWidth(1.45),
+                0: pw.FlexColumnWidth(1.35),
+                1: pw.FlexColumnWidth(1.2),
+                2: pw.FlexColumnWidth(0.85),
+                3: pw.FlexColumnWidth(1.35),
+                4: pw.FlexColumnWidth(1.05),
+                5: pw.FlexColumnWidth(0.65),
+                6: pw.FlexColumnWidth(0.8),
+                7: pw.FlexColumnWidth(0.8),
+                8: pw.FlexColumnWidth(0.7),
+                9: pw.FlexColumnWidth(0.9),
+                10: pw.FlexColumnWidth(0.9),
+                11: pw.FlexColumnWidth(0.55),
+                12: pw.FlexColumnWidth(1.05),
+                13: pw.FlexColumnWidth(1.05),
+                14: pw.FlexColumnWidth(1.1),
               },
             ),
           ];
@@ -2365,6 +2602,11 @@ class _RegistroConsensiPrivacyPageState
       'Data consenso',
       'Data revoca',
       'Stato',
+      'Fine conservazione',
+      'Stato retention',
+      'Retention bloccata',
+      'Motivo retention',
+      'Note retention',
       'Note',
     ];
 
@@ -2393,6 +2635,11 @@ class _RegistroConsensiPrivacyPageState
         formattaDataConsensoPrivacy(consenso.dataConsenso),
         formattaDataConsensoPrivacy(consenso.dataRevoca),
         stato,
+        formattaDataConsensoPrivacy(consenso.dataFineConservazione),
+        statoRetentionConsensoPrivacy(consenso),
+        consenso.retentionBloccata ? 'Sì' : 'No',
+        consenso.motivoRetention,
+        consenso.noteRetention,
         consenso.note,
       ];
 

@@ -138,12 +138,31 @@ class _RegistroConsensiPrivacyPageState
       text: consenso?.documentoRiferimento ?? '',
     );
     final noteController = TextEditingController(text: consenso?.note ?? '');
+    final genitoreTutoreNomeController = TextEditingController(
+      text: consenso?.genitoreTutoreNome ?? '',
+    );
+    final genitoreTutoreCodiceFiscaleController = TextEditingController(
+      text: consenso?.genitoreTutoreCodiceFiscale ?? '',
+    );
+    final genitoreTutoreQualificaController = TextEditingController(
+      text: consenso?.genitoreTutoreQualifica ?? '',
+    );
 
     String tipoSoggetto = consenso?.tipoSoggetto ?? 'Altro';
     String finalita = consenso?.finalita ?? 'Formazione e gestione corsi';
     String baseGiuridica = consenso?.baseGiuridica ?? 'Consenso';
     String canaleRaccolta = consenso?.canaleRaccolta ?? 'Gestionale';
     String stato = consenso?.stato ?? 'ATTIVO';
+    bool soggettoMinorenne = consenso?.soggettoMinorenne ?? false;
+    String consensoPrestatoDa = consenso?.consensoPrestatoDa ?? 'discente';
+
+    if (!['discente', 'genitore', 'tutore'].contains(consensoPrestatoDa)) {
+      consensoPrestatoDa = 'discente';
+    }
+
+    if (soggettoMinorenne && consensoPrestatoDa == 'discente') {
+      consensoPrestatoDa = 'genitore';
+    }
 
     if (!tipiSoggettoForm.contains(tipoSoggetto)) {
       tipoSoggetto = 'Altro';
@@ -250,6 +269,151 @@ class _RegistroConsensiPrivacyPageState
                             decoration: const InputDecoration(
                               labelText: 'Telefono',
                               border: OutlineInputBorder(),
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 752,
+                          child: Card(
+                            margin: EdgeInsets.zero,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CheckboxListTile(
+                                    value: soggettoMinorenne,
+                                    contentPadding: EdgeInsets.zero,
+                                    title: const Text('Soggetto minorenne'),
+                                    subtitle: const Text(
+                                      'Attiva se il consenso/privacy è prestato da genitore o tutore.',
+                                    ),
+                                    onChanged: (value) {
+                                      setModalState(() {
+                                        soggettoMinorenne = value ?? false;
+
+                                        if (soggettoMinorenne) {
+                                          if (consensoPrestatoDa ==
+                                              'discente') {
+                                            consensoPrestatoDa = 'genitore';
+                                          }
+
+                                          if (genitoreTutoreQualificaController
+                                              .text
+                                              .trim()
+                                              .isEmpty) {
+                                            genitoreTutoreQualificaController
+                                                    .text =
+                                                'Genitore';
+                                          }
+                                        } else {
+                                          consensoPrestatoDa = 'discente';
+                                          genitoreTutoreNomeController.clear();
+                                          genitoreTutoreCodiceFiscaleController
+                                              .clear();
+                                          genitoreTutoreQualificaController
+                                              .clear();
+                                        }
+                                      });
+                                    },
+                                  ),
+                                  if (soggettoMinorenne) ...[
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 12,
+                                      runSpacing: 12,
+                                      children: [
+                                        SizedBox(
+                                          width: 220,
+                                          child: DropdownButtonFormField<String>(
+                                            initialValue: consensoPrestatoDa,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Consenso prestato da',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            items: const [
+                                              DropdownMenuItem(
+                                                value: 'genitore',
+                                                child: Text('Genitore'),
+                                              ),
+                                              DropdownMenuItem(
+                                                value: 'tutore',
+                                                child: Text('Tutore'),
+                                              ),
+                                            ],
+                                            onChanged: (value) {
+                                              if (value == null) return;
+
+                                              setModalState(() {
+                                                consensoPrestatoDa = value;
+                                                genitoreTutoreQualificaController
+                                                    .text = value == 'tutore'
+                                                    ? 'Tutore'
+                                                    : 'Genitore';
+                                              });
+                                            },
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 250,
+                                          child: TextFormField(
+                                            controller:
+                                                genitoreTutoreNomeController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Nome genitore/tutore',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            validator: (value) {
+                                              if (!soggettoMinorenne) {
+                                                return null;
+                                              }
+                                              if (value == null ||
+                                                  value.trim().isEmpty) {
+                                                return 'Campo obbligatorio';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 220,
+                                          child: TextFormField(
+                                            controller:
+                                                genitoreTutoreCodiceFiscaleController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'CF genitore/tutore',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                          ),
+                                        ),
+                                        SizedBox(
+                                          width: 220,
+                                          child: TextFormField(
+                                            controller:
+                                                genitoreTutoreQualificaController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Qualifica',
+                                              hintText:
+                                                  'Genitore, tutore, amministratore...',
+                                              border: OutlineInputBorder(),
+                                            ),
+                                            validator: (value) {
+                                              if (!soggettoMinorenne) {
+                                                return null;
+                                              }
+                                              if (value == null ||
+                                                  value.trim().isEmpty) {
+                                                return 'Campo obbligatorio';
+                                              }
+                                              return null;
+                                            },
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ],
+                              ),
                             ),
                           ),
                         ),
@@ -451,6 +615,19 @@ class _RegistroConsensiPrivacyPageState
                       documentoRiferimento: documentoRiferimentoController.text
                           .trim(),
                       note: noteController.text.trim(),
+                      soggettoMinorenne: soggettoMinorenne,
+                      consensoPrestatoDa: soggettoMinorenne
+                          ? consensoPrestatoDa
+                          : 'discente',
+                      genitoreTutoreNome: soggettoMinorenne
+                          ? genitoreTutoreNomeController.text.trim()
+                          : null,
+                      genitoreTutoreCodiceFiscale: soggettoMinorenne
+                          ? genitoreTutoreCodiceFiscaleController.text.trim()
+                          : null,
+                      genitoreTutoreQualifica: soggettoMinorenne
+                          ? genitoreTutoreQualificaController.text.trim()
+                          : null,
                       createdAt: consenso?.createdAt ?? now,
                       updatedAt: now,
                     );
@@ -502,6 +679,9 @@ class _RegistroConsensiPrivacyPageState
     dataScadenzaController.dispose();
     documentoRiferimentoController.dispose();
     noteController.dispose();
+    genitoreTutoreNomeController.dispose();
+    genitoreTutoreCodiceFiscaleController.dispose();
+    genitoreTutoreQualificaController.dispose();
 
     if (salvato == true && mounted) {
       ricaricaConsensi();

@@ -1275,15 +1275,7 @@ class _RegistroConsensiPrivacyPageState
                       ),
                     ),
                   ),
-                  cellaDettaglio(
-                    SizedBox(
-                      width: 210,
-                      child: Text(
-                        testoRappresentanzaConsensoPrivacy(consenso),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
+                  cellaDettaglio(evidenzaTabellaConsensoPrivacy(consenso)),
                   cellaDettaglio(
                     SizedBox(
                       width: 280,
@@ -1501,6 +1493,81 @@ class _RegistroConsensiPrivacyPageState
     final minuti = data.minute.toString().padLeft(2, '0');
 
     return '$giorno/$mese/$anno $ora:$minuti';
+  }
+
+  Widget badgeTabellaConsensoPrivacy({
+    required IconData icona,
+    required String testo,
+    required Color sfondo,
+    required Color bordo,
+    required Color testoColore,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: sfondo,
+        borderRadius: BorderRadius.circular(999),
+        border: BoxBorder.all(color: bordo),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icona, size: 14, color: testoColore),
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              testo,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: testoColore,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget evidenzaTabellaConsensoPrivacy(ConsensoPrivacy consenso) {
+    final minorenne = consenso.soggettoMinorenne;
+    final rappresentanza = testoRappresentanzaConsensoPrivacy(consenso);
+
+    final testoRappresentanza = rappresentanza.trim();
+    final haRappresentanza =
+        testoRappresentanza.isNotEmpty &&
+        testoRappresentanza.toLowerCase() != 'discente';
+
+    if (!minorenne && !haRappresentanza) {
+      return const Text('—', style: TextStyle(color: Colors.grey));
+    }
+
+    return SizedBox(
+      width: 230,
+      child: Wrap(
+        spacing: 6,
+        runSpacing: 4,
+        children: [
+          if (minorenne)
+            badgeTabellaConsensoPrivacy(
+              icona: Icons.child_care,
+              testo: 'MINORENNE',
+              sfondo: Colors.orange.shade50,
+              bordo: Colors.orange.shade200,
+              testoColore: Colors.orange.shade900,
+            ),
+          if (haRappresentanza)
+            badgeTabellaConsensoPrivacy(
+              icona: Icons.supervisor_account,
+              testo: testoRappresentanza,
+              sfondo: Colors.blue.shade50,
+              bordo: Colors.blue.shade200,
+              testoColore: Colors.blue.shade900,
+            ),
+        ],
+      ),
+    );
   }
 
   String testoRappresentanzaConsensoPrivacy(ConsensoPrivacy consenso) {

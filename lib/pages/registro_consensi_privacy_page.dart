@@ -853,6 +853,25 @@ class _RegistroConsensiPrivacyPageState
         .where((elemento) => elemento.stato == 'SCADUTO')
         .length;
 
+    final minorenni = consensi
+        .where((elemento) => elemento.soggettoMinorenne)
+        .length;
+
+    final rappresentatiDaGenitore = consensi.where((elemento) {
+      final prestatoDa = elemento.consensoPrestatoDa.trim().toLowerCase();
+      return elemento.soggettoMinorenne && prestatoDa == 'genitore';
+    }).length;
+
+    final rappresentatiDaTutore = consensi.where((elemento) {
+      final prestatoDa = elemento.consensoPrestatoDa.trim().toLowerCase();
+      return elemento.soggettoMinorenne && prestatoDa == 'tutore';
+    }).length;
+
+    final minorenniSenzaRappresentanza = consensi.where((elemento) {
+      final prestatoDa = elemento.consensoPrestatoDa.trim();
+      return elemento.soggettoMinorenne && prestatoDa.isEmpty;
+    }).length;
+
     return Wrap(
       spacing: 12,
       runSpacing: 12,
@@ -861,6 +880,22 @@ class _RegistroConsensiPrivacyPageState
         cardKpi('Attivi', attivi.toString(), Icons.verified_user_outlined),
         cardKpi('Revocati', revocati.toString(), Icons.block_outlined),
         cardKpi('Scaduti', scaduti.toString(), Icons.warning_amber_outlined),
+        cardKpi('Minorenni', minorenni.toString(), Icons.child_care_outlined),
+        cardKpi(
+          'Genitore',
+          rappresentatiDaGenitore.toString(),
+          Icons.family_restroom_outlined,
+        ),
+        cardKpi(
+          'Tutore',
+          rappresentatiDaTutore.toString(),
+          Icons.admin_panel_settings_outlined,
+        ),
+        cardKpi(
+          'Senza rappr.',
+          minorenniSenzaRappresentanza.toString(),
+          Icons.report_problem_outlined,
+        ),
       ],
     );
   }

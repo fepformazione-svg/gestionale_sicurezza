@@ -1157,6 +1157,12 @@ class _RegistroConsensiPrivacyPageState
                   larghezza: 180,
                 ),
               ),
+              const DataColumn(
+                label: SizedBox(
+                  width: 190,
+                  child: Text('Firma / rappresentanza'),
+                ),
+              ),
               DataColumn(
                 label: intestazioneOrdinabileConsensiPrivacy(
                   'finalita',
@@ -1218,6 +1224,15 @@ class _RegistroConsensiPrivacyPageState
                       width: 240,
                       child: Text(
                         consenso.nominativo,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                  cellaDettaglio(
+                    SizedBox(
+                      width: 210,
+                      child: Text(
+                        testoRappresentanzaConsensoPrivacy(consenso),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -1435,6 +1450,24 @@ class _RegistroConsensiPrivacyPageState
     final minuti = data.minute.toString().padLeft(2, '0');
 
     return '$giorno/$mese/$anno $ora:$minuti';
+  }
+
+  String testoRappresentanzaConsensoPrivacy(ConsensoPrivacy consenso) {
+    if (!consenso.soggettoMinorenne) {
+      return 'Discente';
+    }
+
+    final nomeRappresentante = (consenso.genitoreTutoreNome ?? '').trim();
+
+    final qualifica = consenso.consensoPrestatoDa == 'tutore'
+        ? 'Tutore'
+        : 'Genitore';
+
+    if (nomeRappresentante.isEmpty) {
+      return qualifica;
+    }
+
+    return '$qualifica: $nomeRappresentante';
   }
 
   Future<void> mostraLogConsensoPrivacy(ConsensoPrivacy consenso) async {

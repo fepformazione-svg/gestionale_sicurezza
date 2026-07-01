@@ -1379,6 +1379,11 @@ class _RegistroConsensiPrivacyPageState
               icon: const Icon(Icons.help_outline),
               label: const Text('Guida'),
             ),
+            OutlinedButton.icon(
+              onPressed: mostraGuidaMinorenniConsensiPrivacy,
+              icon: const Icon(Icons.family_restroom),
+              label: const Text('Guida minorenni'),
+            ),
           ],
         ),
         const SizedBox(height: 16),
@@ -1586,6 +1591,138 @@ class _RegistroConsensiPrivacyPageState
     }
 
     return '$qualifica: $nomeRappresentante';
+  }
+
+  void mostraGuidaMinorenniConsensiPrivacy() {
+    Widget rigaGuida({
+      required IconData icona,
+      required String titolo,
+      required String testo,
+    }) {
+      final tema = Theme.of(context);
+      final colori = tema.colorScheme;
+
+      return Card(
+        margin: const EdgeInsets.only(bottom: 10),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icona, color: colori.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      titolo,
+                      style: tema.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(testo),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Row(
+            children: [
+              Icon(Icons.family_restroom),
+              SizedBox(width: 8),
+              Expanded(child: Text('Gestione minorenni e rappresentanza')),
+            ],
+          ),
+          content: SizedBox(
+            width: 760,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  rigaGuida(
+                    icona: Icons.person_outline,
+                    titolo: 'Discente maggiorenne',
+                    testo:
+                        'Il consenso è riferito direttamente al discente. '
+                        'Nella rappresentanza viene indicato “Discente”.',
+                  ),
+                  rigaGuida(
+                    icona: Icons.child_care,
+                    titolo: 'Discente minorenne',
+                    testo:
+                        'Quando il soggetto è minorenne, il registro evidenzia '
+                        'la necessità della firma o presa visione da parte di '
+                        'un genitore o tutore.',
+                  ),
+                  rigaGuida(
+                    icona: Icons.supervisor_account_outlined,
+                    titolo: 'Genitore o tutore',
+                    testo:
+                        'La rappresentanza viene mostrata come “Genitore: ...” '
+                        'oppure “Tutore: ...”, così da rendere chiaro chi ha '
+                        'prestato il consenso per conto del minorenne.',
+                  ),
+                  rigaGuida(
+                    icona: Icons.table_chart_outlined,
+                    titolo: 'Evidenza nella tabella',
+                    testo:
+                        'I minorenni sono evidenziati direttamente nella tabella '
+                        'del Registro consensi/privacy, così da renderli '
+                        'immediatamente riconoscibili durante il controllo.',
+                  ),
+                  rigaGuida(
+                    icona: Icons.filter_alt_outlined,
+                    titolo: 'Filtro e KPI minorenni',
+                    testo:
+                        'Il filtro dedicato permette di visualizzare solo i '
+                        'consensi riferiti a minorenni. Il KPI mostra il numero '
+                        'di consensi con rappresentanza minorenne presenti nel '
+                        'registro filtrato.',
+                  ),
+                  rigaGuida(
+                    icona: Icons.picture_as_pdf_outlined,
+                    titolo: 'Export e stampa',
+                    testo:
+                        'La rappresentanza viene riportata anche negli export '
+                        'Excel, PDF e nella stampa del Registro consensi/privacy, '
+                        'per mantenere tracciabilità anche fuori dalla schermata.',
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Nota operativa',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Questa guida è un riepilogo funzionale interno. Non sostituisce '
+                    'l’informativa privacy, il modulo di consenso o la verifica '
+                    'documentale richiesta per la rappresentanza del minorenne.',
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> mostraLogConsensoPrivacy(ConsensoPrivacy consenso) async {

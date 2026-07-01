@@ -1866,6 +1866,7 @@ class _RegistroConsensiPrivacyPageState
             pw.TableHelper.fromTextArray(
               headers: const [
                 'Interessato',
+                'Firma / rapp.',
                 'Contesto',
                 'Finalità',
                 'Base giuridica',
@@ -1883,6 +1884,7 @@ class _RegistroConsensiPrivacyPageState
 
                 return [
                   consenso.nominativo,
+                  testoRappresentanzaConsensoPrivacy(consenso),
                   consenso.tipoSoggetto,
                   consenso.finalita,
                   consenso.baseGiuridica,
@@ -1904,15 +1906,16 @@ class _RegistroConsensiPrivacyPageState
               cellAlignment: pw.Alignment.topLeft,
               headerAlignment: pw.Alignment.centerLeft,
               columnWidths: const {
-                0: pw.FlexColumnWidth(1.6),
-                1: pw.FlexColumnWidth(1.2),
-                2: pw.FlexColumnWidth(1.8),
-                3: pw.FlexColumnWidth(1.5),
-                4: pw.FlexColumnWidth(0.8),
-                5: pw.FlexColumnWidth(1.0),
-                6: pw.FlexColumnWidth(1.0),
-                7: pw.FlexColumnWidth(0.9),
-                8: pw.FlexColumnWidth(1.7),
+                0: pw.FlexColumnWidth(1.45),
+                1: pw.FlexColumnWidth(1.35),
+                2: pw.FlexColumnWidth(1.0),
+                3: pw.FlexColumnWidth(1.65),
+                4: pw.FlexColumnWidth(1.3),
+                5: pw.FlexColumnWidth(0.75),
+                6: pw.FlexColumnWidth(0.95),
+                7: pw.FlexColumnWidth(0.95),
+                8: pw.FlexColumnWidth(0.8),
+                9: pw.FlexColumnWidth(1.45),
               },
             ),
           ];

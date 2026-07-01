@@ -2099,6 +2099,7 @@ class _RegistroConsensiPrivacyPageState
 
     final intestazioni = <String>[
       'Interessato',
+      'Firma / rappresentanza',
       'Contesto',
       'Finalità',
       'Base giuridica',
@@ -2126,6 +2127,7 @@ class _RegistroConsensiPrivacyPageState
 
       final valori = <String>[
         consenso.nominativo,
+        testoRappresentanzaConsensoPrivacy(consenso),
         consenso.tipoSoggetto,
         consenso.finalita,
         consenso.baseGiuridica,

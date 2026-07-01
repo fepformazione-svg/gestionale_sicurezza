@@ -30,6 +30,7 @@ class _RegistroConsensiPrivacyPageState
 
   String filtroStato = 'Tutti';
   String filtroTipoSoggetto = 'Tutti';
+  bool filtroMinorenniConsensiPrivacy = false;
   String campoOrdinamentoConsensiPrivacy = 'dataConsenso';
   bool ordinamentoConsensiPrivacyCrescente = false;
 
@@ -934,6 +935,16 @@ class _RegistroConsensiPrivacyPageState
             },
           ),
         ),
+        FilterChip(
+          avatar: const Icon(Icons.child_care, size: 18),
+          label: const Text('Minorenni'),
+          selected: filtroMinorenniConsensiPrivacy,
+          onSelected: (value) {
+            setState(() {
+              filtroMinorenniConsensiPrivacy = value;
+            });
+          },
+        ),
         OutlinedButton.icon(
           icon: const Icon(Icons.filter_alt_off_outlined),
           label: const Text('Azzera filtro'),
@@ -941,6 +952,7 @@ class _RegistroConsensiPrivacyPageState
             ricercaController.clear();
             filtroStato = 'Tutti';
             filtroTipoSoggetto = 'Tutti';
+            filtroMinorenniConsensiPrivacy = false;
             ricaricaConsensi();
           },
         ),
@@ -1292,7 +1304,11 @@ class _RegistroConsensiPrivacyPageState
   }
 
   Widget buildContenuto(List<ConsensoPrivacy> consensi) {
-    final consensiOrdinati = ordinaConsensiPrivacy(consensi);
+    final consensiFiltrati = filtroMinorenniConsensiPrivacy
+        ? consensi.where((consenso) => consenso.soggettoMinorenne).toList()
+        : consensi;
+
+    final consensiOrdinati = ordinaConsensiPrivacy(consensiFiltrati);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1306,7 +1322,7 @@ class _RegistroConsensiPrivacyPageState
           'Archivio unico per consensi, informative privacy, finalità, base giuridica, revoche e riferimenti documentali.',
         ),
         const SizedBox(height: 16),
-        buildRiepilogo(consensi),
+        buildRiepilogo(consensiFiltrati),
         const SizedBox(height: 16),
         buildFiltri(),
         const SizedBox(height: 12),

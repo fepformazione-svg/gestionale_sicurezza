@@ -535,10 +535,29 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                         : 'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.',
                                   ),
                               onChanged: (_) {
+                                final codiceFiscaleInserito = cfController.text
+                                    .trim()
+                                    .toUpperCase();
+
+                                final sessoDaCodiceFiscale =
+                                    _sessoDaCodiceFiscale(
+                                      codiceFiscaleInserito,
+                                    );
+
                                 setDialogState(() {
                                   codiceFiscaleModificatoManuale =
-                                      cfController.text.trim().isNotEmpty &&
-                                      cfController.text.trim() != '-';
+                                      codiceFiscaleInserito.isNotEmpty &&
+                                      codiceFiscaleInserito != '-';
+
+                                  if (_codiceFiscaleManualeValido(
+                                        codiceFiscaleInserito,
+                                      ) &&
+                                      _carattereControlloCodiceFiscaleValido(
+                                        codiceFiscaleInserito,
+                                      ) &&
+                                      sessoDaCodiceFiscale != null) {
+                                    sesso = sessoDaCodiceFiscale;
+                                  }
                                 });
                               },
                             ),

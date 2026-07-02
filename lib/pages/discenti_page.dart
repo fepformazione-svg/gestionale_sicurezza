@@ -179,7 +179,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
       text: discente?.codiceFiscale ?? '',
     );
 
-    bool codiceFiscaleModificatoManuale = false;
+    bool codiceFiscaleModificatoManuale =
+        cfController.text.trim().isNotEmpty && cfController.text.trim() != '-';
 
     final dataVisitaController = TextEditingController(
       text: discente?.dataVisitaMedica ?? '',
@@ -314,15 +315,19 @@ class _DiscentiPageState extends State<DiscentiPage> {
                         decoration:
                             _inputDecoration(
                               codiceFiscaleModificatoManuale
-                                  ? 'Codice fiscale manuale'
+                                  ? 'Codice fiscale presente/manuale'
                                   : 'Codice fiscale automatico',
                             ).copyWith(
                               helperText: codiceFiscaleModificatoManuale
-                                  ? 'Modificato manualmente: non verrÃ  sovrascritto automaticamente.'
+                                  ? 'Campo già compilato: non viene ricalcolato. Svuotalo per generarlo automaticamente.'
                                   : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
                             ),
                         onChanged: (_) {
-                          codiceFiscaleModificatoManuale = true;
+                          setDialogState(() {
+                            codiceFiscaleModificatoManuale =
+                                cfController.text.trim().isNotEmpty &&
+                                cfController.text.trim() != '-';
+                          });
                         },
                       ),
 
@@ -461,14 +466,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 dataNascita: dataNascita,
                                 sesso: sesso,
                                 codiceCatastaleNascita: codiceCatastaleNascita,
-                                codiceFiscale:
-                                    codiceFiscaleModificatoManuale &&
-                                        codiceFiscaleCampoCompilato
+                                codiceFiscale: codiceFiscaleCampoCompilato
                                     ? codiceFiscaleInserito
-                                    : codiceFiscaleCalcolato ??
-                                          (codiceFiscaleCampoCompilato
-                                              ? codiceFiscaleInserito
-                                              : ''),
+                                    : codiceFiscaleCalcolato ?? '',
                                 impresaId: impresaId,
 
                                 visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,

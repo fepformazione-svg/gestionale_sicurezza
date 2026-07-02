@@ -164,6 +164,14 @@ class _DiscentiPageState extends State<DiscentiPage> {
     return 'M';
   }
 
+  bool _codiceFiscaleManualeValido(String codiceFiscale) {
+    final cf = codiceFiscale.trim().toUpperCase();
+
+    return RegExp(
+      r'^[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]$',
+    ).hasMatch(cf);
+  }
+
   Future<void> apriDialogDiscente({Discente? discente}) async {
     final nomeController = TextEditingController(text: discente?.nome ?? '');
     final cognomeController = TextEditingController(
@@ -551,7 +559,20 @@ class _DiscentiPageState extends State<DiscentiPage> {
                               final codiceFiscaleCampoCompilato =
                                   codiceFiscaleInserito.isNotEmpty &&
                                   codiceFiscaleInserito != '-';
-
+                              if (codiceFiscaleCampoCompilato &&
+                                  !_codiceFiscaleManualeValido(
+                                    codiceFiscaleInserito,
+                                  )) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Codice fiscale non valido. Inserisci 16 caratteri nel formato corretto, es. RSSMRA80C12H501E.',
+                                    ),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
+                                );
+                                return;
+                              }
                               final nuovoDiscente = Discente(
                                 id: discente?.id,
                                 nome: nome,

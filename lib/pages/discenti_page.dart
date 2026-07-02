@@ -384,6 +384,20 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 return;
                               }
 
+                              if (luogoNascita.isNotEmpty &&
+                                  codiceCatastaleNascita == null &&
+                                  cfController.text.trim().isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Luogo/Nazione di nascita non riconosciuto. Inserisci il codice fiscale manualmente oppure correggi il luogo di nascita.',
+                                    ),
+                                    backgroundColor: Color(0xFFF59E0B),
+                                  ),
+                                );
+                                return;
+                              }
+
                               final nuovoDiscente = Discente(
                                 id: discente?.id,
                                 nome: nome,

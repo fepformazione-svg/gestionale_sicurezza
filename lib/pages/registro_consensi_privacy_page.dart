@@ -967,6 +967,30 @@ class _RegistroConsensiPrivacyPageState
         .where((elemento) => elemento.soggettoMinorenne)
         .length;
 
+    final retentionScadute = consensi
+        .where(
+          (elemento) => statoRetentionConsensoPrivacy(elemento) == 'SCADUTA',
+        )
+        .length;
+
+    final retentionInScadenza = consensi
+        .where(
+          (elemento) =>
+              statoRetentionConsensoPrivacy(elemento) == 'IN SCADENZA',
+        )
+        .length;
+
+    final retentionNonImpostate = consensi
+        .where(
+          (elemento) =>
+              statoRetentionConsensoPrivacy(elemento) == 'NON IMPOSTATA',
+        )
+        .length;
+
+    final retentionBloccate = consensi
+        .where((elemento) => elemento.retentionBloccata)
+        .length;
+
     final rappresentatiDaGenitore = consensi.where((elemento) {
       final prestatoDa = elemento.consensoPrestatoDa.trim().toLowerCase();
       return elemento.soggettoMinorenne && prestatoDa == 'genitore';
@@ -990,6 +1014,26 @@ class _RegistroConsensiPrivacyPageState
         cardKpi('Attivi', attivi.toString(), Icons.verified_user_outlined),
         cardKpi('Revocati', revocati.toString(), Icons.block_outlined),
         cardKpi('Scaduti', scaduti.toString(), Icons.warning_amber_outlined),
+        cardKpi(
+          'Ret. scadute',
+          retentionScadute.toString(),
+          Icons.event_busy_outlined,
+        ),
+        cardKpi(
+          'Ret. in scad.',
+          retentionInScadenza.toString(),
+          Icons.schedule_outlined,
+        ),
+        cardKpi(
+          'Ret. assente',
+          retentionNonImpostate.toString(),
+          Icons.event_note_outlined,
+        ),
+        cardKpi(
+          'Ret. bloccate',
+          retentionBloccate.toString(),
+          Icons.lock_clock_outlined,
+        ),
         cardKpi('Minorenni', minorenni.toString(), Icons.child_care_outlined),
         cardKpi(
           'Genitore',

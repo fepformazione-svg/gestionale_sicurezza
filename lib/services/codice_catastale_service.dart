@@ -23,7 +23,7 @@ class CodiceCatastaleService {
     'FIRENZE': 'D612',
     'FOGGIA': 'D643',
     'FORLI': 'D704',
-    'FORLÃƒÅ’': 'D704',
+    'FORLÃƒÆ’Ã…â€™': 'D704',
     'FRASCATI': 'D773',
     'GENOVA': 'D969',
     'GENZANO DI ROMA': 'D972',
@@ -90,7 +90,7 @@ class CodiceCatastaleService {
     'COREA DEL NORD': 'Z214',
     'COREA DEL SUD': 'Z213',
     'REPUBBLICA DI COREA': 'Z213',
-    'COSTA DÃ¢â‚¬â„¢AVORIO': 'Z313',
+    'COSTA DÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢AVORIO': 'Z313',
     'COSTA D AVORIO': 'Z313',
     "COSTA D'AVORIO": 'Z313',
     'CROAZIA': 'Z149',
@@ -147,7 +147,7 @@ class CodiceCatastaleService {
     'SPAGNA': 'Z131',
     'SRI LANKA': 'Z209',
     'STATI UNITI': 'Z404',
-    'STATI UNITI DÃ¢â‚¬â„¢AMERICA': 'Z404',
+    'STATI UNITI DÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢AMERICA': 'Z404',
     "STATI UNITI D'AMERICA": 'Z404',
     'STATI UNITI D AMERICA': 'Z404',
     'USA': 'Z404',
@@ -196,6 +196,25 @@ class CodiceCatastaleService {
         .replaceAll('/', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  static String? messaggioComuneItalianoAmbiguo(String? luogoNascita) {
+    if (luogoNascita == null || luogoNascita.trim().isEmpty) {
+      return null;
+    }
+
+    final luogoArchivioComuni = normalizzaLuogoArchivioComuni(luogoNascita);
+    final comuniAmbigui = comuniCatastaliItalianiAmbigui[luogoArchivioComuni];
+
+    if (comuniAmbigui == null || comuniAmbigui.isEmpty) {
+      return null;
+    }
+
+    final esempi = comuniAmbigui
+        .map((comune) => '${comune.nome} ${comune.provincia}')
+        .join(' oppure ');
+
+    return 'Comune di nascita ambiguo: specificare anche la provincia, ad esempio $esempi.';
   }
 
   static String? cercaCodiceCatastaleComuneAmbiguo(String luogoNascita) {

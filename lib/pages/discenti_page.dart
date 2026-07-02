@@ -318,7 +318,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                   : 'Codice fiscale automatico',
                             ).copyWith(
                               helperText: codiceFiscaleModificatoManuale
-                                  ? 'Modificato manualmente: non verrà sovrascritto automaticamente.'
+                                  ? 'Modificato manualmente: non verrÃ  sovrascritto automaticamente.'
                                   : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
                             ),
                         onChanged: (_) {
@@ -429,12 +429,18 @@ class _DiscentiPageState extends State<DiscentiPage> {
                               if (luogoNascita.isNotEmpty &&
                                   codiceCatastaleNascita == null &&
                                   cfController.text.trim().isEmpty) {
+                                final messaggioComuneAmbiguo =
+                                    CodiceCatastaleService.messaggioComuneItalianoAmbiguo(
+                                      luogoNascita,
+                                    );
+
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                      'Luogo/Nazione di nascita non riconosciuto. Inserisci il codice fiscale manualmente oppure correggi il luogo di nascita.',
+                                      messaggioComuneAmbiguo ??
+                                          'Luogo/Nazione di nascita non riconosciuto. Inserisci il codice fiscale manualmente oppure correggi il luogo di nascita.',
                                     ),
-                                    backgroundColor: Color(0xFFF59E0B),
+                                    backgroundColor: const Color(0xFFF59E0B),
                                   ),
                                 );
                                 return;

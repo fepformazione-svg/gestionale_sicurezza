@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../database/database_service.dart';
 import '../models/discente.dart';
+import '../widgets/data_text_input_formatter.dart';
 
 InputDecoration _inputDecoration(String label) {
   return InputDecoration(
@@ -89,6 +90,8 @@ Future<bool> apriDialogDiscente({
                         Expanded(
                           child: TextField(
                             controller: dataController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [DataTextInputFormatter()],
                             decoration: _inputDecoration('Data nascita'),
                           ),
                         ),
@@ -137,6 +140,8 @@ Future<bool> apriDialogDiscente({
                         Expanded(
                           child: TextField(
                             controller: dataVisitaController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [DataTextInputFormatter()],
                             decoration: _inputDecoration('Data visita'),
                           ),
                         ),
@@ -144,6 +149,8 @@ Future<bool> apriDialogDiscente({
                         Expanded(
                           child: TextField(
                             controller: scadenzaVisitaController,
+                            keyboardType: TextInputType.number,
+                            inputFormatters: [DataTextInputFormatter()],
                             decoration: _inputDecoration('Scadenza visita'),
                           ),
                         ),

@@ -20,6 +20,7 @@ import '../services/pdf_export_service.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
+import '../widgets/data_text_input_formatter.dart';
 
 import 'discente_scheda_page.dart';
 
@@ -243,6 +244,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
                           Expanded(
                             child: TextField(
                               controller: dataController,
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [DataTextInputFormatter()],
                               decoration: _inputDecoration('Data nascita'),
                             ),
                           ),

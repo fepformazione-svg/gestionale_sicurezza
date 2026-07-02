@@ -531,8 +531,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                         : 'Codice fiscale automatico',
                                   ).copyWith(
                                     helperText: codiceFiscaleModificatoManuale
-                                        ? 'Campo già compilato: puoi ricalcolarlo con il pulsante a destra.'
-                                        : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
+                                        ? 'Manuale: inserisci 16 caratteri. Formato e carattere finale vengono verificati.'
+                                        : 'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.',
                                   ),
                               onChanged: (_) {
                                 setDialogState(() {

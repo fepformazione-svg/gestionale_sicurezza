@@ -7,12 +7,15 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+
 import '../utils/pdf_azienda_helper.dart';
 
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
+import '../services/codice_catastale_service.dart';
 import '../services/pdf_export_service.dart';
+
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
@@ -351,6 +354,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
                             onPressed: () async {
                               final nome = nomeController.text.trim();
                               final cognome = cognomeController.text.trim();
+                              final luogoNascita = luogoController.text.trim();
+                              final dataNascita = dataController.text.trim();
+
+                              final codiceCatastaleNascita =
+                                  CodiceCatastaleService.cercaCodiceCatastale(
+                                    luogoNascita,
+                                  );
 
                               if (nome.isEmpty || cognome.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -367,11 +377,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 id: discente?.id,
                                 nome: nome,
                                 cognome: cognome,
-                                luogoNascita: luogoController.text.trim(),
-                                dataNascita: dataController.text.trim(),
+                                luogoNascita: luogoNascita,
+                                dataNascita: dataNascita,
                                 sesso: sesso,
-                                codiceCatastaleNascita:
-                                    discente?.codiceCatastaleNascita,
+                                codiceCatastaleNascita: codiceCatastaleNascita,
                                 codiceFiscale: cfController.text.trim(),
                                 impresaId: impresaId,
 

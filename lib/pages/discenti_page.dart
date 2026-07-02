@@ -14,6 +14,7 @@ import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
 import '../services/codice_catastale_service.dart';
+import '../services/codice_fiscale_service.dart';
 import '../services/pdf_export_service.dart';
 
 import '../widgets/app_search_bar.dart';
@@ -362,6 +363,16 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                     luogoNascita,
                                   );
 
+                              final codiceFiscaleCalcolato =
+                                  CodiceFiscaleService.generaCodiceFiscale(
+                                    cognome: cognome,
+                                    nome: nome,
+                                    dataNascita: dataNascita,
+                                    sesso: sesso,
+                                    codiceCatastaleNascita:
+                                        codiceCatastaleNascita,
+                                  );
+
                               if (nome.isEmpty || cognome.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -381,7 +392,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 dataNascita: dataNascita,
                                 sesso: sesso,
                                 codiceCatastaleNascita: codiceCatastaleNascita,
-                                codiceFiscale: cfController.text.trim(),
+                                codiceFiscale:
+                                    codiceFiscaleCalcolato ??
+                                    cfController.text.trim().toUpperCase(),
                                 impresaId: impresaId,
 
                                 visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,

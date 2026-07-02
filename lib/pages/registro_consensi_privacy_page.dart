@@ -1054,6 +1054,76 @@ class _RegistroConsensiPrivacyPageState
     );
   }
 
+  Widget buildGuidaRetentionConsensiPrivacy() {
+    Widget chipGuidaRetention(String stato) {
+      return Chip(
+        label: Text(
+          stato,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        backgroundColor: coloreStatoRetentionConsensoPrivacy(stato),
+        visualDensity: VisualDensity.compact,
+        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      );
+    }
+
+    Widget rigaGuida(String stato, String descrizione) {
+      return SizedBox(
+        width: 300,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            chipGuidaRetention(stato),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(descrizione, style: const TextStyle(fontSize: 12)),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.info_outline),
+                SizedBox(width: 8),
+                Text(
+                  'Guida retention dati/privacy',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 12,
+              runSpacing: 10,
+              children: [
+                rigaGuida('SCADUTA', 'Fine conservazione superata.'),
+                rigaGuida('IN SCADENZA', 'Fine conservazione entro 30 giorni.'),
+                rigaGuida('BLOCCATA', 'Esclusa dalle verifiche automatiche.'),
+                rigaGuida(
+                  'NON IMPOSTATA',
+                  'Nessuna data di fine conservazione.',
+                ),
+                rigaGuida('OK', 'Retention impostata e non scaduta.'),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget buildFiltri() {
     return Wrap(
       spacing: 12,
@@ -1580,6 +1650,8 @@ class _RegistroConsensiPrivacyPageState
         ),
         const SizedBox(height: 16),
         buildRiepilogo(consensiFiltrati),
+        const SizedBox(height: 12),
+        buildGuidaRetentionConsensiPrivacy(),
         const SizedBox(height: 16),
         buildFiltri(),
         const SizedBox(height: 12),

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
+import 'package:flutter/services.dart';
 
 import '../utils/pdf_azienda_helper.dart';
 
@@ -402,6 +403,21 @@ class _DiscentiPageState extends State<DiscentiPage> {
                           Expanded(
                             child: TextField(
                               controller: cfController,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.allow(
+                                  RegExp(r'[A-Za-z0-9]'),
+                                ),
+                                LengthLimitingTextInputFormatter(16),
+                                TextInputFormatter.withFunction((
+                                  oldValue,
+                                  newValue,
+                                ) {
+                                  return newValue.copyWith(
+                                    text: newValue.text.toUpperCase(),
+                                    selection: newValue.selection,
+                                  );
+                                }),
+                              ],
                               decoration:
                                   _inputDecoration(
                                     codiceFiscaleModificatoManuale

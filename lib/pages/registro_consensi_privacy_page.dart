@@ -31,8 +31,17 @@ class _RegistroConsensiPrivacyPageState
   String filtroStato = 'Tutti';
   String filtroTipoSoggetto = 'Tutti';
   bool filtroMinorenniConsensiPrivacy = false;
+  String filtroRetentionConsensi = 'Tutti';
   String campoOrdinamentoConsensiPrivacy = 'dataConsenso';
   bool ordinamentoConsensiPrivacyCrescente = false;
+
+  static const List<String> opzioniFiltroRetentionConsensi = [
+    'Tutti',
+    'Retention attiva',
+    'Retention scaduta',
+    'In scadenza',
+    'Senza scadenza',
+  ];
 
   static const List<String> statiFiltro = [
     'Tutti',
@@ -1071,6 +1080,27 @@ class _RegistroConsensiPrivacyPageState
             },
           ),
         ),
+        SizedBox(
+          width: 220,
+          child: DropdownButtonFormField<String>(
+            key: ValueKey('retention-$filtroRetentionConsensi'),
+            initialValue: filtroRetentionConsensi,
+            decoration: const InputDecoration(
+              labelText: 'Retention',
+              border: OutlineInputBorder(),
+            ),
+            items: opzioniFiltroRetentionConsensi
+                .map(
+                  (value) => DropdownMenuItem(value: value, child: Text(value)),
+                )
+                .toList(),
+            onChanged: (value) {
+              if (value == null) return;
+              filtroRetentionConsensi = value;
+              setState(() {});
+            },
+          ),
+        ),
         FilterChip(
           avatar: const Icon(Icons.child_care, size: 18),
           label: const Text('Minorenni'),
@@ -1088,6 +1118,7 @@ class _RegistroConsensiPrivacyPageState
             ricercaController.clear();
             filtroStato = 'Tutti';
             filtroTipoSoggetto = 'Tutti';
+            filtroRetentionConsensi = 'Tutti';
             filtroMinorenniConsensiPrivacy = false;
             ricaricaConsensi();
           },
@@ -1436,9 +1467,28 @@ class _RegistroConsensiPrivacyPageState
   }
 
   Widget buildContenuto(List<ConsensoPrivacy> consensi) {
+    final consensiFiltratiRetention = consensi.where((consenso) {
+      final statoRetention = statoRetentionConsensoPrivacy(consenso);
+
+      switch (filtroRetentionConsensi) {
+        case 'Retention attiva':
+          return statoRetention == 'OK';
+        case 'Retention scaduta':
+          return statoRetention == 'SCADUTA';
+        case 'In scadenza':
+          return statoRetention == 'IN SCADENZA';
+        case 'Senza scadenza':
+          return statoRetention == 'NON IMPOSTATA';
+        default:
+          return true;
+      }
+    }).toList();
+
     final consensiFiltrati = filtroMinorenniConsensiPrivacy
-        ? consensi.where((consenso) => consenso.soggettoMinorenne).toList()
-        : consensi;
+        ? consensiFiltratiRetention
+              .where((consenso) => consenso.soggettoMinorenne)
+              .toList()
+        : consensiFiltratiRetention;
 
     final consensiOrdinati = ordinaConsensiPrivacy(consensiFiltrati);
 

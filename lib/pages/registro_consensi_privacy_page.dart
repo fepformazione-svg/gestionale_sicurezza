@@ -1263,6 +1263,12 @@ class _RegistroConsensiPrivacyPageState
         case 'stato':
           risultato = confrontaTestoConsensiPrivacy(a.stato, b.stato);
           break;
+        case 'retention':
+          risultato = confrontaTestoConsensiPrivacy(
+            statoRetentionConsensoPrivacy(a),
+            statoRetentionConsensoPrivacy(b),
+          );
+          break;
         default:
           risultato = confrontaDateConsensiPrivacy(
             a.dataConsenso,
@@ -1421,8 +1427,12 @@ class _RegistroConsensiPrivacyPageState
                   larghezza: 100,
                 ),
               ),
-              const DataColumn(
-                label: SizedBox(width: 130, child: Text('Retention')),
+              DataColumn(
+                label: intestazioneOrdinabileConsensiPrivacy(
+                  'retention',
+                  'Retention',
+                  larghezza: 130,
+                ),
               ),
               DataColumn(
                 label: intestazioneOrdinabileConsensiPrivacy(

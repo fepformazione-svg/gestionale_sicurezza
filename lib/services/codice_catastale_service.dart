@@ -23,7 +23,7 @@ class CodiceCatastaleService {
     'FIRENZE': 'D612',
     'FOGGIA': 'D643',
     'FORLI': 'D704',
-    'FORLÃŒ': 'D704',
+    'FORLÃƒÅ’': 'D704',
     'FRASCATI': 'D773',
     'GENOVA': 'D969',
     'GENZANO DI ROMA': 'D972',
@@ -90,7 +90,7 @@ class CodiceCatastaleService {
     'COREA DEL NORD': 'Z214',
     'COREA DEL SUD': 'Z213',
     'REPUBBLICA DI COREA': 'Z213',
-    'COSTA Dâ€™AVORIO': 'Z313',
+    'COSTA DÃ¢â‚¬â„¢AVORIO': 'Z313',
     'COSTA D AVORIO': 'Z313',
     "COSTA D'AVORIO": 'Z313',
     'CROAZIA': 'Z149',
@@ -147,7 +147,7 @@ class CodiceCatastaleService {
     'SPAGNA': 'Z131',
     'SRI LANKA': 'Z209',
     'STATI UNITI': 'Z404',
-    'STATI UNITI Dâ€™AMERICA': 'Z404',
+    'STATI UNITI DÃ¢â‚¬â„¢AMERICA': 'Z404',
     "STATI UNITI D'AMERICA": 'Z404',
     'STATI UNITI D AMERICA': 'Z404',
     'USA': 'Z404',
@@ -191,8 +191,38 @@ class CodiceCatastaleService {
         .replaceAll('-', ' ')
         .replaceAll('.', ' ')
         .replaceAll(',', ' ')
+        .replaceAll('(', ' ')
+        .replaceAll(')', ' ')
+        .replaceAll('/', ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  static String? cercaCodiceCatastaleComuneAmbiguo(String luogoNascita) {
+    final luogoArchivioComuni = normalizzaLuogoArchivioComuni(luogoNascita);
+
+    for (final gruppo in comuniCatastaliItalianiAmbigui.entries) {
+      final nomeComune = gruppo.key;
+
+      for (final comune in gruppo.value) {
+        final provincia = comune.provincia;
+
+        if (provincia.isEmpty) {
+          continue;
+        }
+
+        final chiaviConProvincia = <String>{
+          '$nomeComune $provincia',
+          '$provincia $nomeComune',
+        };
+
+        if (chiaviConProvincia.contains(luogoArchivioComuni)) {
+          return comune.codiceCatastale;
+        }
+      }
+    }
+
+    return null;
   }
 
   static String? cercaCodiceCatastale(String? luogoNascita) {
@@ -203,8 +233,24 @@ class CodiceCatastaleService {
     final luogoNormalizzato = normalizzaLuogo(luogoNascita);
     final luogoArchivioComuni = normalizzaLuogoArchivioComuni(luogoNascita);
 
-    return codiciCatastaliComuniItaliani[luogoArchivioComuni] ??
-        _codiciCatastali[luogoNormalizzato] ??
+    final codiceComuneUnivoco =
+        codiciCatastaliComuniItaliani[luogoArchivioComuni];
+
+    if (codiceComuneUnivoco != null) {
+      return codiceComuneUnivoco;
+    }
+
+    final codiceComuneAmbiguo = cercaCodiceCatastaleComuneAmbiguo(luogoNascita);
+
+    if (codiceComuneAmbiguo != null) {
+      return codiceComuneAmbiguo;
+    }
+
+    if (comuniCatastaliItalianiAmbigui.containsKey(luogoArchivioComuni)) {
+      return null;
+    }
+
+    return _codiciCatastali[luogoNormalizzato] ??
         _codiciCatastali[luogoArchivioComuni];
   }
 }

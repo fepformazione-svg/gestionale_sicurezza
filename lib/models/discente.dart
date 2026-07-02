@@ -7,6 +7,8 @@ class Discente {
   final String? luogoNascita;
   final String? dataNascita;
 
+  final String? sesso;
+  final String? codiceCatastaleNascita;
   final String? codiceFiscale;
 
   final int? impresaId;
@@ -27,6 +29,8 @@ class Discente {
     required this.cognome,
     this.luogoNascita,
     this.dataNascita,
+    this.sesso,
+    this.codiceCatastaleNascita,
     this.codiceFiscale,
     this.impresaId,
     this.nomeImpresa,
@@ -62,6 +66,10 @@ class Discente {
       luogoNascita: map['luogo_nascita']?.toString(),
 
       dataNascita: map['data_nascita']?.toString(),
+
+      sesso: map['sesso']?.toString(),
+
+      codiceCatastaleNascita: map['codice_catastale_nascita']?.toString(),
 
       codiceFiscale: map['codice_fiscale']?.toString(),
 
@@ -100,6 +108,8 @@ class Discente {
       'cognome': cognome,
       'luogo_nascita': luogoNascita,
       'data_nascita': dataNascita,
+      'sesso': sesso,
+      'codice_catastale_nascita': codiceCatastaleNascita,
       'codice_fiscale': codiceFiscale,
       'impresa_id': impresaId,
       'visita_medica_svolta': visitaMedicaSvolta,

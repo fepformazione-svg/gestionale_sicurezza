@@ -204,6 +204,84 @@ class _DiscentiPageState extends State<DiscentiPage> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            void ricalcolaCodiceFiscale() {
+              final nome = nomeController.text.trim();
+              final cognome = cognomeController.text.trim();
+              final luogoNascita = luogoController.text.trim();
+              final dataNascita = dataController.text.trim();
+
+              if (nome.isEmpty ||
+                  cognome.isEmpty ||
+                  luogoNascita.isEmpty ||
+                  dataNascita.isEmpty ||
+                  sesso == null) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Per ricalcolare il codice fiscale compila nome, cognome, luogo di nascita, data di nascita e sesso.',
+                    ),
+                    backgroundColor: Color(0xFFF59E0B),
+                  ),
+                );
+                return;
+              }
+
+              final codiceCatastaleNascita =
+                  CodiceCatastaleService.cercaCodiceCatastale(luogoNascita);
+
+              if (codiceCatastaleNascita == null) {
+                final messaggioComuneAmbiguo =
+                    CodiceCatastaleService.messaggioComuneItalianoAmbiguo(
+                      luogoNascita,
+                    );
+
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      messaggioComuneAmbiguo ??
+                          'Luogo/Nazione di nascita non riconosciuto. Correggi il luogo di nascita oppure inserisci il codice fiscale manualmente.',
+                    ),
+                    backgroundColor: const Color(0xFFF59E0B),
+                  ),
+                );
+                return;
+              }
+
+              final codiceFiscaleCalcolato =
+                  CodiceFiscaleService.generaCodiceFiscale(
+                    cognome: cognome,
+                    nome: nome,
+                    dataNascita: dataNascita,
+                    sesso: sesso,
+                    codiceCatastaleNascita: codiceCatastaleNascita,
+                  );
+
+              if (codiceFiscaleCalcolato == null ||
+                  codiceFiscaleCalcolato.isEmpty) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Codice fiscale non calcolabile. Verifica i dati anagrafici inseriti.',
+                    ),
+                    backgroundColor: Color(0xFFF59E0B),
+                  ),
+                );
+                return;
+              }
+
+              setDialogState(() {
+                cfController.text = codiceFiscaleCalcolato;
+                codiceFiscaleModificatoManuale = false;
+              });
+
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Codice fiscale ricalcolato automaticamente.'),
+                  backgroundColor: Color(0xFF16A34A),
+                ),
+              );
+            }
+
             return Dialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -310,25 +388,41 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
                       const SizedBox(height: 16),
 
-                      TextField(
-                        controller: cfController,
-                        decoration:
-                            _inputDecoration(
-                              codiceFiscaleModificatoManuale
-                                  ? 'Codice fiscale presente/manuale'
-                                  : 'Codice fiscale automatico',
-                            ).copyWith(
-                              helperText: codiceFiscaleModificatoManuale
-                                  ? 'Campo già compilato: non viene ricalcolato. Svuotalo per generarlo automaticamente.'
-                                  : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: cfController,
+                              decoration:
+                                  _inputDecoration(
+                                    codiceFiscaleModificatoManuale
+                                        ? 'Codice fiscale presente/manuale'
+                                        : 'Codice fiscale automatico',
+                                  ).copyWith(
+                                    helperText: codiceFiscaleModificatoManuale
+                                        ? 'Campo già compilato: puoi ricalcolarlo con il pulsante a destra.'
+                                        : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
+                                  ),
+                              onChanged: (_) {
+                                setDialogState(() {
+                                  codiceFiscaleModificatoManuale =
+                                      cfController.text.trim().isNotEmpty &&
+                                      cfController.text.trim() != '-';
+                                });
+                              },
                             ),
-                        onChanged: (_) {
-                          setDialogState(() {
-                            codiceFiscaleModificatoManuale =
-                                cfController.text.trim().isNotEmpty &&
-                                cfController.text.trim() != '-';
-                          });
-                        },
+                          ),
+                          const SizedBox(width: 12),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: OutlinedButton.icon(
+                              onPressed: ricalcolaCodiceFiscale,
+                              icon: const Icon(Icons.refresh_rounded),
+                              label: const Text('Ricalcola'),
+                            ),
+                          ),
+                        ],
                       ),
 
                       const SizedBox(height: 16),

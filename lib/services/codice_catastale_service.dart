@@ -1,3 +1,5 @@
+import '../data/codici_catastali_comuni.dart';
+
 class CodiceCatastaleService {
   static const Map<String, String> _codiciCatastali = {
     // Comuni italiani principali
@@ -21,7 +23,7 @@ class CodiceCatastaleService {
     'FIRENZE': 'D612',
     'FOGGIA': 'D643',
     'FORLI': 'D704',
-    'FORLÌ': 'D704',
+    'FORLÃŒ': 'D704',
     'FRASCATI': 'D773',
     'GENOVA': 'D969',
     'GENZANO DI ROMA': 'D972',
@@ -88,7 +90,7 @@ class CodiceCatastaleService {
     'COREA DEL NORD': 'Z214',
     'COREA DEL SUD': 'Z213',
     'REPUBBLICA DI COREA': 'Z213',
-    'COSTA D’AVORIO': 'Z313',
+    'COSTA Dâ€™AVORIO': 'Z313',
     'COSTA D AVORIO': 'Z313',
     "COSTA D'AVORIO": 'Z313',
     'CROAZIA': 'Z149',
@@ -145,7 +147,7 @@ class CodiceCatastaleService {
     'SPAGNA': 'Z131',
     'SRI LANKA': 'Z209',
     'STATI UNITI': 'Z404',
-    'STATI UNITI D’AMERICA': 'Z404',
+    'STATI UNITI Dâ€™AMERICA': 'Z404',
     "STATI UNITI D'AMERICA": 'Z404',
     'STATI UNITI D AMERICA': 'Z404',
     'USA': 'Z404',
@@ -183,12 +185,26 @@ class CodiceCatastaleService {
         .replaceAll('\u00D9', 'U');
   }
 
+  static String normalizzaLuogoArchivioComuni(String valore) {
+    return normalizzaLuogo(valore)
+        .replaceAll("'", ' ')
+        .replaceAll('-', ' ')
+        .replaceAll('.', ' ')
+        .replaceAll(',', ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
   static String? cercaCodiceCatastale(String? luogoNascita) {
     if (luogoNascita == null || luogoNascita.trim().isEmpty) {
       return null;
     }
 
     final luogoNormalizzato = normalizzaLuogo(luogoNascita);
-    return _codiciCatastali[luogoNormalizzato];
+    final luogoArchivioComuni = normalizzaLuogoArchivioComuni(luogoNascita);
+
+    return codiciCatastaliComuniItaliani[luogoArchivioComuni] ??
+        _codiciCatastali[luogoNormalizzato] ??
+        _codiciCatastali[luogoArchivioComuni];
   }
 }

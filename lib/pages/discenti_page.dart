@@ -144,6 +144,26 @@ class _DiscentiPageState extends State<DiscentiPage> {
     });
   }
 
+  String? _sessoDaCodiceFiscale(String? codiceFiscale) {
+    final cf = codiceFiscale?.trim().toUpperCase() ?? '';
+
+    if (cf.length != 16) {
+      return null;
+    }
+
+    final giorno = int.tryParse(cf.substring(9, 11));
+
+    if (giorno == null) {
+      return null;
+    }
+
+    if (giorno > 40) {
+      return 'F';
+    }
+
+    return 'M';
+  }
+
   Future<void> apriDialogDiscente({Discente? discente}) async {
     final nomeController = TextEditingController(text: discente?.nome ?? '');
     final cognomeController = TextEditingController(
@@ -172,6 +192,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
     bool visitaMedicaSvolta = (discente?.visitaMedicaSvolta ?? 0) == 1;
 
     String? sesso = discente?.sesso;
+    if (sesso != 'M' && sesso != 'F') {
+      sesso = _sessoDaCodiceFiscale(discente?.codiceFiscale);
+    }
 
     int? impresaId = discente?.impresaId;
 
@@ -436,10 +459,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                     codiceFiscaleModificatoManuale &&
                                         codiceFiscaleCampoCompilato
                                     ? codiceFiscaleInserito
-                                    : discente != null &&
-                                          codiceFiscaleCampoCompilato
-                                    ? codiceFiscaleInserito
-                                    : codiceFiscaleCalcolato ?? '',
+                                    : codiceFiscaleCalcolato ??
+                                          (codiceFiscaleCampoCompilato
+                                              ? codiceFiscaleInserito
+                                              : ''),
                                 impresaId: impresaId,
 
                                 visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,

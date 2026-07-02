@@ -1214,6 +1214,23 @@ class _RegistroConsensiPrivacyPageState
     return dataA.compareTo(dataB);
   }
 
+  int prioritaRetentionConsensoPrivacy(String stato) {
+    switch (stato) {
+      case 'SCADUTA':
+        return 0;
+      case 'IN SCADENZA':
+        return 1;
+      case 'BLOCCATA':
+        return 2;
+      case 'NON IMPOSTATA':
+        return 3;
+      case 'OK':
+        return 4;
+      default:
+        return 99;
+    }
+  }
+
   List<ConsensoPrivacy> ordinaConsensiPrivacy(List<ConsensoPrivacy> consensi) {
     final ordinati = List<ConsensoPrivacy>.from(consensi);
 
@@ -1264,10 +1281,14 @@ class _RegistroConsensiPrivacyPageState
           risultato = confrontaTestoConsensiPrivacy(a.stato, b.stato);
           break;
         case 'retention':
-          risultato = confrontaTestoConsensiPrivacy(
-            statoRetentionConsensoPrivacy(a),
-            statoRetentionConsensoPrivacy(b),
-          );
+          risultato =
+              prioritaRetentionConsensoPrivacy(
+                statoRetentionConsensoPrivacy(a),
+              ).compareTo(
+                prioritaRetentionConsensoPrivacy(
+                  statoRetentionConsensoPrivacy(b),
+                ),
+              );
           break;
         default:
           risultato = confrontaDateConsensiPrivacy(

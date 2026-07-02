@@ -159,6 +159,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
       text: discente?.codiceFiscale ?? '',
     );
 
+    bool codiceFiscaleModificatoManuale = false;
+
     final dataVisitaController = TextEditingController(
       text: discente?.dataVisitaMedica ?? '',
     );
@@ -286,7 +288,19 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
                       TextField(
                         controller: cfController,
-                        decoration: _inputDecoration('Codice fiscale'),
+                        decoration:
+                            _inputDecoration(
+                              codiceFiscaleModificatoManuale
+                                  ? 'Codice fiscale manuale'
+                                  : 'Codice fiscale automatico',
+                            ).copyWith(
+                              helperText: codiceFiscaleModificatoManuale
+                                  ? 'Modificato manualmente: non verrà sovrascritto automaticamente.'
+                                  : 'Calcolato automaticamente dai dati anagrafici, se disponibili.',
+                            ),
+                        onChanged: (_) {
+                          codiceFiscaleModificatoManuale = true;
+                        },
                       ),
 
                       const SizedBox(height: 16),
@@ -412,8 +426,14 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 sesso: sesso,
                                 codiceCatastaleNascita: codiceCatastaleNascita,
                                 codiceFiscale:
-                                    codiceFiscaleCalcolato ??
-                                    cfController.text.trim().toUpperCase(),
+                                    codiceFiscaleModificatoManuale ||
+                                        (discente != null &&
+                                            cfController.text.trim().isNotEmpty)
+                                    ? cfController.text.trim().toUpperCase()
+                                    : codiceFiscaleCalcolato ??
+                                          cfController.text
+                                              .trim()
+                                              .toUpperCase(),
                                 impresaId: impresaId,
 
                                 visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,

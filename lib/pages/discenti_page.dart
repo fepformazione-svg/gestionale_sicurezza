@@ -164,6 +164,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
     bool visitaMedicaSvolta = (discente?.visitaMedicaSvolta ?? 0) == 1;
 
+    String? sesso = discente?.sesso;
+
     int? impresaId = discente?.impresaId;
 
     final salvato = await showDialog<bool>(
@@ -241,6 +243,34 @@ class _DiscentiPageState extends State<DiscentiPage> {
                             ),
                           ),
                         ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      DropdownButtonFormField<String?>(
+                        initialValue: sesso,
+                        decoration: _inputDecoration(
+                          'Sesso per codice fiscale',
+                        ),
+                        items: const [
+                          DropdownMenuItem<String?>(
+                            value: null,
+                            child: Text('Non specificato'),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: 'M',
+                            child: Text('Maschio'),
+                          ),
+                          DropdownMenuItem<String?>(
+                            value: 'F',
+                            child: Text('Femmina'),
+                          ),
+                        ],
+                        onChanged: (value) {
+                          setDialogState(() {
+                            sesso = value;
+                          });
+                        },
                       ),
 
                       const SizedBox(height: 16),
@@ -339,6 +369,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 cognome: cognome,
                                 luogoNascita: luogoController.text.trim(),
                                 dataNascita: dataController.text.trim(),
+                                sesso: sesso,
+                                codiceCatastaleNascita:
+                                    discente?.codiceCatastaleNascita,
                                 codiceFiscale: cfController.text.trim(),
                                 impresaId: impresaId,
 

@@ -30,6 +30,7 @@ class CodiceCatastaleService {
     'PERUGIA': 'G478',
     'PESCARA': 'G482',
     'PIACENZA': 'G535',
+    'POLI': 'G784',
     'PRATO': 'G999',
     'RAVENNA': 'H199',
     'REGGIO CALABRIA': 'H224',
@@ -44,6 +45,7 @@ class CodiceCatastaleService {
     'TRENTO': 'L378',
     'TRIESTE': 'L424',
     'VENEZIA': 'L736',
+    'VELLETRI': 'L719',
     'VERONA': 'L781',
     'VICENZA': 'L840',
 

@@ -417,6 +417,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 return;
                               }
 
+                              final codiceFiscaleInserito = cfController.text
+                                  .trim()
+                                  .toUpperCase();
+                              final codiceFiscaleCampoCompilato =
+                                  codiceFiscaleInserito.isNotEmpty &&
+                                  codiceFiscaleInserito != '-';
+
                               final nuovoDiscente = Discente(
                                 id: discente?.id,
                                 nome: nome,
@@ -426,14 +433,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 sesso: sesso,
                                 codiceCatastaleNascita: codiceCatastaleNascita,
                                 codiceFiscale:
-                                    codiceFiscaleModificatoManuale ||
-                                        (discente != null &&
-                                            cfController.text.trim().isNotEmpty)
-                                    ? cfController.text.trim().toUpperCase()
-                                    : codiceFiscaleCalcolato ??
-                                          cfController.text
-                                              .trim()
-                                              .toUpperCase(),
+                                    codiceFiscaleModificatoManuale &&
+                                        codiceFiscaleCampoCompilato
+                                    ? codiceFiscaleInserito
+                                    : discente != null &&
+                                          codiceFiscaleCampoCompilato
+                                    ? codiceFiscaleInserito
+                                    : codiceFiscaleCalcolato ?? '',
                                 impresaId: impresaId,
 
                                 visitaMedicaSvolta: visitaMedicaSvolta ? 1 : 0,

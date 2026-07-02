@@ -15,6 +15,7 @@ class CodiceCatastaleService {
     'BELGIO': 'Z103',
     'BOLIVIA': 'Z601',
     'BOSNIA-ERZEGOVINA': 'Z153',
+    'BOSNIA ERZEGOVINA': 'Z153',
     'BRASILE': 'Z602',
     'BULGARIA': 'Z104',
     'CAMERUN': 'Z306',
@@ -27,6 +28,7 @@ class CodiceCatastaleService {
     'COREA DEL SUD': 'Z213',
     'REPUBBLICA DI COREA': 'Z213',
     'COSTA D’AVORIO': 'Z313',
+    'COSTA D AVORIO': 'Z313',
     "COSTA D'AVORIO": 'Z313',
     'CROAZIA': 'Z149',
     'DANIMARCA': 'Z107',
@@ -84,6 +86,7 @@ class CodiceCatastaleService {
     'STATI UNITI': 'Z404',
     'STATI UNITI D’AMERICA': 'Z404',
     "STATI UNITI D'AMERICA": 'Z404',
+    'STATI UNITI D AMERICA': 'Z404',
     'USA': 'Z404',
     'SUD AFRICA': 'Z347',
     'SVEZIA': 'Z132',
@@ -101,6 +104,15 @@ class CodiceCatastaleService {
     return valore
         .trim()
         .toUpperCase()
+        .replaceAll('\u2019', "'")
+        .replaceAll('\u2018', "'")
+        .replaceAll('\u0060', "'")
+        .replaceAll('\u00B4', "'")
+        .replaceAll('\u2010', '-')
+        .replaceAll('\u2011', '-')
+        .replaceAll('\u2012', '-')
+        .replaceAll('\u2013', '-')
+        .replaceAll('\u2014', '-')
         .replaceAll(RegExp(r'\s+'), ' ')
         .replaceAll('\u00C0', 'A')
         .replaceAll('\u00C8', 'E')

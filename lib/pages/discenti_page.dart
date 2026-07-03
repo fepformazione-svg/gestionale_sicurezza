@@ -296,9 +296,6 @@ class _DiscentiPageState extends State<DiscentiPage> {
       text: discente?.codiceFiscale ?? '',
     );
 
-    bool codiceFiscaleModificatoManuale =
-        cfController.text.trim().isNotEmpty && cfController.text.trim() != '-';
-
     final dataVisitaController = TextEditingController(
       text: discente?.dataVisitaMedica ?? '',
     );
@@ -388,7 +385,6 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
               setDialogState(() {
                 cfController.text = codiceFiscaleCalcolato;
-                codiceFiscaleModificatoManuale = false;
               });
 
               ScaffoldMessenger.of(context).showSnackBar(
@@ -526,16 +522,51 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                   );
                                 }),
                               ],
-                              decoration:
-                                  _inputDecoration(
-                                    codiceFiscaleModificatoManuale
-                                        ? 'Codice fiscale presente/manuale'
-                                        : 'Codice fiscale automatico',
-                                  ).copyWith(
-                                    helperText: codiceFiscaleModificatoManuale
-                                        ? 'Manuale: inserisci 16 caratteri. Formato e carattere finale vengono verificati.'
-                                        : 'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.',
-                                  ),
+                              decoration: (() {
+                                final codiceFiscaleInserito = cfController.text
+                                    .trim()
+                                    .toUpperCase();
+                                final codiceFiscaleCampoCompilato =
+                                    codiceFiscaleInserito.isNotEmpty &&
+                                    codiceFiscaleInserito != '-';
+                                final codiceFiscaleValido =
+                                    codiceFiscaleCampoCompilato &&
+                                    _codiceFiscaleManualeValido(
+                                      codiceFiscaleInserito,
+                                    ) &&
+                                    _carattereControlloCodiceFiscaleValido(
+                                      codiceFiscaleInserito,
+                                    );
+
+                                return _inputDecoration(
+                                  codiceFiscaleCampoCompilato
+                                      ? 'Codice fiscale presente/manuale'
+                                      : 'Codice fiscale automatico',
+                                ).copyWith(
+                                  helperText: codiceFiscaleCampoCompilato
+                                      ? codiceFiscaleValido
+                                            ? 'Manuale valido: formato e carattere finale verificati.'
+                                            : 'Manuale non valido: controlla formato e carattere finale.'
+                                      : 'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.',
+                                  helperStyle: codiceFiscaleCampoCompilato
+                                      ? TextStyle(
+                                          color: codiceFiscaleValido
+                                              ? const Color(0xFF16A34A)
+                                              : const Color(0xFFDC2626),
+                                        )
+                                      : null,
+                                  suffixIcon: codiceFiscaleCampoCompilato
+                                      ? Icon(
+                                          codiceFiscaleValido
+                                              ? Icons.check_circle
+                                              : Icons.error,
+                                          color: codiceFiscaleValido
+                                              ? const Color(0xFF16A34A)
+                                              : const Color(0xFFDC2626),
+                                        )
+                                      : null,
+                                );
+                              })(),
                               onChanged: (_) {
                                 final codiceFiscaleInserito = cfController.text
                                     .trim()
@@ -547,10 +578,6 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                     );
 
                                 setDialogState(() {
-                                  codiceFiscaleModificatoManuale =
-                                      codiceFiscaleInserito.isNotEmpty &&
-                                      codiceFiscaleInserito != '-';
-
                                   if (_codiceFiscaleManualeValido(
                                         codiceFiscaleInserito,
                                       ) &&

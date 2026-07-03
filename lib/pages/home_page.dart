@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/assistente_operativo_item.dart';
+import '../services/app_database.dart';
+import '../services/assistente_operativo_service.dart';
 import '../services/database_service.dart';
 import '../services/backup_service.dart';
 import '../services/sessione_utente_service.dart';
@@ -122,6 +125,7 @@ class DashboardPage extends StatefulWidget {
 
 class _DashboardPageState extends State<DashboardPage> {
   bool caricamento = true;
+  List<AssistenteOperativoItem> assistenteItems = [];
 
   Map<String, int> kpi = {
     'prenotazioni': 0,
@@ -205,6 +209,10 @@ class _DashboardPageState extends State<DashboardPage> {
     final chiuse = await DatabaseService.instance.contaPrenotazioniChiuse();
     final totale = await DatabaseService.instance.contaPrenotazioniTotali();
 
+    final assistenteService = AssistenteOperativoService(AppDatabase.instance);
+    final riepilogoAssistente = await assistenteService
+        .generaRiepilogoOperativo();
+
     if (!mounted) return;
 
     setState(() {
@@ -214,8 +222,248 @@ class _DashboardPageState extends State<DashboardPage> {
         'prenotazioni_aperte': aperte,
         'prenotazioni_chiuse': chiuse,
       };
+      assistenteItems = riepilogoAssistente;
       caricamento = false;
     });
+  }
+
+  Color colorePriorita(PrioritaAssistenteOperativo priorita) {
+    switch (priorita) {
+      case PrioritaAssistenteOperativo.alta:
+        return const Color(0xFFDC2626);
+      case PrioritaAssistenteOperativo.media:
+        return const Color(0xFFF59E0B);
+      case PrioritaAssistenteOperativo.bassa:
+        return const Color(0xFF2563EB);
+    }
+  }
+
+  IconData iconaPriorita(PrioritaAssistenteOperativo priorita) {
+    switch (priorita) {
+      case PrioritaAssistenteOperativo.alta:
+        return Icons.priority_high;
+      case PrioritaAssistenteOperativo.media:
+        return Icons.warning_amber;
+      case PrioritaAssistenteOperativo.bassa:
+        return Icons.info_outline;
+    }
+  }
+
+  void apriModuloAssistente(
+    BuildContext context,
+    ModuloAssistenteOperativo modulo,
+  ) {
+    final homeState = context.findAncestorStateOfType<_HomePageState>();
+
+    if (homeState == null) return;
+
+    homeState.setState(() {
+      switch (modulo) {
+        case ModuloAssistenteOperativo.prenotazioni:
+          homeState.filtroPrenotazioni = 'aperte';
+          homeState.selectedIndex = 1;
+          break;
+        case ModuloAssistenteOperativo.diario:
+          homeState.diarioSoloDaFatturare = true;
+          homeState.selectedIndex = 2;
+          break;
+        case ModuloAssistenteOperativo.scadenze:
+          homeState.filtroScadenze = 'scaduti';
+          homeState.selectedIndex = 3;
+          break;
+        case ModuloAssistenteOperativo.discenti:
+          homeState.selectedIndex = 4;
+          break;
+        case ModuloAssistenteOperativo.imprese:
+          homeState.selectedIndex = 5;
+          break;
+        case ModuloAssistenteOperativo.dashboard:
+        case ModuloAssistenteOperativo.consensiPrivacy:
+        case ModuloAssistenteOperativo.visiteMediche:
+          homeState.selectedIndex = 0;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text(
+                'Modulo non ancora collegato alla navigazione rapida.',
+              ),
+            ),
+          );
+          break;
+      }
+    });
+  }
+
+  Widget riquadroAssistenteOperativo() {
+    return Card(
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEEF2FF),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.assistant_direction_outlined,
+                    color: Color(0xFF4F46E5),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Assistente operativo',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Controllo locale delle priorità del gestionale',
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Color(0xFF6B7280),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            if (assistenteItems.isEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.green.shade50,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.green.shade100),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green.shade700,
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Nessuna criticità operativa rilevata.',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF166534),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              Column(
+                children: assistenteItems.map((item) {
+                  final colore = colorePriorita(item.priorita);
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(14),
+                      onTap: () => apriModuloAssistente(context, item.modulo),
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF9FAFB),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: colore.withValues(alpha: 0.12),
+                              child: Icon(
+                                iconaPriorita(item.priorita),
+                                color: colore,
+                                size: 22,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.titolo,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF111827),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    item.descrizione,
+                                    style: const TextStyle(
+                                      color: Color(0xFF4B5563),
+                                    ),
+                                  ),
+                                  if (item.azioneSuggerita != null) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      item.azioneSuggerita!,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6B7280),
+                                      ),
+                                    ),
+                                  ],
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colore.withValues(alpha: 0.10),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: Text(
+                                item.conteggio.toString(),
+                                style: TextStyle(
+                                  color: colore,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   void apriPagina(BuildContext context, int index) {
@@ -423,6 +671,8 @@ class _DashboardPageState extends State<DashboardPage> {
               ),
             ],
           ),
+          const SizedBox(height: 24),
+          riquadroAssistenteOperativo(),
         ],
       ),
     );

@@ -44,6 +44,42 @@ const double discentiTableWidth =
     colImpresa +
     colAzioni;
 
+bool _dataNascitaValida(String valore) {
+  final testo = valore.trim();
+
+  final match = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(testo);
+  if (match == null) {
+    return false;
+  }
+
+  final giorno = int.tryParse(match.group(1)!);
+  final mese = int.tryParse(match.group(2)!);
+  final anno = int.tryParse(match.group(3)!);
+
+  if (giorno == null || mese == null || anno == null) {
+    return false;
+  }
+
+  final oggi = DateTime.now();
+  if (anno < 1900 || anno > oggi.year) {
+    return false;
+  }
+
+  final data = DateTime(anno, mese, giorno);
+
+  final componentiCoerenti =
+      data.day == giorno && data.month == mese && data.year == anno;
+
+  if (!componentiCoerenti) {
+    return false;
+  }
+
+  final oggiSoloData = DateTime(oggi.year, oggi.month, oggi.day);
+  final dataSoloData = DateTime(data.year, data.month, data.day);
+
+  return !dataSoloData.isAfter(oggiSoloData);
+}
+
 class DiscentiPage extends StatefulWidget {
   final String globalSearch;
 
@@ -333,6 +369,18 @@ class _DiscentiPageState extends State<DiscentiPage> {
                   const SnackBar(
                     content: Text(
                       'Per ricalcolare il codice fiscale compila nome, cognome, luogo di nascita, data di nascita e sesso.',
+                    ),
+                    backgroundColor: Color(0xFFF59E0B),
+                  ),
+                );
+                return;
+              }
+
+              if (!_dataNascitaValida(dataNascita)) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'Data di nascita non valida. Inserire una data reale nel formato gg/mm/aaaa.',
                     ),
                     backgroundColor: Color(0xFFF59E0B),
                   ),
@@ -677,21 +725,6 @@ class _DiscentiPageState extends State<DiscentiPage> {
                               final luogoNascita = luogoController.text.trim();
                               final dataNascita = dataController.text.trim();
 
-                              final codiceCatastaleNascita =
-                                  CodiceCatastaleService.cercaCodiceCatastale(
-                                    luogoNascita,
-                                  );
-
-                              final codiceFiscaleCalcolato =
-                                  CodiceFiscaleService.generaCodiceFiscale(
-                                    cognome: cognome,
-                                    nome: nome,
-                                    dataNascita: dataNascita,
-                                    sesso: sesso,
-                                    codiceCatastaleNascita:
-                                        codiceCatastaleNascita,
-                                  );
-
                               if (nome.isEmpty || cognome.isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
@@ -702,6 +735,23 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 );
                                 return;
                               }
+
+                              if (!_dataNascitaValida(dataNascita)) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Data di nascita non valida. Correggere il formato gg/mm/aaaa prima di salvare.',
+                                    ),
+                                    backgroundColor: Color(0xFFF59E0B),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              final codiceCatastaleNascita =
+                                  CodiceCatastaleService.cercaCodiceCatastale(
+                                    luogoNascita,
+                                  );
 
                               if (luogoNascita.isNotEmpty &&
                                   codiceCatastaleNascita == null &&
@@ -722,6 +772,16 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 );
                                 return;
                               }
+
+                              final codiceFiscaleCalcolato =
+                                  CodiceFiscaleService.generaCodiceFiscale(
+                                    cognome: cognome,
+                                    nome: nome,
+                                    dataNascita: dataNascita,
+                                    sesso: sesso,
+                                    codiceCatastaleNascita:
+                                        codiceCatastaleNascita,
+                                  );
 
                               final codiceFiscaleInserito = cfController.text
                                   .trim()

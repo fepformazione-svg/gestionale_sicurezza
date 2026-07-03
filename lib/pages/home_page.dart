@@ -317,6 +317,53 @@ class _DashboardPageState extends State<DashboardPage> {
   }
 
   Widget riquadroAssistenteOperativo() {
+    String testoCosaFareOggi() {
+      if (assistenteItems.isEmpty) {
+        return 'Nessuna attività urgente: il gestionale non segnala interventi immediati.';
+      }
+
+      final dettagli = assistenteItems
+          .map((item) {
+            final conteggio = item.conteggio;
+            final titolo = item.titolo.toLowerCase();
+
+            if (titolo.contains('scadenze scadute')) {
+              return conteggio == 1
+                  ? '1 scadenza scaduta'
+                  : '$conteggio scadenze scadute';
+            }
+
+            if (titolo.contains('scadenze in scadenza')) {
+              return conteggio == 1
+                  ? '1 scadenza in scadenza'
+                  : '$conteggio scadenze in scadenza';
+            }
+
+            if (titolo.contains('visite mediche scadute')) {
+              return conteggio == 1
+                  ? '1 visita medica scaduta'
+                  : '$conteggio visite mediche scadute';
+            }
+
+            if (titolo.contains('visite mediche in scadenza')) {
+              return conteggio == 1
+                  ? '1 visita medica in scadenza'
+                  : '$conteggio visite mediche in scadenza';
+            }
+
+            if (titolo.contains('pratiche da fatturare')) {
+              return conteggio == 1
+                  ? '1 pratica da fatturare'
+                  : '$conteggio pratiche da fatturare';
+            }
+
+            return '$conteggio $titolo';
+          })
+          .join(', ');
+
+      return 'Oggi: $dettagli.';
+    }
+
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -427,9 +474,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          assistenteItems.isEmpty
-                              ? 'Nessuna attività urgente: il gestionale non segnala interventi immediati.'
-                              : 'Hai ${assistenteItems.length} priorità operative da gestire: controlla prima scaduti e attività in scadenza.',
+                          testoCosaFareOggi(),
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,

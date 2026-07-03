@@ -356,6 +356,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           color: Color(0xFF111827),
                         ),
                       ),
+
                       SizedBox(height: 4),
                       Text(
                         'Controllo locale delle priorità del gestionale',
@@ -369,7 +370,33 @@ class _DashboardPageState extends State<DashboardPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 18),
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.blueGrey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.blueGrey.shade100),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.sort, size: 18, color: Colors.blueGrey.shade700),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Ordine operativo: scaduti → in scadenza → da gestire',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.blueGrey.shade800,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 14),
             if (assistenteItems.isEmpty)
               Container(
                 width: double.infinity,

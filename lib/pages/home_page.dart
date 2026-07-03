@@ -251,6 +251,25 @@ class _DashboardPageState extends State<DashboardPage> {
     }
   }
 
+  String messaggioPrioritaOperativa() {
+    final haPrioritaAlta = assistenteItems.any(
+      (item) => item.priorita == PrioritaAssistenteOperativo.alta,
+    );
+    final haPrioritaMedia = assistenteItems.any(
+      (item) => item.priorita == PrioritaAssistenteOperativo.media,
+    );
+
+    if (haPrioritaAlta) {
+      return 'Priorit\u00E0 operativa: gestisci prima le criticit\u00E0 ad alta priorit\u00E0, poi pianifica le attivit\u00E0 in scadenza.';
+    }
+
+    if (haPrioritaMedia) {
+      return 'Priorit\u00E0 operativa: pianifica le attivit\u00E0 in scadenza e mantieni aggiornata la situazione.';
+    }
+
+    return 'Priorit\u00E0 operativa: controlla le attivit\u00E0 segnalate e mantieni il gestionale aggiornato.';
+  }
+
   void apriModuloAssistente(
     BuildContext context,
     ModuloAssistenteOperativo modulo,
@@ -381,88 +400,121 @@ class _DashboardPageState extends State<DashboardPage> {
               )
             else
               Column(
-                children: assistenteItems.map((item) {
-                  final colore = colorePriorita(item.priorita);
-
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: InkWell(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFEEF2FF),
                       borderRadius: BorderRadius.circular(14),
-                      onTap: () => apriModuloAssistente(context, item.modulo),
-                      child: Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF9FAFB),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: Colors.grey.shade200),
+                      border: Border.all(color: const Color(0xFFC7D2FE)),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Icon(
+                          Icons.auto_awesome,
+                          color: Color(0xFF4F46E5),
+                          size: 20,
                         ),
-                        child: Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 20,
-                              backgroundColor: colore.withValues(alpha: 0.12),
-                              child: Icon(
-                                iconaPriorita(item.priorita),
-                                color: colore,
-                                size: 22,
-                              ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            messaggioPrioritaOperativa(),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF312E81),
                             ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    item.titolo,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF111827),
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    item.descrizione,
-                                    style: const TextStyle(
-                                      color: Color(0xFF4B5563),
-                                    ),
-                                  ),
-                                  if (item.azioneSuggerita != null) ...[
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      item.azioneSuggerita!,
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Color(0xFF6B7280),
-                                      ),
-                                    ),
-                                  ],
-                                ],
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: colore.withValues(alpha: 0.10),
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Text(
-                                item.conteggio.toString(),
-                                style: TextStyle(
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  ...assistenteItems.map((item) {
+                    final colore = colorePriorita(item.priorita);
+
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => apriModuloAssistente(context, item.modulo),
+                        child: Container(
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF9FAFB),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.grey.shade200),
+                          ),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 20,
+                                backgroundColor: colore.withValues(alpha: 0.12),
+                                child: Icon(
+                                  iconaPriorita(item.priorita),
                                   color: colore,
-                                  fontWeight: FontWeight.bold,
+                                  size: 22,
                                 ),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.titolo,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF111827),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      item.descrizione,
+                                      style: const TextStyle(
+                                        color: Color(0xFF4B5563),
+                                      ),
+                                    ),
+                                    if (item.azioneSuggerita != null) ...[
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        item.azioneSuggerita!,
+                                        style: const TextStyle(
+                                          fontSize: 12,
+                                          color: Color(0xFF6B7280),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: colore.withValues(alpha: 0.10),
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                                child: Text(
+                                  item.conteggio.toString(),
+                                  style: TextStyle(
+                                    color: colore,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
+                    );
+                  }),
+                ],
               ),
           ],
         ),

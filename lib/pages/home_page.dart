@@ -364,6 +364,36 @@ class _DashboardPageState extends State<DashboardPage> {
       return 'Oggi: $dettagli.';
     }
 
+    String testoPrioritaMassima() {
+      if (assistenteItems.isEmpty) {
+        return '';
+      }
+
+      final titolo = assistenteItems.first.titolo.toLowerCase();
+
+      if (titolo.contains('scadenze scadute')) {
+        return 'Priorità massima: scadenze scadute.';
+      }
+
+      if (titolo.contains('visite mediche scadute')) {
+        return 'Priorità massima: visite mediche scadute.';
+      }
+
+      if (titolo.contains('pratiche da fatturare')) {
+        return 'Priorità massima: pratiche da fatturare.';
+      }
+
+      if (titolo.contains('scadenze in scadenza')) {
+        return 'Priorità massima: scadenze in scadenza.';
+      }
+
+      if (titolo.contains('visite mediche in scadenza')) {
+        return 'Priorità massima: visite mediche in scadenza.';
+      }
+
+      return 'Priorità massima: ${assistenteItems.first.titolo.toLowerCase()}.';
+    }
+
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -473,6 +503,17 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
+                        if (assistenteItems.isNotEmpty) ...[
+                          Text(
+                            testoPrioritaMassima(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF92400E),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                        ],
                         Text(
                           testoCosaFareOggi(),
                           style: const TextStyle(

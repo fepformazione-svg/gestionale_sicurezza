@@ -342,6 +342,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
     bool visitaMedicaSvolta = (discente?.visitaMedicaSvolta ?? 0) == 1;
 
+    bool dataNascitaNonValida = false;
+
     String? sesso = discente?.sesso;
     if (sesso != 'M' && sesso != 'F') {
       sesso = _sessoDaCodiceFiscale(discente?.codiceFiscale);
@@ -377,6 +379,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
               }
 
               if (!_dataNascitaValida(dataNascita)) {
+                setDialogState(() {
+                  dataNascitaNonValida = true;
+                });
+
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text(
@@ -387,6 +393,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                 );
                 return;
               }
+
+              setDialogState(() {
+                dataNascitaNonValida = false;
+              });
 
               final codiceCatastaleNascita =
                   CodiceCatastaleService.cercaCodiceCatastale(luogoNascita);
@@ -513,7 +523,28 @@ class _DiscentiPageState extends State<DiscentiPage> {
                               controller: dataController,
                               keyboardType: TextInputType.number,
                               inputFormatters: [DataTextInputFormatter()],
-                              decoration: _inputDecoration('Data nascita'),
+                              decoration: _inputDecoration('Data nascita').copyWith(
+                                helperText: dataNascitaNonValida
+                                    ? 'Data non valida: usa gg/mm/aaaa e una data reale.'
+                                    : 'Formato gg/mm/aaaa',
+                                helperStyle: dataNascitaNonValida
+                                    ? const TextStyle(color: Color(0xFFDC2626))
+                                    : null,
+                                suffixIcon: dataNascitaNonValida
+                                    ? const Icon(
+                                        Icons.error,
+                                        color: Color(0xFFDC2626),
+                                      )
+                                    : null,
+                              ),
+                              onChanged: (value) {
+                                setDialogState(() {
+                                  final testo = value.trim();
+                                  dataNascitaNonValida =
+                                      testo.isNotEmpty &&
+                                      !_dataNascitaValida(testo);
+                                });
+                              },
                             ),
                           ),
                         ],
@@ -737,6 +768,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                               }
 
                               if (!_dataNascitaValida(dataNascita)) {
+                                setDialogState(() {
+                                  dataNascitaNonValida = true;
+                                });
+
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
                                     content: Text(
@@ -747,6 +782,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 );
                                 return;
                               }
+
+                              setDialogState(() {
+                                dataNascitaNonValida = false;
+                              });
 
                               final codiceCatastaleNascita =
                                   CodiceCatastaleService.cercaCodiceCatastale(

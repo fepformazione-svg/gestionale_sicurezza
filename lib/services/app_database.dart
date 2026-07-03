@@ -1515,6 +1515,119 @@ updated_at TEXT NOT NULL
     );
   }
 
+  Future<int> contaScadenzeScaduteAssistente() async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM scadenze
+      WHERE UPPER(COALESCE(stato, '')) = 'SCADUTO'
+    ''');
+
+    return _leggiConteggio(result);
+  }
+
+  Future<int> contaScadenzeInScadenzaAssistente() async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM scadenze
+      WHERE UPPER(COALESCE(stato, '')) = 'IN SCADENZA'
+    ''');
+
+    return _leggiConteggio(result);
+  }
+
+  Future<int> contaPraticheDaFatturareAssistente() async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM diario
+      WHERE COALESCE(da_fatturare, 0) = 1
+    ''');
+
+    return _leggiConteggio(result);
+  }
+
+  Future<int> contaPrenotazioniAperteAssistente() async {
+    final db = await database;
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*) AS totale
+      FROM prenotazioni
+      WHERE COALESCE(aperto, 0) = 1
+    ''');
+
+    return _leggiConteggio(result);
+  }
+
+  Future<int> contaVisiteMedicheScaduteAssistente() async {
+    final visite = await getVisiteMediche();
+    final oggi = DateTime.now();
+
+    return visite.where((visita) {
+      final dataScadenza = _parseDataItaliana(visita['data_scadenza']);
+      if (dataScadenza == null) return false;
+
+      return dataScadenza.isBefore(DateTime(oggi.year, oggi.month, oggi.day));
+    }).length;
+  }
+
+  Future<int> contaVisiteMedicheInScadenzaAssistente() async {
+    final visite = await getVisiteMediche();
+    final oggi = DateTime.now();
+    final limite = DateTime(
+      oggi.year,
+      oggi.month,
+      oggi.day,
+    ).add(const Duration(days: 60));
+
+    return visite.where((visita) {
+      final dataScadenza = _parseDataItaliana(visita['data_scadenza']);
+      if (dataScadenza == null) return false;
+
+      final oggiSenzaOra = DateTime(oggi.year, oggi.month, oggi.day);
+
+      return !dataScadenza.isBefore(oggiSenzaOra) &&
+          !dataScadenza.isAfter(limite);
+    }).length;
+  }
+
+  int _leggiConteggio(List<Map<String, Object?>> result) {
+    if (result.isEmpty) return 0;
+
+    final valore = result.first['totale'];
+    if (valore is int) return valore;
+
+    return int.tryParse('$valore') ?? 0;
+  }
+
+  DateTime? _parseDataItaliana(Object? valore) {
+    if (valore == null) return null;
+
+    final testo = valore.toString().trim();
+    if (testo.isEmpty) return null;
+
+    final parti = testo.split('/');
+    if (parti.length != 3) return DateTime.tryParse(testo);
+
+    final giorno = int.tryParse(parti[0]);
+    final mese = int.tryParse(parti[1]);
+    final anno = int.tryParse(parti[2]);
+
+    if (giorno == null || mese == null || anno == null) return null;
+
+    final data = DateTime(anno, mese, giorno);
+
+    if (data.day != giorno || data.month != mese || data.year != anno) {
+      return null;
+    }
+
+    return data;
+  }
+
   Future<List<Map<String, dynamic>>> getVisiteMediche() async {
     final db = await database;
 

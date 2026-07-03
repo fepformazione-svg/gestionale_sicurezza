@@ -1,71 +1,6 @@
 import '../data/codici_catastali_comuni.dart';
 
 class CodiceCatastaleService {
-  static const Map<String, String> _codiciCatastali = {
-    // Comuni italiani principali
-    'ALBANO LAZIALE': 'A132',
-    'ANCONA': 'A271',
-    'ANZIO': 'A323',
-    'AREZZO': 'A390',
-    'ARICCIA': 'A401',
-    'BARI': 'A662',
-    'BERGAMO': 'A794',
-    'BOLOGNA': 'A944',
-    'BOLZANO': 'A952',
-    'BRESCIA': 'B157',
-    'CAGLIARI': 'B354',
-    'CASTEL GANDOLFO': 'C116',
-    'CATANIA': 'C351',
-    'CIAMPINO': 'M272',
-    'CIVITAVECCHIA': 'C773',
-    'FERRARA': 'D548',
-    'FIUMICINO': 'M297',
-    'FIRENZE': 'D612',
-    'FOGGIA': 'D643',
-    'FORLI': 'D704',
-    'FRASCATI': 'D773',
-    'GENOVA': 'D969',
-    'GENZANO DI ROMA': 'D972',
-    'GROTTAFERRATA': 'E204',
-    'GUIDONIA MONTECELIO': 'E263',
-    'LANUVIO': 'C767',
-    'LATINA': 'E472',
-    'LIVORNO': 'E625',
-    'MESSINA': 'F158',
-    'MILANO': 'F205',
-    'MODENA': 'F257',
-    'MONZA': 'F704',
-    'NAPOLI': 'F839',
-    'NETTUNO': 'F880',
-    'NOVARA': 'F952',
-    'PADOVA': 'G224',
-    'PALERMO': 'G273',
-    'PARMA': 'G337',
-    'PERUGIA': 'G478',
-    'PESCARA': 'G482',
-    'PIACENZA': 'G535',
-    'POLI': 'G784',
-    'POMEZIA': 'G811',
-    'PRATO': 'G999',
-    'RAVENNA': 'H199',
-    'REGGIO CALABRIA': 'H224',
-    'REGGIO EMILIA': 'H223',
-    'RIMINI': 'H294',
-    'ROMA': 'H501',
-    'SALERNO': 'H703',
-    'SASSARI': 'I452',
-    'SIRACUSA': 'I754',
-    'TERNI': 'L117',
-    'TIVOLI': 'L182',
-    'TORINO': 'L219',
-    'TRENTO': 'L378',
-    'TRIESTE': 'L424',
-    'VENEZIA': 'L736',
-    'VELLETRI': 'L719',
-    'VERONA': 'L781',
-    'VICENZA': 'L840',
-  };
-
   static const Map<String, String> _codiciCatastaliStatiEsteri = {
     'AFGHANISTAN': 'Z200',
     'ALBANIA': 'Z100',
@@ -281,7 +216,6 @@ class CodiceCatastaleService {
       return codiceStatoEstero;
     }
 
-    return _codiciCatastali[luogoNormalizzato] ??
-        _codiciCatastali[luogoArchivioComuni];
+    return null;
   }
 }

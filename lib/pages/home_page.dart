@@ -18,6 +18,7 @@ import 'discenti_page.dart';
 import 'imprese_page.dart';
 import 'corsi_page.dart';
 import 'prezzario_page.dart';
+import 'visite_mediche_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -50,6 +51,7 @@ class _HomePageState extends State<HomePage> {
     const ImpresePage(),
     const CorsiPage(),
     const PrezzarioPage(),
+    const VisiteMedichePage(),
   ];
 
   void aggiornaRicercaGlobale(String value) {
@@ -277,9 +279,11 @@ class _DashboardPageState extends State<DashboardPage> {
         case ModuloAssistenteOperativo.imprese:
           homeState.selectedIndex = 5;
           break;
+        case ModuloAssistenteOperativo.visiteMediche:
+          homeState.selectedIndex = 8;
+          break;
         case ModuloAssistenteOperativo.dashboard:
         case ModuloAssistenteOperativo.consensiPrivacy:
-        case ModuloAssistenteOperativo.visiteMediche:
           homeState.selectedIndex = 0;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(

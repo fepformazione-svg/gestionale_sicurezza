@@ -43,6 +43,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
     try {
       final dati = await DatabaseService.instance.caricaScadenze();
 
+      if (!mounted) return;
+
       setState(() {
         _scadenze = dati;
         _caricamento = false;
@@ -50,16 +52,16 @@ class _ScadenzePageState extends State<ScadenzePage> {
     } catch (e) {
       debugPrint('ERRORE CARICA SCADENZE: $e');
 
+      if (!mounted) return;
+
       setState(() {
         _scadenze = [];
         _caricamento = false;
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Errore scadenze: $e')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Errore scadenze: $e')));
     }
   }
 

@@ -42,6 +42,8 @@ class _ImpresePageState extends State<ImpresePage> {
   Future<void> caricaImprese() async {
     final dati = await DatabaseService.instance.getImprese();
 
+    if (!mounted) return;
+
     setState(() {
       imprese = dati;
       impreseFiltrate = dati;

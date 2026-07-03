@@ -88,6 +88,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
     final datiDiscenti = await DatabaseService.instance.getDiscenti();
     final datiImprese = await DatabaseService.instance.getImprese();
 
+    if (!mounted) return;
+
     setState(() {
       discenti = datiDiscenti;
       discentiFiltrati = datiDiscenti;

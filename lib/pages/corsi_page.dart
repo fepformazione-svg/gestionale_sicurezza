@@ -40,6 +40,8 @@ class _CorsiPageState extends State<CorsiPage> {
   Future<void> caricaCorsi() async {
     final dati = await DatabaseService.instance.getCorsi();
 
+    if (!mounted) return;
+
     setState(() {
       corsi = dati;
       corsiFiltrati = dati;

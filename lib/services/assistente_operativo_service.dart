@@ -102,7 +102,84 @@ class AssistenteOperativoService {
       ),
     );
 
+    _ordinaPerPrioritaOperativa(items);
+
     return items;
+  }
+
+  void _ordinaPerPrioritaOperativa(List<AssistenteOperativoItem> items) {
+    items.sort((a, b) {
+      final confrontoPeso = _pesoPrioritaOperativa(
+        a,
+      ).compareTo(_pesoPrioritaOperativa(b));
+
+      if (confrontoPeso != 0) {
+        return confrontoPeso;
+      }
+
+      final confrontoConteggio = b.conteggio.compareTo(a.conteggio);
+
+      if (confrontoConteggio != 0) {
+        return confrontoConteggio;
+      }
+
+      return a.titolo.compareTo(b.titolo);
+    });
+  }
+
+  int _pesoPrioritaOperativa(AssistenteOperativoItem item) {
+    switch (item.priorita) {
+      case PrioritaAssistenteOperativo.alta:
+        switch (item.modulo) {
+          case ModuloAssistenteOperativo.scadenze:
+            return 10;
+          case ModuloAssistenteOperativo.visiteMediche:
+            return 20;
+          case ModuloAssistenteOperativo.diario:
+            return 30;
+          case ModuloAssistenteOperativo.prenotazioni:
+            return 40;
+          case ModuloAssistenteOperativo.dashboard:
+          case ModuloAssistenteOperativo.discenti:
+          case ModuloAssistenteOperativo.imprese:
+          case ModuloAssistenteOperativo.consensiPrivacy:
+            return 90;
+        }
+
+      case PrioritaAssistenteOperativo.media:
+        switch (item.modulo) {
+          case ModuloAssistenteOperativo.scadenze:
+            return 110;
+          case ModuloAssistenteOperativo.visiteMediche:
+            return 120;
+          case ModuloAssistenteOperativo.prenotazioni:
+            return 130;
+          case ModuloAssistenteOperativo.diario:
+            return 140;
+          case ModuloAssistenteOperativo.dashboard:
+          case ModuloAssistenteOperativo.discenti:
+          case ModuloAssistenteOperativo.imprese:
+          case ModuloAssistenteOperativo.consensiPrivacy:
+            return 190;
+        }
+
+      case PrioritaAssistenteOperativo.bassa:
+        switch (item.modulo) {
+          case ModuloAssistenteOperativo.scadenze:
+            return 210;
+          case ModuloAssistenteOperativo.visiteMediche:
+            return 220;
+          case ModuloAssistenteOperativo.prenotazioni:
+            return 230;
+          case ModuloAssistenteOperativo.diario:
+            return 240;
+          case ModuloAssistenteOperativo.dashboard:
+          case ModuloAssistenteOperativo.discenti:
+          case ModuloAssistenteOperativo.imprese:
+          case ModuloAssistenteOperativo.consensiPrivacy:
+            return 290;
+        }
+    }
   }
 
   void _aggiungiSePresente(

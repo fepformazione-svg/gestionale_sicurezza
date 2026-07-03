@@ -394,6 +394,88 @@ class _DashboardPageState extends State<DashboardPage> {
       return 'Priorità massima: ${assistenteItems.first.titolo.toLowerCase()}.';
     }
 
+    bool prioritaMassimaScaduta() {
+      if (assistenteItems.isEmpty) {
+        return false;
+      }
+
+      final titolo = assistenteItems.first.titolo.toLowerCase();
+      return titolo.contains('scadute') || titolo.contains('scaduta');
+    }
+
+    bool prioritaMassimaInScadenza() {
+      if (assistenteItems.isEmpty) {
+        return false;
+      }
+
+      final titolo = assistenteItems.first.titolo.toLowerCase();
+      return titolo.contains('in scadenza');
+    }
+
+    Color sfondoCosaFareOggi() {
+      if (assistenteItems.isEmpty) {
+        return const Color(0xFFF0FDF4);
+      }
+
+      if (prioritaMassimaScaduta()) {
+        return const Color(0xFFFEF2F2);
+      }
+
+      if (prioritaMassimaInScadenza()) {
+        return const Color(0xFFFFFBEB);
+      }
+
+      return const Color(0xFFEFF6FF);
+    }
+
+    Color bordoCosaFareOggi() {
+      if (assistenteItems.isEmpty) {
+        return const Color(0xFFBBF7D0);
+      }
+
+      if (prioritaMassimaScaduta()) {
+        return const Color(0xFFFECACA);
+      }
+
+      if (prioritaMassimaInScadenza()) {
+        return const Color(0xFFFDE68A);
+      }
+
+      return const Color(0xFFBFDBFE);
+    }
+
+    Color testoCosaFareOggiColore() {
+      if (assistenteItems.isEmpty) {
+        return const Color(0xFF166534);
+      }
+
+      if (prioritaMassimaScaduta()) {
+        return const Color(0xFF991B1B);
+      }
+
+      if (prioritaMassimaInScadenza()) {
+        return const Color(0xFF92400E);
+      }
+
+      return const Color(0xFF1D4ED8);
+    }
+
+    IconData iconaCosaFareOggi() {
+      if (assistenteItems.isEmpty) {
+        return Icons.check_circle_outline;
+      }
+
+      if (prioritaMassimaScaduta()) {
+        return Icons.error_outline;
+      }
+
+      if (prioritaMassimaInScadenza()) {
+        return Icons.warning_amber_outlined;
+      }
+
+      return Icons.today_outlined;
+    }
+
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -478,16 +560,16 @@ class _DashboardPageState extends State<DashboardPage> {
               width: double.infinity,
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFFBEB),
+                color: sfondoCosaFareOggi(),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFFDE68A)),
+                border: Border.all(color: bordoCosaFareOggi()),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
-                    Icons.today_outlined,
-                    color: Color(0xFFD97706),
+                  Icon(
+                    iconaCosaFareOggi(),
+                    color: testoCosaFareOggiColore(),
                     size: 22,
                   ),
                   const SizedBox(width: 10),
@@ -495,31 +577,31 @@ class _DashboardPageState extends State<DashboardPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Cosa fare oggi',
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: Color(0xFF92400E),
+                            color: testoCosaFareOggiColore(),
                           ),
                         ),
                         const SizedBox(height: 4),
                         if (assistenteItems.isNotEmpty) ...[
                           Text(
                             testoPrioritaMassima(),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w700,
-                              color: Color(0xFF92400E),
+                              color: testoCosaFareOggiColore(),
                             ),
                           ),
                           const SizedBox(height: 4),
                         ],
                         Text(
                           testoCosaFareOggi(),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: Color(0xFF92400E),
+                            color: testoCosaFareOggiColore(),
                           ),
                         ),
                       ],

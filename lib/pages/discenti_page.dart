@@ -203,6 +203,77 @@ class _DiscentiPageState extends State<DiscentiPage> {
     return 'M';
   }
 
+  String? _meseCodiceFiscaleDaNumero(int mese) {
+    const mesi = {
+      1: 'A',
+      2: 'B',
+      3: 'C',
+      4: 'D',
+      5: 'E',
+      6: 'H',
+      7: 'L',
+      8: 'M',
+      9: 'P',
+      10: 'R',
+      11: 'S',
+      12: 'T',
+    };
+
+    return mesi[mese];
+  }
+
+  bool _codiceFiscaleCoerenteConSesso(String codiceFiscale, String? sesso) {
+    if (sesso != 'M' && sesso != 'F') {
+      return true;
+    }
+
+    final sessoDaCodiceFiscale = _sessoDaCodiceFiscale(codiceFiscale);
+
+    return sessoDaCodiceFiscale == null || sessoDaCodiceFiscale == sesso;
+  }
+
+  bool _codiceFiscaleCoerenteConDataNascita(
+    String codiceFiscale,
+    String dataNascita,
+  ) {
+    final cf = codiceFiscale.trim().toUpperCase();
+    final data = dataNascita.trim();
+
+    if (cf.length != 16 || !_dataNascitaValida(data)) {
+      return false;
+    }
+
+    final match = RegExp(r'^(\d{2})/(\d{2})/(\d{4})$').firstMatch(data);
+    if (match == null) {
+      return false;
+    }
+
+    final giorno = int.tryParse(match.group(1)!);
+    final mese = int.tryParse(match.group(2)!);
+    final anno = match.group(3)!;
+
+    if (giorno == null || mese == null) {
+      return false;
+    }
+
+    final annoCodiceFiscale = cf.substring(6, 8);
+    final meseCodiceFiscale = cf.substring(8, 9);
+    final giornoCodiceFiscale = int.tryParse(cf.substring(9, 11));
+    final meseAtteso = _meseCodiceFiscaleDaNumero(mese);
+
+    if (giornoCodiceFiscale == null || meseAtteso == null) {
+      return false;
+    }
+
+    final giornoMaschile = giorno;
+    final giornoFemminile = giorno + 40;
+
+    return annoCodiceFiscale == anno.substring(2, 4) &&
+        meseCodiceFiscale == meseAtteso &&
+        (giornoCodiceFiscale == giornoMaschile ||
+            giornoCodiceFiscale == giornoFemminile);
+  }
+
   bool _codiceFiscaleManualeValido(String codiceFiscale) {
     final cf = codiceFiscale.trim().toUpperCase();
 
@@ -605,9 +676,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 final codiceFiscaleInserito = cfController.text
                                     .trim()
                                     .toUpperCase();
+                                final dataNascitaInserita = dataController.text
+                                    .trim();
+
                                 final codiceFiscaleCampoCompilato =
                                     codiceFiscaleInserito.isNotEmpty &&
                                     codiceFiscaleInserito != '-';
+
                                 final codiceFiscaleValido =
                                     codiceFiscaleCampoCompilato &&
                                     _codiceFiscaleManualeValido(
@@ -617,29 +692,64 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                       codiceFiscaleInserito,
                                     );
 
+                                final sessoCoerenteConCodiceFiscale =
+                                    !codiceFiscaleValido ||
+                                    _codiceFiscaleCoerenteConSesso(
+                                      codiceFiscaleInserito,
+                                      sesso,
+                                    );
+
+                                final dataCoerenteConCodiceFiscale =
+                                    !codiceFiscaleValido ||
+                                    dataNascitaInserita.isEmpty ||
+                                    !_dataNascitaValida(dataNascitaInserita) ||
+                                    _codiceFiscaleCoerenteConDataNascita(
+                                      codiceFiscaleInserito,
+                                      dataNascitaInserita,
+                                    );
+
+                                final codiceFiscaleCoerente =
+                                    codiceFiscaleValido &&
+                                    sessoCoerenteConCodiceFiscale &&
+                                    dataCoerenteConCodiceFiscale;
+
+                                String helperText;
+                                if (!codiceFiscaleCampoCompilato) {
+                                  helperText =
+                                      'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.';
+                                } else if (!codiceFiscaleValido) {
+                                  helperText =
+                                      'Manuale non valido: controlla formato e carattere finale.';
+                                } else if (!sessoCoerenteConCodiceFiscale) {
+                                  helperText =
+                                      'Manuale non coerente: il sesso ricavato dal codice fiscale non coincide.';
+                                } else if (!dataCoerenteConCodiceFiscale) {
+                                  helperText =
+                                      'Manuale non coerente: la data di nascita non coincide.';
+                                } else {
+                                  helperText =
+                                      'Manuale valido: formato, controllo, sesso e data verificati.';
+                                }
+
                                 return _inputDecoration(
                                   codiceFiscaleCampoCompilato
                                       ? 'Codice fiscale presente/manuale'
                                       : 'Codice fiscale automatico',
                                 ).copyWith(
-                                  helperText: codiceFiscaleCampoCompilato
-                                      ? codiceFiscaleValido
-                                            ? 'Manuale valido: formato e carattere finale verificati.'
-                                            : 'Manuale non valido: controlla formato e carattere finale.'
-                                      : 'Automatico dai dati anagrafici. Puoi modificarlo o ricalcolarlo.',
+                                  helperText: helperText,
                                   helperStyle: codiceFiscaleCampoCompilato
                                       ? TextStyle(
-                                          color: codiceFiscaleValido
+                                          color: codiceFiscaleCoerente
                                               ? const Color(0xFF16A34A)
                                               : const Color(0xFFDC2626),
                                         )
                                       : null,
                                   suffixIcon: codiceFiscaleCampoCompilato
                                       ? Icon(
-                                          codiceFiscaleValido
+                                          codiceFiscaleCoerente
                                               ? Icons.check_circle
                                               : Icons.error,
-                                          color: codiceFiscaleValido
+                                          color: codiceFiscaleCoerente
                                               ? const Color(0xFF16A34A)
                                               : const Color(0xFFDC2626),
                                         )
@@ -856,6 +966,39 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                 );
                                 return;
                               }
+
+                              if (codiceFiscaleCampoCompilato &&
+                                  !_codiceFiscaleCoerenteConSesso(
+                                    codiceFiscaleInserito,
+                                    sesso,
+                                  )) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Codice fiscale non coerente: il sesso ricavato dal codice fiscale non coincide con quello selezionato.',
+                                    ),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
+                                );
+                                return;
+                              }
+
+                              if (codiceFiscaleCampoCompilato &&
+                                  !_codiceFiscaleCoerenteConDataNascita(
+                                    codiceFiscaleInserito,
+                                    dataNascita,
+                                  )) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text(
+                                      'Codice fiscale non coerente: la data di nascita non coincide con quella inserita.',
+                                    ),
+                                    backgroundColor: Color(0xFFDC2626),
+                                  ),
+                                );
+                                return;
+                              }
+
                               final nuovoDiscente = Discente(
                                 id: discente?.id,
                                 nome: nome,
@@ -917,11 +1060,15 @@ class _DiscentiPageState extends State<DiscentiPage> {
       },
     );
 
-    nomeController.dispose();
-    cognomeController.dispose();
-    luogoController.dispose();
-    dataController.dispose();
-    cfController.dispose();
+    Future<void>.delayed(const Duration(milliseconds: 300), () {
+      nomeController.dispose();
+      cognomeController.dispose();
+      luogoController.dispose();
+      dataController.dispose();
+      cfController.dispose();
+      dataVisitaController.dispose();
+      scadenzaVisitaController.dispose();
+    });
 
     if (salvato == true) {
       await caricaDati();

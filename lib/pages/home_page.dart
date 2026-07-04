@@ -537,6 +537,10 @@ class _DashboardPageState extends State<DashboardPage> {
       return 0;
     }
 
+    final scadenzeScadute = conteggioAssistentePerTitolo('scadenze scadute');
+    final scadenzeInScadenza = conteggioAssistentePerTitolo(
+      'scadenze in scadenza',
+    );
     final praticheDaFatturare = conteggioAssistentePerTitolo(
       'pratiche da fatturare',
     );
@@ -672,13 +676,51 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: testoCosaFareOggiColore(),
                           ),
                         ),
-                        if (praticheDaFatturare > 0 ||
+                        if (scadenzeScadute > 0 ||
+                            scadenzeInScadenza > 0 ||
+                            praticheDaFatturare > 0 ||
                             visiteMedicheInScadenza > 0) ...[
                           const SizedBox(height: 10),
                           Wrap(
                             spacing: 8,
                             runSpacing: 8,
                             children: [
+                              if (scadenzeScadute > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.gpp_bad_outlined,
+                                  valore: scadenzeScadute,
+                                  testo: 'Scadenze scadute',
+                                  colore: const Color(0xFFDC2626),
+                                  onTap: () {
+                                    final homeState = context
+                                        .findAncestorStateOfType<
+                                          _HomePageState
+                                        >();
+
+                                    homeState?.setState(() {
+                                      homeState.filtroScadenze = 'scaduti';
+                                      homeState.selectedIndex = 3;
+                                    });
+                                  },
+                                ),
+                              if (scadenzeInScadenza > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.warning_amber_outlined,
+                                  valore: scadenzeInScadenza,
+                                  testo: 'Scadenze in scadenza',
+                                  colore: const Color(0xFFF59E0B),
+                                  onTap: () {
+                                    final homeState = context
+                                        .findAncestorStateOfType<
+                                          _HomePageState
+                                        >();
+
+                                    homeState?.setState(() {
+                                      homeState.filtroScadenze = 'in_scadenza';
+                                      homeState.selectedIndex = 3;
+                                    });
+                                  },
+                                ),
                               if (praticheDaFatturare > 0)
                                 buildMiniContatoreCosaFareOggi(
                                   icona: Icons.receipt_long_outlined,

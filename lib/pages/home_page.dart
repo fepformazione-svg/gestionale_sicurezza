@@ -453,8 +453,10 @@ class _DashboardPageState extends State<DashboardPage> {
       return const Color(0xFFBFDBFE);
     }
 
+    final tuttoSottoControllo = assistenteItems.isEmpty;
+
     Color testoCosaFareOggiColore() {
-      if (assistenteItems.isEmpty) {
+      if (tuttoSottoControllo) {
         return const Color(0xFF166534);
       }
 
@@ -470,7 +472,7 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     IconData iconaCosaFareOggi() {
-      if (assistenteItems.isEmpty) {
+      if (tuttoSottoControllo) {
         return Icons.check_circle_outline;
       }
 
@@ -657,7 +659,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        if (assistenteItems.isNotEmpty) ...[
+                        if (!tuttoSottoControllo) ...[
                           Text(
                             testoPrioritaMassima(),
                             style: TextStyle(
@@ -669,17 +671,33 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(height: 4),
                         ],
                         Text(
-                          testoCosaFareOggi(),
+                          tuttoSottoControllo
+                              ? 'Tutto sotto controllo'
+                              : testoCosaFareOggi(),
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                            fontWeight: tuttoSottoControllo
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                             color: testoCosaFareOggiColore(),
                           ),
                         ),
-                        if (scadenzeScadute > 0 ||
-                            scadenzeInScadenza > 0 ||
-                            praticheDaFatturare > 0 ||
-                            visiteMedicheInScadenza > 0) ...[
+                        if (tuttoSottoControllo) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            'Non risultano attività urgenti o in scadenza.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                              color: testoCosaFareOggiColore(),
+                            ),
+                          ),
+                        ],
+                        if (!tuttoSottoControllo &&
+                            (scadenzeScadute > 0 ||
+                                scadenzeInScadenza > 0 ||
+                                praticheDaFatturare > 0 ||
+                                visiteMedicheInScadenza > 0)) ...[
                           const SizedBox(height: 10),
                           Wrap(
                             spacing: 8,

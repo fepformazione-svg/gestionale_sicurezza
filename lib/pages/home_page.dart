@@ -747,7 +747,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 buildMiniContatoreCosaFareOggi(
                                   icona: Icons.receipt_long_outlined,
                                   valore: praticheDaFatturare,
-                                  testo: 'Da fatturare',
+                                  testo: 'Pratiche da fatturare',
                                   colore: const Color(0xFF0891B2),
                                   onTap: () => apriModuloAssistente(
                                     context,
@@ -758,7 +758,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 buildMiniContatoreCosaFareOggi(
                                   icona: Icons.medical_services_outlined,
                                   valore: visiteMedicheScadute,
-                                  testo: 'Visite scadute',
+                                  testo: 'Visite mediche scadute',
                                   colore: const Color(0xFFB91C1C),
                                   onTap: () {
                                     final homeState = context
@@ -776,7 +776,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                 buildMiniContatoreCosaFareOggi(
                                   icona: Icons.medical_services_outlined,
                                   valore: visiteMedicheInScadenza,
-                                  testo: 'Visite in scadenza',
+                                  testo: 'Visite mediche in scadenza',
                                   colore: const Color(0xFF92400E),
                                   onTap: () {
                                     final homeState = context

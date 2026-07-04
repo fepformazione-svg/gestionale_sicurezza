@@ -552,7 +552,12 @@ class _DashboardPageState extends State<DashboardPage> {
     final visiteMedicheInScadenza = conteggioAssistentePerTitolo(
       'visite mediche in scadenza',
     );
-
+    final totalePrioritaOperative =
+        scadenzeScadute +
+        visiteMedicheScadute +
+        praticheDaFatturare +
+        scadenzeInScadenza +
+        visiteMedicheInScadenza;
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -697,11 +702,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                         ],
                         if (!tuttoSottoControllo &&
-                            (scadenzeScadute > 0 ||
-                                scadenzeInScadenza > 0 ||
-                                praticheDaFatturare > 0 ||
-                                visiteMedicheScadute > 0 ||
-                                visiteMedicheInScadenza > 0)) ...[
+                            totalePrioritaOperative > 0) ...[
                           const SizedBox(height: 10),
                           Wrap(
                             spacing: 8,
@@ -793,6 +794,17 @@ class _DashboardPageState extends State<DashboardPage> {
                                   },
                                 ),
                             ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            totalePrioritaOperative == 1
+                                ? 'È presente 1 priorità operativa da gestire.'
+                                : 'Sono presenti $totalePrioritaOperative priorità operative da gestire.',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: testoCosaFareOggiColore(),
+                            ),
                           ),
                         ],
                       ],

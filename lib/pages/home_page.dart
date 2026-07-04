@@ -32,6 +32,7 @@ class _HomePageState extends State<HomePage> {
   String globalSearch = '';
   String filtroScadenze = 'tutte';
   String filtroPrenotazioni = 'tutte';
+  String filtroVisiteMediche = 'Tutte';
   bool diarioSoloDaFatturare = false;
   int dashboardRefresh = 0;
   List<Widget> get pages => [
@@ -51,7 +52,10 @@ class _HomePageState extends State<HomePage> {
     const ImpresePage(),
     const CorsiPage(),
     const PrezzarioPage(),
-    const VisiteMedichePage(),
+    VisiteMedichePage(
+      key: ValueKey('visite_mediche_$filtroVisiteMediche'),
+      filtroStatoIniziale: filtroVisiteMediche,
+    ),
   ];
 
   void aggiornaRicercaGlobale(String value) {
@@ -88,6 +92,10 @@ class _HomePageState extends State<HomePage> {
 
                 if (index == 3) {
                   filtroScadenze = 'tutte';
+                }
+
+                if (index == 8) {
+                  filtroVisiteMediche = 'Tutte';
                 }
               });
 
@@ -299,6 +307,7 @@ class _DashboardPageState extends State<DashboardPage> {
           homeState.selectedIndex = 5;
           break;
         case ModuloAssistenteOperativo.visiteMediche:
+          homeState.filtroVisiteMediche = 'Tutte';
           homeState.selectedIndex = 8;
           break;
         case ModuloAssistenteOperativo.dashboard:
@@ -687,10 +696,18 @@ class _DashboardPageState extends State<DashboardPage> {
                                   valore: visiteMedicheInScadenza,
                                   testo: 'Visite in scadenza',
                                   colore: const Color(0xFF92400E),
-                                  onTap: () => apriModuloAssistente(
-                                    context,
-                                    ModuloAssistenteOperativo.visiteMediche,
-                                  ),
+                                  onTap: () {
+                                    final homeState = context
+                                        .findAncestorStateOfType<
+                                          _HomePageState
+                                        >();
+
+                                    homeState?.setState(() {
+                                      homeState.filtroVisiteMediche =
+                                          'In scadenza';
+                                      homeState.selectedIndex = 8;
+                                    });
+                                  },
                                 ),
                             ],
                           ),

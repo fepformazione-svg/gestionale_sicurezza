@@ -14,8 +14,13 @@ import '../utils/pdf_azienda_helper.dart';
 
 class VisiteMedichePage extends StatefulWidget {
   final String? ricercaIniziale;
+  final String filtroStatoIniziale;
 
-  const VisiteMedichePage({super.key, this.ricercaIniziale});
+  const VisiteMedichePage({
+    super.key,
+    this.ricercaIniziale,
+    this.filtroStatoIniziale = 'Tutte',
+  });
 
   @override
   State<VisiteMedichePage> createState() => _VisiteMedichePageState();
@@ -42,6 +47,16 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     final ricercaIniziale = widget.ricercaIniziale?.trim() ?? '';
     if (ricercaIniziale.isNotEmpty) {
       _cercaController.text = ricercaIniziale;
+    }
+
+    final filtroIniziale = widget.filtroStatoIniziale.trim();
+    if ([
+      'Tutte',
+      'Valide',
+      'In scadenza',
+      'Scadute',
+    ].contains(filtroIniziale)) {
+      filtroStatoVisita = filtroIniziale;
     }
 
     caricaVisite();

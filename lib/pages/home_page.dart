@@ -926,6 +926,11 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(height: 12),
                   ...assistenteItems.map((item) {
                     final colore = colorePriorita(item.priorita);
+                    final etichettaPriorita = switch (item.priorita) {
+                      PrioritaAssistenteOperativo.alta => 'PRIORITÀ ALTA',
+                      PrioritaAssistenteOperativo.media => 'IN SCADENZA',
+                      PrioritaAssistenteOperativo.bassa => 'DA MONITORARE',
+                    };
 
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 10),
@@ -962,7 +967,32 @@ class _DashboardPageState extends State<DashboardPage> {
                                         color: Color(0xFF111827),
                                       ),
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colore.withValues(alpha: 0.10),
+                                        borderRadius: BorderRadius.circular(
+                                          999,
+                                        ),
+                                        border: Border.all(
+                                          color: colore.withValues(alpha: 0.30),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        etichettaPriorita,
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                          color: colore,
+                                          letterSpacing: 0.4,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
                                     Text(
                                       item.descrizione,
                                       style: const TextStyle(

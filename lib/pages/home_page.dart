@@ -836,7 +836,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Nessuna criticità operativa rilevata.',
+                            'Nessuna priorità operativa aperta.',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF166534),
@@ -844,7 +844,7 @@ class _DashboardPageState extends State<DashboardPage> {
                           ),
                           SizedBox(height: 4),
                           Text(
-                            'Scadenze, visite mediche e pratiche da fatturare non richiedono interventi immediati.',
+                            'Puoi continuare con ricerca, consultazione archivi o aggiornamento dati.',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,

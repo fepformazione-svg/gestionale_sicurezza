@@ -546,6 +546,9 @@ class _DashboardPageState extends State<DashboardPage> {
     final praticheDaFatturare = conteggioAssistentePerTitolo(
       'pratiche da fatturare',
     );
+    final visiteMedicheScadute = conteggioAssistentePerTitolo(
+      'visite mediche scadute',
+    );
     final visiteMedicheInScadenza = conteggioAssistentePerTitolo(
       'visite mediche in scadenza',
     );
@@ -697,6 +700,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             (scadenzeScadute > 0 ||
                                 scadenzeInScadenza > 0 ||
                                 praticheDaFatturare > 0 ||
+                                visiteMedicheScadute > 0 ||
                                 visiteMedicheInScadenza > 0)) ...[
                           const SizedBox(height: 10),
                           Wrap(
@@ -749,6 +753,24 @@ class _DashboardPageState extends State<DashboardPage> {
                                     context,
                                     ModuloAssistenteOperativo.diario,
                                   ),
+                                ),
+                              if (visiteMedicheScadute > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.medical_services_outlined,
+                                  valore: visiteMedicheScadute,
+                                  testo: 'Visite scadute',
+                                  colore: const Color(0xFFB91C1C),
+                                  onTap: () {
+                                    final homeState = context
+                                        .findAncestorStateOfType<
+                                          _HomePageState
+                                        >();
+
+                                    homeState?.setState(() {
+                                      homeState.filtroVisiteMediche = 'Scadute';
+                                      homeState.selectedIndex = 8;
+                                    });
+                                  },
                                 ),
                               if (visiteMedicheInScadenza > 0)
                                 buildMiniContatoreCosaFareOggi(

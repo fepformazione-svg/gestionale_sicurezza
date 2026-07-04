@@ -476,6 +476,56 @@ class _DashboardPageState extends State<DashboardPage> {
       return Icons.today_outlined;
     }
 
+    Widget buildMiniContatoreCosaFareOggi({
+      required IconData icona,
+      required int valore,
+      required String testo,
+      required Color colore,
+    }) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: colore.withValues(alpha: 0.10),
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: colore.withValues(alpha: 0.35)),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icona, size: 15, color: colore),
+            const SizedBox(width: 6),
+            Text(
+              '$valore $testo',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: colore,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    int conteggioAssistentePerTitolo(String testoTitolo) {
+      final testoNormalizzato = testoTitolo.toLowerCase();
+
+      for (final item in assistenteItems) {
+        if (item.titolo.toLowerCase().contains(testoNormalizzato)) {
+          return item.conteggio;
+        }
+      }
+
+      return 0;
+    }
+
+    final praticheDaFatturare = conteggioAssistentePerTitolo(
+      'pratiche da fatturare',
+    );
+    final visiteMedicheInScadenza = conteggioAssistentePerTitolo(
+      'visite mediche in scadenza',
+    );
+
     return Card(
       elevation: 0,
       color: Colors.white,
@@ -604,6 +654,30 @@ class _DashboardPageState extends State<DashboardPage> {
                             color: testoCosaFareOggiColore(),
                           ),
                         ),
+                        if (praticheDaFatturare > 0 ||
+                            visiteMedicheInScadenza > 0) ...[
+                          const SizedBox(height: 10),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: [
+                              if (praticheDaFatturare > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.receipt_long_outlined,
+                                  valore: praticheDaFatturare,
+                                  testo: 'Da fatturare',
+                                  colore: const Color(0xFF0891B2),
+                                ),
+                              if (visiteMedicheInScadenza > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.medical_services_outlined,
+                                  valore: visiteMedicheInScadenza,
+                                  testo: 'Visite in scadenza',
+                                  colore: const Color(0xFF92400E),
+                                ),
+                            ],
+                          ),
+                        ],
                       ],
                     ),
                   ),

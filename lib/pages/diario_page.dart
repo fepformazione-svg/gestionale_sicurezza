@@ -70,6 +70,16 @@ class _DiarioPageState extends State<DiarioPage> {
     caricaDiario();
   }
 
+  @override
+  void didUpdateWidget(covariant DiarioPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.soloDaFatturare != widget.soloDaFatturare) {
+      _soloDaFatturare = widget.soloDaFatturare;
+      caricaDiario();
+    }
+  }
+
   Future<void> caricaDiario() async {
     setState(() => _caricamento = true);
 

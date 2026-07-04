@@ -725,35 +725,6 @@ class _DashboardPageState extends State<DashboardPage> {
                                     });
                                   },
                                 ),
-                              if (scadenzeInScadenza > 0)
-                                buildMiniContatoreCosaFareOggi(
-                                  icona: Icons.warning_amber_outlined,
-                                  valore: scadenzeInScadenza,
-                                  testo: 'Scadenze in scadenza',
-                                  colore: const Color(0xFFF59E0B),
-                                  onTap: () {
-                                    final homeState = context
-                                        .findAncestorStateOfType<
-                                          _HomePageState
-                                        >();
-
-                                    homeState?.setState(() {
-                                      homeState.filtroScadenze = 'in_scadenza';
-                                      homeState.selectedIndex = 3;
-                                    });
-                                  },
-                                ),
-                              if (praticheDaFatturare > 0)
-                                buildMiniContatoreCosaFareOggi(
-                                  icona: Icons.receipt_long_outlined,
-                                  valore: praticheDaFatturare,
-                                  testo: 'Pratiche da fatturare',
-                                  colore: const Color(0xFF0891B2),
-                                  onTap: () => apriModuloAssistente(
-                                    context,
-                                    ModuloAssistenteOperativo.diario,
-                                  ),
-                                ),
                               if (visiteMedicheScadute > 0)
                                 buildMiniContatoreCosaFareOggi(
                                   icona: Icons.medical_services_outlined,
@@ -769,6 +740,36 @@ class _DashboardPageState extends State<DashboardPage> {
                                     homeState?.setState(() {
                                       homeState.filtroVisiteMediche = 'Scadute';
                                       homeState.selectedIndex = 8;
+                                    });
+                                  },
+                                ),
+
+                              if (praticheDaFatturare > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.receipt_long_outlined,
+                                  valore: praticheDaFatturare,
+                                  testo: 'Pratiche da fatturare',
+                                  colore: const Color(0xFF0891B2),
+                                  onTap: () => apriModuloAssistente(
+                                    context,
+                                    ModuloAssistenteOperativo.diario,
+                                  ),
+                                ),
+                              if (scadenzeInScadenza > 0)
+                                buildMiniContatoreCosaFareOggi(
+                                  icona: Icons.warning_amber_outlined,
+                                  valore: scadenzeInScadenza,
+                                  testo: 'Scadenze in scadenza',
+                                  colore: const Color(0xFFF59E0B),
+                                  onTap: () {
+                                    final homeState = context
+                                        .findAncestorStateOfType<
+                                          _HomePageState
+                                        >();
+
+                                    homeState?.setState(() {
+                                      homeState.filtroScadenze = 'in_scadenza';
+                                      homeState.selectedIndex = 3;
                                     });
                                   },
                                 ),

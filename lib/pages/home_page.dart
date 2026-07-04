@@ -481,28 +481,37 @@ class _DashboardPageState extends State<DashboardPage> {
       required int valore,
       required String testo,
       required Color colore,
+      VoidCallback? onTap,
     }) {
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(
-          color: colore.withValues(alpha: 0.10),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: colore.withValues(alpha: 0.35)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icona, size: 15, color: colore),
-            const SizedBox(width: 6),
-            Text(
-              '$valore $testo',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-                color: colore,
-              ),
+      return MouseRegion(
+        cursor: onTap == null
+            ? SystemMouseCursors.basic
+            : SystemMouseCursors.click,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: colore.withValues(alpha: 0.10),
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: colore.withValues(alpha: 0.35)),
             ),
-          ],
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icona, size: 15, color: colore),
+                const SizedBox(width: 6),
+                Text(
+                  '$valore $testo',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                    color: colore,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       );
     }
@@ -667,6 +676,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                   valore: praticheDaFatturare,
                                   testo: 'Da fatturare',
                                   colore: const Color(0xFF0891B2),
+                                  onTap: () => apriModuloAssistente(
+                                    context,
+                                    ModuloAssistenteOperativo.diario,
+                                  ),
                                 ),
                               if (visiteMedicheInScadenza > 0)
                                 buildMiniContatoreCosaFareOggi(
@@ -674,6 +687,10 @@ class _DashboardPageState extends State<DashboardPage> {
                                   valore: visiteMedicheInScadenza,
                                   testo: 'Visite in scadenza',
                                   colore: const Color(0xFF92400E),
+                                  onTap: () => apriModuloAssistente(
+                                    context,
+                                    ModuloAssistenteOperativo.visiteMediche,
+                                  ),
                                 ),
                             ],
                           ),

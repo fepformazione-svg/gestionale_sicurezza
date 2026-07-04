@@ -626,7 +626,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ordine operativo: scaduti → in scadenza → da gestire',
+                      'Ordine operativo: scaduti → da gestire → in scadenza',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,

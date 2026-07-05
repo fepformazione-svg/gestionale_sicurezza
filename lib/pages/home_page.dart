@@ -47,13 +47,17 @@ class _HomePageState extends State<HomePage> {
       },
     ),
     DiarioPage(soloDaFatturare: diarioSoloDaFatturare),
-    ScadenzePage(filtro: filtroScadenze),
+    ScadenzePage(
+      key: ValueKey('scadenze_$filtroScadenze'),
+      filtro: filtroScadenze,
+    ),
     DiscentiPage(globalSearch: globalSearch),
     const ImpresePage(),
     const CorsiPage(),
     const PrezzarioPage(),
     VisiteMedichePage(
-      key: ValueKey('visite_mediche_$filtroVisiteMediche'),
+      key: ValueKey('visite_mediche_${globalSearch}_$filtroVisiteMediche'),
+      ricercaIniziale: globalSearch,
       filtroStatoIniziale: filtroVisiteMediche,
     ),
   ];
@@ -280,11 +284,13 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void apriModuloAssistente(
     BuildContext context,
-    ModuloAssistenteOperativo modulo,
-  ) {
+    ModuloAssistenteOperativo modulo, {
+    String? titolo,
+  }) {
     final homeState = context.findAncestorStateOfType<_HomePageState>();
 
     if (homeState == null) return;
+    final titoloNormalizzato = titolo?.toLowerCase() ?? '';
 
     homeState.setState(() {
       switch (modulo) {
@@ -297,7 +303,13 @@ class _DashboardPageState extends State<DashboardPage> {
           homeState.selectedIndex = 2;
           break;
         case ModuloAssistenteOperativo.scadenze:
-          homeState.filtroScadenze = 'scaduti';
+          if (titoloNormalizzato.contains('in scadenza')) {
+            homeState.filtroScadenze = 'in_scadenza';
+          } else if (titoloNormalizzato.contains('scadut')) {
+            homeState.filtroScadenze = 'scaduti';
+          } else {
+            homeState.filtroScadenze = 'tutte';
+          }
           homeState.selectedIndex = 3;
           break;
         case ModuloAssistenteOperativo.discenti:
@@ -307,7 +319,16 @@ class _DashboardPageState extends State<DashboardPage> {
           homeState.selectedIndex = 5;
           break;
         case ModuloAssistenteOperativo.visiteMediche:
-          homeState.filtroVisiteMediche = 'Tutte';
+          homeState.globalSearch = '';
+
+          if (titoloNormalizzato.contains('in scadenza')) {
+            homeState.filtroVisiteMediche = 'In scadenza';
+          } else if (titoloNormalizzato.contains('scadut')) {
+            homeState.filtroVisiteMediche = 'Scadute';
+          } else {
+            homeState.filtroVisiteMediche = 'Tutte';
+          }
+
           homeState.selectedIndex = 8;
           break;
         case ModuloAssistenteOperativo.dashboard:
@@ -936,7 +957,11 @@ class _DashboardPageState extends State<DashboardPage> {
                       padding: const EdgeInsets.only(bottom: 10),
                       child: InkWell(
                         borderRadius: BorderRadius.circular(14),
-                        onTap: () => apriModuloAssistente(context, item.modulo),
+                        onTap: () => apriModuloAssistente(
+                          context,
+                          item.modulo,
+                          titolo: item.titolo,
+                        ),
                         child: Container(
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(

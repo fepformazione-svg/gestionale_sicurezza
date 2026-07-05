@@ -32,7 +32,19 @@ class _ScadenzePageState extends State<ScadenzePage> {
   @override
   void initState() {
     super.initState();
+    filtroStato = _filtroStatoDaFiltroWidget(widget.filtro);
     caricaScadenze();
+  }
+
+  String _filtroStatoDaFiltroWidget(String filtro) {
+    switch (filtro) {
+      case 'scaduti':
+        return 'Scadute';
+      case 'in_scadenza':
+        return 'In scadenza';
+      default:
+        return 'Tutte';
+    }
   }
 
   Future<void> caricaScadenze() async {
@@ -683,14 +695,6 @@ class _ScadenzePageState extends State<ScadenzePage> {
       }
 
       if (filtroStato == 'Valide' && stato != 'Valido') {
-        return false;
-      }
-
-      if (widget.filtro == 'scaduti' && stato != 'Scaduto') {
-        return false;
-      }
-
-      if (widget.filtro == 'in_scadenza' && stato != 'In scadenza') {
         return false;
       }
 

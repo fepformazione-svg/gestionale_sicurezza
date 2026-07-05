@@ -430,6 +430,8 @@ Output richiesto:
                 },
               ),
               const SizedBox(height: 24),
+              const _FontiUfficialiCard(),
+              const SizedBox(height: 16),
               const _UsoOperativoCard(),
             ],
           ),
@@ -689,40 +691,92 @@ class _UsoOperativoCard extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
+      elevation: 0,
       child: Padding(
         padding: const EdgeInsets.all(18),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Row(
+              children: [
+                Icon(Icons.task_alt_outlined, color: theme.colorScheme.primary),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Procedura consigliata',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Text(
-              'Procedura consigliata',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
+              'Usa l’AI come supporto operativo, non come fonte unica. La verifica finale resta sempre professionale.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             const _ProceduraRiga(
               numero: '1',
-              testo: 'Scegli il prompt piu adatto alla situazione.',
+              testo:
+                  'Prepara il caso raccogliendo solo le informazioni realmente necessarie.',
             ),
             const _ProceduraRiga(
               numero: '2',
-              testo: 'Copia il prompt negli appunti.',
+              testo:
+                  'Rimuovi o anonimizza dati personali, sensibili e informazioni non indispensabili.',
             ),
             const _ProceduraRiga(
               numero: '3',
-              testo:
-                  'Incollalo in uno strumento AI esterno solo dopo aver rimosso o anonimizzato dati personali e sensibili.',
+              testo: 'Scegli il prompt piu adatto alla situazione operativa.',
             ),
             const _ProceduraRiga(
               numero: '4',
               testo:
-                  'Controlla la risposta con fonti ufficiali e con la tua valutazione professionale.',
+                  'Copia il prompt e incollalo manualmente nello strumento AI esterno.',
             ),
             const _ProceduraRiga(
               numero: '5',
               testo:
-                  'Usa il risultato come bozza o supporto, non come decisione automatica.',
+                  'Controlla la risposta con fonti ufficiali aggiornate e con la tua valutazione tecnica.',
+            ),
+            const _ProceduraRiga(
+              numero: '6',
+              testo:
+                  'Usa il risultato come bozza di lavoro, non come decisione automatica.',
+            ),
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.45,
+                ),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.25),
+                ),
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Nota operativa: questa pagina resta locale e senza API. I dati escono dal gestionale solo se copiati manualmente dall’utente.',
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onPrimaryContainer,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -752,6 +806,166 @@ class _ProceduraRiga extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(child: Text(testo)),
+        ],
+      ),
+    );
+  }
+}
+
+class _FontiUfficialiCard extends StatelessWidget {
+  const _FontiUfficialiCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.account_balance_outlined,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'Fonti ufficiali',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Prima di usare una risposta generata dall’AI, verifica norme, obblighi e riferimenti con fonti istituzionali aggiornate.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 14),
+            const _FonteUfficialeRiga(
+              titolo: 'Normattiva',
+              descrizione: 'Testo vigente di leggi, decreti e norme nazionali.',
+              link: 'https://www.normattiva.it/',
+              icona: Icons.menu_book_outlined,
+            ),
+            const _FonteUfficialeRiga(
+              titolo: 'Ispettorato Nazionale del Lavoro',
+              descrizione:
+                  'Normativa, orientamenti, circolari e materiali in materia di lavoro e sicurezza.',
+              link: 'https://www.ispettorato.gov.it/',
+              icona: Icons.health_and_safety_outlined,
+            ),
+            const _FonteUfficialeRiga(
+              titolo: 'Ministero del Lavoro',
+              descrizione:
+                  'Interpelli, documenti e aggiornamenti istituzionali.',
+              link: 'https://www.lavoro.gov.it/',
+              icona: Icons.description_outlined,
+            ),
+            const _FonteUfficialeRiga(
+              titolo: 'INAIL',
+              descrizione:
+                  'Pubblicazioni tecniche, prevenzione, strumenti e materiali sulla sicurezza sul lavoro.',
+              link: 'https://www.inail.it/',
+              icona: Icons.verified_outlined,
+            ),
+            const _FonteUfficialeRiga(
+              titolo: 'Garante Privacy',
+              descrizione:
+                  'Indicazioni ufficiali su GDPR, privacy, lavoratori e videosorveglianza.',
+              link: 'https://www.garanteprivacy.it/',
+              icona: Icons.privacy_tip_outlined,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FonteUfficialeRiga extends StatelessWidget {
+  const _FonteUfficialeRiga({
+    required this.titolo,
+    required this.descrizione,
+    required this.link,
+    required this.icona,
+  });
+
+  final String titolo;
+  final String descrizione;
+  final String link;
+  final IconData icona;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.35,
+        ),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icona, size: 22, color: theme.colorScheme.primary),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  titolo,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            descrizione,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 8),
+          SelectableText(
+            link,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: link));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Link copiato: $titolo')),
+                );
+              },
+              icon: const Icon(Icons.copy_outlined, size: 18),
+              label: const Text('Copia link'),
+            ),
+          ),
         ],
       ),
     );

@@ -494,45 +494,126 @@ class _PromptCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+
+    final descrizioneStyle = theme.textTheme.bodyMedium?.copyWith(
+      color: colorScheme.onSurfaceVariant,
+      height: 1.35,
+    );
+
+    final promptStyle = theme.textTheme.bodySmall?.copyWith(
+      height: 1.35,
+      fontFamily: 'monospace',
+      color: colorScheme.onSurface,
+    );
 
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.article_outlined, color: theme.colorScheme.primary),
-            const SizedBox(height: 10),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    Icons.article_outlined,
+                    color: colorScheme.onPrimaryContainer,
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Categoria operativa',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.4,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        titolo,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
             Text(
-              titolo,
-              style: theme.textTheme.titleMedium?.copyWith(
+              'Finalita',
+              style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
-            Text(descrizione),
-            const SizedBox(height: 14),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                border: Border.all(color: theme.dividerColor),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Text(
-                prompt,
-                maxLines: 8,
-                overflow: TextOverflow.ellipsis,
-                style: theme.textTheme.bodySmall,
+            const SizedBox(height: 6),
+            Text(descrizione, style: descrizioneStyle),
+            const SizedBox(height: 18),
+            Divider(height: 1, color: theme.dividerColor),
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.content_paste_search_outlined,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Prompt copiabile',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Anteprima del testo: il pulsante copia sempre il prompt completo.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 14),
-            Align(
-              alignment: Alignment.centerRight,
-              child: OutlinedButton.icon(
+            const SizedBox(height: 10),
+            Container(
+              width: double.infinity,
+              constraints: const BoxConstraints(minHeight: 170),
+              padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: theme.dividerColor),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Text(
+                prompt.trim(),
+                maxLines: 11,
+                overflow: TextOverflow.ellipsis,
+                style: promptStyle,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
                 onPressed: onCopy,
                 icon: const Icon(Icons.copy, size: 18),
-                label: const Text('Copia prompt'),
+                label: const Text('Copia prompt completo'),
               ),
             ),
           ],

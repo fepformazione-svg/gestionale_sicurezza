@@ -19,6 +19,7 @@ import 'imprese_page.dart';
 import 'corsi_page.dart';
 import 'prezzario_page.dart';
 import 'visite_mediche_page.dart';
+import 'assistente_ai_page.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -60,6 +61,7 @@ class _HomePageState extends State<HomePage> {
       ricercaIniziale: globalSearch,
       filtroStatoIniziale: filtroVisiteMediche,
     ),
+    const AssistenteAiPage(),
   ];
 
   void aggiornaRicercaGlobale(String value) {

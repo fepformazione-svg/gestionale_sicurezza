@@ -76,6 +76,11 @@ class Sidebar extends StatelessWidget {
                   title: 'Visite Mediche',
                   index: 8,
                 ),
+                _buildMenuItem(
+                  icon: Icons.lightbulb_outline,
+                  title: 'Assistente AI',
+                  index: 9,
+                ),
               ],
             ),
           ),

@@ -18,6 +18,7 @@ import '../services/codice_catastale_service.dart';
 import '../services/codice_fiscale_service.dart';
 import '../services/pdf_export_service.dart';
 
+import '../widgets/app_action_button.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
@@ -1419,6 +1420,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
   @override
   Widget build(BuildContext context) {
+    final exportDisabilitato = discentiFiltrati.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1436,69 +1439,67 @@ class _DiscentiPageState extends State<DiscentiPage> {
               ),
             ),
             const SizedBox(width: 16),
-
-            OutlinedButton.icon(
-              onPressed: discentiFiltrati.isEmpty ? null : esportaExcelDiscenti,
-              icon: const Icon(Icons.table_chart_rounded),
-              label: Text('Export Excel (${discentiFiltrati.length})'),
-            ),
-
-            const SizedBox(width: 12),
-
-            OutlinedButton.icon(
-              onPressed: discentiFiltrati.isEmpty
-                  ? null
-                  : () async {
-                      await PdfExportService.esportaTabella(
-                        titolo: 'Discenti',
-                        intestazioni: [
-                          'Nome',
-                          'Cognome',
-                          'Luogo nascita',
-                          'Data nascita',
-                          'Codice fiscale',
-                          'Impresa',
-                        ],
-                        righe: discentiFiltrati.map((d) {
-                          return [
-                            testoVuoto(d.nome),
-                            testoVuoto(d.cognome),
-                            testoVuoto(d.luogoNascita),
-                            testoVuoto(d.dataNascita),
-                            testoVuoto(d.codiceFiscale),
-                            testoVuoto(d.nomeImpresa),
-                          ];
-                        }).toList(),
-                      );
-                    },
-              icon: const Icon(Icons.picture_as_pdf),
-              label: Text('Export PDF (${discentiFiltrati.length})'),
-            ),
-
-            OutlinedButton.icon(
-              onPressed: discentiFiltrati.isEmpty ? null : stampaDiscenti,
-              icon: const Icon(Icons.print_rounded),
-              label: Text('Stampa (${discentiFiltrati.length})'),
-            ),
-
-            const SizedBox(width: 12),
-
-            ElevatedButton.icon(
-              onPressed: () => apriDialogDiscente(),
-              icon: const Icon(Icons.add),
-              label: const Text('Nuovo discente'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF2563EB),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 22,
-                  vertical: 18,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
+            Tooltip(
+              message: exportDisabilitato
+                  ? 'Nessun discente da esportare'
+                  : 'Esporta ${discentiFiltrati.length} discenti in Excel',
+              child: AppActionButton(
+                type: AppActionButtonType.excel,
+                onPressed: exportDisabilitato ? null : esportaExcelDiscenti,
+                label: 'Excel (${discentiFiltrati.length})',
               ),
+            ),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: exportDisabilitato
+                  ? 'Nessun discente da esportare in PDF'
+                  : 'Esporta ${discentiFiltrati.length} discenti in PDF',
+              child: AppActionButton(
+                type: AppActionButtonType.pdf,
+                onPressed: exportDisabilitato
+                    ? null
+                    : () async {
+                        await PdfExportService.esportaTabella(
+                          titolo: 'Discenti',
+                          intestazioni: [
+                            'Nome',
+                            'Cognome',
+                            'Luogo nascita',
+                            'Data nascita',
+                            'Codice fiscale',
+                            'Impresa',
+                          ],
+                          righe: discentiFiltrati.map((d) {
+                            return [
+                              testoVuoto(d.nome),
+                              testoVuoto(d.cognome),
+                              testoVuoto(d.luogoNascita),
+                              testoVuoto(d.dataNascita),
+                              testoVuoto(d.codiceFiscale),
+                              testoVuoto(d.nomeImpresa),
+                            ];
+                          }).toList(),
+                        );
+                      },
+                label: 'PDF (${discentiFiltrati.length})',
+              ),
+            ),
+            const SizedBox(width: 12),
+            Tooltip(
+              message: exportDisabilitato
+                  ? 'Nessun discente da stampare'
+                  : 'Stampa ${discentiFiltrati.length} discenti',
+              child: AppActionButton(
+                type: AppActionButtonType.stampa,
+                onPressed: exportDisabilitato ? null : stampaDiscenti,
+                label: 'Stampa (${discentiFiltrati.length})',
+              ),
+            ),
+            const SizedBox(width: 12),
+            AppActionButton(
+              type: AppActionButtonType.nuovo,
+              onPressed: () => apriDialogDiscente(),
+              label: 'Nuovo discente',
             ),
           ],
         ),

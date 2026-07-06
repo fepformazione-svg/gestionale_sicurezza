@@ -3454,7 +3454,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
             Tooltip(
               message: 'Crea una nuova prenotazione',
-              child: ElevatedButton.icon(
+              child: AppActionButton(
+                type: AppActionButtonType.nuovo,
                 onPressed: () {
                   setState(() {
                     azzeraSelezionePrenotazioni();
@@ -3462,20 +3463,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                   apriDialogNuovaPrenotazione();
                 },
-                icon: const Icon(Icons.add),
-                label: const Text('Nuova prenotazione'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
+                label: 'Nuova prenotazione',
               ),
             ),
           ],

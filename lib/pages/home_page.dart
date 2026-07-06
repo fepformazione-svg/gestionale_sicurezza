@@ -104,14 +104,6 @@ class _HomePageState extends State<HomePage> {
                   filtroVisiteMediche = 'Tutte';
                 }
               });
-
-              if (index == 0) {
-                Future.delayed(const Duration(milliseconds: 100), () {
-                  setState(() {
-                    dashboardRefresh++;
-                  });
-                });
-              }
             },
           ),
           Expanded(

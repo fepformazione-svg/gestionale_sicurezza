@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/app_action_button.dart';
 import '../widgets/data_text_input_formatter.dart';
 
 class VisiteMedichePage extends StatefulWidget {
@@ -1208,6 +1209,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
 
   @override
   Widget build(BuildContext context) {
+    final exportDisabilitato = visiteFiltrate.isEmpty;
+
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
       appBar: AppBar(
@@ -1260,34 +1263,50 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: visiteFiltrate.isEmpty
-                      ? null
-                      : esportaExcelVisiteMediche,
-                  icon: const Icon(Icons.table_chart_rounded),
-                  label: Text('Export Excel (${visiteFiltrate.length})'),
+                Tooltip(
+                  message: exportDisabilitato
+                      ? 'Nessuna visita medica da esportare'
+                      : 'Esporta ${visiteFiltrate.length} visite mediche in Excel',
+                  child: AppActionButton(
+                    type: AppActionButtonType.excel,
+                    onPressed: exportDisabilitato
+                        ? null
+                        : esportaExcelVisiteMediche,
+                    label: 'Excel (${visiteFiltrate.length})',
+                  ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: visiteFiltrate.isEmpty
-                      ? null
-                      : esportaPdfVisiteMediche,
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  label: Text('Export PDF (${visiteFiltrate.length})'),
+                Tooltip(
+                  message: exportDisabilitato
+                      ? 'Nessuna visita medica da esportare in PDF'
+                      : 'Esporta ${visiteFiltrate.length} visite mediche in PDF',
+                  child: AppActionButton(
+                    type: AppActionButtonType.pdf,
+                    onPressed: exportDisabilitato
+                        ? null
+                        : esportaPdfVisiteMediche,
+                    label: 'PDF (${visiteFiltrate.length})',
+                  ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: visiteFiltrate.isEmpty
-                      ? null
-                      : stampaVisiteMediche,
-                  icon: const Icon(Icons.print_rounded),
-                  label: Text('Stampa (${visiteFiltrate.length})'),
+                Tooltip(
+                  message: exportDisabilitato
+                      ? 'Nessuna visita medica da stampare'
+                      : 'Stampa ${visiteFiltrate.length} visite mediche',
+                  child: AppActionButton(
+                    type: AppActionButtonType.stampa,
+                    onPressed: exportDisabilitato ? null : stampaVisiteMediche,
+                    label: 'Stampa (${visiteFiltrate.length})',
+                  ),
                 ),
                 const SizedBox(width: 12),
-                ElevatedButton.icon(
-                  onPressed: apriDialogNuovaVisita,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Nuova visita'),
+                Tooltip(
+                  message: 'Crea una nuova visita medica',
+                  child: AppActionButton(
+                    type: AppActionButtonType.nuovo,
+                    onPressed: apriDialogNuovaVisita,
+                    label: 'Nuova visita',
+                  ),
                 ),
               ],
             ),

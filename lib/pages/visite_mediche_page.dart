@@ -267,6 +267,26 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     );
   }
 
+  List<Map<String, dynamic>> righeUnichePerId(
+    List<Map<String, dynamic>> righe,
+  ) {
+    final idsVisti = <int>{};
+
+    return righe.where((riga) {
+      final id = riga['id'];
+      if (id is! int) return false;
+
+      return idsVisti.add(id);
+    }).toList();
+  }
+
+  int? valoreDropdownValido(List<Map<String, dynamic>> righe, int? valore) {
+    if (valore == null) return null;
+
+    final presente = righe.any((riga) => riga['id'] == valore);
+    return presente ? valore : null;
+  }
+
   Future<void> apriDialogNuovaVisita() async {
     if (discenti.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -296,6 +316,8 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     final esitoController = TextEditingController();
     final giudizioController = TextEditingController();
     final noteController = TextEditingController();
+    final discentiDropdown = righeUnichePerId(discenti);
+    final mediciStruttureDropdown = righeUnichePerId(mediciStrutture);
 
     await showDialog<void>(
       context: context,
@@ -316,7 +338,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           labelText: 'Discente',
                           border: OutlineInputBorder(),
                         ),
-                        items: discenti.map((discente) {
+                        items: discentiDropdown.map((discente) {
                           final id = discente['id'] as int;
                           final nome = discente['nome']?.toString() ?? '';
                           final cognome = discente['cognome']?.toString() ?? '';
@@ -339,7 +361,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           labelText: 'Medico / Struttura',
                           border: OutlineInputBorder(),
                         ),
-                        items: mediciStrutture.map((voce) {
+                        items: mediciStruttureDropdown.map((voce) {
                           final id = voce['id'] as int;
                           final tipo = voce['tipo']?.toString() ?? '';
                           final denominazione =
@@ -516,6 +538,18 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
     final noteController = TextEditingController(
       text: testoValore(visita['note']),
     );
+    final discentiDropdown = righeUnichePerId(discenti);
+    final mediciStruttureDropdown = righeUnichePerId(mediciStrutture);
+
+    discenteSelezionatoId = valoreDropdownValido(
+      discentiDropdown,
+      discenteSelezionatoId,
+    );
+
+    medicoStrutturaSelezionatoId = valoreDropdownValido(
+      mediciStruttureDropdown,
+      medicoStrutturaSelezionatoId,
+    );
 
     await showDialog<void>(
       context: context,
@@ -536,7 +570,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           labelText: 'Discente',
                           border: OutlineInputBorder(),
                         ),
-                        items: discenti.map((discente) {
+                        items: discentiDropdown.map((discente) {
                           final id = discente['id'] as int;
                           final nome = discente['nome']?.toString() ?? '';
                           final cognome = discente['cognome']?.toString() ?? '';
@@ -559,7 +593,7 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                           labelText: 'Medico / Struttura',
                           border: OutlineInputBorder(),
                         ),
-                        items: mediciStrutture.map((voce) {
+                        items: mediciStruttureDropdown.map((voce) {
                           final id = voce['id'] as int;
                           final tipo = voce['tipo']?.toString() ?? '';
                           final denominazione =

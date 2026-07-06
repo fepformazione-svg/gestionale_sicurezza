@@ -318,6 +318,54 @@ class DatabaseService {
     );
   }
 
+  Future<Map<String, int>> contaCollegamentiCorso(int idCorso) async {
+    final db = await _db;
+
+    final prenotazioni =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM prenotazioni WHERE corso_id = ?',
+            [idCorso],
+          ),
+        ) ??
+        0;
+
+    final diario =
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM diario WHERE corso_id = ?', [
+            idCorso,
+          ]),
+        ) ??
+        0;
+
+    final scadenze =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM scadenze WHERE corso_id = ?',
+            [idCorso],
+          ),
+        ) ??
+        0;
+
+    return {
+      'prenotazioni': prenotazioni,
+      'diario': diario,
+      'scadenze': scadenze,
+    };
+  }
+
+  Future<bool> corsoHaCollegamenti(int idCorso) async {
+    final collegamenti = await contaCollegamentiCorso(idCorso);
+
+    return collegamenti.values.any((totale) => totale > 0);
+  }
+
+  Future<void> deleteCorso(int id) async {
+    final db = await _db;
+
+    await db.delete('corsi', where: 'id = ?', whereArgs: [id]);
+  }
+
   Future<List<Map<String, dynamic>>> getCorsiLookup() async {
     final db = await _db;
 

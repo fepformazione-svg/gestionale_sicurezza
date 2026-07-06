@@ -13,6 +13,7 @@ import '../utils/pdf_azienda_helper.dart';
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
 import 'discente_scheda_page.dart';
+import '../widgets/app_action_button.dart';
 
 class DiarioPage extends StatefulWidget {
   final bool soloDaFatturare;
@@ -1087,6 +1088,8 @@ class _DiarioPageState extends State<DiarioPage> {
 
   @override
   Widget build(BuildContext context) {
+    final exportDisabilitato = _diario.isEmpty;
+
     return Material(
       color: Colors.transparent,
       child: Padding(
@@ -1301,96 +1304,44 @@ class _DiarioPageState extends State<DiarioPage> {
                           ),
 
                           Tooltip(
-                            message: _diario.isEmpty
+                            message: exportDisabilitato
                                 ? 'Nessun corso da esportare'
-                                : 'Esporta il diario visualizzato in Excel',
-                            child: FilledButton.icon(
-                              onPressed: _diario.isEmpty
+                                : 'Esporta ${_diario.length} corsi in Excel',
+                            child: AppActionButton(
+                              type: AppActionButtonType.excel,
+                              onPressed: exportDisabilitato
                                   ? null
                                   : esportaExcelDiario,
-                              icon: const Icon(
-                                Icons.table_chart_rounded,
-                                size: 18,
-                              ),
-                              label: Text('Esporta Excel (${_diario.length})'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF16A34A),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
+                              label: 'Excel (${_diario.length})',
+                              compact: true,
                             ),
                           ),
 
                           Tooltip(
-                            message: _diario.isEmpty
+                            message: exportDisabilitato
                                 ? 'Nessun corso da esportare in PDF'
-                                : 'Esporta il diario visualizzato in PDF',
-                            child: FilledButton.icon(
-                              onPressed: _diario.isEmpty
+                                : 'Esporta ${_diario.length} corsi in PDF',
+                            child: AppActionButton(
+                              type: AppActionButtonType.pdf,
+                              onPressed: exportDisabilitato
                                   ? null
                                   : esportaPdfDiario,
-                              icon: const Icon(
-                                Icons.picture_as_pdf_rounded,
-                                size: 18,
-                              ),
-                              label: Text('Esporta PDF (${_diario.length})'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFFDC2626),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
+                              label: 'PDF (${_diario.length})',
+                              compact: true,
                             ),
                           ),
 
                           Tooltip(
-                            message: _diario.isEmpty
+                            message: exportDisabilitato
                                 ? 'Nessun corso da stampare'
                                 : 'Stampa ${_diario.length} corsi visualizzati',
-                            child: FilledButton.icon(
-                              onPressed: _diario.isEmpty ? null : stampaDiario,
-                              icon: const Icon(Icons.print_rounded, size: 18),
-                              label: Text('Stampa Diario (${_diario.length})'),
-                              style: FilledButton.styleFrom(
-                                backgroundColor: const Color(0xFF334155),
-                                foregroundColor: Colors.white,
-                                disabledBackgroundColor: const Color(
-                                  0xFFE2E8F0,
-                                ),
-                                disabledForegroundColor: const Color(
-                                  0xFF94A3B8,
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                              ),
+                            child: AppActionButton(
+                              type: AppActionButtonType.stampa,
+                              onPressed: exportDisabilitato
+                                  ? null
+                                  : stampaDiario,
+                              label: 'Stampa (${_diario.length})',
+                              compact: true,
                             ),
                           ),
                         ],

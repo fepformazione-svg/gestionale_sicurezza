@@ -3435,7 +3435,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   : prenotazioniVisibili.length == 1
                   ? 'Esporta 1 prenotazione visualizzata in PDF'
                   : 'Esporta ${prenotazioniVisibili.length} prenotazioni visualizzate in PDF',
-              child: ElevatedButton.icon(
+              child: AppActionButton(
+                type: AppActionButtonType.pdf,
                 onPressed: prenotazioniVisibili.isEmpty
                     ? null
                     : () {
@@ -3445,31 +3446,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                         esportaPdf();
                       },
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: Text(
-                  prenotazioniVisibili.isEmpty
-                      ? 'Esporta PDF'
-                      : 'Esporta PDF (${prenotazioniVisibili.length})',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFFDC2626),
-                  disabledBackgroundColor: const Color(0xFFF1F5F9),
-                  disabledForegroundColor: const Color(0xFF94A3B8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                      color: prenotazioniVisibili.isEmpty
-                          ? const Color(0xFFE2E8F0)
-                          : const Color(0xFFFECACA),
-                    ),
-                  ),
-                  elevation: 0,
-                ),
+                label: 'PDF (${prenotazioniVisibili.length})',
               ),
             ),
 

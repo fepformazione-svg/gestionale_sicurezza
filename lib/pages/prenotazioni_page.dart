@@ -3361,7 +3361,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
               message: mostraTutteLePrenotazioni
                   ? 'Tutte le prenotazioni sono già visualizzate'
                   : 'Carica tutte le prenotazioni',
-              child: ElevatedButton.icon(
+              child: AppActionButton(
+                type: AppActionButtonType.aggiorna,
                 onPressed: mostraTutteLePrenotazioni || caricamentoPaginaDb
                     ? null
                     : () async {
@@ -3370,39 +3371,10 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         });
 
                         await caricaTutteLePrenotazioni();
-                        ripristinaFocusTabella();
                       },
-                icon: caricamentoPaginaDb && !mostraTutteLePrenotazioni
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.unfold_more_rounded),
-                label: Text(
-                  mostraTutteLePrenotazioni
-                      ? 'Tutto visualizzato'
-                      : 'Mostra tutto',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF475569),
-                  disabledBackgroundColor: const Color(0xFFF1F5F9),
-                  disabledForegroundColor: const Color(0xFF94A3B8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                      color: mostraTutteLePrenotazioni
-                          ? const Color(0xFFE2E8F0)
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                  elevation: 0,
-                ),
+                label: mostraTutteLePrenotazioni
+                    ? 'Tutto visibile'
+                    : 'Mostra tutto',
               ),
             ),
 

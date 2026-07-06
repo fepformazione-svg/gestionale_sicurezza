@@ -8,6 +8,7 @@ import '../widgets/page_header.dart';
 import '../widgets/prenotazione_dialog.dart';
 import '../widgets/section_card.dart';
 import '../widgets/table_status_badge.dart';
+import '../widgets/app_action_button.dart';
 
 import '../services/app_database.dart';
 
@@ -3411,7 +3412,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                   : prenotazioniVisibili.length == 1
                   ? 'Esporta 1 prenotazione visualizzata in Excel'
                   : 'Esporta ${prenotazioniVisibili.length} prenotazioni visualizzate in Excel',
-              child: ElevatedButton.icon(
+              child: AppActionButton(
+                type: AppActionButtonType.excel,
                 onPressed: prenotazioniVisibili.isEmpty
                     ? null
                     : () {
@@ -3421,31 +3423,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
                         exportPrenotazioniExcel();
                       },
-                icon: const Icon(Icons.table_view_outlined),
-                label: Text(
-                  prenotazioniVisibili.isEmpty
-                      ? 'Esporta elenco Excel'
-                      : 'Esporta Excel (${prenotazioniVisibili.length})',
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  foregroundColor: const Color(0xFF2563EB),
-                  disabledBackgroundColor: const Color(0xFFF1F5F9),
-                  disabledForegroundColor: const Color(0xFF94A3B8),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                    side: BorderSide(
-                      color: prenotazioniVisibili.isEmpty
-                          ? const Color(0xFFE2E8F0)
-                          : Colors.grey.shade300,
-                    ),
-                  ),
-                  elevation: 0,
-                ),
+                label: 'Excel (${prenotazioniVisibili.length})',
               ),
             ),
 

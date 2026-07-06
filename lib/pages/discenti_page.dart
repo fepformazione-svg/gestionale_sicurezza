@@ -836,14 +836,22 @@ class _DiscentiPageState extends State<DiscentiPage> {
                           Expanded(
                             child: TextField(
                               controller: dataVisitaController,
-                              decoration: _inputDecoration('Data visita'),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [DataTextInputFormatter()],
+                              decoration: _inputDecoration(
+                                'Data visita',
+                              ).copyWith(helperText: 'Formato gg/mm/aaaa'),
                             ),
                           ),
                           const SizedBox(width: 14),
                           Expanded(
                             child: TextField(
                               controller: scadenzaVisitaController,
-                              decoration: _inputDecoration('Scadenza visita'),
+                              keyboardType: TextInputType.number,
+                              inputFormatters: [DataTextInputFormatter()],
+                              decoration: _inputDecoration(
+                                'Scadenza visita',
+                              ).copyWith(helperText: 'Formato gg/mm/aaaa'),
                             ),
                           ),
                         ],
@@ -1060,17 +1068,16 @@ class _DiscentiPageState extends State<DiscentiPage> {
       },
     );
 
-    Future<void>.delayed(const Duration(milliseconds: 300), () {
-      nomeController.dispose();
-      cognomeController.dispose();
-      luogoController.dispose();
-      dataController.dispose();
-      cfController.dispose();
-      dataVisitaController.dispose();
-      scadenzaVisitaController.dispose();
-    });
+    nomeController.dispose();
+    cognomeController.dispose();
+    luogoController.dispose();
+    dataController.dispose();
+    cfController.dispose();
+    dataVisitaController.dispose();
+    scadenzaVisitaController.dispose();
 
     if (salvato == true) {
+      if (!mounted) return;
       await caricaDati();
     }
   }

@@ -3,8 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../services/database_service.dart';
-
 import '../services/app_database.dart';
+import 'data_text_input_formatter.dart';
 
 class PrenotazioneDialog extends StatefulWidget {
   final Map<String, dynamic>? prenotazione;
@@ -314,14 +314,17 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                 final item = risultati[index];
                 final subtitle = getSubtitle?.call(item) ?? '';
 
-                return ListTile(
-                  dense: true,
-                  title: Text(
-                    getTitle(item),
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+                return Material(
+                  color: Colors.transparent,
+                  child: ListTile(
+                    dense: true,
+                    title: Text(
+                      getTitle(item),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: subtitle.isEmpty ? null : Text(subtitle),
+                    onTap: () => onSelect(item),
                   ),
-                  subtitle: subtitle.isEmpty ? null : Text(subtitle),
-                  onTap: () => onSelect(item),
                 );
               },
             ),
@@ -752,8 +755,12 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                     Expanded(
                       child: TextFormField(
                         controller: dataController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DataTextInputFormatter()],
                         decoration: InputDecoration(
                           labelText: 'Data corso',
+                          hintText: 'gg/mm/aaaa',
+                          helperText: 'Formato gg/mm/aaaa',
                           filled: true,
                           fillColor: Colors.white,
                           border: OutlineInputBorder(

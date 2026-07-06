@@ -11,6 +11,7 @@ import 'package:printing/printing.dart';
 
 import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/data_text_input_formatter.dart';
 
 class VisiteMedichePage extends StatefulWidget {
   final String? ricercaIniziale;
@@ -358,18 +359,24 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: dataVisitaController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DataTextInputFormatter()],
                         decoration: const InputDecoration(
                           labelText: 'Data visita',
                           hintText: 'Es. 17/06/2026',
+                          helperText: 'Formato gg/mm/aaaa',
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: dataScadenzaController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DataTextInputFormatter()],
                         decoration: const InputDecoration(
                           labelText: 'Data scadenza',
                           hintText: 'Es. 17/06/2027',
+                          helperText: 'Formato gg/mm/aaaa',
                           border: OutlineInputBorder(),
                         ),
                       ),
@@ -572,18 +579,24 @@ class _VisiteMedichePageState extends State<VisiteMedichePage> {
                       const SizedBox(height: 12),
                       TextField(
                         controller: dataVisitaController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DataTextInputFormatter()],
                         decoration: const InputDecoration(
                           labelText: 'Data visita',
                           hintText: 'Es. 17/06/2026',
+                          helperText: 'Formato gg/mm/aaaa',
                           border: OutlineInputBorder(),
                         ),
                       ),
                       const SizedBox(height: 12),
                       TextField(
                         controller: dataScadenzaController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [DataTextInputFormatter()],
                         decoration: const InputDecoration(
                           labelText: 'Data scadenza',
                           hintText: 'Es. 17/06/2027',
+                          helperText: 'Formato gg/mm/aaaa',
                           border: OutlineInputBorder(),
                         ),
                       ),

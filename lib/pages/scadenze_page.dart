@@ -9,9 +9,9 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
 import '../utils/pdf_azienda_helper.dart';
-
 import '../database/database_service.dart';
 import '../dialogs/discente_dialog.dart';
+import '../widgets/app_action_button.dart';
 import 'discente_scheda_page.dart';
 
 class ScadenzePage extends StatefulWidget {
@@ -719,6 +719,9 @@ class _ScadenzePageState extends State<ScadenzePage> {
 
   @override
   Widget build(BuildContext context) {
+    final scadenzeVisibili = scadenzeFiltrate;
+    final exportDisabilitato = scadenzeVisibili.isEmpty;
+
     final scadute = _scadenze.where((s) => calcolaStato(s) == 'Scaduto').length;
 
     final inScadenza = _scadenze
@@ -846,60 +849,37 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 attivo: filtroStato == 'Valide',
                 onTap: () => setState(() => filtroStato = 'Valide'),
               ),
-              ElevatedButton.icon(
-                onPressed: scadenzeFiltrate.isEmpty
-                    ? null
-                    : esportaExcelScadenze,
-                icon: const Icon(Icons.table_chart_rounded, size: 18),
-                label: Text('Esporta Excel (${scadenzeFiltrate.length})'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF16A34A),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE5E7EB),
-                  disabledForegroundColor: const Color(0xFF9CA3AF),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna scadenza da esportare'
+                    : 'Esporta ${scadenzeVisibili.length} scadenze in Excel',
+                child: AppActionButton(
+                  type: AppActionButtonType.excel,
+                  onPressed: exportDisabilitato ? null : esportaExcelScadenze,
+                  label: 'Excel (${scadenzeVisibili.length})',
+                  compact: true,
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: scadenzeFiltrate.isEmpty ? null : esportaPdfScadenze,
-                icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-                label: Text('Esporta PDF (${scadenzeFiltrate.length})'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFDC2626),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE5E7EB),
-                  disabledForegroundColor: const Color(0xFF9CA3AF),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna scadenza da esportare in PDF'
+                    : 'Esporta ${scadenzeVisibili.length} scadenze in PDF',
+                child: AppActionButton(
+                  type: AppActionButtonType.pdf,
+                  onPressed: exportDisabilitato ? null : esportaPdfScadenze,
+                  label: 'PDF (${scadenzeVisibili.length})',
+                  compact: true,
                 ),
               ),
-              ElevatedButton.icon(
-                onPressed: scadenzeFiltrate.isEmpty ? null : stampaScadenze,
-                icon: const Icon(Icons.print_rounded, size: 18),
-                label: Text('Stampa (${scadenzeFiltrate.length})'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF475569),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: const Color(0xFFE5E7EB),
-                  disabledForegroundColor: const Color(0xFF9CA3AF),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(999),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna scadenza da stampare'
+                    : 'Stampa ${scadenzeVisibili.length} scadenze',
+                child: AppActionButton(
+                  type: AppActionButtonType.stampa,
+                  onPressed: exportDisabilitato ? null : stampaScadenze,
+                  label: 'Stampa (${scadenzeVisibili.length})',
+                  compact: true,
                 ),
               ),
             ],
@@ -916,9 +896,9 @@ class _ScadenzePageState extends State<ScadenzePage> {
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: ListView.builder(
-                      itemCount: scadenzeFiltrate.length,
+                      itemCount: scadenzeVisibili.length,
                       itemBuilder: (context, index) {
-                        final riga = scadenzeFiltrate[index];
+                        final riga = scadenzeVisibili[index];
 
                         final stato = calcolaStato(riga);
 

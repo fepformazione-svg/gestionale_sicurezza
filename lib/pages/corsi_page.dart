@@ -16,6 +16,7 @@ import '../services/database_service.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
+import '../widgets/app_action_button.dart';
 
 class CorsiPage extends StatefulWidget {
   const CorsiPage({super.key});
@@ -791,109 +792,48 @@ class _CorsiPageState extends State<CorsiPage> {
                   onChanged: cercaCorsi,
                 ),
               ),
-
               const SizedBox(width: 16),
-
               Tooltip(
                 message: exportDisabilitato
                     ? 'Nessun corso da esportare'
                     : 'Esporta ${corsiFiltrati.length} corsi in Excel',
-                child: ElevatedButton.icon(
+                child: AppActionButton(
+                  type: AppActionButtonType.excel,
                   onPressed: exportDisabilitato ? null : esportaExcelCorsi,
-                  icon: const Icon(Icons.table_view_rounded),
-                  label: Text('Export Excel (${corsiFiltrati.length})'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF16A34A),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFE5E7EB),
-                    disabledForegroundColor: const Color(0xFF94A3B8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
+                  label: 'Excel (${corsiFiltrati.length})',
                 ),
               ),
-
-              const SizedBox(width: 16),
-
+              const SizedBox(width: 12),
               Tooltip(
                 message: exportDisabilitato
                     ? 'Nessun corso da esportare in PDF'
                     : 'Esporta ${corsiFiltrati.length} corsi in PDF',
-                child: ElevatedButton.icon(
+                child: AppActionButton(
+                  type: AppActionButtonType.pdf,
                   onPressed: exportDisabilitato ? null : esportaPdfCorsi,
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  label: Text('Export PDF (${corsiFiltrati.length})'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFDC2626),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFE5E7EB),
-                    disabledForegroundColor: const Color(0xFF94A3B8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
+                  label: 'PDF (${corsiFiltrati.length})',
                 ),
               ),
-
-              const SizedBox(width: 16),
-
+              const SizedBox(width: 12),
               Tooltip(
                 message: exportDisabilitato
                     ? 'Nessun corso da stampare'
                     : 'Stampa ${corsiFiltrati.length} corsi',
-                child: ElevatedButton.icon(
+                child: AppActionButton(
+                  type: AppActionButtonType.stampa,
                   onPressed: exportDisabilitato ? null : stampaCorsi,
-                  icon: const Icon(Icons.print_rounded),
-                  label: Text('Stampa (${corsiFiltrati.length})'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF475569),
-                    foregroundColor: Colors.white,
-                    disabledBackgroundColor: const Color(0xFFE5E7EB),
-                    disabledForegroundColor: const Color(0xFF94A3B8),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 22,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
+                  label: 'Stampa (${corsiFiltrati.length})',
                 ),
               ),
-
-              const SizedBox(width: 16),
-
-              ElevatedButton.icon(
+              const SizedBox(width: 12),
+              AppActionButton(
+                type: AppActionButtonType.nuovo,
                 onPressed: apriDialogNuovoCorso,
-                icon: const Icon(Icons.add),
-                label: const Text('Nuovo corso'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
+                label: 'Nuovo corso',
               ),
             ],
           ),
+          const SizedBox(height: 24),
 
           const SizedBox(height: 24),
 

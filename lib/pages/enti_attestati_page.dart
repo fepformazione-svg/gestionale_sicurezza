@@ -29,6 +29,8 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
   String ricerca = '';
   bool soloAttivi = true;
 
+  final ScrollController entiAttestatiScrollController = ScrollController();
+
   List<EnteAttestato> get entiFiltrati {
     final testo = ricerca.trim().toLowerCase();
 
@@ -61,6 +63,7 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
   @override
   void dispose() {
     ricercaController.dispose();
+    entiAttestatiScrollController.dispose();
     super.dispose();
   }
 
@@ -946,8 +949,11 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                       ),
                     )
                   : Scrollbar(
+                      controller: entiAttestatiScrollController,
                       thumbVisibility: true,
+                      scrollbarOrientation: ScrollbarOrientation.bottom,
                       child: SingleChildScrollView(
+                        controller: entiAttestatiScrollController,
                         scrollDirection: Axis.horizontal,
                         child: SingleChildScrollView(
                           child: DataTable(

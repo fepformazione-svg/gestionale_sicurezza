@@ -14,6 +14,7 @@ import 'impresa_scheda_page.dart';
 import '../models/impresa.dart';
 import '../services/database_service.dart';
 
+import '../widgets/app_action_button.dart';
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
@@ -773,6 +774,8 @@ class _ImpresePageState extends State<ImpresePage> {
 
   @override
   Widget build(BuildContext context) {
+    final exportDisabilitato = impreseFiltrate.isEmpty;
+
     return Padding(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -793,86 +796,48 @@ class _ImpresePageState extends State<ImpresePage> {
                   onChanged: cercaImprese,
                 ),
               ),
-
               const SizedBox(width: 16),
-
-              OutlinedButton.icon(
-                onPressed: impreseFiltrate.isEmpty ? null : esportaExcelImprese,
-                icon: const Icon(Icons.table_chart_outlined),
-                label: Text('Export Excel (${impreseFiltrate.length})'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF2563EB),
-                  side: const BorderSide(color: Color(0xFF2563EB)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna impresa da esportare'
+                    : 'Esporta ${impreseFiltrate.length} imprese in Excel',
+                child: AppActionButton(
+                  type: AppActionButtonType.excel,
+                  onPressed: exportDisabilitato ? null : esportaExcelImprese,
+                  label: 'Excel (${impreseFiltrate.length})',
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              OutlinedButton.icon(
-                onPressed: impreseFiltrate.isEmpty ? null : esportaPdfImprese,
-                icon: const Icon(Icons.picture_as_pdf_outlined),
-                label: Text('PDF (${impreseFiltrate.length})'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFFDC2626),
-                  side: const BorderSide(color: Color(0xFFDC2626)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna impresa da esportare in PDF'
+                    : 'Esporta ${impreseFiltrate.length} imprese in PDF',
+                child: AppActionButton(
+                  type: AppActionButtonType.pdf,
+                  onPressed: exportDisabilitato ? null : esportaPdfImprese,
+                  label: 'PDF (${impreseFiltrate.length})',
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              OutlinedButton.icon(
-                onPressed: impreseFiltrate.isEmpty ? null : stampaImprese,
-                icon: const Icon(Icons.print_outlined),
-                label: Text('Stampa (${impreseFiltrate.length})'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF334155),
-                  side: const BorderSide(color: Color(0xFFCBD5E1)),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
+              Tooltip(
+                message: exportDisabilitato
+                    ? 'Nessuna impresa da stampare'
+                    : 'Stampa ${impreseFiltrate.length} imprese',
+                child: AppActionButton(
+                  type: AppActionButtonType.stampa,
+                  onPressed: exportDisabilitato ? null : stampaImprese,
+                  label: 'Stampa (${impreseFiltrate.length})',
                 ),
               ),
-
               const SizedBox(width: 12),
-
-              ElevatedButton.icon(
+              AppActionButton(
+                type: AppActionButtonType.nuovo,
                 onPressed: apriDialogNuovaImpresa,
-                icon: const Icon(Icons.add),
-                label: const Text('Nuova impresa'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF2563EB),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 22,
-                    vertical: 18,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
+                label: 'Nuova impresa',
               ),
             ],
           ),
-
+          const SizedBox(height: 24),
           const SizedBox(height: 24),
 
           Expanded(

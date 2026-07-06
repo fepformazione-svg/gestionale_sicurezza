@@ -485,9 +485,37 @@ class _ImpresePageState extends State<ImpresePage> {
     final ragioneSocialeController = TextEditingController();
     final partitaIvaController = TextEditingController();
     final codiceFiscaleController = TextEditingController();
-    final indirizzoController = TextEditingController();
+    final viaController = TextEditingController();
+    final civicoController = TextEditingController();
+    final capController = TextEditingController();
+    final comuneController = TextEditingController();
+    final provinciaController = TextEditingController();
     final telefonoController = TextEditingController();
     final referenteController = TextEditingController();
+
+    String componiIndirizzoCompleto() {
+      final via = viaController.text.trim();
+      final civico = civicoController.text.trim();
+      final cap = capController.text.trim();
+      final comune = comuneController.text.trim();
+      final provincia = provinciaController.text.trim().toUpperCase();
+
+      final strada = [
+        via,
+        civico,
+      ].where((valore) => valore.isNotEmpty).join(', ');
+
+      final localita = [
+        cap,
+        comune,
+        if (provincia.isNotEmpty) '($provincia)',
+      ].where((valore) => valore.isNotEmpty).join(' ');
+
+      return [
+        strada,
+        localita,
+      ].where((valore) => valore.isNotEmpty).join(' - ');
+    }
 
     final risultato = await showDialog<Impresa>(
       context: context,
@@ -554,15 +582,95 @@ class _ImpresePageState extends State<ImpresePage> {
                   ),
                   const SizedBox(height: 18),
 
-                  TextField(
-                    controller: indirizzoController,
-                    decoration: InputDecoration(
-                      labelText: 'Indirizzo',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                  const Text(
+                    'Indirizzo sede legale / operativa',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF374151),
                     ),
                   ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: viaController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'Via / Piazza / Località',
+                            hintText: 'Es. Via Roma',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 110,
+                        child: TextField(
+                          controller: civicoController,
+                          decoration: InputDecoration(
+                            labelText: 'Civico',
+                            hintText: 'Es. 12',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      SizedBox(
+                        width: 120,
+                        child: TextField(
+                          controller: capController,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            labelText: 'CAP',
+                            hintText: '00100',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: TextField(
+                          controller: comuneController,
+                          textCapitalization: TextCapitalization.words,
+                          decoration: InputDecoration(
+                            labelText: 'Comune',
+                            hintText: 'Roma',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SizedBox(
+                        width: 96,
+                        child: TextField(
+                          controller: provinciaController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: InputDecoration(
+                            labelText: 'Prov.',
+                            hintText: 'RM',
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
                   const SizedBox(height: 18),
 
                   TextField(
@@ -609,7 +717,7 @@ class _ImpresePageState extends State<ImpresePage> {
                               partitaIva: partitaIvaController.text.trim(),
                               codiceFiscale: codiceFiscaleController.text
                                   .trim(),
-                              indirizzo: indirizzoController.text.trim(),
+                              indirizzo: componiIndirizzoCompleto(),
                               telefono: telefonoController.text.trim(),
                               referente: referenteController.text.trim(),
                             ),
@@ -643,7 +751,11 @@ class _ImpresePageState extends State<ImpresePage> {
     ragioneSocialeController.dispose();
     partitaIvaController.dispose();
     codiceFiscaleController.dispose();
-    indirizzoController.dispose();
+    viaController.dispose();
+    civicoController.dispose();
+    capController.dispose();
+    comuneController.dispose();
+    provinciaController.dispose();
     telefonoController.dispose();
     referenteController.dispose();
 

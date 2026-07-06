@@ -768,6 +768,106 @@ class _CorsiPageState extends State<CorsiPage> {
     );
   }
 
+  Future<void> eliminaCorso(Corso corso) async {
+    final id = corso.id;
+
+    if (id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Impossibile eliminare: ID corso mancante'),
+          backgroundColor: Color(0xFFF59E0B),
+        ),
+      );
+      return;
+    }
+
+    final collegamenti = await DatabaseService.instance.contaCollegamentiCorso(
+      id,
+    );
+
+    if (!mounted) return;
+
+    final totaleCollegamenti = collegamenti.values.fold<int>(
+      0,
+      (totale, valore) => totale + valore,
+    );
+
+    if (totaleCollegamenti > 0) {
+      await showDialog<void>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text('Corso non eliminabile'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Il corso "${corso.denominazione}" è collegato ad altri dati '
+                  'del gestionale e non può essere eliminato.',
+                ),
+                const SizedBox(height: 16),
+                Text('Prenotazioni: ${collegamenti['prenotazioni'] ?? 0}'),
+                Text('Diario: ${collegamenti['diario'] ?? 0}'),
+                Text('Scadenze: ${collegamenti['scadenze'] ?? 0}'),
+                const SizedBox(height: 16),
+                const Text(
+                  'Per sicurezza non viene eseguita nessuna eliminazione a cascata.',
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Chiudi'),
+              ),
+            ],
+          );
+        },
+      );
+
+      return;
+    }
+
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Eliminare il corso?'),
+          content: Text(
+            'Vuoi eliminare definitivamente il corso "${corso.denominazione}"?\n\n'
+            'L’operazione non può essere annullata.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.pop(context, true),
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Elimina'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await DatabaseService.instance.deleteCorso(id);
+    await caricaCorsi();
+
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Corso eliminato: ${corso.denominazione}'),
+        backgroundColor: const Color(0xFF16A34A),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final exportDisabilitato = loading || corsiFiltrati.isEmpty;
@@ -948,6 +1048,18 @@ class _CorsiPageState extends State<CorsiPage> {
                                                   Icons.edit_rounded,
                                                 ),
                                                 color: const Color(0xFF2563EB),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Tooltip(
+                                              message: 'Elimina corso',
+                                              child: IconButton(
+                                                onPressed: () =>
+                                                    eliminaCorso(item),
+                                                icon: const Icon(
+                                                  Icons.delete_outline,
+                                                ),
+                                                color: const Color(0xFFDC2626),
                                               ),
                                             ),
                                           ],

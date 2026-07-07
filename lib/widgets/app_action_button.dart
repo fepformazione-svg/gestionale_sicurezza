@@ -8,6 +8,7 @@ enum AppActionButtonType {
   stampa,
   elimina,
   modifica,
+  salva,
 }
 
 class AppActionButton extends StatelessWidget {
@@ -135,6 +136,14 @@ class _ActionButtonConfig {
           icon: Icons.edit_outlined,
           backgroundColor: colorScheme.tertiaryContainer,
           foregroundColor: colorScheme.onTertiaryContainer,
+        );
+
+      case AppActionButtonType.salva:
+        return _ActionButtonConfig(
+          label: 'Salva',
+          icon: Icons.save_outlined,
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
         );
     }
   }

@@ -1709,17 +1709,48 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                     ],
                   ),
                 ),
-                Chip(
-                  avatar: Icon(
-                    auditOk
-                        ? Icons.verified_outlined
-                        : Icons.warning_amber_rounded,
-                    size: 18,
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
                   ),
-                  label: Text(auditOk ? 'Auditabile' : 'Da verificare'),
-                  backgroundColor: auditOk
-                      ? Colors.green.shade50
-                      : Colors.orange.shade50,
+                  decoration: BoxDecoration(
+                    color: auditOk
+                        ? Colors.green.shade50
+                        : Colors.orange.shade50,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(
+                      color: auditOk
+                          ? Colors.green.shade300
+                          : Colors.orange.shade300,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        auditOk
+                            ? Icons.verified_outlined
+                            : Icons.warning_amber_rounded,
+                        size: 18,
+                        color: auditOk
+                            ? Colors.green.shade800
+                            : Colors.orange.shade800,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        auditOk
+                            ? 'Stato audit: auditabile'
+                            : 'Stato audit: da verificare',
+                        style: TextStyle(
+                          color: auditOk
+                              ? Colors.green.shade800
+                              : Colors.orange.shade800,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),

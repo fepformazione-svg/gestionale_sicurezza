@@ -13,6 +13,7 @@ import 'package:printing/printing.dart';
 
 import '../models/ente_attestato.dart';
 import '../services/app_database.dart';
+import '../widgets/app_action_button.dart';
 
 class EntiAttestatiPage extends StatefulWidget {
   const EntiAttestatiPage({super.key});
@@ -815,10 +816,10 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 12),
-            child: FilledButton.icon(
+            child: AppActionButton(
+              type: AppActionButtonType.nuovo,
               onPressed: () => mostraDialogEnte(),
-              icon: const Icon(Icons.add),
-              label: const Text('Nuova voce'),
+              label: 'Nuova voce',
             ),
           ),
         ],
@@ -870,30 +871,30 @@ class _EntiAttestatiPageState extends State<EntiAttestatiPage> {
                       },
                     ),
                     const SizedBox(width: 8),
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.excel,
                       onPressed: entiFiltrati.isEmpty
                           ? null
                           : esportaExcelEntiAttestati,
-                      icon: const Icon(Icons.table_chart),
-                      label: Text('Excel (${entiFiltrati.length})'),
+                      label: 'Excel (${entiFiltrati.length})',
                     ),
                     const SizedBox(width: 8),
 
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.pdf,
                       onPressed: entiFiltrati.isEmpty
                           ? null
                           : esportaPdfEntiAttestati,
-                      icon: const Icon(Icons.picture_as_pdf),
-                      label: Text('PDF (${entiFiltrati.length})'),
+                      label: 'PDF (${entiFiltrati.length})',
                     ),
                     const SizedBox(width: 8),
 
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.stampa,
                       onPressed: entiFiltrati.isEmpty
                           ? null
                           : stampaEntiAttestati,
-                      icon: const Icon(Icons.print),
-                      label: Text('Stampa (${entiFiltrati.length})'),
+                      label: 'Stampa (${entiFiltrati.length})',
                     ),
                     const SizedBox(width: 24),
                     Expanded(

@@ -1721,6 +1721,12 @@ class _RegistroConsensiPrivacyPageState
               compact: true,
               onPressed: () => stampaRegistroConsensiPrivacy(consensiOrdinati),
             ),
+            AppActionButton(
+              type: AppActionButtonType.nuovo,
+              label: 'Nuovo consenso',
+              compact: true,
+              onPressed: () => mostraDialogConsenso(),
+            ),
             OutlinedButton.icon(
               onPressed: mostraGuidaRegistroConsensiPrivacy,
               icon: const Icon(Icons.help_outline),
@@ -2418,11 +2424,6 @@ class _RegistroConsensiPrivacyPageState
             onPressed: ricaricaConsensi,
           ),
         ],
-      ),
-      floatingActionButton: AppActionButton(
-        type: AppActionButtonType.nuovo,
-        label: 'Nuovo consenso',
-        onPressed: () => mostraDialogConsenso(),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),

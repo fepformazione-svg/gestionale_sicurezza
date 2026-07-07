@@ -12,6 +12,7 @@ import '../utils/pdf_azienda_helper.dart';
 
 import '../models/prezzario.dart';
 import '../services/database_service.dart';
+import '../widgets/app_action_button.dart';
 
 class PrezzarioPage extends StatefulWidget {
   const PrezzarioPage({super.key});
@@ -566,37 +567,61 @@ class _PrezzarioPageState extends State<PrezzarioPage> {
               ),
             ),
             const Spacer(),
-            OutlinedButton.icon(
-              onPressed: vociPrezzarioFiltrate.isEmpty
-                  ? null
-                  : esportaExcelPrezzario,
-              icon: const Icon(Icons.table_view_rounded, size: 18),
-              label: Text('Esporta Excel (${vociPrezzarioFiltrate.length})'),
+            Tooltip(
+              message: vociPrezzarioFiltrate.isEmpty
+                  ? 'Nessuna voce prezzario da esportare'
+                  : 'Esporta ${vociPrezzarioFiltrate.length} voci prezzario in Excel',
+              child: AppActionButton(
+                type: AppActionButtonType.excel,
+                onPressed: vociPrezzarioFiltrate.isEmpty
+                    ? null
+                    : esportaExcelPrezzario,
+                label: 'Excel (${vociPrezzarioFiltrate.length})',
+              ),
             ),
             const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: vociPrezzarioFiltrate.isEmpty
-                  ? null
-                  : esportaPdfPrezzario,
-              icon: const Icon(Icons.picture_as_pdf_rounded, size: 18),
-              label: Text('Esporta PDF (${vociPrezzarioFiltrate.length})'),
+            Tooltip(
+              message: vociPrezzarioFiltrate.isEmpty
+                  ? 'Nessuna voce prezzario da esportare in PDF'
+                  : 'Esporta ${vociPrezzarioFiltrate.length} voci prezzario in PDF',
+              child: AppActionButton(
+                type: AppActionButtonType.pdf,
+                onPressed: vociPrezzarioFiltrate.isEmpty
+                    ? null
+                    : esportaPdfPrezzario,
+                label: 'PDF (${vociPrezzarioFiltrate.length})',
+              ),
             ),
             const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: vociPrezzarioFiltrate.isEmpty ? null : stampaPrezzario,
-              icon: const Icon(Icons.print_rounded, size: 18),
-              label: Text('Stampa (${vociPrezzarioFiltrate.length})'),
-            ),
-            FilledButton.icon(
-              onPressed: apriDialogNuovaVoce,
-              icon: const Icon(Icons.add_rounded, size: 18),
-              label: const Text('Nuova voce'),
+            Tooltip(
+              message: vociPrezzarioFiltrate.isEmpty
+                  ? 'Nessuna voce prezzario da stampare'
+                  : 'Stampa ${vociPrezzarioFiltrate.length} voci prezzario',
+              child: AppActionButton(
+                type: AppActionButtonType.stampa,
+                onPressed: vociPrezzarioFiltrate.isEmpty
+                    ? null
+                    : stampaPrezzario,
+                label: 'Stampa (${vociPrezzarioFiltrate.length})',
+              ),
             ),
             const SizedBox(width: 8),
-            OutlinedButton.icon(
-              onPressed: caricaPrezzario,
-              icon: const Icon(Icons.refresh_rounded, size: 18),
-              label: const Text('Aggiorna'),
+            Tooltip(
+              message: 'Crea una nuova voce prezzario',
+              child: AppActionButton(
+                type: AppActionButtonType.nuovo,
+                onPressed: apriDialogNuovaVoce,
+                label: 'Nuova voce',
+              ),
+            ),
+            const SizedBox(width: 8),
+            Tooltip(
+              message: 'Ricarica il prezzario',
+              child: AppActionButton(
+                type: AppActionButtonType.aggiorna,
+                onPressed: caricaPrezzario,
+                label: 'Aggiorna',
+              ),
             ),
           ],
         ),

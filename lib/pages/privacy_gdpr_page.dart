@@ -1878,92 +1878,98 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   }
 
   Widget tabellaPrivacy() {
-    return Card(
-      elevation: 1,
-      child: Scrollbar(
-        controller: scrollOrizzontaleTabellaController,
-        thumbVisibility: true,
-        trackVisibility: true,
-        scrollbarOrientation: ScrollbarOrientation.bottom,
-        child: SingleChildScrollView(
+    return SizedBox(
+      width: double.infinity,
+      child: Card(
+        elevation: 1,
+        child: Scrollbar(
           controller: scrollOrizzontaleTabellaController,
-          scrollDirection: Axis.horizontal,
-          child: DataTable(
-            columnSpacing: 18,
-            horizontalMargin: 16,
-            headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
-            columns: const [
-              DataColumn(label: Text('Titolo')),
-              DataColumn(label: Text('Titolare trattamento')),
-              DataColumn(label: Text('Referente privacy')),
-              DataColumn(label: Text('Base giuridica')),
-              DataColumn(label: Text('Periodo conservazione')),
-              DataColumn(label: Text('Stato')),
-              DataColumn(label: Text('Azioni')),
-            ],
-            rows: vociPrivacyFiltrate.map((voce) {
-              return DataRow(
-                cells: [
-                  DataCell(
-                    SizedBox(
-                      width: 250,
-                      child: Text(voce.titolo, overflow: TextOverflow.ellipsis),
-                    ),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 220,
-                      child: Text(
-                        voce.titolareTrattamento ?? '',
-                        overflow: TextOverflow.ellipsis,
+          thumbVisibility: true,
+          trackVisibility: true,
+          scrollbarOrientation: ScrollbarOrientation.bottom,
+          child: SingleChildScrollView(
+            controller: scrollOrizzontaleTabellaController,
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 18,
+              horizontalMargin: 16,
+              headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
+              columns: const [
+                DataColumn(label: Text('Titolo')),
+                DataColumn(label: Text('Titolare trattamento')),
+                DataColumn(label: Text('Referente privacy')),
+                DataColumn(label: Text('Base giuridica')),
+                DataColumn(label: Text('Periodo conservazione')),
+                DataColumn(label: Text('Stato')),
+                DataColumn(label: Text('Azioni')),
+              ],
+              rows: vociPrivacyFiltrate.map((voce) {
+                return DataRow(
+                  cells: [
+                    DataCell(
+                      SizedBox(
+                        width: 250,
+                        child: Text(
+                          voce.titolo,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 190,
-                      child: Text(
-                        voce.referentePrivacy ?? '',
-                        overflow: TextOverflow.ellipsis,
+                    DataCell(
+                      SizedBox(
+                        width: 220,
+                        child: Text(
+                          voce.titolareTrattamento ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 250,
-                      child: Text(
-                        voce.baseGiuridica ?? '',
-                        overflow: TextOverflow.ellipsis,
+                    DataCell(
+                      SizedBox(
+                        width: 190,
+                        child: Text(
+                          voce.referentePrivacy ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 200,
-                      child: Text(
-                        voce.periodoConservazione ?? '',
-                        overflow: TextOverflow.ellipsis,
+                    DataCell(
+                      SizedBox(
+                        width: 250,
+                        child: Text(
+                          voce.baseGiuridica ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                  DataCell(
-                    SizedBox(width: 115, child: badgeStato(voce.attivo)),
-                  ),
-                  DataCell(
-                    SizedBox(
-                      width: 70,
-                      child: IconButton(
-                        tooltip: 'Modifica voce Privacy/GDPR',
-                        icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                        onPressed: () {
-                          mostraDialogModificaVoce(voce);
-                        },
+                    DataCell(
+                      SizedBox(
+                        width: 200,
+                        child: Text(
+                          voce.periodoConservazione ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              );
-            }).toList(),
+                    DataCell(
+                      SizedBox(width: 115, child: badgeStato(voce.attivo)),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 70,
+                        child: IconButton(
+                          tooltip: 'Modifica voce Privacy/GDPR',
+                          icon: const Icon(Icons.edit, color: Colors.blueGrey),
+                          onPressed: () {
+                            mostraDialogModificaVoce(voce);
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -2003,7 +2009,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
         child: caricamento
             ? const Center(child: CircularProgressIndicator())
             : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Card(
                     child: Padding(
@@ -2202,7 +2208,12 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                   const SizedBox(height: 12),
                   Flexible(
                     flex: 2,
-                    child: SingleChildScrollView(child: riepilogoAuditGdpr()),
+                    child: SingleChildScrollView(
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: riepilogoAuditGdpr(),
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 12),
                   Expanded(

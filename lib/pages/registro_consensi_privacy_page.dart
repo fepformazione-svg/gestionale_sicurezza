@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
@@ -8,10 +9,43 @@ import 'package:printing/printing.dart';
 import '../models/consenso_privacy.dart';
 import '../models/consenso_privacy_log.dart';
 import '../services/app_database.dart';
+import '../widgets/app_action_button.dart';
 
 import 'dart:io';
-import 'dart:typed_data';
 import 'dart:convert';
+
+class _DateSlashInputFormatter extends TextInputFormatter {
+  const _DateSlashInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final digitsOnly = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+    final limitedDigits = digitsOnly.length > 8
+        ? digitsOnly.substring(0, 8)
+        : digitsOnly;
+
+    final buffer = StringBuffer();
+
+    for (var index = 0; index < limitedDigits.length; index++) {
+      if (index == 2 || index == 4) {
+        buffer.write('/');
+      }
+
+      buffer.write(limitedDigits[index]);
+    }
+
+    final text = buffer.toString();
+
+    return TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
+    );
+  }
+}
 
 class RegistroConsensiPrivacyPage extends StatefulWidget {
   const RegistroConsensiPrivacyPage({super.key});
@@ -25,6 +59,10 @@ class _RegistroConsensiPrivacyPageState
     extends State<RegistroConsensiPrivacyPage> {
   final TextEditingController ricercaController = TextEditingController();
   final ScrollController tabellaOrizzontaleController = ScrollController();
+
+  static const List<TextInputFormatter> formattatoriData = <TextInputFormatter>[
+    _DateSlashInputFormatter(),
+  ];
 
   late Future<List<ConsensoPrivacy>> futureConsensi;
 
@@ -306,7 +344,7 @@ class _RegistroConsensiPrivacyPageState
                                     contentPadding: EdgeInsets.zero,
                                     title: const Text('Soggetto minorenne'),
                                     subtitle: const Text(
-                                      'Attiva se il consenso/privacy è prestato da genitore o tutore.',
+                                      'Attiva se il consenso/privacy ÃƒÂ¨ prestato da genitore o tutore.',
                                     ),
                                     onChanged: (value) {
                                       setModalState(() {
@@ -442,7 +480,7 @@ class _RegistroConsensiPrivacyPageState
                           child: DropdownButtonFormField<String>(
                             initialValue: finalita,
                             decoration: const InputDecoration(
-                              labelText: 'Finalità',
+                              labelText: 'FinalitÃƒÂ ',
                               border: OutlineInputBorder(),
                             ),
                             items: finalitaForm
@@ -534,6 +572,8 @@ class _RegistroConsensiPrivacyPageState
                               hintText: 'gg/mm/aaaa',
                               border: OutlineInputBorder(),
                             ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: formattatoriData,
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
                                 return 'Campo obbligatorio';
@@ -551,6 +591,8 @@ class _RegistroConsensiPrivacyPageState
                               hintText: 'gg/mm/aaaa',
                               border: OutlineInputBorder(),
                             ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: formattatoriData,
                           ),
                         ),
                         SizedBox(
@@ -562,6 +604,8 @@ class _RegistroConsensiPrivacyPageState
                               hintText: 'gg/mm/aaaa',
                               border: OutlineInputBorder(),
                             ),
+                            keyboardType: TextInputType.number,
+                            inputFormatters: formattatoriData,
                           ),
                         ),
                         SizedBox(
@@ -595,6 +639,8 @@ class _RegistroConsensiPrivacyPageState
                                             hintText: 'gg/mm/aaaa',
                                             border: OutlineInputBorder(),
                                           ),
+                                          keyboardType: TextInputType.number,
+                                          inputFormatters: formattatoriData,
                                         ),
                                       ),
                                       SizedBox(
@@ -689,9 +735,8 @@ class _RegistroConsensiPrivacyPageState
                   onPressed: () => Navigator.of(dialogContext).pop(false),
                   child: const Text('Annulla'),
                 ),
-                ElevatedButton.icon(
-                  icon: const Icon(Icons.save_outlined),
-                  label: const Text('Salva'),
+                AppActionButton(
+                  type: AppActionButtonType.salva,
                   onPressed: () async {
                     if (!formKey.currentState!.validate()) return;
 
@@ -812,7 +857,7 @@ class _RegistroConsensiPrivacyPageState
         return AlertDialog(
           title: const Text('Revocare il consenso?'),
           content: Text(
-            'Il consenso di "${consenso.nominativo}" verrà impostato come REVOCATO.',
+            'Il consenso di "${consenso.nominativo}" verrÃƒÂ  impostato come REVOCATO.',
           ),
           actions: [
             TextButton(
@@ -861,7 +906,7 @@ class _RegistroConsensiPrivacyPageState
         return AlertDialog(
           title: const Text('Eliminare il consenso?'),
           content: Text(
-            'Il record di "${consenso.nominativo}" verrà eliminato definitivamente.',
+            'Il record di "${consenso.nominativo}" verrÃƒÂ  eliminato definitivamente.',
           ),
           actions: [
             TextButton(
@@ -1136,7 +1181,8 @@ class _RegistroConsensiPrivacyPageState
             controller: ricercaController,
             decoration: InputDecoration(
               labelText: 'Cerca',
-              hintText: 'Nominativo, CF/P.IVA, email, finalità, documento...',
+              hintText:
+                  'Nominativo, CF/P.IVA, email, finalitÃƒÂ , documento...',
               prefixIcon: const Icon(Icons.search),
               suffixIcon: ricercaController.text.isEmpty
                   ? null
@@ -1486,7 +1532,7 @@ class _RegistroConsensiPrivacyPageState
               DataColumn(
                 label: intestazioneOrdinabileConsensiPrivacy(
                   'finalita',
-                  'Finalità',
+                  'FinalitÃƒÂ ',
                   larghezza: 180,
                 ),
               ),
@@ -1646,7 +1692,7 @@ class _RegistroConsensiPrivacyPageState
         ),
         const SizedBox(height: 6),
         const Text(
-          'Archivio unico per consensi, informative privacy, finalità, base giuridica, revoche e riferimenti documentali.',
+          'Archivio unico per consensi, informative privacy, finalitÃƒÂ , base giuridica, revoche e riferimenti documentali.',
         ),
         const SizedBox(height: 16),
         buildRiepilogo(consensiFiltrati),
@@ -1659,22 +1705,22 @@ class _RegistroConsensiPrivacyPageState
           spacing: 8,
           runSpacing: 8,
           children: [
-            FilledButton.icon(
+            AppActionButton(
+              type: AppActionButtonType.excel,
+              compact: true,
               onPressed: () =>
                   esportaExcelRegistroConsensiPrivacy(consensiOrdinati),
-              icon: const Icon(Icons.table_chart),
-              label: const Text('Excel'),
             ),
-            FilledButton.icon(
+            AppActionButton(
+              type: AppActionButtonType.pdf,
+              compact: true,
               onPressed: () =>
                   mostraAnteprimaPdfRegistroConsensiPrivacy(consensiOrdinati),
-              icon: const Icon(Icons.picture_as_pdf),
-              label: const Text('PDF'),
             ),
-            FilledButton.icon(
+            AppActionButton(
+              type: AppActionButtonType.stampa,
+              compact: true,
               onPressed: () => stampaRegistroConsensiPrivacy(consensiOrdinati),
-              icon: const Icon(Icons.print),
-              label: const Text('Stampa'),
             ),
             OutlinedButton.icon(
               onPressed: mostraGuidaRegistroConsensiPrivacy,
@@ -1696,7 +1742,7 @@ class _RegistroConsensiPrivacyPageState
 
   String valoreDettaglioConsensoPrivacy(String valore) {
     final testo = valore.trim();
-    return testo.isEmpty ? '—' : testo;
+    return testo.isEmpty ? 'Ã¢â‚¬â€' : testo;
   }
 
   Widget rigaDettaglioConsensoPrivacy(
@@ -1779,7 +1825,7 @@ class _RegistroConsensiPrivacyPageState
     return [
       'Nominativo: ${consenso.nominativo}',
       'Tipo soggetto: ${consenso.tipoSoggetto}',
-      'Finalità: ${consenso.finalita}',
+      'FinalitÃƒÂ : ${consenso.finalita}',
       'Stato: ${consenso.stato}',
     ].join(' | ');
   }
@@ -1847,7 +1893,7 @@ class _RegistroConsensiPrivacyPageState
         testoRappresentanza.toLowerCase() != 'discente';
 
     if (!minorenne && !haRappresentanza) {
-      return const Text('—', style: TextStyle(color: Colors.grey));
+      return const Text('Ã¢â‚¬â€', style: TextStyle(color: Colors.grey));
     }
 
     return SizedBox(
@@ -1955,23 +2001,23 @@ class _RegistroConsensiPrivacyPageState
                     icona: Icons.person_outline,
                     titolo: 'Discente maggiorenne',
                     testo:
-                        'Il consenso è riferito direttamente al discente. '
-                        'Nella rappresentanza viene indicato “Discente”.',
+                        'Il consenso ÃƒÂ¨ riferito direttamente al discente. '
+                        'Nella rappresentanza viene indicato Ã¢â‚¬Å“DiscenteÃ¢â‚¬Â.',
                   ),
                   rigaGuida(
                     icona: Icons.child_care,
                     titolo: 'Discente minorenne',
                     testo:
-                        'Quando il soggetto è minorenne, il registro evidenzia '
-                        'la necessità della firma o presa visione da parte di '
+                        'Quando il soggetto ÃƒÂ¨ minorenne, il registro evidenzia '
+                        'la necessitÃƒÂ  della firma o presa visione da parte di '
                         'un genitore o tutore.',
                   ),
                   rigaGuida(
                     icona: Icons.supervisor_account_outlined,
                     titolo: 'Genitore o tutore',
                     testo:
-                        'La rappresentanza viene mostrata come “Genitore: ...” '
-                        'oppure “Tutore: ...”, così da rendere chiaro chi ha '
+                        'La rappresentanza viene mostrata come Ã¢â‚¬Å“Genitore: ...Ã¢â‚¬Â '
+                        'oppure Ã¢â‚¬Å“Tutore: ...Ã¢â‚¬Â, cosÃƒÂ¬ da rendere chiaro chi ha '
                         'prestato il consenso per conto del minorenne.',
                   ),
                   rigaGuida(
@@ -1979,7 +2025,7 @@ class _RegistroConsensiPrivacyPageState
                     titolo: 'Evidenza nella tabella',
                     testo:
                         'I minorenni sono evidenziati direttamente nella tabella '
-                        'del Registro consensi/privacy, così da renderli '
+                        'del Registro consensi/privacy, cosÃƒÂ¬ da renderli '
                         'immediatamente riconoscibili durante il controllo.',
                   ),
                   rigaGuida(
@@ -1997,7 +2043,7 @@ class _RegistroConsensiPrivacyPageState
                     testo:
                         'La rappresentanza viene riportata anche negli export '
                         'Excel, PDF e nella stampa del Registro consensi/privacy, '
-                        'per mantenere tracciabilità anche fuori dalla schermata.',
+                        'per mantenere tracciabilitÃƒÂ  anche fuori dalla schermata.',
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -2008,8 +2054,8 @@ class _RegistroConsensiPrivacyPageState
                   ),
                   const SizedBox(height: 4),
                   const Text(
-                    'Questa guida è un riepilogo funzionale interno. Non sostituisce '
-                    'l’informativa privacy, il modulo di consenso o la verifica '
+                    'Questa guida ÃƒÂ¨ un riepilogo funzionale interno. Non sostituisce '
+                    'lÃ¢â‚¬â„¢informativa privacy, il modulo di consenso o la verifica '
                     'documentale richiesta per la rappresentanza del minorenne.',
                   ),
                 ],
@@ -2219,7 +2265,7 @@ class _RegistroConsensiPrivacyPageState
                     sezioneDettaglioConsensoPrivacy('Soggetto minorenne', [
                       rigaDettaglioConsensoPrivacy(
                         'Soggetto minorenne',
-                        consenso.soggettoMinorenne ? 'Sì' : 'No',
+                        consenso.soggettoMinorenne ? 'SÃƒÂ¬' : 'No',
                         evidenziata: consenso.soggettoMinorenne,
                       ),
                       rigaDettaglioConsensoPrivacy(
@@ -2252,7 +2298,7 @@ class _RegistroConsensiPrivacyPageState
                       'Consenso e base giuridica',
                       [
                         rigaDettaglioConsensoPrivacy(
-                          'Finalità',
+                          'FinalitÃƒÂ ',
                           consenso.finalita,
                           evidenziata: true,
                         ),
@@ -2308,7 +2354,7 @@ class _RegistroConsensiPrivacyPageState
                       ),
                       rigaDettaglioConsensoPrivacy(
                         'Retention bloccata',
-                        consenso.retentionBloccata ? 'Sì' : 'No',
+                        consenso.retentionBloccata ? 'SÃƒÂ¬' : 'No',
                         evidenziata: consenso.retentionBloccata,
                       ),
                       rigaDettaglioConsensoPrivacy(
@@ -2375,9 +2421,9 @@ class _RegistroConsensiPrivacyPageState
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        icon: const Icon(Icons.add),
-        label: const Text('Nuovo consenso'),
+      floatingActionButton: AppActionButton(
+        type: AppActionButtonType.nuovo,
+        label: 'Nuovo consenso',
         onPressed: () => mostraDialogConsenso(),
       ),
       body: Padding(
@@ -2528,7 +2574,7 @@ class _RegistroConsensiPrivacyPageState
             ),
             pw.SizedBox(height: 6),
             pw.Text(
-              'Archivio centralizzato consensi, informative privacy, finalità, base giuridica, revoche e riferimenti documentali.',
+              'Archivio centralizzato consensi, informative privacy, finalitÃƒÂ , base giuridica, revoche e riferimenti documentali.',
               style: const pw.TextStyle(fontSize: 9),
             ),
             pw.SizedBox(height: 10),
@@ -2542,7 +2588,7 @@ class _RegistroConsensiPrivacyPageState
                 'Interessato',
                 'Firma / rapp.',
                 'Contesto',
-                'Finalità',
+                'FinalitÃƒÂ ',
                 'Base giuridica',
                 'Consenso',
                 'Data consenso',
@@ -2558,7 +2604,7 @@ class _RegistroConsensiPrivacyPageState
               data: elementiDaEsportare.map((consenso) {
                 final stato = consenso.stato.trim();
                 final consensoPrestato = stato.toLowerCase() == 'attivo'
-                    ? 'Sì'
+                    ? 'SÃƒÂ¬'
                     : 'No';
 
                 return [
@@ -2573,7 +2619,7 @@ class _RegistroConsensiPrivacyPageState
                   stato,
                   formattaDataConsensoPrivacy(consenso.dataFineConservazione),
                   statoRetentionConsensoPrivacy(consenso),
-                  consenso.retentionBloccata ? 'Sì' : 'No',
+                  consenso.retentionBloccata ? 'SÃƒÂ¬' : 'No',
                   consenso.motivoRetention,
                   consenso.noteRetention,
                   consenso.note,
@@ -2793,7 +2839,7 @@ class _RegistroConsensiPrivacyPageState
       'Interessato',
       'Firma / rappresentanza',
       'Contesto',
-      'Finalità',
+      'FinalitÃƒÂ ',
       'Base giuridica',
       'Consenso prestato',
       'Data consenso',
@@ -2820,7 +2866,7 @@ class _RegistroConsensiPrivacyPageState
       final rowIndex = riga + 1;
 
       final stato = consenso.stato.trim();
-      final consensoPrestato = stato.toLowerCase() == 'attivo' ? 'Sì' : 'No';
+      final consensoPrestato = stato.toLowerCase() == 'attivo' ? 'SÃƒÂ¬' : 'No';
 
       final valori = <String>[
         consenso.nominativo,
@@ -2834,7 +2880,7 @@ class _RegistroConsensiPrivacyPageState
         stato,
         formattaDataConsensoPrivacy(consenso.dataFineConservazione),
         statoRetentionConsensoPrivacy(consenso),
-        consenso.retentionBloccata ? 'Sì' : 'No',
+        consenso.retentionBloccata ? 'SÃƒÂ¬' : 'No',
         consenso.motivoRetention,
         consenso.noteRetention,
         consenso.note,
@@ -2956,7 +3002,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Il registro consensi/privacy consente di mantenere un archivio centralizzato dei consensi, delle informative privacy, delle finalità di trattamento, della base giuridica e delle eventuali revoche.',
+                          'Il registro consensi/privacy consente di mantenere un archivio centralizzato dei consensi, delle informative privacy, delle finalitÃƒÂ  di trattamento, della base giuridica e delle eventuali revoche.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -2968,7 +3014,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Ogni riga rappresenta un consenso o una registrazione privacy collegata a un soggetto. È possibile registrare nominativo, tipo soggetto, finalità, base giuridica, data consenso, stato, eventuale revoca e note interne.',
+                          'Ogni riga rappresenta un consenso o una registrazione privacy collegata a un soggetto. ÃƒË† possibile registrare nominativo, tipo soggetto, finalitÃƒÂ , base giuridica, data consenso, stato, eventuale revoca e note interne.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -2981,8 +3027,8 @@ class _RegistroConsensiPrivacyPageState
                         SizedBox(height: 6),
                         Text(
                           'ATTIVO: consenso valido o registrazione privacy attiva.\n'
-                          'REVOCATO: consenso revocato o non più utilizzabile.\n'
-                          'Gli stati aiutano a distinguere rapidamente le posizioni valide da quelle non più operative.',
+                          'REVOCATO: consenso revocato o non piÃƒÂ¹ utilizzabile.\n'
+                          'Gli stati aiutano a distinguere rapidamente le posizioni valide da quelle non piÃƒÂ¹ operative.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -2994,7 +3040,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Usare la ricerca e i filtri disponibili per individuare rapidamente consensi per nominativo, tipologia soggetto, finalità, base giuridica o stato. Il pulsante di azzeramento filtri consente di tornare alla vista completa.',
+                          'Usare la ricerca e i filtri disponibili per individuare rapidamente consensi per nominativo, tipologia soggetto, finalitÃƒÂ , base giuridica o stato. Il pulsante di azzeramento filtri consente di tornare alla vista completa.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -3006,7 +3052,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Il dettaglio in sola lettura permette di verificare tutti i dati del consenso senza modificare accidentalmente il record. Può essere aperto dalla riga o dal pulsante dedicato, se presente.',
+                          'Il dettaglio in sola lettura permette di verificare tutti i dati del consenso senza modificare accidentalmente il record. PuÃƒÂ² essere aperto dalla riga o dal pulsante dedicato, se presente.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -3018,7 +3064,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'La revoca deve essere usata quando un consenso non è più valido. La registrazione della data di revoca permette di conservare la tracciabilità storica della scelta dell’interessato.',
+                          'La revoca deve essere usata quando un consenso non ÃƒÂ¨ piÃƒÂ¹ valido. La registrazione della data di revoca permette di conservare la tracciabilitÃƒÂ  storica della scelta dellÃ¢â‚¬â„¢interessato.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -3031,8 +3077,8 @@ class _RegistroConsensiPrivacyPageState
                         SizedBox(height: 6),
                         Text(
                           'Excel: esporta il registro in formato .xlsx.\n'
-                          'PDF: apre l’anteprima del registro in formato PDF.\n'
-                          'Stampa: apre l’anteprima di stampa e consente l’invio alla stampante.',
+                          'PDF: apre lÃ¢â‚¬â„¢anteprima del registro in formato PDF.\n'
+                          'Stampa: apre lÃ¢â‚¬â„¢anteprima di stampa e consente lÃ¢â‚¬â„¢invio alla stampante.',
                         ),
                         SizedBox(height: 18),
                         Text(
@@ -3044,7 +3090,7 @@ class _RegistroConsensiPrivacyPageState
                         ),
                         SizedBox(height: 6),
                         Text(
-                          'Il registro non sostituisce l’informativa privacy o il registro dei trattamenti, ma aiuta a documentare in modo ordinato le evidenze relative ai consensi e alle basi giuridiche collegate.',
+                          'Il registro non sostituisce lÃ¢â‚¬â„¢informativa privacy o il registro dei trattamenti, ma aiuta a documentare in modo ordinato le evidenze relative ai consensi e alle basi giuridiche collegate.',
                         ),
                       ],
                     ),

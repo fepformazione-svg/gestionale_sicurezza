@@ -45,7 +45,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
 
   final ScrollController scrollOrizzontaleTabellaController =
       ScrollController();
-
+  final ScrollController scrollVerticaleTabellaController = ScrollController();
   @override
   void initState() {
     super.initState();
@@ -119,6 +119,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
   void dispose() {
     ricercaController.dispose();
     scrollOrizzontaleTabellaController.dispose();
+    scrollVerticaleTabellaController.dispose();
     super.dispose();
   }
 
@@ -1676,7 +1677,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     return Card(
       elevation: 1,
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -1754,17 +1755,21 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: 8),
             LayoutBuilder(
               builder: (context, constraints) {
                 final larghezza = constraints.maxWidth;
-                final cardWidth = larghezza < 720
-                    ? larghezza
-                    : (larghezza - 24) / 3;
+                final cardWidth = larghezza >= 1320
+                    ? (larghezza - 60) / 6
+                    : larghezza >= 900
+                    ? (larghezza - 24) / 3
+                    : larghezza >= 620
+                    ? (larghezza - 12) / 2
+                    : larghezza;
 
                 return Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
+                  spacing: 8,
+                  runSpacing: 8,
                   children: [
                     SizedBox(
                       width: cardWidth,
@@ -1908,6 +1913,23 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
     );
   }
 
+  List<DataColumn> colonneTabellaPrivacy() {
+    return const [
+      DataColumn(label: SizedBox(width: 250, child: Text('Titolo'))),
+      DataColumn(
+        label: SizedBox(width: 220, child: Text('Titolare trattamento')),
+      ),
+      DataColumn(label: SizedBox(width: 190, child: Text('Referente privacy'))),
+      DataColumn(label: SizedBox(width: 250, child: Text('Base giuridica'))),
+      DataColumn(label: SizedBox(width: 260, child: Text('Finalità'))),
+      DataColumn(
+        label: SizedBox(width: 200, child: Text('Periodo conservazione')),
+      ),
+      DataColumn(label: SizedBox(width: 115, child: Text('Stato'))),
+      DataColumn(label: SizedBox(width: 70, child: Text('Azioni'))),
+    ];
+  }
+
   Widget tabellaPrivacy() {
     return SizedBox(
       width: double.infinity,
@@ -1921,95 +1943,116 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
           child: SingleChildScrollView(
             controller: scrollOrizzontaleTabellaController,
             scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columnSpacing: 18,
-              horizontalMargin: 16,
-              headingRowColor: WidgetStateProperty.all(Colors.blueGrey.shade50),
-              columns: const [
-                DataColumn(label: Text('Titolo')),
-                DataColumn(label: Text('Titolare trattamento')),
-                DataColumn(label: Text('Referente privacy')),
-                DataColumn(label: Text('Base giuridica')),
-                DataColumn(label: Text('Finalità')),
-                DataColumn(label: Text('Periodo conservazione')),
-                DataColumn(label: Text('Stato')),
-                DataColumn(label: Text('Azioni')),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                DataTable(
+                  columnSpacing: 18,
+                  horizontalMargin: 16,
+                  headingRowColor: WidgetStateProperty.all(
+                    Colors.blueGrey.shade50,
+                  ),
+                  columns: colonneTabellaPrivacy(),
+                  rows: const [],
+                ),
+                Expanded(
+                  child: Scrollbar(
+                    controller: scrollVerticaleTabellaController,
+                    thumbVisibility: true,
+                    trackVisibility: true,
+                    child: SingleChildScrollView(
+                      controller: scrollVerticaleTabellaController,
+                      child: DataTable(
+                        columnSpacing: 18,
+                        horizontalMargin: 16,
+                        headingRowHeight: 0,
+                        columns: colonneTabellaPrivacy(),
+                        rows: vociPrivacyFiltrate.map((voce) {
+                          return DataRow(
+                            cells: [
+                              DataCell(
+                                SizedBox(
+                                  width: 250,
+                                  child: Text(
+                                    voce.titolo,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 220,
+                                  child: Text(
+                                    voce.titolareTrattamento ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 190,
+                                  child: Text(
+                                    voce.referentePrivacy ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 250,
+                                  child: Text(
+                                    voce.baseGiuridica ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 260,
+                                  child: Text(
+                                    voce.finalitaTrattamento ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 200,
+                                  child: Text(
+                                    voce.periodoConservazione ?? '',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 115,
+                                  child: badgeStato(voce.attivo),
+                                ),
+                              ),
+                              DataCell(
+                                SizedBox(
+                                  width: 70,
+                                  child: IconButton(
+                                    tooltip: 'Modifica voce Privacy/GDPR',
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      color: Colors.blueGrey,
+                                    ),
+                                    onPressed: () {
+                                      mostraDialogModificaVoce(voce);
+                                    },
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                ),
               ],
-              rows: vociPrivacyFiltrate.map((voce) {
-                return DataRow(
-                  cells: [
-                    DataCell(
-                      SizedBox(
-                        width: 250,
-                        child: Text(
-                          voce.titolo,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 220,
-                        child: Text(
-                          voce.titolareTrattamento ?? '',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 190,
-                        child: Text(
-                          voce.referentePrivacy ?? '',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 250,
-                        child: Text(
-                          voce.baseGiuridica ?? '',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 260,
-                        child: Text(
-                          voce.finalitaTrattamento ?? '',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 200,
-                        child: Text(
-                          voce.periodoConservazione ?? '',
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ),
-                    DataCell(
-                      SizedBox(width: 115, child: badgeStato(voce.attivo)),
-                    ),
-                    DataCell(
-                      SizedBox(
-                        width: 70,
-                        child: IconButton(
-                          tooltip: 'Modifica voce Privacy/GDPR',
-                          icon: const Icon(Icons.edit, color: Colors.blueGrey),
-                          onPressed: () {
-                            mostraDialogModificaVoce(voce);
-                          },
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              }).toList(),
             ),
           ),
         ),
@@ -2252,18 +2295,18 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                       alignment: Alignment.topCenter,
                       child: ConstrainedBox(
                         constraints: const BoxConstraints(maxWidth: 1600),
-                        child: SingleChildScrollView(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              riepilogoAuditGdpr(),
-                              const SizedBox(height: 16),
-                              vociPrivacyFiltrate.isEmpty
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            riepilogoAuditGdpr(),
+                            const SizedBox(height: 8),
+                            Expanded(
+                              child: vociPrivacyFiltrate.isEmpty
                                   ? SizedBox(height: 360, child: statoVuoto())
                                   : tabellaPrivacy(),
-                              const SizedBox(height: 16),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
                         ),
                       ),
                     ),

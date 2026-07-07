@@ -1899,6 +1899,7 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                 DataColumn(label: Text('Titolare trattamento')),
                 DataColumn(label: Text('Referente privacy')),
                 DataColumn(label: Text('Base giuridica')),
+                DataColumn(label: Text('Finalità')),
                 DataColumn(label: Text('Periodo conservazione')),
                 DataColumn(label: Text('Stato')),
                 DataColumn(label: Text('Azioni')),
@@ -1938,6 +1939,15 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                         width: 250,
                         child: Text(
                           voce.baseGiuridica ?? '',
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      SizedBox(
+                        width: 260,
+                        child: Text(
+                          voce.finalitaTrattamento ?? '',
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -2206,21 +2216,26 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Flexible(
-                    flex: 2,
-                    child: SingleChildScrollView(
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: riepilogoAuditGdpr(),
+                  Expanded(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 1600),
+                        child: SingleChildScrollView(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              riepilogoAuditGdpr(),
+                              const SizedBox(height: 16),
+                              vociPrivacyFiltrate.isEmpty
+                                  ? SizedBox(height: 360, child: statoVuoto())
+                                  : tabellaPrivacy(),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    flex: 3,
-                    child: vociPrivacyFiltrate.isEmpty
-                        ? statoVuoto()
-                        : tabellaPrivacy(),
                   ),
                 ],
               ),

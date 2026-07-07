@@ -59,6 +59,7 @@ class _RegistroConsensiPrivacyPageState
     extends State<RegistroConsensiPrivacyPage> {
   final TextEditingController ricercaController = TextEditingController();
   final ScrollController tabellaOrizzontaleController = ScrollController();
+  final ScrollController tabellaVerticaleController = ScrollController();
 
   static const List<TextInputFormatter> formattatoriData = <TextInputFormatter>[
     _DateSlashInputFormatter(),
@@ -1486,7 +1487,249 @@ class _RegistroConsensiPrivacyPageState
       );
     }
 
+    const larghezzaData = 130.0;
+    const larghezzaSoggetto = 130.0;
+    const larghezzaNominativo = 240.0;
+    const larghezzaFirma = 260.0;
+    const larghezzaFinalita = 280.0;
+    const larghezzaBaseGiuridica = 180.0;
+    const larghezzaInformativa = 130.0;
+    const larghezzaCanale = 140.0;
+    const larghezzaStato = 130.0;
+    const larghezzaRetention = 150.0;
+    const larghezzaRevoca = 120.0;
+    const larghezzaAzioni = 220.0;
+    const larghezzaContenutoTabella =
+        larghezzaData +
+        larghezzaSoggetto +
+        larghezzaNominativo +
+        larghezzaFirma +
+        larghezzaFinalita +
+        larghezzaBaseGiuridica +
+        larghezzaInformativa +
+        larghezzaCanale +
+        larghezzaStato +
+        larghezzaRetention +
+        larghezzaRevoca +
+        larghezzaAzioni;
+    const larghezzaTabella = larghezzaContenutoTabella + 24;
+
+    Widget intestazione({required double larghezza, required Widget child}) {
+      return SizedBox(width: larghezza, child: child);
+    }
+
+    Widget cella({required double larghezza, required Widget child}) {
+      return SizedBox(width: larghezza, child: child);
+    }
+
+    Widget testoCella(String valore, {int maxLines = 1}) {
+      return Text(valore, maxLines: maxLines, overflow: TextOverflow.ellipsis);
+    }
+
+    Widget buildHeader() {
+      return Container(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: SizedBox(
+          width: larghezzaContenutoTabella,
+          child: Row(
+            children: [
+              intestazione(
+                larghezza: larghezzaData,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'dataConsenso',
+                  'Data consenso',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaSoggetto,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'tipoSoggetto',
+                  'Soggetto',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaNominativo,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'nominativo',
+                  'Nominativo',
+                ),
+              ),
+              const SizedBox(
+                width: larghezzaFirma,
+                child: Text(
+                  'Firma / rappresentanza',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaFinalita,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'finalita',
+                  'Finalit\u00e0',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaBaseGiuridica,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'baseGiuridica',
+                  'Base giuridica',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaInformativa,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'versioneInformativa',
+                  'Informativa',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaCanale,
+                child: intestazioneOrdinabileConsensiPrivacy(
+                  'canaleRaccolta',
+                  'Canale',
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaStato,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 34),
+                  child: intestazioneOrdinabileConsensiPrivacy(
+                    'stato',
+                    'Stato',
+                  ),
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaRetention,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 34),
+                  child: intestazioneOrdinabileConsensiPrivacy(
+                    'retention',
+                    'Retention',
+                  ),
+                ),
+              ),
+              intestazione(
+                larghezza: larghezzaRevoca,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 34),
+                  child: intestazioneOrdinabileConsensiPrivacy(
+                    'dataRevoca',
+                    'Revoca',
+                  ),
+                ),
+              ),
+              const SizedBox(
+                width: larghezzaAzioni,
+                child: Padding(
+                  padding: EdgeInsets.only(left: 42),
+                  child: Text(
+                    'Azioni',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget buildRiga(ConsensoPrivacy consenso) {
+      return InkWell(
+        onDoubleTap: () => mostraDettaglioConsensoPrivacy(consenso),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: SizedBox(
+            width: larghezzaContenutoTabella,
+            child: Row(
+              children: [
+                cella(
+                  larghezza: larghezzaData,
+                  child: testoCella(consenso.dataConsenso),
+                ),
+                cella(
+                  larghezza: larghezzaSoggetto,
+                  child: testoCella(consenso.tipoSoggetto),
+                ),
+                cella(
+                  larghezza: larghezzaNominativo,
+                  child: testoCella(consenso.nominativo),
+                ),
+                cella(
+                  larghezza: larghezzaFirma,
+                  child: evidenzaTabellaConsensoPrivacy(consenso),
+                ),
+                cella(
+                  larghezza: larghezzaFinalita,
+                  child: testoCella(consenso.finalita),
+                ),
+                cella(
+                  larghezza: larghezzaBaseGiuridica,
+                  child: testoCella(consenso.baseGiuridica),
+                ),
+                cella(
+                  larghezza: larghezzaInformativa,
+                  child: testoCella(consenso.versioneInformativa),
+                ),
+                cella(
+                  larghezza: larghezzaCanale,
+                  child: testoCella(consenso.canaleRaccolta),
+                ),
+                cella(
+                  larghezza: larghezzaStato,
+                  child: badgeStato(consenso.stato),
+                ),
+                cella(
+                  larghezza: larghezzaRetention,
+                  child: chipStatoRetentionConsensoPrivacy(consenso),
+                ),
+                cella(
+                  larghezza: larghezzaRevoca,
+                  child: testoCella(consenso.dataRevoca),
+                ),
+                cella(
+                  larghezza: larghezzaAzioni,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'Dettaglio',
+                        icon: const Icon(Icons.visibility_outlined),
+                        onPressed: () =>
+                            mostraDettaglioConsensoPrivacy(consenso),
+                      ),
+                      IconButton(
+                        tooltip: 'Modifica',
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () =>
+                            mostraDialogConsenso(consenso: consenso),
+                      ),
+                      IconButton(
+                        tooltip: 'Revoca',
+                        icon: const Icon(Icons.block_outlined),
+                        onPressed: consenso.stato == 'REVOCATO'
+                            ? null
+                            : () => revocaConsenso(consenso),
+                      ),
+                      IconButton(
+                        tooltip: 'Elimina',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: () => eliminaConsenso(consenso),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     return Card(
+      clipBehavior: Clip.antiAlias,
       child: Scrollbar(
         controller: tabellaOrizzontaleController,
         thumbVisibility: true,
@@ -1496,160 +1739,31 @@ class _RegistroConsensiPrivacyPageState
         child: SingleChildScrollView(
           controller: tabellaOrizzontaleController,
           scrollDirection: Axis.horizontal,
-          child: DataTable(
-            headingRowHeight: 46,
-            dataRowMinHeight: 48,
-            dataRowMaxHeight: 58,
-            columns: [
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'dataConsenso',
-                  'Data consenso',
-                  larghezza: 130,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'tipoSoggetto',
-                  'Soggetto',
-                  larghezza: 130,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'nominativo',
-                  'Nominativo',
-                  larghezza: 180,
-                ),
-              ),
-              const DataColumn(
-                label: SizedBox(
-                  width: 190,
-                  child: Text('Firma / rappresentanza'),
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'finalita',
-                  'Finalità',
-                  larghezza: 180,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'baseGiuridica',
-                  'Base giuridica',
-                  larghezza: 160,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'versioneInformativa',
-                  'Informativa',
-                  larghezza: 130,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'canaleRaccolta',
-                  'Canale',
-                  larghezza: 120,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'stato',
-                  'Stato',
-                  larghezza: 100,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'retention',
-                  'Retention',
-                  larghezza: 130,
-                ),
-              ),
-              DataColumn(
-                label: intestazioneOrdinabileConsensiPrivacy(
-                  'dataRevoca',
-                  'Revoca',
-                  larghezza: 120,
-                ),
-              ),
-              const DataColumn(label: Text('Azioni')),
-            ],
-            rows: consensi.map((consenso) {
-              DataCell cellaDettaglio(Widget child) {
-                return DataCell(
-                  child,
-                  onDoubleTap: () => mostraDettaglioConsensoPrivacy(consenso),
-                );
-              }
-
-              return DataRow(
-                cells: [
-                  cellaDettaglio(Text(consenso.dataConsenso)),
-                  cellaDettaglio(Text(consenso.tipoSoggetto)),
-                  cellaDettaglio(
-                    SizedBox(
-                      width: 240,
-                      child: Text(
-                        consenso.nominativo,
-                        overflow: TextOverflow.ellipsis,
-                      ),
+          primary: false,
+          child: SizedBox(
+            width: larghezzaTabella,
+            child: Column(
+              children: [
+                buildHeader(),
+                Expanded(
+                  child: Scrollbar(
+                    controller: tabellaVerticaleController,
+                    thumbVisibility: true,
+                    trackVisibility: true,
+                    interactive: true,
+                    child: ListView.separated(
+                      controller: tabellaVerticaleController,
+                      primary: false,
+                      itemCount: consensi.length,
+                      separatorBuilder: (_, _) => const Divider(height: 1),
+                      itemBuilder: (context, index) {
+                        return buildRiga(consensi[index]);
+                      },
                     ),
                   ),
-                  cellaDettaglio(evidenzaTabellaConsensoPrivacy(consenso)),
-                  cellaDettaglio(
-                    SizedBox(
-                      width: 280,
-                      child: Text(
-                        consenso.finalita,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ),
-                  cellaDettaglio(Text(consenso.baseGiuridica)),
-                  cellaDettaglio(Text(consenso.versioneInformativa)),
-                  cellaDettaglio(Text(consenso.canaleRaccolta)),
-                  cellaDettaglio(badgeStato(consenso.stato)),
-                  cellaDettaglio(chipStatoRetentionConsensoPrivacy(consenso)),
-                  cellaDettaglio(Text(consenso.dataRevoca)),
-                  DataCell(
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        IconButton(
-                          tooltip: 'Dettaglio',
-                          icon: const Icon(Icons.visibility_outlined),
-                          onPressed: () =>
-                              mostraDettaglioConsensoPrivacy(consenso),
-                        ),
-                        IconButton(
-                          tooltip: 'Modifica',
-                          icon: const Icon(Icons.edit_outlined),
-                          onPressed: () =>
-                              mostraDialogConsenso(consenso: consenso),
-                        ),
-                        IconButton(
-                          tooltip: 'Revoca',
-                          icon: const Icon(Icons.block_outlined),
-                          onPressed: consenso.stato == 'REVOCATO'
-                              ? null
-                              : () => revocaConsenso(consenso),
-                        ),
-                        IconButton(
-                          tooltip: 'Elimina',
-                          icon: const Icon(Icons.delete_outline),
-                          onPressed: () => eliminaConsenso(consenso),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              );
-            }).toList(),
+                ),
+              ],
+            ),
           ),
         ),
       ),

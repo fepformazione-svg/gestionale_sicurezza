@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/app_database.dart';
+import '../widgets/app_action_button.dart';
 
 class MediciStrutturePage extends StatefulWidget {
   const MediciStrutturePage({super.key});
@@ -238,10 +239,13 @@ class _MediciStrutturePageState extends State<MediciStrutturePage> {
                   },
                 ),
                 const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: apriDialogNuovaVoce,
-                  icon: const Icon(Icons.add_rounded),
-                  label: const Text('Nuova voce'),
+                Tooltip(
+                  message: 'Crea una nuova voce medico/struttura',
+                  child: AppActionButton(
+                    type: AppActionButtonType.nuovo,
+                    onPressed: apriDialogNuovaVoce,
+                    label: 'Nuova voce',
+                  ),
                 ),
               ],
             ),

@@ -10,6 +10,7 @@ import 'dart:io';
 
 import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/app_action_button.dart';
 
 class DocentiPage extends StatefulWidget {
   const DocentiPage({super.key});
@@ -826,29 +827,29 @@ class _DocentiPageState extends State<DocentiPage> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.excel,
                       onPressed: docentiFiltrati.isEmpty
                           ? null
                           : esportaExcelDocenti,
-                      icon: const Icon(Icons.table_chart_rounded),
-                      label: Text('Export Excel (${docentiFiltrati.length})'),
+                      label: 'Export Excel (${docentiFiltrati.length})',
                     ),
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.pdf,
                       onPressed: docentiFiltrati.isEmpty
                           ? null
                           : esportaPdfDocenti,
-                      icon: const Icon(Icons.picture_as_pdf_rounded),
-                      label: Text('Export PDF (${docentiFiltrati.length})'),
+                      label: 'Export PDF (${docentiFiltrati.length})',
                     ),
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.stampa,
                       onPressed: docentiFiltrati.isEmpty ? null : stampaDocenti,
-                      icon: const Icon(Icons.print_rounded),
-                      label: Text('Stampa (${docentiFiltrati.length})'),
+                      label: 'Stampa (${docentiFiltrati.length})',
                     ),
-                    ElevatedButton.icon(
+                    AppActionButton(
+                      type: AppActionButtonType.nuovo,
                       onPressed: apriDialogNuovoDocente,
-                      icon: const Icon(Icons.add),
-                      label: const Text('Nuovo docente'),
+                      label: 'Nuovo docente',
                     ),
                   ],
                 ),

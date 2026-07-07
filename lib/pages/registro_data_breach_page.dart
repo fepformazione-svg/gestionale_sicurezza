@@ -11,6 +11,7 @@ import '../models/data_breach.dart';
 import '../models/data_breach_log.dart';
 import '../services/app_database.dart';
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/app_action_button.dart';
 
 class RegistroDataBreachPage extends StatefulWidget {
   const RegistroDataBreachPage({super.key});
@@ -2117,40 +2118,40 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                       children: [
                         SizedBox(
                           width: larghezzaPulsante,
-                          child: OutlinedButton.icon(
+                          child: AppActionButton(
+                            type: AppActionButtonType.excel,
                             onPressed: caricamento || elencoDataBreach.isEmpty
                                 ? null
                                 : esportaExcelDataBreach,
-                            icon: const Icon(Icons.table_view),
-                            label: const Text('Excel'),
+                            label: 'Excel',
                           ),
                         ),
                         SizedBox(
                           width: larghezzaPulsante,
-                          child: OutlinedButton.icon(
+                          child: AppActionButton(
+                            type: AppActionButtonType.pdf,
                             onPressed: caricamento || elencoDataBreach.isEmpty
                                 ? null
                                 : mostraAnteprimaPdfDataBreach,
-                            icon: const Icon(Icons.picture_as_pdf_outlined),
-                            label: const Text('PDF'),
+                            label: 'PDF',
                           ),
                         ),
                         SizedBox(
                           width: larghezzaPulsante,
-                          child: OutlinedButton.icon(
+                          child: AppActionButton(
+                            type: AppActionButtonType.stampa,
                             onPressed: caricamento || elencoDataBreach.isEmpty
                                 ? null
                                 : stampaRegistroDataBreach,
-                            icon: const Icon(Icons.print),
-                            label: const Text('Stampa'),
+                            label: 'Stampa',
                           ),
                         ),
                         SizedBox(
                           width: larghezzaPulsante,
-                          child: FilledButton.icon(
+                          child: AppActionButton(
+                            type: AppActionButtonType.nuovo,
                             onPressed: () => mostraDialogDataBreach(),
-                            icon: const Icon(Icons.add),
-                            label: const Text('Nuovo data breach'),
+                            label: 'Nuovo data breach',
                           ),
                         ),
                       ],

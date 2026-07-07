@@ -4,6 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../services/app_database.dart';
+import '../widgets/app_action_button.dart';
 
 class DatiAziendaPage extends StatefulWidget {
   const DatiAziendaPage({super.key});
@@ -454,21 +455,16 @@ class _DatiAziendaPageState extends State<DatiAziendaPage> {
                             const SizedBox(height: 22),
                             Align(
                               alignment: Alignment.centerRight,
-                              child: FilledButton.icon(
-                                onPressed: salvataggio
-                                    ? null
-                                    : salvaDatiAzienda,
-                                icon: salvataggio
-                                    ? const SizedBox(
-                                        width: 18,
-                                        height: 18,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                        ),
-                                      )
-                                    : const Icon(Icons.save_rounded),
-                                label: Text(
-                                  salvataggio
+                              child: Tooltip(
+                                message: salvataggio
+                                    ? 'Salvataggio dati azienda in corso'
+                                    : 'Salva dati azienda',
+                                child: AppActionButton(
+                                  type: AppActionButtonType.salva,
+                                  onPressed: salvataggio
+                                      ? null
+                                      : salvaDatiAzienda,
+                                  label: salvataggio
                                       ? 'Salvataggio...'
                                       : 'Salva dati azienda',
                                 ),

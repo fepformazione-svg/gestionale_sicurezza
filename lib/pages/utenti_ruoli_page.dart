@@ -9,6 +9,7 @@ import '../models/utente_app.dart';
 import '../services/app_database.dart';
 import '../services/auth_service.dart';
 import '../services/sessione_utente_service.dart';
+import '../widgets/app_action_button.dart';
 
 import 'login_page.dart';
 
@@ -1044,12 +1045,12 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
           const SizedBox(width: 8),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: ElevatedButton.icon(
-              icon: const Icon(Icons.person_add),
-              label: const Text('Nuovo utente'),
+            child: AppActionButton(
+              type: AppActionButtonType.nuovo,
               onPressed: puoGestireUtenti
                   ? () => mostraDialogUtente()
                   : mostraPermessoNegatoGestioneUtenti,
+              label: 'Nuovo utente',
             ),
           ),
           const SizedBox(width: 8),

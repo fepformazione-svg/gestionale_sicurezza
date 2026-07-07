@@ -2091,11 +2091,6 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Registro Data Breach')),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: mostraGuidaRapidaDataBreach,
-        icon: const Icon(Icons.help_outline),
-        label: const Text('Guida'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -2152,6 +2147,14 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                             type: AppActionButtonType.nuovo,
                             onPressed: () => mostraDialogDataBreach(),
                             label: 'Nuovo data breach',
+                          ),
+                        ),
+                        SizedBox(
+                          width: larghezzaPulsante,
+                          child: OutlinedButton.icon(
+                            onPressed: mostraGuidaRapidaDataBreach,
+                            icon: const Icon(Icons.help_outline),
+                            label: const Text('Guida'),
                           ),
                         ),
                       ],
@@ -2214,7 +2217,7 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                               child: SingleChildScrollView(
                                 scrollDirection: Axis.horizontal,
                                 child: SizedBox(
-                                  width: 1510,
+                                  width: 1610,
                                   child: Column(
                                     children: [
                                       Container(
@@ -2269,19 +2272,23 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                             ),
                                             SizedBox(
                                               width: 130,
-                                              child:
-                                                  intestazioneOrdinabileDataBreach(
-                                                    'Garante',
-                                                    'notificatoGarante',
-                                                  ),
+                                              child: Center(
+                                                child:
+                                                    intestazioneOrdinabileDataBreach(
+                                                      'Garante',
+                                                      'notificatoGarante',
+                                                    ),
+                                              ),
                                             ),
                                             SizedBox(
                                               width: 140,
-                                              child:
-                                                  intestazioneOrdinabileDataBreach(
-                                                    'Interessati',
-                                                    'comunicatoInteressati',
-                                                  ),
+                                              child: Center(
+                                                child:
+                                                    intestazioneOrdinabileDataBreach(
+                                                      'Interessati',
+                                                      'comunicatoInteressati',
+                                                    ),
+                                              ),
                                             ),
                                             SizedBox(
                                               width: 140,
@@ -2291,8 +2298,9 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                     'stato',
                                                   ),
                                             ),
+                                            const SizedBox(width: 80),
                                             const SizedBox(
-                                              width: 190,
+                                              width: 220,
                                               child: Text(
                                                 'Azioni',
                                                 style: TextStyle(
@@ -2364,18 +2372,22 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                     ),
                                                     SizedBox(
                                                       width: 130,
-                                                      child: Text(
-                                                        elemento.notificatoGarante
-                                                            ? 'Sì'
-                                                            : 'No',
+                                                      child: Center(
+                                                        child: Text(
+                                                          elemento.notificatoGarante
+                                                              ? 'S\u00ec'
+                                                              : 'No',
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
                                                       width: 140,
-                                                      child: Text(
-                                                        elemento.comunicatoInteressati
-                                                            ? 'Sì'
-                                                            : 'No',
+                                                      child: Center(
+                                                        child: Text(
+                                                          elemento.comunicatoInteressati
+                                                              ? 'S\u00ec'
+                                                              : 'No',
+                                                        ),
                                                       ),
                                                     ),
                                                     SizedBox(
@@ -2387,8 +2399,9 @@ class _RegistroDataBreachPageState extends State<RegistroDataBreachPage> {
                                                         ),
                                                       ),
                                                     ),
+                                                    const SizedBox(width: 80),
                                                     SizedBox(
-                                                      width: 190,
+                                                      width: 220,
                                                       child: Row(
                                                         children: [
                                                           IconButton(

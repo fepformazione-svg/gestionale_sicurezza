@@ -1470,35 +1470,49 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       ),
     );
 
-    final directoryDocumenti = await getApplicationDocumentsDirectory();
-    final directoryExport = Directory(
-      '${directoryDocumenti.path}${Platform.pathSeparator}Gestionale Sicurezza${Platform.pathSeparator}Export',
-    );
-
-    if (!await directoryExport.exists()) {
-      await directoryExport.create(recursive: true);
-    }
-
-    final timestamp = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
-    final file = File(
-      '${directoryExport.path}${Platform.pathSeparator}registro_trattamenti_$timestamp.pdf',
-    );
-
-    await file.writeAsBytes(await pdf.save());
+    final bytes = await pdf.save();
 
     await registraLogAzioneRegistro(
-      azione: 'ESPORTAZIONE_PDF',
+      azione: 'ANTEPRIMA_PDF',
       descrizione:
-          'Esportato Registro trattamenti in PDF. Record esportati: ${listaDaEsportare.length}.',
+          'Aperta anteprima PDF Registro trattamenti. Record in anteprima: ${listaDaEsportare.length}.',
     );
 
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('PDF esportato: ${file.path}'),
-        backgroundColor: Colors.green,
-      ),
+    await showDialog<void>(
+      context: context,
+      builder: (previewContext) {
+        final dimensioniSchermo = MediaQuery.of(previewContext).size;
+        final larghezzaDialog = dimensioniSchermo.width > 1400
+            ? 1280.0
+            : dimensioniSchermo.width * 0.92;
+        final altezzaDialog = dimensioniSchermo.height > 900
+            ? 780.0
+            : dimensioniSchermo.height * 0.86;
+
+        return AlertDialog(
+          title: const Text('Anteprima PDF Registro trattamenti'),
+          content: SizedBox(
+            width: larghezzaDialog,
+            height: altezzaDialog,
+            child: PdfPreview(
+              build: (_) async => bytes,
+              canChangePageFormat: false,
+              canChangeOrientation: false,
+              allowSharing: false,
+              allowPrinting: true,
+              initialPageFormat: PdfPageFormat.a4.landscape,
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(previewContext),
+              child: const Text('Chiudi'),
+            ),
+          ],
+        );
+      },
     );
   }
 

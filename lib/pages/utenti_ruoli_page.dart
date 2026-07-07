@@ -605,6 +605,15 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
                   ),
                 ),
                 actions: [
+                  if (isModifica)
+                    TextButton.icon(
+                      icon: const Icon(Icons.lock_reset),
+                      label: const Text('Reset password'),
+                      onPressed: () async {
+                        Navigator.of(dialogContext).pop();
+                        await mostraDialogResetPassword(utente);
+                      },
+                    ),
                   TextButton(
                     onPressed: () {
                       Navigator.of(dialogContext).pop();
@@ -711,6 +720,247 @@ class _UtentiRuoliPageState extends State<UtentiRuoliPage> {
       passwordController.dispose();
       confermaPasswordController.dispose();
       noteController.dispose();
+    }
+  }
+
+  Future<void> mostraDialogResetPassword(UtenteApp utente) async {
+    if (!puoGestireUtenti) {
+      mostraPermessoNegatoGestioneUtenti();
+      return;
+    }
+
+    if (utente.id == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.orange,
+          content: Text(
+            'Impossibile reimpostare la password: ID utente mancante.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final passwordController = TextEditingController();
+    final confermaPasswordController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    bool mostraPassword = false;
+    bool mostraConfermaPassword = false;
+    bool salvataggio = false;
+
+    try {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              return AlertDialog(
+                title: const Text('Reset password'),
+                content: SizedBox(
+                  width: 460,
+                  child: Form(
+                    key: formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          'Utente: ${utente.nomeCompleto}\nUsername: ${utente.username}',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 12),
+                        const Text(
+                          'La vecchia password non viene mostrata. '
+                          'Inserisci una nuova password da comunicare all’utente.',
+                          style: TextStyle(color: Colors.black54),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: passwordController,
+                          enabled: !salvataggio,
+                          obscureText: !mostraPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Nuova password *',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.lock_reset),
+                            suffixIcon: IconButton(
+                              tooltip: mostraPassword
+                                  ? 'Nascondi password'
+                                  : 'Mostra password',
+                              icon: Icon(
+                                mostraPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: salvataggio
+                                  ? null
+                                  : () {
+                                      setDialogState(() {
+                                        mostraPassword = !mostraPassword;
+                                      });
+                                    },
+                            ),
+                          ),
+                          validator: (value) {
+                            final testo = value?.trim() ?? '';
+
+                            if (testo.isEmpty) {
+                              return 'Inserisci la nuova password.';
+                            }
+
+                            if (testo.length < 8) {
+                              return 'La password deve avere almeno 8 caratteri.';
+                            }
+
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: confermaPasswordController,
+                          enabled: !salvataggio,
+                          obscureText: !mostraConfermaPassword,
+                          decoration: InputDecoration(
+                            labelText: 'Conferma nuova password *',
+                            border: const OutlineInputBorder(),
+                            prefixIcon: const Icon(Icons.lock_outline),
+                            suffixIcon: IconButton(
+                              tooltip: mostraConfermaPassword
+                                  ? 'Nascondi password'
+                                  : 'Mostra password',
+                              icon: Icon(
+                                mostraConfermaPassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
+                              ),
+                              onPressed: salvataggio
+                                  ? null
+                                  : () {
+                                      setDialogState(() {
+                                        mostraConfermaPassword =
+                                            !mostraConfermaPassword;
+                                      });
+                                    },
+                            ),
+                          ),
+                          validator: (value) {
+                            final password = passwordController.text.trim();
+                            final conferma = value?.trim() ?? '';
+
+                            if (conferma.isEmpty) {
+                              return 'Conferma la nuova password.';
+                            }
+
+                            if (conferma != password) {
+                              return 'Le password non coincidono.';
+                            }
+
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: salvataggio
+                        ? null
+                        : () {
+                            Navigator.of(dialogContext).pop();
+                          },
+                    child: const Text('Annulla'),
+                  ),
+                  ElevatedButton.icon(
+                    icon: salvataggio
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.lock_reset),
+                    label: Text(
+                      salvataggio ? 'Salvataggio...' : 'Reimposta password',
+                    ),
+                    onPressed: salvataggio
+                        ? null
+                        : () async {
+                            if (!formKey.currentState!.validate()) {
+                              return;
+                            }
+
+                            final navigator = Navigator.of(dialogContext);
+                            final messenger = ScaffoldMessenger.of(
+                              this.context,
+                            );
+
+                            setDialogState(() {
+                              salvataggio = true;
+                            });
+
+                            try {
+                              final nuovaPasswordHash = generaPasswordHash(
+                                passwordController.text.trim(),
+                              );
+
+                              await AppDatabase.instance
+                                  .aggiornaPasswordUtenteApp(
+                                    id: utente.id!,
+                                    passwordHash: nuovaPasswordHash,
+                                  );
+
+                              await AppDatabase.instance.registraAuditLog(
+                                modulo: 'Utenti/Ruoli',
+                                azione: 'RESET_PASSWORD',
+                                descrizione:
+                                    'Password reimpostata per username ${utente.username}.',
+                                recordId: utente.id,
+                              );
+
+                              if (!mounted) return;
+
+                              navigator.pop();
+
+                              await caricaDati();
+
+                              if (!mounted) return;
+
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  backgroundColor: Colors.green,
+                                  content: Text(
+                                    'Password reimpostata per ${utente.username}.',
+                                  ),
+                                ),
+                              );
+                            } catch (e) {
+                              if (!mounted) return;
+
+                              setDialogState(() {
+                                salvataggio = false;
+                              });
+
+                              messenger.showSnackBar(
+                                SnackBar(
+                                  backgroundColor: Colors.red,
+                                  content: Text(
+                                    'Errore durante il reset password: $e',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      passwordController.dispose();
+      confermaPasswordController.dispose();
     }
   }
 

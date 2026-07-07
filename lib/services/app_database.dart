@@ -2863,6 +2863,23 @@ updated_at TEXT NOT NULL
     );
   }
 
+  Future<int> aggiornaPasswordUtenteApp({
+    required int id,
+    required String passwordHash,
+  }) async {
+    final db = await database;
+
+    return db.update(
+      'utenti_app',
+      {
+        'password_hash': passwordHash,
+        'updated_at': DateTime.now().toIso8601String(),
+      },
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future<int> aggiornaStatoUtenteApp({
     required int id,
     required bool attivo,

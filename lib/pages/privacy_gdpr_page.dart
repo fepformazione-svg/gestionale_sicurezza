@@ -20,6 +20,7 @@ import '../models/data_breach.dart';
 import '../services/app_database.dart';
 
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/app_action_button.dart';
 
 class PrivacyGdprPage extends StatefulWidget {
   const PrivacyGdprPage({super.key});
@@ -1864,10 +1865,10 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                   label: const Text('Azzera ricerca'),
                 )
               else
-                FilledButton.icon(
+                AppActionButton(
+                  type: AppActionButtonType.nuovo,
                   onPressed: mostraDialogNuovaVoce,
-                  icon: const Icon(Icons.add),
-                  label: const Text('Nuova voce'),
+                  label: 'Nuova voce',
                 ),
             ],
           ),
@@ -2125,37 +2126,38 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                       },
                                     ),
                                   ),
-                                  ElevatedButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.excel,
                                     onPressed: vociPrivacyFiltrate.isEmpty
                                         ? null
                                         : esportaExcelPrivacyGdpr,
-                                    icon: const Icon(Icons.table_chart),
-                                    label: Text('Excel ($totaleFiltrato)'),
+                                    label: 'Excel ($totaleFiltrato)',
                                   ),
-                                  ElevatedButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.pdf,
                                     onPressed: vociPrivacyFiltrate.isEmpty
                                         ? null
                                         : esportaPdfPrivacyGdpr,
-                                    icon: const Icon(Icons.picture_as_pdf),
-                                    label: Text('PDF ($totaleFiltrato)'),
+                                    label: 'PDF ($totaleFiltrato)',
                                   ),
-                                  ElevatedButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.stampa,
                                     onPressed: vociPrivacyFiltrate.isEmpty
                                         ? null
                                         : stampaPrivacyGdpr,
-                                    icon: const Icon(Icons.print),
-                                    label: Text('Stampa ($totaleFiltrato)'),
+                                    label: 'Stampa ($totaleFiltrato)',
                                   ),
-                                  ElevatedButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.pdf,
                                     onPressed: esportaPdfRiepilogoAuditGdpr,
-                                    icon: const Icon(Icons.assessment_outlined),
-                                    label: const Text('PDF audit'),
+                                    label: 'PDF audit',
                                   ),
-                                  ElevatedButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.stampa,
                                     onPressed: stampaRiepilogoAuditGdpr,
-                                    icon: const Icon(Icons.print_outlined),
-                                    label: const Text('Stampa audit'),
+                                    label: 'Stampa audit',
                                   ),
+
                                   ElevatedButton.icon(
                                     icon: const Icon(Icons.fact_check_outlined),
                                     label: const Text(
@@ -2171,10 +2173,10 @@ class _PrivacyGdprPageState extends State<PrivacyGdprPage> {
                                     },
                                   ),
 
-                                  FilledButton.icon(
+                                  AppActionButton(
+                                    type: AppActionButtonType.nuovo,
                                     onPressed: mostraDialogNuovaVoce,
-                                    icon: const Icon(Icons.add),
-                                    label: const Text('Nuova voce'),
+                                    label: 'Nuova voce',
                                   ),
                                   Chip(
                                     avatar: const Icon(

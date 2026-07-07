@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:excel/excel.dart' as excel;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -2459,6 +2459,36 @@ class _DataBreachDialog extends StatefulWidget {
   State<_DataBreachDialog> createState() => _DataBreachDialogState();
 }
 
+class _DataBreachDateInputFormatter extends TextInputFormatter {
+  const _DataBreachDateInputFormatter();
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final cifre = newValue.text.replaceAll(RegExp(r'\D'), '');
+    final limitate = cifre.length > 8 ? cifre.substring(0, 8) : cifre;
+
+    final buffer = StringBuffer();
+
+    for (var i = 0; i < limitate.length; i++) {
+      if (i == 2 || i == 4) {
+        buffer.write('/');
+      }
+
+      buffer.write(limitate[i]);
+    }
+
+    final testoFormattato = buffer.toString();
+
+    return TextEditingValue(
+      text: testoFormattato,
+      selection: TextSelection.collapsed(offset: testoFormattato.length),
+    );
+  }
+}
+
 class _DataBreachDialogState extends State<_DataBreachDialog> {
   final formKey = GlobalKey<FormState>();
 
@@ -2565,10 +2595,14 @@ class _DataBreachDialogState extends State<_DataBreachDialog> {
     String label, {
     int maxLines = 1,
     bool obbligatorio = false,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
+      keyboardType: keyboardType,
+      inputFormatters: inputFormatters,
       decoration: decorazione(label),
       validator: obbligatorio
           ? (value) {
@@ -2599,12 +2633,25 @@ class _DataBreachDialogState extends State<_DataBreachDialog> {
               children: [
                 Row(
                   children: [
-                    Expanded(child: campo(dataEventoController, 'Data evento')),
+                    Expanded(
+                      child: campo(
+                        dataEventoController,
+                        'Data evento',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: const [
+                          _DataBreachDateInputFormatter(),
+                        ],
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: campo(
                         dataRilevazioneController,
                         'Data rilevazione',
+                        keyboardType: TextInputType.number,
+                        inputFormatters: const [
+                          _DataBreachDateInputFormatter(),
+                        ],
                       ),
                     ),
                   ],

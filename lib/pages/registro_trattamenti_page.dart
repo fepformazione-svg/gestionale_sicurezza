@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../models/registro_trattamento.dart';
 import '../models/registro_trattamento_log.dart';
@@ -6,6 +6,7 @@ import '../models/registro_trattamento_log.dart';
 import '../services/app_database.dart';
 
 import '../utils/pdf_azienda_helper.dart';
+import '../widgets/app_action_button.dart';
 
 import 'dart:io';
 import 'dart:typed_data';
@@ -223,7 +224,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       case 'statoRevisione':
         return 'Stato revisione';
       case 'finalita':
-        return 'FinalitÃ ';
+        return 'Finalità';
       case 'baseGiuridica':
         return 'Base giuridica';
       case 'categorieDati':
@@ -1019,7 +1020,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
             ),
             pw.Text(
-              'Registro attivitÃ  singolo trattamento - GDPR 679/2016',
+              'Registro attività singolo trattamento - GDPR 679/2016',
               style: const pw.TextStyle(fontSize: 10),
             ),
             pw.Text(
@@ -1239,7 +1240,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
       'Nome trattamento',
       'Data revisione',
       'Stato revisione',
-      'FinalitÃ ',
+      'Finalità',
       'Categorie interessati',
       'Categorie dati',
       'Base giuridica',
@@ -1438,7 +1439,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 'Nome trattamento',
                 'Data revisione',
                 'Stato rev.',
-                'FinalitÃ ',
+                'Finalità',
                 'Categorie interessati',
                 'Categorie dati',
                 'Base giuridica',
@@ -1596,7 +1597,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 'Nome trattamento',
                 'Data revisione',
                 'Stato rev.',
-                'FinalitÃ ',
+                'Finalità',
                 'Categorie interessati',
                 'Categorie dati',
                 'Base giuridica',
@@ -1701,8 +1702,8 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
           ),
           content: Text(
             nuovoStatoAttivo
-                ? 'Il trattamento tornerÃ  attivo nel Registro trattamenti.'
-                : 'Il trattamento non verrÃ  cancellato, ma sarÃ  segnato come non attivo.',
+                ? 'Il trattamento tornerà attivo nel Registro trattamenti.'
+                : 'Il trattamento non verrà cancellato, ma sarà segnato come non attivo.',
           ),
           actions: [
             TextButton(
@@ -1770,7 +1771,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
     return const Center(
       child: Text(
         'Nessun trattamento registrato.\n'
-        'Il registro Ã¨ collegato al database, ma non contiene ancora dati.',
+        'Il registro è collegato al database, ma non contiene ancora dati.',
         textAlign: TextAlign.center,
         style: TextStyle(color: Colors.grey, fontSize: 16),
       ),
@@ -1911,7 +1912,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               ),
             ]),
             sezionePdf('Inquadramento GDPR', [
-              rigaDettaglioPdf('FinalitÃ ', trattamento.finalita),
+              rigaDettaglioPdf('Finalità', trattamento.finalita),
               rigaDettaglioPdf('Base giuridica', trattamento.baseGiuridica),
               rigaDettaglioPdf(
                 'Tempi di conservazione',
@@ -2093,7 +2094,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 children: [
                   titoloSezione('Dati principali', Icons.assignment_outlined),
                   rigaDettaglio('Trattamento', trattamento.nomeTrattamento),
-                  rigaDettaglio('FinalitÃ ', trattamento.finalita),
+                  rigaDettaglio('Finalità', trattamento.finalita),
                   rigaDettaglio(
                     'Stato',
                     trattamento.attivo ? 'Attivo' : 'Non attivo',
@@ -2211,20 +2212,20 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
 
   Widget _buildTabella() {
     return Scrollbar(
-      controller: _tabellaVerticaleController,
+      controller: _tabellaOrizzontaleController,
       thumbVisibility: true,
       interactive: true,
+      scrollbarOrientation: ScrollbarOrientation.bottom,
       child: SingleChildScrollView(
-        controller: _tabellaVerticaleController,
+        controller: _tabellaOrizzontaleController,
+        scrollDirection: Axis.horizontal,
         primary: false,
         child: Scrollbar(
-          controller: _tabellaOrizzontaleController,
+          controller: _tabellaVerticaleController,
           thumbVisibility: true,
           interactive: true,
-          scrollbarOrientation: ScrollbarOrientation.bottom,
           child: SingleChildScrollView(
-            controller: _tabellaOrizzontaleController,
-            scrollDirection: Axis.horizontal,
+            controller: _tabellaVerticaleController,
             primary: false,
             child: DataTable(
               columns: [
@@ -2249,7 +2250,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                 ),
                 DataColumn(
                   label: intestazioneOrdinabileRegistro(
-                    'FinalitÃ ',
+                    'Finalità',
                     'finalita',
                   ),
                 ),
@@ -2388,12 +2389,11 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     ),
                   ],
                 );
-              }).toList(),
-            ), // DataTable
-          ), // SingleChildScrollView orizzontale
-        ), // Scrollbar orizzontale
-      ), // SingleChildScrollView verticale
-    ); // Scrollbar verticale
+              }).toList(),            ), // DataTable
+          ), // SingleChildScrollView verticale
+        ), // Scrollbar verticale
+      ), // SingleChildScrollView orizzontale
+    ); // Scrollbar orizzontale
   }
 
   Widget _buildContenuto() {
@@ -2545,7 +2545,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   _SezioneGuidaRegistro(
                     titolo: '1. Ricerca e filtri',
                     testo:
-                        'Usa la ricerca testuale per trovare rapidamente trattamenti per nome, finalitÃ , categorie di dati, base giuridica, destinatari, responsabile interno, note e altri campi. '
+                        'Usa la ricerca testuale per trovare rapidamente trattamenti per nome, finalità, categorie di dati, base giuridica, destinatari, responsabile interno, note e altri campi. '
                         'I filtri per stato e revisione possono essere combinati con la ricerca.',
                   ),
                   _SezioneGuidaRegistro(
@@ -2558,7 +2558,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                     titolo: '3. Ordinamento',
                     testo:
                         'Clicca sulle intestazioni della tabella per ordinare i trattamenti. '
-                        'Un secondo click sulla stessa colonna inverte lâ€™ordinamento. '
+                        'Un secondo click sulla stessa colonna inverte l’ordinamento. '
                         'Il riepilogo sopra la tabella mostra il criterio attivo.',
                   ),
                   _SezioneGuidaRegistro(
@@ -2571,14 +2571,14 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
                   _SezioneGuidaRegistro(
                     titolo: '5. Data revisione',
                     testo:
-                        'La data revisione puÃ² essere scritta manualmente oppure selezionata dal calendario. '
+                        'La data revisione può essere scritta manualmente oppure selezionata dal calendario. '
                         'Il formato viene normalizzato in gg/mm/aaaa.',
                   ),
                   _SezioneGuidaRegistro(
                     titolo: '6. Dettaglio trattamento',
                     testo:
-                        'Lâ€™azione Dettaglio apre una vista in sola lettura con tutti i campi del trattamento. '
-                        'Da lÃ¬ Ã¨ possibile generare o salvare il PDF del singolo trattamento.',
+                        'L’azione Dettaglio apre una vista in sola lettura con tutti i campi del trattamento. '
+                        'Da lì è possibile generare o salvare il PDF del singolo trattamento.',
                   ),
                   _SezioneGuidaRegistro(
                     titolo: '7. Excel, PDF e stampa',
@@ -2622,26 +2622,32 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
         actions: [
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: OutlinedButton.icon(
-              onPressed: esportaExcelRegistroTrattamenti,
-              icon: const Icon(Icons.file_download_outlined, size: 18),
-              label: const Text('Excel'),
+            child: AppActionButton(
+              type: AppActionButtonType.excel,
+              compact: true,
+              onPressed: caricamento || trattamentiFiltrati.isEmpty
+                  ? null
+                  : esportaExcelRegistroTrattamenti,
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: OutlinedButton.icon(
-              onPressed: esportaPdfRegistroTrattamenti,
-              icon: const Icon(Icons.picture_as_pdf_outlined, size: 18),
-              label: const Text('PDF'),
+            child: AppActionButton(
+              type: AppActionButtonType.pdf,
+              compact: true,
+              onPressed: caricamento || trattamentiFiltrati.isEmpty
+                  ? null
+                  : esportaPdfRegistroTrattamenti,
             ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-            child: OutlinedButton.icon(
-              onPressed: stampaRegistroTrattamenti,
-              icon: const Icon(Icons.print_outlined, size: 18),
-              label: const Text('Stampa'),
+            child: AppActionButton(
+              type: AppActionButtonType.stampa,
+              compact: true,
+              onPressed: caricamento || trattamentiFiltrati.isEmpty
+                  ? null
+                  : stampaRegistroTrattamenti,
             ),
           ),
           IconButton(
@@ -2829,7 +2835,7 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
               decoration: InputDecoration(
                 labelText: 'Cerca nel registro trattamenti',
                 hintText:
-                    'Nome, finalitÃ , base giuridica, dati, responsabile, note...',
+                    'Nome, finalità, base giuridica, dati, responsabile, note...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: ricercaRegistro.isEmpty
                     ? null
@@ -2853,6 +2859,28 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             ),
 
             const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(
+                spacing: 12,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: mostraGuidaRapidaRegistroTrattamenti,
+                    icon: const Icon(Icons.help_outline),
+                    label: const Text('Guida'),
+                  ),
+                  AppActionButton(
+                    type: AppActionButtonType.nuovo,
+                    label: 'Nuovo trattamento',
+                    onPressed: () => mostraDialogTrattamento(),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             riepilogoOrdinamentoRegistro(),
 
@@ -2861,25 +2889,6 @@ class _RegistroTrattamentiPageState extends State<RegistroTrattamentiPage> {
             Expanded(child: _buildContenuto()),
           ],
         ),
-      ),
-      floatingActionButton: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          FloatingActionButton.extended(
-            heroTag: 'guidaRegistroTrattamenti',
-            onPressed: mostraGuidaRapidaRegistroTrattamenti,
-            icon: const Icon(Icons.help_outline),
-            label: const Text('Guida'),
-          ),
-          const SizedBox(height: 12),
-          FloatingActionButton.extended(
-            heroTag: 'nuovoRegistroTrattamenti',
-            onPressed: () => mostraDialogTrattamento(),
-            icon: const Icon(Icons.add),
-            label: const Text('Nuovo trattamento'),
-          ),
-        ],
       ),
     );
   }
@@ -3129,7 +3138,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
     setState(() {
       _erroreNome = nomeVuoto ? 'Inserisci il nome del trattamento' : null;
       _erroreFinalita = finalitaVuota
-          ? 'Inserisci la finalitÃ  del trattamento'
+          ? 'Inserisci la finalità del trattamento'
           : null;
       _erroreDataRevisione = dataRevisioneNonValida
           ? 'Inserisci una data valida nel formato gg/mm/aaaa'
@@ -3277,7 +3286,7 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
                 const SizedBox(height: 12),
                 campoTesto(
                   controller: _finalitaController,
-                  label: 'FinalitÃ  *',
+                  label: 'Finalità *',
                   errorText: _erroreFinalita,
                   minLines: 3,
                   maxLines: 5,
@@ -3397,16 +3406,14 @@ class _NuovoTrattamentoDialogState extends State<_NuovoTrattamentoDialog> {
           icon: const Icon(Icons.close),
           label: const Text('Annulla'),
         ),
-        ElevatedButton.icon(
+        AppActionButton(
+          type: AppActionButtonType.salva,
           onPressed: _salva,
-          icon: Icon(isDuplicazione ? Icons.copy : Icons.save),
-          label: Text(
-            isDuplicazione
-                ? 'Duplica trattamento'
-                : isModifica
-                ? 'Salva modifiche'
-                : 'Salva',
-          ),
+          label: isDuplicazione
+              ? 'Duplica trattamento'
+              : isModifica
+              ? 'Salva modifiche'
+              : 'Salva',
         ),
       ],
     );

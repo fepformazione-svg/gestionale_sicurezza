@@ -14,6 +14,7 @@ import '../services/app_database.dart';
 
 import '../utils/pdf_azienda_helper.dart';
 
+import 'dart:async';
 import 'dart:io';
 import 'package:excel/excel.dart' hide Border;
 import 'package:path_provider/path_provider.dart';
@@ -61,6 +62,24 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   bool fineArchivioPrenotazioni = false;
   bool caricamentoPaginaDb = false;
   bool headerShadowVisible = false;
+
+  Timer? ricercaPrenotazioniDebounce;
+
+  Map<String, int> conteggiPrenotazioniDb = {
+    'tutte': 0,
+    'aperte': 0,
+    'registro': 0,
+    'chiuse': 0,
+    'da_fare': 0,
+  };
+
+  int conteggioPrenotazioniDb(String filtro) {
+    return conteggiPrenotazioniDb[filtro] ?? 0;
+  }
+
+  int get totalePrenotazioniFiltroCorrente {
+    return conteggioPrenotazioniDb(filtroLocale);
+  }
 
   int? prenotazioneSelezionataId;
 
@@ -467,46 +486,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> caricaPrenotazioniIniziali() async {
-    setState(() {
-      loading = true;
-      caricamentoPaginaDb = true;
-      paginaDbCorrente = 0;
-      fineArchivioPrenotazioni = false;
-      mostraTutteLePrenotazioni = false;
-
-      prenotazioni.clear();
-      prenotazioniFiltrate.clear();
-    });
-
-    try {
-      final dati = await DatabaseService.instance.getPrenotazioniPaged(
-        limit: righePerPaginaDb,
-        offset: 0,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        prenotazioni = dati;
-        prenotazioniFiltrate = dati;
-
-        paginaDbCorrente = 1;
-
-        if (dati.length < righePerPaginaDb) {
-          fineArchivioPrenotazioni = true;
-          mostraTutteLePrenotazioni = true;
-        }
-      });
-    } catch (e) {
-      debugPrint('ERRORE caricaPrenotazioniIniziali: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          loading = false;
-          caricamentoPaginaDb = false;
-        });
-      }
-    }
+    await caricaPrenotazioni();
   }
 
   bool loading = true;
@@ -588,6 +568,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
   @override
   void dispose() {
+    ricercaPrenotazioniDebounce?.cancel();
     ricercaController.dispose();
     ricercaFocusNode.dispose();
     tableFocusNode.dispose();
@@ -805,6 +786,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         azzeraSelezionePrenotazioni();
       });
 
+      caricaPrenotazioni();
+
       cercaPrenotazioni(widget.globalSearch);
     }
   }
@@ -1001,77 +984,104 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     };
   }
 
+  Future<List<Map<String, dynamic>>> arricchisciPrenotazioniConAttrezzature(
+    List<Map<String, dynamic>> dati,
+  ) async {
+    final datiConAttrezzature = <Map<String, dynamic>>[];
+
+    for (final prenotazione in dati) {
+      final prenotazioneArricchita = Map<String, dynamic>.from(prenotazione);
+      final prenotazioneIdRaw = prenotazioneArricchita['id'];
+      final prenotazioneId = prenotazioneIdRaw is int
+          ? prenotazioneIdRaw
+          : int.tryParse(prenotazioneIdRaw?.toString() ?? '');
+
+      if (prenotazioneId != null) {
+        prenotazioneArricchita['attrezzature_sintesi'] = await AppDatabase
+            .instance
+            .getSintesiAttrezzaturePrenotazione(prenotazioneId);
+      } else {
+        prenotazioneArricchita['attrezzature_sintesi'] = '';
+      }
+
+      datiConAttrezzature.add(prenotazioneArricchita);
+    }
+
+    return datiConAttrezzature;
+  }
+
   Future<void> caricaPrenotazioni() async {
     setState(() {
       loading = true;
       caricamentoPaginaDb = false;
       paginaDbCorrente = 0;
       fineArchivioPrenotazioni = false;
+      mostraTutteLePrenotazioni = false;
       prenotazioni = [];
       prenotazioniFiltrate = [];
+      azzeraSelezionePrenotazioni();
     });
 
     await caricaPaginaPrenotazioni(reset: true);
   }
 
   Future<void> caricaPaginaPrenotazioni({bool reset = false}) async {
-    if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
+    if (caricamentoPaginaDb || (!reset && fineArchivioPrenotazioni)) return;
 
     setState(() {
       caricamentoPaginaDb = true;
     });
 
     try {
-      final offset = paginaDbCorrente * righePerPaginaDb;
+      final ricerca = ricercaController.text.trim();
+      final filtro = filtroLocale;
+
+      final offset = reset ? 0 : prenotazioni.length;
+
+      final nuoviConteggi = reset
+          ? await DatabaseService.instance.contaPrenotazioniFiltratePerStato(
+              ricerca: ricerca,
+            )
+          : conteggiPrenotazioniDb;
+
+      final totaleFiltro = nuoviConteggi[filtro] ?? 0;
 
       final dati = await DatabaseService.instance.getPrenotazioniPaged(
         limit: righePerPaginaDb,
         offset: offset,
+        ricerca: ricerca,
+        filtro: filtro,
       );
 
-      final datiConAttrezzature = <Map<String, dynamic>>[];
-
-      for (final prenotazione in dati) {
-        final prenotazioneArricchita = Map<String, dynamic>.from(prenotazione);
-        final prenotazioneIdRaw = prenotazioneArricchita['id'];
-        final prenotazioneId = prenotazioneIdRaw is int
-            ? prenotazioneIdRaw
-            : int.tryParse(prenotazioneIdRaw.toString());
-
-        if (prenotazioneId != null) {
-          prenotazioneArricchita['attrezzature_sintesi'] = await AppDatabase
-              .instance
-              .getSintesiAttrezzaturePrenotazione(prenotazioneId);
-        } else {
-          prenotazioneArricchita['attrezzature_sintesi'] = '';
-        }
-
-        datiConAttrezzature.add(prenotazioneArricchita);
-      }
+      final datiConAttrezzature = await arricchisciPrenotazioniConAttrezzature(
+        dati,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        if (reset) {
-          prenotazioni.clear();
-        }
+        final righeAggiornate = reset
+            ? List<Map<String, dynamic>>.from(datiConAttrezzature)
+            : <Map<String, dynamic>>[...prenotazioni, ...datiConAttrezzature];
 
-        prenotazioni.addAll(datiConAttrezzature);
-        prenotazioniFiltrate = List.from(prenotazioni);
+        prenotazioni = righeAggiornate;
+        prenotazioniFiltrate = List<Map<String, dynamic>>.from(righeAggiornate);
+        conteggiPrenotazioniDb = nuoviConteggi;
 
-        paginaDbCorrente++;
+        paginaDbCorrente = (righeAggiornate.length / righePerPaginaDb).ceil();
 
-        if (datiConAttrezzature.length < righePerPaginaDb) {
-          fineArchivioPrenotazioni = true;
-          mostraTutteLePrenotazioni = true;
-        }
+        fineArchivioPrenotazioni =
+            righeAggiornate.length >= totaleFiltro ||
+            datiConAttrezzature.length < righePerPaginaDb;
 
-        caricamentoPaginaDb = false;
+        mostraTutteLePrenotazioni = fineArchivioPrenotazioni;
+
         loading = false;
+        caricamentoPaginaDb = false;
       });
 
-      if (widget.globalSearch.trim().isNotEmpty) {
-        cercaPrenotazioni(widget.globalSearch);
+      if (reset && _scrollController.hasClients) {
+        _scrollController.jumpTo(0);
       }
     } catch (e) {
       debugPrint('Errore caricamento prenotazioni paged: $e');
@@ -1079,8 +1089,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       if (!mounted) return;
 
       setState(() {
-        caricamentoPaginaDb = false;
         loading = false;
+        caricamentoPaginaDb = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1097,50 +1107,57 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
     setState(() {
       caricamentoPaginaDb = true;
+      azzeraSelezionePrenotazioni();
     });
 
     try {
-      final tutteLePrenotazioni = <Map<String, dynamic>>[];
-      int offset = 0;
+      final ricerca = ricercaController.text.trim();
+      final filtro = filtroLocale;
 
-      while (true) {
+      final conteggi = await DatabaseService.instance
+          .contaPrenotazioniFiltratePerStato(ricerca: ricerca);
+
+      final totaleFiltro = conteggi[filtro] ?? 0;
+
+      final tutteLePrenotazioni = <Map<String, dynamic>>[];
+      var offset = 0;
+
+      while (tutteLePrenotazioni.length < totaleFiltro) {
         final dati = await DatabaseService.instance.getPrenotazioniPaged(
           limit: righePerPaginaDb,
           offset: offset,
+          ricerca: ricerca,
+          filtro: filtro,
         );
 
-        tutteLePrenotazioni.addAll(dati);
+        if (dati.isEmpty) break;
 
-        if (dati.length < righePerPaginaDb) {
-          break;
-        }
+        final datiConAttrezzature =
+            await arricchisciPrenotazioniConAttrezzature(dati);
 
+        tutteLePrenotazioni.addAll(datiConAttrezzature);
         offset += righePerPaginaDb;
+
+        if (dati.length < righePerPaginaDb) break;
       }
 
       if (!mounted) return;
 
       setState(() {
-        prenotazioni = List<Map<String, dynamic>>.from(tutteLePrenotazioni);
+        prenotazioni = tutteLePrenotazioni;
+        prenotazioniFiltrate = List<Map<String, dynamic>>.from(
+          tutteLePrenotazioni,
+        );
+        conteggiPrenotazioniDb = conteggi;
 
-        prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
-
-        mostraTutteLePrenotazioni = true;
         paginaDbCorrente = (tutteLePrenotazioni.length / righePerPaginaDb)
             .ceil();
+
         fineArchivioPrenotazioni = true;
-
-        caricamentoPaginaDb = false;
+        mostraTutteLePrenotazioni = true;
         loading = false;
+        caricamentoPaginaDb = false;
       });
-
-      final ricercaCorrente = ricercaController.text.trim();
-
-      if (ricercaCorrente.isNotEmpty) {
-        cercaPrenotazioni(ricercaCorrente);
-      }
-
-      if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -1159,8 +1176,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       if (!mounted) return;
 
       setState(() {
-        caricamentoPaginaDb = false;
         loading = false;
+        caricamentoPaginaDb = false;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
@@ -1173,35 +1190,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   void cercaPrenotazioni(String valore) {
-    final query = valore.toLowerCase().trim();
+    ricercaPrenotazioniDebounce?.cancel();
 
-    setState(() {
-      if (query.isEmpty) {
-        prenotazioniFiltrate = prenotazioni;
-        return;
-      }
-
-      prenotazioniFiltrate = prenotazioni.where((p) {
-        final discente = nomeDiscente(p).toLowerCase();
-        final impresa = testo(p['impresa_nome']).toLowerCase();
-        final corso = testo(p['corso_nome']).toLowerCase();
-        final data = testo(p['data']).toLowerCase();
-        final prot = testo(p['prot']).toLowerCase();
-        final stato = statoPrenotazione(p).toLowerCase();
-        final docente = testoDocentePrenotazione(p).toLowerCase();
-        final aulaSede = testoAulaSedePrenotazione(p).toLowerCase();
-        final enteAttestato = testoEnteAttestatoPrenotazione(p).toLowerCase();
-
-        return discente.contains(query) ||
-            impresa.contains(query) ||
-            corso.contains(query) ||
-            docente.contains(query) ||
-            aulaSede.contains(query) ||
-            enteAttestato.contains(query) ||
-            data.contains(query) ||
-            prot.contains(query) ||
-            stato.contains(query);
-      }).toList();
+    ricercaPrenotazioniDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (!mounted) return;
+      caricaPrenotazioni();
     });
   }
 
@@ -1527,11 +1520,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       message: tooltipFiltroPrenotazioni(filtro),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
-        onTap: () {
+        onTap: () async {
           setState(() {
             filtroLocale = filtro;
             azzeraSelezionePrenotazioni();
           });
+
+          await caricaPrenotazioni();
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -1583,11 +1578,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       message: tooltipFiltroPrenotazioni(filtro),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
-        onTap: () {
+        onTap: () async {
           setState(() {
             filtroLocale = filtro;
             azzeraSelezionePrenotazioni();
           });
+
+          await caricaPrenotazioni();
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 180),
@@ -3608,7 +3605,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                               Builder(
                                 builder: (context) {
                                   final numeroPrenotazioniVisibili =
-                                      prenotazioniVisibili.length;
+                                      totalePrenotazioniFiltroCorrente;
                                   final testoPrenotazione =
                                       numeroPrenotazioniVisibili == 1
                                       ? 'prenotazione'
@@ -3630,20 +3627,22 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                     child: InkWell(
                                       borderRadius: BorderRadius.circular(999),
                                       onTap: filtriAttivi
-                                          ? () {
+                                          ? () async {
+                                              ricercaPrenotazioniDebounce
+                                                  ?.cancel();
+
                                               setState(() {
                                                 ricercaController.clear();
                                                 filtroLocale = 'tutte';
-                                                prenotazioniFiltrate =
-                                                    List<
-                                                      Map<String, dynamic>
-                                                    >.from(prenotazioni);
                                                 azzeraSelezionePrenotazioni();
                                               });
+
+                                              await caricaPrenotazioni();
 
                                               ripristinaFocusTabella();
                                             }
                                           : null,
+
                                       child: Container(
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 10,
@@ -3711,49 +3710,43 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         children: [
                           compactKpiCard(
                             titolo: 'Totale',
-                            valore: prenotazioniFiltrate.length.toString(),
+                            valore: conteggioPrenotazioniDb('tutte').toString(),
                             colore: const Color(0xFF2563EB),
                             filtro: 'tutte',
                           ),
 
                           compactKpiCard(
                             titolo: 'Aperte',
-                            valore: prenotazioniFiltrate
-                                .where((p) => statoPrenotazione(p) == 'Aperto')
-                                .length
-                                .toString(),
+                            valore: conteggioPrenotazioniDb(
+                              'aperte',
+                            ).toString(),
                             colore: Colors.green,
                             filtro: 'aperte',
                           ),
 
                           compactKpiCard(
                             titolo: 'Registro',
-                            valore: prenotazioniFiltrate
-                                .where(
-                                  (p) => statoPrenotazione(p) == 'Registro',
-                                )
-                                .length
-                                .toString(),
+                            valore: conteggioPrenotazioniDb(
+                              'registro',
+                            ).toString(),
                             colore: Colors.orange,
                             filtro: 'registro',
                           ),
 
                           compactKpiCard(
                             titolo: 'Chiuse',
-                            valore: prenotazioniFiltrate
-                                .where((p) => statoPrenotazione(p) == 'Chiuso')
-                                .length
-                                .toString(),
+                            valore: conteggioPrenotazioniDb(
+                              'chiuse',
+                            ).toString(),
                             colore: Colors.grey,
                             filtro: 'chiuse',
                           ),
 
                           compactKpiCard(
                             titolo: 'Da fare',
-                            valore: prenotazioniFiltrate
-                                .where((p) => statoPrenotazione(p) == 'Da fare')
-                                .length
-                                .toString(),
+                            valore: conteggioPrenotazioniDb(
+                              'da_fare',
+                            ).toString(),
                             colore: Colors.red,
                             filtro: 'da_fare',
                           ),
@@ -3766,35 +3759,36 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         runSpacing: 10,
                         children: [
                           filtroChip(
-                            titolo: 'Tutte (${prenotazioniFiltrate.length})',
+                            titolo:
+                                "Tutte (${conteggioPrenotazioniDb('tutte')})",
                             filtro: 'tutte',
                             colore: Colors.blue,
                           ),
 
                           filtroChip(
                             titolo:
-                                'Aperte (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Aperto').length})',
+                                "Aperte (${conteggioPrenotazioniDb('aperte')})",
                             filtro: 'aperte',
                             colore: Colors.green,
                           ),
 
                           filtroChip(
                             titolo:
-                                'Registro (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Registro').length})',
+                                "Registro (${conteggioPrenotazioniDb('registro')})",
                             filtro: 'registro',
                             colore: Colors.orange,
                           ),
 
                           filtroChip(
                             titolo:
-                                'Chiuse (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Chiuso').length})',
+                                "Chiuse (${conteggioPrenotazioniDb('chiuse')})",
                             filtro: 'chiuse',
                             colore: Colors.grey,
                           ),
 
                           filtroChip(
                             titolo:
-                                'Da fare (${prenotazioniFiltrate.where((p) => statoPrenotazione(p) == 'Da fare').length})',
+                                "Da fare (${conteggioPrenotazioniDb('da_fare')})",
                             filtro: 'da_fare',
                             colore: Colors.red,
                           ),

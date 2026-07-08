@@ -646,11 +646,152 @@ class DatabaseService {
     return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
+  String _wherePrenotazioniSql({
+    required String ricerca,
+    required String filtro,
+    required List<Object?> args,
+  }) {
+    final condizioni = <String>[];
+
+    switch (filtro) {
+      case 'registro':
+        condizioni.add('COALESCE(p.registro, 0) = 1');
+        break;
+
+      case 'chiuse':
+        condizioni.add('''
+        COALESCE(p.registro, 0) = 0
+        AND COALESCE(p.conferma, 0) = 1
+      ''');
+        break;
+
+      case 'aperte':
+        condizioni.add('''
+        COALESCE(p.registro, 0) = 0
+        AND COALESCE(p.conferma, 0) = 0
+        AND COALESCE(p.aperto, 0) = 1
+      ''');
+        break;
+
+      case 'da_fare':
+        condizioni.add('''
+        COALESCE(p.registro, 0) = 0
+        AND COALESCE(p.conferma, 0) = 0
+        AND COALESCE(p.aperto, 0) = 0
+      ''');
+        break;
+
+      case 'tutte':
+      default:
+        break;
+    }
+
+    final query = ricerca.trim().toLowerCase();
+
+    if (query.isNotEmpty) {
+      final like = '%$query%';
+
+      condizioni.add('''
+      (
+        LOWER(
+          CASE
+            WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
+            ELSE COALESCE(d.nome, '')
+          END
+        ) LIKE ?
+        OR LOWER(COALESCE(d.cognome, '')) LIKE ?
+        OR LOWER(TRIM(COALESCE(d.cognome, '') || ' ' || COALESCE(d.nome, ''))) LIKE ?
+        OR LOWER(TRIM(COALESCE(d.nome, '') || ' ' || COALESCE(d.cognome, ''))) LIKE ?
+        OR LOWER(COALESCE(i.intestazione, '')) LIKE ?
+        OR LOWER(COALESCE(c.denominazione, '')) LIKE ?
+        OR LOWER(COALESCE(p.data, '')) LIKE ?
+        OR LOWER(COALESCE(p.prot, '')) LIKE ?
+        OR LOWER(
+          CASE
+            WHEN COALESCE(p.registro, 0) = 1 THEN 'registro'
+            WHEN COALESCE(p.conferma, 0) = 1 THEN 'chiuso'
+            WHEN COALESCE(p.aperto, 0) = 1 THEN 'aperto'
+            ELSE 'da fare'
+          END
+        ) LIKE ?
+      )
+    ''');
+
+      args.addAll(List<Object?>.filled(9, like));
+    }
+
+    if (condizioni.isEmpty) return '';
+
+    return 'WHERE ${condizioni.join(' AND ')}';
+  }
+
+  Future<int> contaPrenotazioniFiltrate({
+    String ricerca = '',
+    String filtro = 'tutte',
+  }) async {
+    final db = await _db;
+    final args = <Object?>[];
+
+    final whereSql = _wherePrenotazioniSql(
+      ricerca: ricerca,
+      filtro: filtro,
+      args: args,
+    );
+
+    final result = await db.rawQuery('''
+    SELECT COUNT(*) AS totale
+    FROM prenotazioni p
+    LEFT JOIN discenti d ON d.id = p.discente_id
+    LEFT JOIN imprese i ON i.id = p.impresa_id
+    LEFT JOIN corsi c ON c.id = p.corso_id
+    $whereSql
+  ''', args);
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<Map<String, int>> contaPrenotazioniFiltratePerStato({
+    String ricerca = '',
+  }) async {
+    return {
+      'tutte': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'tutte',
+      ),
+      'aperte': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'aperte',
+      ),
+      'registro': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'registro',
+      ),
+      'chiuse': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'chiuse',
+      ),
+      'da_fare': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'da_fare',
+      ),
+    };
+  }
+
   Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
     required int limit,
     required int offset,
+    String ricerca = '',
+    String filtro = 'tutte',
   }) async {
     final db = await _db;
+
+    final args = <Object?>[];
+
+    final whereSql = _wherePrenotazioniSql(
+      ricerca: ricerca,
+      filtro: filtro,
+      args: args,
+    );
 
     final result = await db.rawQuery(
       '''
@@ -713,15 +854,17 @@ FROM prenotazioni p
     LEFT JOIN discenti d ON d.id = p.discente_id
     LEFT JOIN imprese i ON i.id = p.impresa_id
     LEFT JOIN corsi c ON c.id = p.corso_id
-    LEFT JOIN docenti doc ON doc.id = p.docente_id
+        LEFT JOIN docenti doc ON doc.id = p.docente_id
     LEFT JOIN aule_sedi aula ON aula.id = p.aula_sede_id
     LEFT JOIN enti_attestati ente ON ente.id = p.ente_attestato_id
+
+    $whereSql
 
     ORDER BY p.id DESC
 
     LIMIT ? OFFSET ?
   ''',
-      [limit, offset],
+      [...args, limit, offset],
     );
 
     return result.map((row) => Map<String, dynamic>.from(row)).toList();

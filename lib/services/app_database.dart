@@ -32,21 +32,36 @@ class AppDatabase {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
 
-    final documentsPath = Platform.environment['USERPROFILE'] != null
-        ? join(
-            Platform.environment['USERPROFILE']!,
-            'Documents',
-            'Gestionale Sicurezza',
-          )
-        : await databaseFactory.getDatabasesPath();
+    final diagnosticDbPath =
+        Platform.environment['GESTIONALE_SICUREZZA_DB_PATH'];
 
-    if (!Directory(documentsPath).existsSync()) {
-      Directory(documentsPath).createSync(recursive: true);
+    final String path;
+
+    if (diagnosticDbPath != null && diagnosticDbPath.trim().isNotEmpty) {
+      path = diagnosticDbPath.trim();
+
+      if (!File(path).existsSync()) {
+        throw StateError('Database diagnostico non trovato: $path');
+      }
+
+      debugPrint('DATABASE PATH DIAGNOSTICO: $path');
+    } else {
+      final documentsPath = Platform.environment['USERPROFILE'] != null
+          ? join(
+              Platform.environment['USERPROFILE']!,
+              'Documents',
+              'Gestionale Sicurezza',
+            )
+          : await databaseFactory.getDatabasesPath();
+
+      if (!Directory(documentsPath).existsSync()) {
+        Directory(documentsPath).createSync(recursive: true);
+      }
+
+      path = join(documentsPath, databaseName);
+
+      debugPrint('DATABASE PATH: $path');
     }
-
-    final path = join(documentsPath, databaseName);
-
-    debugPrint('DATABASE PATH: $path');
 
     _database = await databaseFactory.openDatabase(
       path,

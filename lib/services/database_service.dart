@@ -292,12 +292,44 @@ class DatabaseService {
         d.id,
         d.nome,
         d.cognome,
+        d.codice_fiscale,
         d.impresa_id,
         i.intestazione AS nome_impresa
       FROM discenti d
       LEFT JOIN imprese i ON i.id = d.impresa_id
       ORDER BY d.cognome ASC, d.nome ASC
     ''');
+  }
+
+  Future<int> collegaDiscenteAPrenotazione({
+    required int prenotazioneId,
+    required int discenteId,
+  }) async {
+    final db = await _db;
+
+    final discenteEsiste =
+        Sqflite.firstIntValue(
+          await db.rawQuery('SELECT COUNT(*) FROM discenti WHERE id = ?', [
+            discenteId,
+          ]),
+        ) ??
+        0;
+
+    if (discenteEsiste == 0) {
+      throw ArgumentError('Discente non trovato: $discenteId');
+    }
+
+    return await db.rawUpdate(
+      '''
+      UPDATE prenotazioni
+      SET
+        discente_id = ?,
+        updated_at = ?
+      WHERE id = ?
+        AND discente_id IS NULL
+      ''',
+      [discenteId, DateTime.now().toIso8601String(), prenotazioneId],
+    );
   }
 
   // =========================

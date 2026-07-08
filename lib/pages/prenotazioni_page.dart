@@ -1352,6 +1352,407 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
+  String _testoCollegamentoDiscente(dynamic value) {
+    return value?.toString().trim() ?? '';
+  }
+
+  String _nomeDiscenteLookup(Map<String, dynamic> discente) {
+    final cognome = _testoCollegamentoDiscente(discente['cognome']);
+    final nome = _testoCollegamentoDiscente(discente['nome']);
+
+    final nominativo = [cognome, nome].where((e) => e.isNotEmpty).join(' ');
+
+    return nominativo.isEmpty ? 'Discente senza nome' : nominativo;
+  }
+
+  String _dettaglioDiscenteLookup(Map<String, dynamic> discente) {
+    final codiceFiscale = _testoCollegamentoDiscente(
+      discente['codice_fiscale'],
+    );
+    final impresa = _testoCollegamentoDiscente(discente['nome_impresa']);
+
+    return [
+      if (codiceFiscale.isNotEmpty) 'CF: $codiceFiscale',
+      if (impresa.isNotEmpty) impresa,
+    ].join(' • ');
+  }
+
+  String _chiaveRicercaDiscenteLookup(Map<String, dynamic> discente) {
+    return [
+      discente['cognome'],
+      discente['nome'],
+      discente['codice_fiscale'],
+      discente['nome_impresa'],
+    ].map(_testoCollegamentoDiscente).join(' ').toLowerCase();
+  }
+
+  void aggiornaPrenotazioneCollegataDiscenteInMemoria({
+    required int prenotazioneId,
+    required int discenteId,
+    required Map<String, dynamic> discente,
+  }) {
+    final nome = _testoCollegamentoDiscente(discente['nome']);
+    final cognome = _testoCollegamentoDiscente(discente['cognome']);
+
+    Map<String, dynamic> aggiornaRiga(Map<String, dynamic> prenotazione) {
+      final idRaw = prenotazione['id'];
+      final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '');
+
+      if (id != prenotazioneId) {
+        return prenotazione;
+      }
+
+      return {
+        ...prenotazione,
+        'discente_id': discenteId,
+        'discente_nome': nome,
+        'discente_cognome': cognome,
+      };
+    }
+
+    setState(() {
+      prenotazioni = prenotazioni.map(aggiornaRiga).toList();
+      prenotazioniFiltrate = prenotazioniFiltrate.map(aggiornaRiga).toList();
+    });
+  }
+
+  Future<void> collegaDiscentePrenotazione(
+    Map<String, dynamic> prenotazione,
+  ) async {
+    final prenotazioneIdRaw = prenotazione['id'];
+    final prenotazioneId = prenotazioneIdRaw is int
+        ? prenotazioneIdRaw
+        : int.tryParse(prenotazioneIdRaw?.toString() ?? '');
+
+    if (prenotazioneId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID prenotazione non valido.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    if (prenotazione['discente_id'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Questa prenotazione risulta gia collegata a un discente.',
+          ),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final discenti = (await DatabaseService.instance.getDiscentiLookup())
+          .map((row) => Map<String, dynamic>.from(row))
+          .toList();
+
+      if (!mounted) return;
+
+      if (discenti.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Nessun discente disponibile per il collegamento.'),
+            backgroundColor: Color(0xFFF97316),
+          ),
+        );
+        return;
+      }
+
+      final ricercaDiscenteController = TextEditingController();
+
+      final discenteSelezionato = await showDialog<Map<String, dynamic>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              final query = ricercaDiscenteController.text.trim().toLowerCase();
+
+              final risultati = query.isEmpty
+                  ? discenti.take(80).toList()
+                  : discenti
+                        .where(
+                          (discente) => _chiaveRicercaDiscenteLookup(
+                            discente,
+                          ).contains(query),
+                        )
+                        .take(80)
+                        .toList();
+
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                title: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFECFDF5),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.person_add_alt_1_rounded,
+                        color: Color(0xFF059669),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Collega discente',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 760,
+                  height: 560,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Prenotazione: ${nomeDiscente(prenotazione)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Impresa: ${testo(prenotazione['impresa_nome']).isEmpty ? '-' : testo(prenotazione['impresa_nome'])}',
+                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      ),
+                      Text(
+                        'Corso: ${testo(prenotazione['corso_nome']).isEmpty ? '-' : testo(prenotazione['corso_nome'])}',
+                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: ricercaDiscenteController,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Cerca discente',
+                          hintText: 'Nome, cognome, codice fiscale o impresa',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: risultati.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Nessun discente trovato con questa ricerca.',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: risultati.length,
+                                separatorBuilder: (separatorContext, index) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final discente = risultati[index];
+                                  final dettaglio = _dettaglioDiscenteLookup(
+                                    discente,
+                                  );
+
+                                  return ListTile(
+                                    dense: true,
+                                    leading: const Icon(
+                                      Icons.person_outline,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                    title: Text(
+                                      _nomeDiscenteLookup(discente),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: dettaglio.isEmpty
+                                        ? null
+                                        : Text(dettaglio),
+                                    onTap: () {
+                                      Navigator.pop(dialogContext, discente);
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Il collegamento aggiorna solo questa prenotazione e non modifica massivamente lo storico.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text(
+                      'Annulla',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      ricercaDiscenteController.dispose();
+
+      if (!mounted) return;
+
+      if (discenteSelezionato == null) {
+        ripristinaFocusTabella();
+        return;
+      }
+
+      final discenteIdRaw = discenteSelezionato['id'];
+      final discenteId = discenteIdRaw is int
+          ? discenteIdRaw
+          : int.tryParse(discenteIdRaw?.toString() ?? '');
+
+      if (discenteId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID discente non valido.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        return;
+      }
+
+      final nomeDiscenteSelezionato = _nomeDiscenteLookup(discenteSelezionato);
+
+      final conferma = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: const Text(
+              'Conferma collegamento',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: Text(
+              'Vuoi collegare questa prenotazione a:\n\n'
+              '$nomeDiscenteSelezionato\n\n'
+              'L\'operazione aggiorna solo prenotazioni.discente_id per questa riga.',
+              style: const TextStyle(height: 1.45, fontWeight: FontWeight.w500),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  'Annulla',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                icon: const Icon(Icons.link_rounded, size: 18),
+                label: const Text(
+                  'Collega discente',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF059669),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (conferma != true) {
+        ripristinaFocusTabella();
+        return;
+      }
+
+      final righeAggiornate = await DatabaseService.instance
+          .collegaDiscenteAPrenotazione(
+            prenotazioneId: prenotazioneId,
+            discenteId: discenteId,
+          );
+
+      notificaDatiModificati();
+
+      if (!mounted) return;
+
+      if (righeAggiornate > 0) {
+        aggiornaPrenotazioneCollegataDiscenteInMemoria(
+          prenotazioneId: prenotazioneId,
+          discenteId: discenteId,
+          discente: discenteSelezionato,
+        );
+      }
+
+      if (righeAggiornate == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nessuna riga aggiornata: la prenotazione potrebbe essere gia stata collegata.',
+            ),
+            backgroundColor: Color(0xFFF97316),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Discente collegato alla prenotazione: $nomeDiscenteSelezionato',
+            ),
+            backgroundColor: const Color(0xFF16A34A),
+          ),
+        );
+      }
+
+      ripristinaFocusTabella();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore collegamento discente: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+
+      ripristinaFocusTabella();
+    }
+  }
+
   Future<void> eliminaPrenotazione(Map<String, dynamic> prenotazione) async {
     final bool prenotazioneConfermata =
         prenotazione['conferma'] == 1 || prenotazione['conferma'] == true;
@@ -4835,6 +5236,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 p,
                                                               ),
 
+                                                          onCollegaDiscente: () =>
+                                                              collegaDiscentePrenotazione(
+                                                                p,
+                                                              ),
+
                                                           onElimina: () =>
                                                               eliminaPrenotazione(
                                                                 p,
@@ -4880,7 +5286,7 @@ const double colAttrezzature = 130;
 const double colData = 80;
 const double colProt = 45;
 const double colStato = 105;
-const double colAzioni = 145;
+const double colAzioni = 180;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -4892,6 +5298,7 @@ class PrenotazioneRow extends StatefulWidget {
   final VoidCallback onRegistro;
   final VoidCallback onStampaRegistro;
   final VoidCallback onModifica;
+  final VoidCallback onCollegaDiscente;
 
   final VoidCallback onElimina;
   final VoidCallback onDoppioClick;
@@ -4911,6 +5318,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.onModifica,
     required this.onRegistro,
     required this.onStampaRegistro,
+    required this.onCollegaDiscente,
     required this.onElimina,
     required this.statoPrenotazione,
     required this.nomeDiscente,
@@ -4929,6 +5337,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
   @override
   Widget build(BuildContext context) {
     final stato = widget.statoPrenotazione(widget.prenotazione);
+    final puoCollegareDiscente = widget.prenotazione['discente_id'] == null;
 
     Color? rowColor;
 
@@ -5201,6 +5610,22 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                                   color: Color(0xFF4F46E5),
                                 ),
                               ),
+                              if (puoCollegareDiscente)
+                                IconButton(
+                                  tooltip: 'Collega discente',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 30,
+                                    minHeight: 30,
+                                  ),
+                                  onPressed: widget.onCollegaDiscente,
+                                  icon: const Icon(
+                                    Icons.person_add_alt_1_outlined,
+                                    size: 19,
+                                    color: Color(0xFF059669),
+                                  ),
+                                ),
+
                               IconButton(
                                 tooltip: 'Elimina prenotazione',
                                 padding: EdgeInsets.zero,

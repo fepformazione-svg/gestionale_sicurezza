@@ -1573,6 +1573,8 @@ updated_at TEXT NOT NULL
       SELECT COUNT(*) AS totale
       FROM prenotazioni
       WHERE COALESCE(aperto, 0) = 1
+        AND COALESCE(registro, 0) = 0
+        AND COALESCE(conferma, 0) = 0
     ''');
 
     return _leggiConteggio(result);

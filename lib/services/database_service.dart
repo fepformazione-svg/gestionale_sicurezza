@@ -1562,7 +1562,9 @@ FROM prenotazioni p
     final result = await db.rawQuery('''
       SELECT COUNT(*) AS totale
       FROM prenotazioni
-      WHERE conferma = 0 OR conferma IS NULL
+      WHERE COALESCE(aperto, 0) = 1
+        AND COALESCE(registro, 0) = 0
+        AND COALESCE(conferma, 0) = 0
     ''');
 
     return result.first['totale'] as int? ?? 0;
@@ -1574,7 +1576,8 @@ FROM prenotazioni p
     final result = await db.rawQuery('''
       SELECT COUNT(*) AS totale
       FROM prenotazioni
-      WHERE conferma = 1
+      WHERE COALESCE(registro, 0) = 0
+        AND COALESCE(conferma, 0) = 1
     ''');
 
     return result.first['totale'] as int? ?? 0;

@@ -786,48 +786,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   Future<void> caricaAltrePrenotazioni() async {
-    if (caricamentoPaginaDb || fineArchivioPrenotazioni) return;
-
-    setState(() {
-      caricamentoPaginaDb = true;
-    });
-
-    try {
-      final dati = await DatabaseService.instance.getPrenotazioniPaged(
-        limit: righePerPaginaDb,
-        offset: paginaDbCorrente * righePerPaginaDb,
-      );
-
-      if (!mounted) return;
-
-      setState(() {
-        prenotazioni.addAll(dati);
-        prenotazioniFiltrate = List<Map<String, dynamic>>.from(prenotazioni);
-
-        paginaDbCorrente++;
-
-        if (dati.length < righePerPaginaDb) {
-          fineArchivioPrenotazioni = true;
-        }
-      });
-    } catch (e) {
-      debugPrint('Errore caricamento altre prenotazioni: $e');
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Errore caricamento altre prenotazioni: $e'),
-          backgroundColor: const Color(0xFFDC2626),
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          caricamentoPaginaDb = false;
-        });
-      }
-    }
+    await caricaPaginaPrenotazioni();
   }
 
   @override
@@ -3377,6 +3336,47 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                     : 'Mostra tutto',
               ),
             ),
+
+            if (!mostraTutteLePrenotazioni && !fineArchivioPrenotazioni) ...[
+              const SizedBox(width: 10),
+              Tooltip(
+                message: caricamentoPaginaDb
+                    ? 'Caricamento prenotazioni in corso'
+                    : 'Carica altre $righePerPaginaDb prenotazioni',
+                child: OutlinedButton.icon(
+                  onPressed: caricamentoPaginaDb
+                      ? null
+                      : () async {
+                          setState(() {
+                            azzeraSelezionePrenotazioni();
+                          });
+
+                          await caricaAltrePrenotazioni();
+                        },
+                  icon: caricamentoPaginaDb
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.expand_more_rounded, size: 18),
+                  label: Text(
+                    caricamentoPaginaDb ? 'Caricamento...' : 'Carica altri',
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    foregroundColor: const Color(0xFF2563EB),
+                    side: const BorderSide(color: Color(0xFFBFDBFE)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ),
+            ],
 
             Tooltip(
               message: prenotazioniVisibili.isEmpty

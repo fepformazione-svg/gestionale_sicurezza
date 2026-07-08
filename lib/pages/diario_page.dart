@@ -332,16 +332,38 @@ class _DiarioPageState extends State<DiarioPage> {
     );
   }
 
-  String statoScadenza(String? dataScadenza) {
-    if (dataScadenza == null || dataScadenza.isEmpty) {
-      return 'N/D';
+  DateTime? parseDataDiario(String? valore) {
+    if (valore == null) return null;
+
+    final testoData = valore.trim();
+    if (testoData.isEmpty) return null;
+
+    final iso = DateTime.tryParse(testoData);
+    if (iso != null) {
+      return DateTime(iso.year, iso.month, iso.day);
     }
 
-    final oggi = DateTime.now();
-    final scadenza = DateTime.tryParse(dataScadenza);
+    final soloData = testoData.split(' ').first;
+    final parti = soloData.split('/');
+
+    if (parti.length != 3) return null;
+
+    final giorno = int.tryParse(parti[0]);
+    final mese = int.tryParse(parti[1]);
+    final anno = int.tryParse(parti[2]);
+
+    if (giorno == null || mese == null || anno == null) return null;
+
+    return DateTime(anno, mese, giorno);
+  }
+
+  String statoScadenza(String? dataScadenza) {
+    final scadenza = parseDataDiario(dataScadenza);
 
     if (scadenza == null) return 'N/D';
 
+    final oggiBase = DateTime.now();
+    final oggi = DateTime(oggiBase.year, oggiBase.month, oggiBase.day);
     final giorni = scadenza.difference(oggi).inDays;
 
     if (giorni < 0) return 'SCADUTO';
@@ -413,7 +435,7 @@ class _DiarioPageState extends State<DiarioPage> {
   Widget badgeDaFatturare(bool valore, {bool bloccato = false}) {
     return Tooltip(
       message: bloccato
-          ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
+          ? 'Fattura giÃ  inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
           : valore
           ? 'Da fatturare'
           : 'Non da fatturare',
@@ -894,7 +916,7 @@ class _DiarioPageState extends State<DiarioPage> {
     final dettaglioFiltro = [
       if (ricercaAttiva) 'ricerca "${_cercaController.text.trim()}"',
       if (filtroAttivo) 'solo Da fatturare',
-    ].join(' · ');
+    ].join(' Â· ');
 
     final infoStampa = stampaFiltrata
         ? 'Stampa diario filtrato - ${_diario.length} corsi - $dettaglioFiltro - ${formattaDataOra(adesso)}'
@@ -1913,7 +1935,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                     height: 10,
                                                                   ),
                                                                   const Text(
-                                                                    'Salvando una fattura, il corso verrà rimosso automaticamente dai Da fatturare.',
+                                                                    'Salvando una fattura, il corso verrÃ  rimosso automaticamente dai Da fatturare.',
                                                                     style: TextStyle(
                                                                       fontSize:
                                                                           12.5,
@@ -1963,7 +1985,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                                 ],
                                                                               ),
                                                                               content: const Text(
-                                                                                'Vuoi rimuovere il riferimento fattura da questo corso? Dopo la rimozione, il campo Da fatturare tornerà modificabile manualmente.',
+                                                                                'Vuoi rimuovere il riferimento fattura da questo corso? Dopo la rimozione, il campo Da fatturare tornerÃ  modificabile manualmente.',
                                                                               ),
                                                                               actions: [
                                                                                 TextButton(
@@ -2093,7 +2115,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                       .trim()
                                                                       .isEmpty
                                                                   ? 'Riferimento fattura rimosso. Il campo Da fatturare torna modificabile manualmente.'
-                                                                  : 'Riferimento fattura salvato. Il corso è stato rimosso dai Da fatturare.',
+                                                                  : 'Riferimento fattura salvato. Il corso Ã¨ stato rimosso dai Da fatturare.',
                                                             ),
                                                             backgroundColor:
                                                                 nuovaFattura
@@ -2124,7 +2146,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                 : riga['invio']
                                                                           ?.toString() ==
                                                                       '1'
-                                                                ? 'Invio già registrato. Clicca per rimuovere lo stato inviato'
+                                                                ? 'Invio giÃ  registrato. Clicca per rimuovere lo stato inviato'
                                                                 : 'Nessun invio registrato. Clicca per segnare come inviato',
                                                             child:
                                                                 invioQuestaRiga
@@ -2348,11 +2370,11 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           child: Tooltip(
                                                             message:
                                                                 fatturaPresente
-                                                                ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
+                                                                ? 'Fattura giÃ  inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
                                                                 : riga['da_fatturare'] ==
                                                                       1
-                                                                ? 'Il corso è da fatturare. Clicca per rimuoverlo dai Da fatturare'
-                                                                : 'Il corso non è da fatturare. Clicca per segnarlo come Da fatturare',
+                                                                ? 'Il corso Ã¨ da fatturare. Clicca per rimuoverlo dai Da fatturare'
+                                                                : 'Il corso non Ã¨ da fatturare. Clicca per segnarlo come Da fatturare',
                                                             child: InkWell(
                                                               borderRadius:
                                                                   BorderRadius.circular(
@@ -2366,7 +2388,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                       ).showSnackBar(
                                                                         const SnackBar(
                                                                           content: Text(
-                                                                            'Fattura già inserita. Per modificare Da fatturare, svuota prima il riferimento fattura.',
+                                                                            'Fattura giÃ  inserita. Per modificare Da fatturare, svuota prima il riferimento fattura.',
                                                                           ),
                                                                           backgroundColor: Color(
                                                                             0xFF64748B,
@@ -2448,7 +2470,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                   ? 'Rinnovo corso in corso...'
                                                                   : rinnovoInCorsoId !=
                                                                         null
-                                                                  ? 'Attendi il completamento del rinnovo già avviato'
+                                                                  ? 'Attendi il completamento del rinnovo giÃ  avviato'
                                                                   : 'Crea rinnovo corso',
                                                               padding:
                                                                   EdgeInsets
@@ -2553,7 +2575,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                                   'Vuoi creare un nuovo rinnovo per il corso '
                                                                                   '"${testo(riga['corso'])}" di '
                                                                                   '${testo(riga['cognome'])} ${testo(riga['nome'])}?\n\n'
-                                                                                  'Il rinnovo verrà aggiunto come nuovo record nel Diario.',
+                                                                                  'Il rinnovo verrÃ  aggiunto come nuovo record nel Diario.',
                                                                                 ),
                                                                                 actions: [
                                                                                   TextButton(
@@ -2651,7 +2673,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                         ).showSnackBar(
                                                                           SnackBar(
                                                                             content: Text(
-                                                                              'Rinnovo corso creato: ${testo(riga['corso'])} — '
+                                                                              'Rinnovo corso creato: ${testo(riga['corso'])} â€” '
                                                                               '${testo(riga['cognome'])} ${testo(riga['nome'])}',
                                                                             ),
                                                                             backgroundColor: const Color(

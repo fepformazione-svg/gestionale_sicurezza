@@ -1,4 +1,4 @@
-import 'package:sqflite/sqflite.dart';
+﻿import 'package:sqflite/sqflite.dart';
 
 import 'package:flutter/foundation.dart';
 import '../models/discente.dart';
@@ -441,6 +441,8 @@ class DatabaseService {
       FROM prezzario p
       LEFT JOIN imprese i ON i.id = p.impresa_id
       LEFT JOIN corsi c ON c.id = p.corso_id
+      WHERE p.impresa_id IS NOT NULL
+        AND p.corso_id IS NOT NULL
       ORDER BY i.intestazione COLLATE NOCASE ASC,
                c.denominazione COLLATE NOCASE ASC
     ''');
@@ -517,7 +519,7 @@ class DatabaseService {
   Future<List<Map<String, dynamic>>> getPrenotazioni() async {
     final db = await _db;
 
-    return await db.rawQuery('''
+    final result = await db.rawQuery('''
       SELECT
         p.id,
         p.discente_id,
@@ -542,6 +544,8 @@ class DatabaseService {
       LEFT JOIN corsi c ON c.id = p.corso_id
       ORDER BY p.id DESC
     ''');
+
+    return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
   Future<List<Map<String, dynamic>>> getPrenotazioniPaged({
@@ -556,7 +560,7 @@ class DatabaseService {
 
     debugPrint('PRENOTAZIONI DB: $count');
 
-    return await db.rawQuery(
+    final result = await db.rawQuery(
       '''
     SELECT
       p.id,
@@ -624,6 +628,8 @@ FROM prenotazioni p
   ''',
       [limit, offset],
     );
+
+    return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
   Future<int> chiudiPrenotazioniSelezionate(List<int> ids) async {
@@ -831,7 +837,10 @@ FROM prenotazioni p
           d.corso_id,
           d.data,
           d.prot,
-          s.data_scadenza AS scadenza,
+          COALESCE(
+  NULLIF(TRIM(s.data_scadenza), ''),
+  NULLIF(TRIM(d.scadenza), '')
+) AS scadenza,
           d.da_fatturare,
           d.fattura,
           d.invio,
@@ -862,7 +871,10 @@ FROM prenotazioni p
         d.corso_id,
         d.data,
         d.prot,
-        s.data_scadenza AS scadenza,
+        COALESCE(
+  NULLIF(TRIM(s.data_scadenza), ''),
+  NULLIF(TRIM(d.scadenza), '')
+) AS scadenza,
         d.da_fatturare,
         d.fattura,
         d.invio,
@@ -1009,8 +1021,6 @@ FROM prenotazioni p
   Future<List<Map<String, dynamic>>> caricaScadenze() async {
     final db = await _db;
 
-    await aggiornaScadenzeDaDiario();
-
     return await db.rawQuery('''
     SELECT
       s.id,
@@ -1048,8 +1058,6 @@ FROM prenotazioni p
 
   Future<int> contaScaduti() async {
     final db = await _db;
-    await aggiornaScadenzeDaDiario();
-
     final result = await db.rawQuery(
       "SELECT COUNT(*) AS totale FROM scadenze WHERE stato = 'SCADUTO'",
     );
@@ -1059,8 +1067,6 @@ FROM prenotazioni p
 
   Future<int> contaInScadenza() async {
     final db = await _db;
-    await aggiornaScadenzeDaDiario();
-
     final result = await db.rawQuery(
       "SELECT COUNT(*) AS totale FROM scadenze WHERE stato = 'IN SCADENZA'",
     );
@@ -1070,8 +1076,6 @@ FROM prenotazioni p
 
   Future<int> contaValidi() async {
     final db = await _db;
-    await aggiornaScadenzeDaDiario();
-
     final result = await db.rawQuery(
       "SELECT COUNT(*) AS totale FROM scadenze WHERE stato = 'VALIDO'",
     );
@@ -1174,8 +1178,6 @@ FROM prenotazioni p
 
   Future<Map<String, int>> caricaKpiDashboard() async {
     final db = await _db;
-
-    await aggiornaScadenzeDaDiario();
 
     Future<int> count(String sql) async {
       final result = await db.rawQuery(sql);

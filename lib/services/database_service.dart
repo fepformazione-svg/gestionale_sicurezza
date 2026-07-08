@@ -629,7 +629,11 @@ class DatabaseService {
         p.seleziona,
 
         CASE
-          WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
+          WHEN p.discente_id IS NULL
+            AND p.impresa_id IS NOT NULL
+            AND p.corso_id IS NOT NULL THEN 'AZIENDALE / SENZA DISCENTE'
+          WHEN p.discente_id IS NULL THEN 'PRENOTAZIONE NON CLASSIFICATA'
+          WHEN d.id IS NULL THEN 'DISCENTE NON TROVATO'
           ELSE COALESCE(d.nome, '')
         END AS discente_nome,
         COALESCE(d.cognome, '') AS discente_cognome,
@@ -695,7 +699,11 @@ class DatabaseService {
       (
         LOWER(
           CASE
-            WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
+            WHEN p.discente_id IS NULL
+              AND p.impresa_id IS NOT NULL
+              AND p.corso_id IS NOT NULL THEN 'AZIENDALE / SENZA DISCENTE'
+            WHEN p.discente_id IS NULL THEN 'PRENOTAZIONE NON CLASSIFICATA'
+            WHEN d.id IS NULL THEN 'DISCENTE NON TROVATO'
             ELSE COALESCE(d.nome, '')
           END
         ) LIKE ?
@@ -812,9 +820,13 @@ class DatabaseService {
       p.ente_attestato_id,
 
       CASE
-        WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
-        ELSE COALESCE(d.nome, '')
-      END AS discente_nome,
+          WHEN p.discente_id IS NULL
+            AND p.impresa_id IS NOT NULL
+            AND p.corso_id IS NOT NULL THEN 'AZIENDALE / SENZA DISCENTE'
+          WHEN p.discente_id IS NULL THEN 'PRENOTAZIONE NON CLASSIFICATA'
+          WHEN d.id IS NULL THEN 'DISCENTE NON TROVATO'
+          ELSE COALESCE(d.nome, '')
+        END AS discente_nome,
       COALESCE(d.cognome, '') AS discente_cognome,
       i.intestazione AS impresa_nome,
       c.denominazione AS corso_nome,

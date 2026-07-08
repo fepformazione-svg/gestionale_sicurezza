@@ -797,10 +797,31 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   String nomeDiscente(Map<String, dynamic> p) {
-    final cognome = testo(p['discente_cognome']);
-    final nome = testo(p['discente_nome']);
+    final cognome = testo(p['discente_cognome']).trim();
+    final nome = testo(p['discente_nome']).trim();
+    final completo = '$cognome $nome'.trim();
 
-    return '$cognome $nome'.trim();
+    if (completo.isNotEmpty) return completo;
+
+    bool idValorizzato(dynamic value) {
+      if (value == null) return false;
+
+      final testoId = value.toString().trim().toLowerCase();
+
+      return testoId.isNotEmpty && testoId != '0' && testoId != 'null';
+    }
+
+    final haDiscente = idValorizzato(p['discente_id']);
+    final haImpresa = idValorizzato(p['impresa_id']);
+    final haCorso = idValorizzato(p['corso_id']);
+
+    if (!haDiscente && haImpresa && haCorso) {
+      return 'AZIENDALE / SENZA DISCENTE';
+    }
+
+    if (!haDiscente) return 'PRENOTAZIONE NON CLASSIFICATA';
+
+    return 'DISCENTE NON TROVATO';
   }
 
   String testoDocentePrenotazione(Map<String, dynamic> prenotazione) {

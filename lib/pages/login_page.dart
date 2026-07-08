@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../services/app_database.dart';
 import '../services/auth_service.dart';
 import '../services/sessione_utente_service.dart';
 
@@ -84,6 +85,146 @@ class _LoginPageState extends State<LoginPage> {
       messenger.showSnackBar(
         SnackBar(
           content: Text('Errore durante il login: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          caricamento = false;
+        });
+      }
+    }
+  }
+
+  Future<void> recuperaUsername() async {
+    String emailInserita = '';
+
+    final email = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Recupero username'),
+          content: TextField(
+            autofocus: true,
+            keyboardType: TextInputType.emailAddress,
+            textInputAction: TextInputAction.done,
+            onChanged: (value) {
+              emailInserita = value;
+            },
+            decoration: const InputDecoration(
+              labelText: 'Email utente',
+              prefixIcon: Icon(Icons.email_outlined),
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (value) {
+              Navigator.of(dialogContext).pop(value);
+            },
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.of(dialogContext).pop(emailInserita);
+              },
+              icon: const Icon(Icons.search),
+              label: const Text('Cerca username'),
+            ),
+          ],
+        );
+      },
+    );
+
+    final emailPulita = email?.trim().toLowerCase() ?? '';
+    if (emailPulita.isEmpty) {
+      return;
+    }
+
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+
+    setState(() {
+      caricamento = true;
+    });
+
+    try {
+      final utenti = await AppDatabase.instance.getUtentiAppAttiviByEmail(
+        emailPulita,
+      );
+
+      if (!mounted) return;
+
+      if (utenti.length == 1) {
+        final utente = utenti.first;
+
+        usernameController.text = utente.username;
+
+        await AppDatabase.instance.registraLogAccesso(
+          utenteId: utente.id,
+          username: utente.username,
+          esito: 'OK',
+          messaggio: 'Recupero username da email riuscito.',
+          dispositivo: 'Schermata login - recupero username',
+        );
+
+        if (!mounted) return;
+
+        await showDialog<void>(
+          context: context,
+          builder: (dialogContext) {
+            return AlertDialog(
+              title: const Text('Username trovato'),
+              content: SelectableText(
+                'Lo username associato all’email inserita è:\n\n'
+                '${utente.username}\n\n'
+                'Il campo Username è stato compilato automaticamente.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
+        );
+      } else {
+        await AppDatabase.instance.registraLogAccesso(
+          username: null,
+          esito: 'KO',
+          messaggio:
+              'Recupero username non riuscito o non univoco per email inserita.',
+          dispositivo: 'Schermata login - recupero username',
+        );
+
+        if (!mounted) return;
+
+        messenger.showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Se l’email corrisponde a un solo utente attivo, lo username potrà essere recuperato.',
+            ),
+            backgroundColor: Colors.blueGrey,
+          ),
+        );
+      }
+    } catch (e) {
+      await AppDatabase.instance.registraLogAccesso(
+        username: null,
+        esito: 'ERRORE',
+        messaggio: 'Errore recupero username: $e',
+        dispositivo: 'Schermata login - recupero username',
+      );
+
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Errore durante il recupero username: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -197,7 +338,16 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton.icon(
+                        onPressed: caricamento ? null : recuperaUsername,
+                        icon: const Icon(Icons.help_outline),
+                        label: const Text('Hai dimenticato lo username?'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
                     ElevatedButton.icon(
                       onPressed: caricamento ? null : eseguiLogin,
                       icon: caricamento

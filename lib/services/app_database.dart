@@ -2831,6 +2831,24 @@ updated_at TEXT NOT NULL
     return UtenteApp.fromMap(maps.first);
   }
 
+  Future<List<UtenteApp>> getUtentiAppAttiviByEmail(String email) async {
+    final db = await database;
+
+    final emailNormalizzata = email.trim().toLowerCase();
+    if (emailNormalizzata.isEmpty) {
+      return [];
+    }
+
+    final maps = await db.query(
+      'utenti_app',
+      where: 'attivo = ? AND LOWER(TRIM(email)) = ?',
+      whereArgs: [1, emailNormalizzata],
+      orderBy: 'cognome ASC, nome ASC, username ASC',
+    );
+
+    return maps.map((map) => UtenteApp.fromMap(map)).toList();
+  }
+
   Future<int> inserisciUtenteApp(UtenteApp utente) async {
     final db = await database;
 

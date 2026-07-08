@@ -507,11 +507,44 @@ class DatabaseService {
       id,
       nome,
       cognome,
+      qualifica,
       attivo
     FROM docenti
     WHERE attivo = 1
     ORDER BY cognome ASC, nome ASC
   ''');
+  }
+
+  Future<int> collegaDocenteAPrenotazione({
+    required int prenotazioneId,
+    required int docenteId,
+  }) async {
+    final db = await _db;
+
+    final docenteEsiste =
+        Sqflite.firstIntValue(
+          await db.rawQuery(
+            'SELECT COUNT(*) FROM docenti WHERE id = ? AND attivo = 1',
+            [docenteId],
+          ),
+        ) ??
+        0;
+
+    if (docenteEsiste == 0) {
+      throw ArgumentError('Docente non trovato o non attivo: $docenteId');
+    }
+
+    return await db.rawUpdate(
+      '''
+      UPDATE prenotazioni
+      SET
+        docente_id = ?,
+        updated_at = ?
+      WHERE id = ?
+        AND docente_id IS NULL
+      ''',
+      [docenteId, DateTime.now().toIso8601String(), prenotazioneId],
+    );
   }
 
   Future<List<Map<String, dynamic>>> getAuleSediLookup() async {

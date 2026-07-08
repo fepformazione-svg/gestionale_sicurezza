@@ -1618,8 +1618,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         },
       );
 
-      ricercaDiscenteController.dispose();
-
       if (!mounted) return;
 
       if (discenteSelezionato == null) {
@@ -1745,6 +1743,399 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Errore collegamento discente: $e'),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+
+      ripristinaFocusTabella();
+    }
+  }
+
+  String _testoCollegamentoDocente(dynamic value) {
+    return value?.toString().trim() ?? '';
+  }
+
+  String _nomeDocenteLookup(Map<String, dynamic> docente) {
+    final cognome = _testoCollegamentoDocente(docente['cognome']);
+    final nome = _testoCollegamentoDocente(docente['nome']);
+
+    final nominativo = [cognome, nome].where((e) => e.isNotEmpty).join(' ');
+
+    return nominativo.isEmpty ? 'Docente senza nome' : nominativo;
+  }
+
+  String _dettaglioDocenteLookup(Map<String, dynamic> docente) {
+    final qualifica = _testoCollegamentoDocente(docente['qualifica']);
+    return qualifica.isEmpty ? '' : qualifica;
+  }
+
+  String _chiaveRicercaDocenteLookup(Map<String, dynamic> docente) {
+    return [
+      docente['cognome'],
+      docente['nome'],
+      docente['qualifica'],
+    ].map(_testoCollegamentoDocente).join(' ').toLowerCase();
+  }
+
+  void aggiornaPrenotazioneCollegataDocenteInMemoria({
+    required int prenotazioneId,
+    required int docenteId,
+    required Map<String, dynamic> docente,
+  }) {
+    final nome = _testoCollegamentoDocente(docente['nome']);
+    final cognome = _testoCollegamentoDocente(docente['cognome']);
+    final qualifica = _testoCollegamentoDocente(docente['qualifica']);
+
+    Map<String, dynamic> aggiornaRiga(Map<String, dynamic> prenotazione) {
+      final idRaw = prenotazione['id'];
+      final id = idRaw is int ? idRaw : int.tryParse(idRaw?.toString() ?? '');
+
+      if (id != prenotazioneId) {
+        return prenotazione;
+      }
+
+      return {
+        ...prenotazione,
+        'docente_id': docenteId,
+        'docente_nome': nome,
+        'docente_cognome': cognome,
+        'docente_qualifica': qualifica,
+      };
+    }
+
+    setState(() {
+      prenotazioni = prenotazioni.map(aggiornaRiga).toList();
+      prenotazioniFiltrate = prenotazioniFiltrate.map(aggiornaRiga).toList();
+    });
+  }
+
+  Future<void> collegaDocentePrenotazione(
+    Map<String, dynamic> prenotazione,
+  ) async {
+    final prenotazioneIdRaw = prenotazione['id'];
+    final prenotazioneId = prenotazioneIdRaw is int
+        ? prenotazioneIdRaw
+        : int.tryParse(prenotazioneIdRaw?.toString() ?? '');
+
+    if (prenotazioneId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ID prenotazione non valido.'),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    if (prenotazione['docente_id'] != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Questa prenotazione risulta gia collegata a un docente.',
+          ),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final docenti = (await DatabaseService.instance.getDocentiLookup())
+          .map((row) => Map<String, dynamic>.from(row))
+          .toList();
+
+      if (!mounted) return;
+
+      if (docenti.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nessun docente attivo disponibile per il collegamento.',
+            ),
+            backgroundColor: Color(0xFFF97316),
+          ),
+        );
+        return;
+      }
+
+      final ricercaDocenteController = TextEditingController();
+
+      final docenteSelezionato = await showDialog<Map<String, dynamic>>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return StatefulBuilder(
+            builder: (context, setDialogState) {
+              final query = ricercaDocenteController.text.trim().toLowerCase();
+
+              final risultati = query.isEmpty
+                  ? docenti.take(80).toList()
+                  : docenti
+                        .where(
+                          (docente) => _chiaveRicercaDocenteLookup(
+                            docente,
+                          ).contains(query),
+                        )
+                        .take(80)
+                        .toList();
+
+              return AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                title: Row(
+                  children: [
+                    Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFEFF6FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Icon(
+                        Icons.co_present_outlined,
+                        color: Color(0xFF2563EB),
+                        size: 24,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Collega docente',
+                        style: TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
+                content: SizedBox(
+                  width: 720,
+                  height: 520,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Prenotazione: ${nomeDiscente(prenotazione)}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF111827),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Corso: ${testo(prenotazione['corso_nome']).isEmpty ? '-' : testo(prenotazione['corso_nome'])}',
+                        style: const TextStyle(color: Color(0xFF4B5563)),
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: ricercaDocenteController,
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Cerca docente',
+                          hintText: 'Nome, cognome o qualifica',
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (_) => setDialogState(() {}),
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: risultati.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'Nessun docente trovato con questa ricerca.',
+                                  style: TextStyle(
+                                    color: Color(0xFF6B7280),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              )
+                            : ListView.separated(
+                                itemCount: risultati.length,
+                                separatorBuilder: (separatorContext, index) =>
+                                    const Divider(height: 1),
+                                itemBuilder: (context, index) {
+                                  final docente = risultati[index];
+                                  final dettaglio = _dettaglioDocenteLookup(
+                                    docente,
+                                  );
+
+                                  return ListTile(
+                                    dense: true,
+                                    leading: const Icon(
+                                      Icons.co_present_outlined,
+                                      color: Color(0xFF2563EB),
+                                    ),
+                                    title: Text(
+                                      _nomeDocenteLookup(docente),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    subtitle: dettaglio.isEmpty
+                                        ? null
+                                        : Text(dettaglio),
+                                    onTap: () {
+                                      Navigator.pop(dialogContext, docente);
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Il collegamento aggiorna solo questa prenotazione e non ricarica massivamente lo storico.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF6B7280),
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext),
+                    child: const Text(
+                      'Annulla',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+              );
+            },
+          );
+        },
+      );
+
+      if (!mounted) return;
+
+      if (docenteSelezionato == null) {
+        ripristinaFocusTabella();
+        return;
+      }
+
+      final docenteIdRaw = docenteSelezionato['id'];
+      final docenteId = docenteIdRaw is int
+          ? docenteIdRaw
+          : int.tryParse(docenteIdRaw?.toString() ?? '');
+
+      if (docenteId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('ID docente non valido.'),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        return;
+      }
+
+      final nomeDocenteSelezionato = _nomeDocenteLookup(docenteSelezionato);
+
+      final conferma = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+            ),
+            title: const Text(
+              'Conferma collegamento docente',
+              style: TextStyle(fontWeight: FontWeight.w800),
+            ),
+            content: Text(
+              'Vuoi collegare questa prenotazione al docente:\n\n'
+              '$nomeDocenteSelezionato\n\n'
+              'L\'operazione aggiorna solo prenotazioni.docente_id per questa riga.',
+              style: const TextStyle(height: 1.45, fontWeight: FontWeight.w500),
+            ),
+            actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text(
+                  'Annulla',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                icon: const Icon(Icons.link_rounded, size: 18),
+                label: const Text(
+                  'Collega docente',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 18,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (!mounted) return;
+
+      if (conferma != true) {
+        ripristinaFocusTabella();
+        return;
+      }
+
+      final righeAggiornate = await DatabaseService.instance
+          .collegaDocenteAPrenotazione(
+            prenotazioneId: prenotazioneId,
+            docenteId: docenteId,
+          );
+
+      if (!mounted) return;
+
+      if (righeAggiornate > 0) {
+        aggiornaPrenotazioneCollegataDocenteInMemoria(
+          prenotazioneId: prenotazioneId,
+          docenteId: docenteId,
+          docente: docenteSelezionato,
+        );
+      }
+
+      notificaDatiModificati();
+
+      if (righeAggiornate == 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Nessuna riga aggiornata: la prenotazione potrebbe essere gia stata collegata a un docente.',
+            ),
+            backgroundColor: Color(0xFFF97316),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Docente collegato alla prenotazione: $nomeDocenteSelezionato',
+            ),
+            backgroundColor: const Color(0xFF16A34A),
+          ),
+        );
+      }
+
+      ripristinaFocusTabella();
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Errore collegamento docente: $e'),
           backgroundColor: const Color(0xFFDC2626),
         ),
       );
@@ -5241,6 +5632,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 p,
                                                               ),
 
+                                                          onCollegaDocente: () =>
+                                                              collegaDocentePrenotazione(
+                                                                p,
+                                                              ),
+
                                                           onElimina: () =>
                                                               eliminaPrenotazione(
                                                                 p,
@@ -5286,7 +5682,7 @@ const double colAttrezzature = 130;
 const double colData = 80;
 const double colProt = 45;
 const double colStato = 105;
-const double colAzioni = 180;
+const double colAzioni = 215;
 
 class PrenotazioneRow extends StatefulWidget {
   final Map<String, dynamic> prenotazione;
@@ -5299,6 +5695,7 @@ class PrenotazioneRow extends StatefulWidget {
   final VoidCallback onStampaRegistro;
   final VoidCallback onModifica;
   final VoidCallback onCollegaDiscente;
+  final VoidCallback onCollegaDocente;
 
   final VoidCallback onElimina;
   final VoidCallback onDoppioClick;
@@ -5319,6 +5716,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.onRegistro,
     required this.onStampaRegistro,
     required this.onCollegaDiscente,
+    required this.onCollegaDocente,
     required this.onElimina,
     required this.statoPrenotazione,
     required this.nomeDiscente,
@@ -5338,6 +5736,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
   Widget build(BuildContext context) {
     final stato = widget.statoPrenotazione(widget.prenotazione);
     final puoCollegareDiscente = widget.prenotazione['discente_id'] == null;
+    final puoCollegareDocente = widget.prenotazione['docente_id'] == null;
 
     Color? rowColor;
 
@@ -5623,6 +6022,22 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                                     Icons.person_add_alt_1_outlined,
                                     size: 19,
                                     color: Color(0xFF059669),
+                                  ),
+                                ),
+
+                              if (puoCollegareDocente)
+                                IconButton(
+                                  tooltip: 'Collega docente',
+                                  padding: EdgeInsets.zero,
+                                  constraints: const BoxConstraints(
+                                    minWidth: 30,
+                                    minHeight: 30,
+                                  ),
+                                  onPressed: widget.onCollegaDocente,
+                                  icon: const Icon(
+                                    Icons.co_present_outlined,
+                                    size: 19,
+                                    color: Color(0xFF2563EB),
                                   ),
                                 ),
 

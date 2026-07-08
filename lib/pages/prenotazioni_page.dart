@@ -139,7 +139,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       return;
     }
 
-    final pdf = pw.Document();
+    final pdf = await _creaDocumentoPdfCompatibile();
 
     final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
@@ -1381,7 +1381,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             content: SizedBox(
               width: 520,
               child: Text(
-                'La prenotazione di ${nomeDiscente(prenotazione)} non può essere eliminata perché è già stata confermata.\n\n'
+                'La prenotazione di ${nomeDiscente(prenotazione)} non puÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² essere eliminata perchÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  stata confermata.\n\n'
                 'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
                 'Per mantenere coerenti Diario, Scadenze e Storico formativo, le prenotazioni confermate non vanno cancellate direttamente.',
                 style: const TextStyle(
@@ -1453,7 +1453,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           content: Text(
             'Vuoi eliminare la prenotazione di ${nomeDiscente(prenotazione)}?\n\n'
             'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
-            'Questa operazione non può essere annullata.',
+            'Questa operazione non puÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² essere annullata.',
             style: const TextStyle(height: 1.45, fontWeight: FontWeight.w500),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
@@ -1982,7 +1982,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
-      final pdf = pw.Document();
+      final pdf = await _creaDocumentoPdfCompatibile();
 
       pdf.addPage(
         pw.MultiPage(
@@ -2320,7 +2320,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           'sede',
         ]);
 
-        final pdf = pw.Document();
+        final pdf = await _creaDocumentoPdfCompatibile();
 
         pdf.addPage(
           pw.MultiPage(
@@ -2382,7 +2382,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 pw.SizedBox(height: 24),
 
                 pw.Text(
-                  'La società F&P S.r.l.s. Formazione e Privacy, in qualità di soggetto formatore, dichiara che i lavoratori sotto indicati hanno partecipato al corso di formazione riportato nella presente dichiarazione.',
+                  'La societÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  F&P S.r.l.s. Formazione e Privacy, in qualitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  di soggetto formatore, dichiara che i lavoratori sotto indicati hanno partecipato al corso di formazione riportato nella presente dichiarazione.',
                   textAlign: pw.TextAlign.justify,
                   style: const pw.TextStyle(fontSize: 11, lineSpacing: 3),
                 ),
@@ -2644,6 +2644,45 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       ripristinaFocusTabella();
     }
+  }
+
+  Future<pw.Document> _creaDocumentoPdfCompatibile() async {
+    final fontBase = await _caricaFontPdf([
+      r'C:\Windows\Fonts\arial.ttf',
+      r'C:\Windows\Fonts\calibri.ttf',
+      r'C:\Windows\Fonts\segoeui.ttf',
+    ]);
+
+    final fontBold = await _caricaFontPdf([
+      r'C:\Windows\Fonts\arialbd.ttf',
+      r'C:\Windows\Fonts\calibrib.ttf',
+      r'C:\Windows\Fonts\segoeuib.ttf',
+    ]);
+
+    return pw.Document(
+      theme: pw.ThemeData.withFont(
+        base: fontBase,
+        bold: fontBold,
+        italic: fontBase,
+        boldItalic: fontBold,
+      ),
+    );
+  }
+
+  Future<pw.Font> _caricaFontPdf(List<String> percorsi) async {
+    for (final percorso in percorsi) {
+      final file = File(percorso);
+
+      if (await file.exists()) {
+        final bytes = await file.readAsBytes();
+
+        return pw.Font.ttf(
+          ByteData.view(bytes.buffer, bytes.offsetInBytes, bytes.lengthInBytes),
+        );
+      }
+    }
+
+    return pw.Font.helvetica();
   }
 
   pw.Widget _rigaInfoPdf(String label, String valore) {
@@ -2989,12 +3028,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       final timestamp = DateFormat('yyyyMMdd_HHmmss').format(now);
       final directory = await getApplicationDocumentsDirectory();
 
-      final pdf = pw.Document();
+      final pdf = await _creaDocumentoPdfCompatibile();
 
       final intestazioneAzienda = await caricaIntestazioneAziendaPdf();
 
       pdf.addPage(
         pw.MultiPage(
+          maxPages: 300,
           pageFormat: PdfPageFormat.a4.landscape,
           margin: const pw.EdgeInsets.fromLTRB(36, 32, 36, 30),
           footer: (context) => pw.Container(
@@ -3151,7 +3191,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Errore durante la creazione o l’apertura del PDF'),
+          content: Text('Errore durante la creazione o apertura del PDF'),
           backgroundColor: Color(0xFFDC2626),
           duration: Duration(seconds: 5),
         ),
@@ -3315,7 +3355,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
             Tooltip(
               message: mostraTutteLePrenotazioni
-                  ? 'Tutte le prenotazioni sono già visualizzate'
+                  ? 'Tutte le prenotazioni sono giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  visualizzate'
                   : 'Carica tutte le prenotazioni',
               child: AppActionButton(
                 type: AppActionButtonType.aggiorna,
@@ -3557,16 +3597,16 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                       ? 'Azzera la ricerca attiva'
                                       : 'Azzera il filtro attivo',
                                   child: OutlinedButton.icon(
-                                    onPressed: () {
+                                    onPressed: () async {
+                                      ricercaPrenotazioniDebounce?.cancel();
+
                                       setState(() {
                                         ricercaController.clear();
                                         filtroLocale = 'tutte';
-                                        prenotazioniFiltrate =
-                                            List<Map<String, dynamic>>.from(
-                                              prenotazioni,
-                                            );
                                         azzeraSelezionePrenotazioni();
                                       });
+
+                                      await caricaPrenotazioni();
 
                                       ripristinaFocusTabella();
                                     },
@@ -3853,7 +3893,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                         ? 'Nessuna prenotazione attualmente visibile'
                                         : prenotazioniSelezionateIds.length ==
                                               prenotazioniVisibili.length
-                                        ? 'Le prenotazioni visibili sono già selezionate'
+                                        ? 'Le prenotazioni visibili sono giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  selezionate'
                                         : prenotazioniSelezionateIds.isNotEmpty
                                         ? 'Aggiungi alla selezione tutte le prenotazioni visibili'
                                         : 'Seleziona le prenotazioni attualmente visibili',

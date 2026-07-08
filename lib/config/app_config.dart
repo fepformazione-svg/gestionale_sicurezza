@@ -1,3 +1,3 @@
 class AppConfig {
-  static const bool loginObbligatorioAllAvvio = false;
+  static const bool loginObbligatorioAllAvvio = true;
 }

@@ -1,6 +1,5 @@
 import 'package:sqflite/sqflite.dart';
 
-import 'package:flutter/foundation.dart';
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
@@ -629,8 +628,11 @@ class DatabaseService {
         p.registro,
         p.seleziona,
 
-        d.nome AS discente_nome,
-        d.cognome AS discente_cognome,
+        CASE
+          WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
+          ELSE COALESCE(d.nome, '')
+        END AS discente_nome,
+        COALESCE(d.cognome, '') AS discente_cognome,
         i.intestazione AS impresa_nome,
         c.denominazione AS corso_nome
 
@@ -650,12 +652,6 @@ class DatabaseService {
   }) async {
     final db = await _db;
 
-    final count = Sqflite.firstIntValue(
-      await db.rawQuery('SELECT COUNT(*) FROM prenotazioni'),
-    );
-
-    debugPrint('PRENOTAZIONI DB: $count');
-
     final result = await db.rawQuery(
       '''
     SELECT
@@ -674,8 +670,11 @@ class DatabaseService {
       p.aula_sede_id,
       p.ente_attestato_id,
 
-      d.nome AS discente_nome,
-      d.cognome AS discente_cognome,
+      CASE
+        WHEN p.discente_id IS NULL THEN 'DISCENTE NON COLLEGATO'
+        ELSE COALESCE(d.nome, '')
+      END AS discente_nome,
+      COALESCE(d.cognome, '') AS discente_cognome,
       i.intestazione AS impresa_nome,
       c.denominazione AS corso_nome,
 
@@ -762,7 +761,27 @@ FROM prenotazioni p
   ''', ids);
   }
 
+  void _validaCollegamentiPrenotazione(Map<String, dynamic> dati) {
+    if (dati['discente_id'] == null) {
+      throw Exception(
+        'Seleziona un discente prima di salvare la prenotazione.',
+      );
+    }
+
+    if (dati['impresa_id'] == null) {
+      throw Exception(
+        'Seleziona un\'impresa prima di salvare la prenotazione.',
+      );
+    }
+
+    if (dati['corso_id'] == null) {
+      throw Exception('Seleziona un corso prima di salvare la prenotazione.');
+    }
+  }
+
   Future<int> insertPrenotazione(Map<String, dynamic> dati) async {
+    _validaCollegamentiPrenotazione(dati);
+
     final db = await _db;
 
     final id = await db.insert('prenotazioni', {
@@ -785,6 +804,8 @@ FROM prenotazioni p
   }
 
   Future<void> updatePrenotazione(int id, Map<String, dynamic> dati) async {
+    _validaCollegamentiPrenotazione(dati);
+
     final db = await _db;
 
     await db.update(

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -35,6 +36,12 @@ class _DiarioPageState extends State<DiarioPage> {
   List<Map<String, dynamic>> _diario = [];
   bool _caricamento = true;
   bool _soloDaFatturare = false;
+
+  static const int _diarioPageSize = 120;
+  int _totaleDiario = 0;
+  int _offsetDiario = 0;
+  bool _caricamentoAltri = false;
+  Timer? _ricercaDebounce;
 
   int? _sortColumnIndex;
   bool _sortAscending = true;
@@ -81,46 +88,63 @@ class _DiarioPageState extends State<DiarioPage> {
     }
   }
 
-  Future<void> caricaDiario() async {
-    setState(() => _caricamento = true);
+  Future<void> caricaDiario({bool append = false}) async {
+    if (append) {
+      if (_caricamentoAltri || _diario.length >= _totaleDiario) {
+        return;
+      }
 
-    final dati = await DatabaseService.instance.caricaDiario(ricerca: '');
+      setState(() => _caricamentoAltri = true);
+    } else {
+      setState(() {
+        _caricamento = true;
+        _offsetDiario = 0;
+      });
+    }
 
-    final ricerca = _cercaController.text.trim().toLowerCase();
+    final ricerca = _cercaController.text.trim();
+    final offset = append ? _offsetDiario : 0;
 
-    final datiFiltrati = ricerca.isEmpty
-        ? dati
-        : dati.where((riga) {
-            final nome = testo(riga['nome']).toLowerCase();
-            final cognome = testo(riga['cognome']).toLowerCase();
-            final discenteCognomeNome = '$cognome $nome'.trim();
-            final discenteNomeCognome = '$nome $cognome'.trim();
+    final totale = append
+        ? _totaleDiario
+        : await DatabaseService.instance.contaDiario(
+            ricerca: ricerca,
+            soloDaFatturare: _soloDaFatturare,
+          );
 
-            final impresa = testo(riga['impresa']).toLowerCase();
-            final corso = testo(riga['corso']).toLowerCase();
-            final prot = testo(riga['prot']).toLowerCase();
-            final data = testo(riga['data']).toLowerCase();
-            final scadenza = testo(riga['scadenza']).toLowerCase();
-
-            return nome.contains(ricerca) ||
-                cognome.contains(ricerca) ||
-                discenteCognomeNome.contains(ricerca) ||
-                discenteNomeCognome.contains(ricerca) ||
-                impresa.contains(ricerca) ||
-                corso.contains(ricerca) ||
-                prot.contains(ricerca) ||
-                data.contains(ricerca) ||
-                scadenza.contains(ricerca);
-          }).toList();
+    final dati = await DatabaseService.instance.caricaDiarioPaged(
+      limit: _diarioPageSize,
+      offset: offset,
+      ricerca: ricerca,
+      soloDaFatturare: _soloDaFatturare,
+    );
 
     if (!mounted) return;
 
     setState(() {
-      _diario = _soloDaFatturare
-          ? datiFiltrati.where((riga) => riga['da_fatturare'] == 1).toList()
-          : datiFiltrati;
+      if (append) {
+        _diario.addAll(dati);
+      } else {
+        _diario = dati;
+        _totaleDiario = totale;
+      }
 
+      _offsetDiario = _diario.length;
       _caricamento = false;
+      _caricamentoAltri = false;
+    });
+
+    if (!append && diarioVerticalController.hasClients) {
+      diarioVerticalController.jumpTo(0);
+    }
+  }
+
+  void pianificaRicercaDiario() {
+    _ricercaDebounce?.cancel();
+    _ricercaDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) {
+        caricaDiario();
+      }
     });
   }
 
@@ -1126,7 +1150,7 @@ class _DiarioPageState extends State<DiarioPage> {
             const SizedBox(height: 18),
             TextField(
               controller: _cercaController,
-              onChanged: (_) => caricaDiario(),
+              onChanged: (_) => pianificaRicercaDiario(),
               decoration: InputDecoration(
                 hintText: 'Cerca discente, impresa, corso, protocollo...',
                 prefixIcon: const Icon(Icons.search),
@@ -1212,6 +1236,53 @@ class _DiarioPageState extends State<DiarioPage> {
                                         Icons.close_rounded,
                                         size: 14,
                                         color: Color(0xFF2563EB),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          if (!_soloDaFatturare)
+                            Tooltip(
+                              message: 'Mostra solo i corsi da fatturare',
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(999),
+                                onTap: () {
+                                  setState(() {
+                                    _soloDaFatturare = true;
+                                  });
+
+                                  caricaDiario();
+                                },
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 7,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFFFF7ED),
+                                    borderRadius: BorderRadius.circular(999),
+                                    border: Border.all(
+                                      color: const Color(0xFFFED7AA),
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.receipt_long_rounded,
+                                        size: 15,
+                                        color: Color(0xFFF97316),
+                                      ),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Da fatturare',
+                                        style: TextStyle(
+                                          color: Color(0xFFF97316),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w800,
+                                        ),
                                       ),
                                     ],
                                   ),
@@ -1442,6 +1513,41 @@ class _DiarioPageState extends State<DiarioPage> {
             ),
 
             const SizedBox(height: 10),
+
+            if (!_caricamento && _totaleDiario > 0)
+              Row(
+                children: [
+                  Text(
+                    _diario.length >= _totaleDiario
+                        ? 'Tutti i $_totaleDiario corsi sono visualizzati'
+                        : 'Visualizzati ${_diario.length} di $_totaleDiario corsi',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const Spacer(),
+                  if (_diario.length < _totaleDiario)
+                    OutlinedButton.icon(
+                      onPressed: _caricamentoAltri
+                          ? null
+                          : () => caricaDiario(append: true),
+                      icon: _caricamentoAltri
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.expand_more_rounded, size: 18),
+                      label: Text(
+                        _caricamentoAltri ? 'Caricamento...' : 'Carica altri',
+                      ),
+                    ),
+                ],
+              ),
+
+            const SizedBox(height: 12),
 
             Expanded(
               child: _caricamento

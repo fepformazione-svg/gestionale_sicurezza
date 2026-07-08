@@ -1,4 +1,4 @@
-﻿import 'package:sqflite/sqflite.dart';
+import 'package:sqflite/sqflite.dart';
 
 import 'package:flutter/foundation.dart';
 import '../models/discente.dart';
@@ -904,6 +904,136 @@ FROM prenotazioni p
     ''',
       [q, q, q, q, q, q],
     );
+  }
+
+  Future<int> contaDiario({
+    String ricerca = '',
+    bool soloDaFatturare = false,
+  }) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+      whereParts.add('''
+        (
+          dis.nome LIKE ?
+          OR dis.cognome LIKE ?
+          OR imp.intestazione LIKE ?
+          OR c.denominazione LIKE ?
+          OR d.prot LIKE ?
+          OR d.data LIKE ?
+          OR d.fattura LIKE ?
+          OR d.scadenza LIKE ?
+          OR s.data_scadenza LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q, q]);
+    }
+
+    if (soloDaFatturare) {
+      whereParts.add('d.da_fatturare = 1');
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(DISTINCT d.id)
+      FROM diario d
+      LEFT JOIN discenti dis ON dis.id = d.discente_id
+      LEFT JOIN imprese imp ON imp.id = d.impresa_id
+      LEFT JOIN corsi c ON c.id = d.corso_id
+      LEFT JOIN scadenze s ON s.diario_id = d.id
+      $whereSql
+      ''', args);
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> caricaDiarioPaged({
+    required int limit,
+    required int offset,
+    String ricerca = '',
+    bool soloDaFatturare = false,
+  }) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+      whereParts.add('''
+        (
+          dis.nome LIKE ?
+          OR dis.cognome LIKE ?
+          OR imp.intestazione LIKE ?
+          OR c.denominazione LIKE ?
+          OR d.prot LIKE ?
+          OR d.data LIKE ?
+          OR d.fattura LIKE ?
+          OR d.scadenza LIKE ?
+          OR s.data_scadenza LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q, q]);
+    }
+
+    if (soloDaFatturare) {
+      whereParts.add('d.da_fatturare = 1');
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final result = await db.rawQuery(
+      '''
+      SELECT
+        d.id,
+        d.prenotazione_id,
+        d.discente_id,
+        d.impresa_id,
+        d.corso_id,
+        d.data,
+        d.prot,
+        COALESCE(
+          NULLIF(TRIM(s.data_scadenza), ''),
+          NULLIF(TRIM(d.scadenza), '')
+        ) AS scadenza,
+        d.da_fatturare,
+        d.fattura,
+        d.invio,
+        d.rinnovo,
+        d.pdf_attestato,
+
+        dis.nome,
+        dis.cognome,
+        imp.intestazione AS impresa,
+        c.denominazione AS corso
+
+      FROM diario d
+      LEFT JOIN discenti dis ON dis.id = d.discente_id
+      LEFT JOIN imprese imp ON imp.id = d.impresa_id
+      LEFT JOIN corsi c ON c.id = d.corso_id
+      LEFT JOIN scadenze s ON s.diario_id = d.id
+
+      $whereSql
+
+      GROUP BY d.id
+      ORDER BY d.id DESC
+      LIMIT ? OFFSET ?
+      ''',
+      [...args, limit, offset],
+    );
+
+    return result.map((row) => Map<String, dynamic>.from(row)).toList();
   }
 
   Future<void> aggiornaDaFatturareDiario({

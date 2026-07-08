@@ -1186,6 +1186,178 @@ FROM prenotazioni p
   ''');
   }
 
+  Future<Map<String, int>> contaScadenzeRiepilogo() async {
+    final db = await _db;
+
+    final result = await db.rawQuery('''
+      SELECT
+        COUNT(*) AS totale,
+        SUM(CASE WHEN stato = 'SCADUTO' THEN 1 ELSE 0 END) AS scadute,
+        SUM(CASE WHEN stato = 'IN SCADENZA' THEN 1 ELSE 0 END) AS in_scadenza,
+        SUM(CASE WHEN stato = 'VALIDO' THEN 1 ELSE 0 END) AS valide
+      FROM scadenze
+      ''');
+
+    final row = result.isEmpty ? <String, Object?>{} : result.first;
+
+    int valore(Object? value) {
+      return int.tryParse(value?.toString() ?? '') ?? 0;
+    }
+
+    return {
+      'totale': valore(row['totale']),
+      'scadute': valore(row['scadute']),
+      'in_scadenza': valore(row['in_scadenza']),
+      'valide': valore(row['valide']),
+    };
+  }
+
+  Future<int> contaScadenzeFiltrate({
+    String ricerca = '',
+    String filtroStato = 'Tutte',
+  }) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    switch (filtroStato) {
+      case 'Scadute':
+        whereParts.add("s.stato = 'SCADUTO'");
+        break;
+      case 'In scadenza':
+        whereParts.add("s.stato = 'IN SCADENZA'");
+        break;
+      case 'Valide':
+        whereParts.add("s.stato = 'VALIDO'");
+        break;
+    }
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+
+      whereParts.add('''
+        (
+          d.nome LIKE ?
+          OR d.cognome LIKE ?
+          OR (COALESCE(d.cognome, '') || ' ' || COALESCE(d.nome, '')) LIKE ?
+          OR (COALESCE(d.nome, '') || ' ' || COALESCE(d.cognome, '')) LIKE ?
+          OR i.intestazione LIKE ?
+          OR c.denominazione LIKE ?
+          OR s.data_corso LIKE ?
+          OR s.data_scadenza LIKE ?
+          OR s.stato LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q, q]);
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*)
+      FROM scadenze s
+      LEFT JOIN discenti d ON d.id = s.discente_id
+      LEFT JOIN imprese i ON i.id = s.impresa_id
+      LEFT JOIN corsi c ON c.id = s.corso_id
+      $whereSql
+      ''', args);
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<List<Map<String, dynamic>>> caricaScadenzePaged({
+    required int limit,
+    required int offset,
+    String ricerca = '',
+    String filtroStato = 'Tutte',
+  }) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    switch (filtroStato) {
+      case 'Scadute':
+        whereParts.add("s.stato = 'SCADUTO'");
+        break;
+      case 'In scadenza':
+        whereParts.add("s.stato = 'IN SCADENZA'");
+        break;
+      case 'Valide':
+        whereParts.add("s.stato = 'VALIDO'");
+        break;
+    }
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+
+      whereParts.add('''
+        (
+          d.nome LIKE ?
+          OR d.cognome LIKE ?
+          OR (COALESCE(d.cognome, '') || ' ' || COALESCE(d.nome, '')) LIKE ?
+          OR (COALESCE(d.nome, '') || ' ' || COALESCE(d.cognome, '')) LIKE ?
+          OR i.intestazione LIKE ?
+          OR c.denominazione LIKE ?
+          OR s.data_corso LIKE ?
+          OR s.data_scadenza LIKE ?
+          OR s.stato LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q, q]);
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final result = await db.rawQuery(
+      '''
+      SELECT
+        s.id,
+        s.diario_id,
+        s.discente_id,
+        s.impresa_id,
+        s.corso_id,
+        s.discente_id AS id_discente,
+        s.impresa_id AS id_impresa,
+        s.corso_id AS id_corso,
+        s.data_corso,
+        s.data_scadenza,
+        s.stato,
+        s.note,
+        d.nome,
+        d.cognome,
+        d.nome || ' ' || d.cognome AS discente,
+        i.intestazione AS impresa,
+        c.denominazione AS corso,
+        s.data_corso AS data,
+        s.data_scadenza AS scadenza
+      FROM scadenze s
+      LEFT JOIN discenti d ON d.id = s.discente_id
+      LEFT JOIN imprese i ON i.id = s.impresa_id
+      LEFT JOIN corsi c ON c.id = s.corso_id
+      $whereSql
+      ORDER BY
+        CASE s.stato
+          WHEN 'SCADUTO' THEN 1
+          WHEN 'IN SCADENZA' THEN 2
+          ELSE 3
+        END,
+        s.data_scadenza ASC
+      LIMIT ? OFFSET ?
+      ''',
+      [...args, limit, offset],
+    );
+
+    return result.map((row) => Map<String, dynamic>.from(row)).toList();
+  }
+
   Future<int> contaScaduti() async {
     final db = await _db;
     final result = await db.rawQuery(

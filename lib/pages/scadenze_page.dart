@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:excel/excel.dart' as xls;
@@ -29,6 +30,17 @@ class _ScadenzePageState extends State<ScadenzePage> {
   List<Map<String, dynamic>> _scadenze = [];
   bool _caricamento = true;
 
+  static const int _scadenzePageSize = 120;
+  int _totaleScadenzeFiltrate = 0;
+  int _offsetScadenze = 0;
+  bool _caricamentoAltre = false;
+  Timer? _ricercaDebounce;
+
+  int _conteggioTotale = 0;
+  int _conteggioScadute = 0;
+  int _conteggioInScadenza = 0;
+  int _conteggioValide = 0;
+
   @override
   void initState() {
     super.initState();
@@ -47,19 +59,62 @@ class _ScadenzePageState extends State<ScadenzePage> {
     }
   }
 
-  Future<void> caricaScadenze() async {
-    setState(() {
-      _caricamento = true;
-    });
+  Future<void> caricaScadenze({bool append = false}) async {
+    if (append) {
+      if (_caricamentoAltre || _scadenze.length >= _totaleScadenzeFiltrate) {
+        return;
+      }
+
+      setState(() => _caricamentoAltre = true);
+    } else {
+      setState(() {
+        _caricamento = true;
+        _offsetScadenze = 0;
+      });
+    }
 
     try {
-      final dati = await DatabaseService.instance.caricaScadenze();
+      final ricerca = _cercaController.text.trim();
+      final offset = append ? _offsetScadenze : 0;
+
+      final riepilogo = append
+          ? null
+          : await DatabaseService.instance.contaScadenzeRiepilogo();
+
+      final totaleFiltrato = append
+          ? _totaleScadenzeFiltrate
+          : await DatabaseService.instance.contaScadenzeFiltrate(
+              ricerca: ricerca,
+              filtroStato: filtroStato,
+            );
+
+      final dati = await DatabaseService.instance.caricaScadenzePaged(
+        limit: _scadenzePageSize,
+        offset: offset,
+        ricerca: ricerca,
+        filtroStato: filtroStato,
+      );
 
       if (!mounted) return;
 
       setState(() {
-        _scadenze = dati;
+        if (append) {
+          _scadenze.addAll(dati);
+        } else {
+          _scadenze = dati;
+          _totaleScadenzeFiltrate = totaleFiltrato;
+
+          if (riepilogo != null) {
+            _conteggioTotale = riepilogo['totale'] ?? 0;
+            _conteggioScadute = riepilogo['scadute'] ?? 0;
+            _conteggioInScadenza = riepilogo['in_scadenza'] ?? 0;
+            _conteggioValide = riepilogo['valide'] ?? 0;
+          }
+        }
+
+        _offsetScadenze = _scadenze.length;
         _caricamento = false;
+        _caricamentoAltre = false;
       });
     } catch (e) {
       debugPrint('ERRORE CARICA SCADENZE: $e');
@@ -67,14 +122,29 @@ class _ScadenzePageState extends State<ScadenzePage> {
       if (!mounted) return;
 
       setState(() {
-        _scadenze = [];
+        if (!append) {
+          _scadenze = [];
+          _totaleScadenzeFiltrate = 0;
+        }
+
         _caricamento = false;
+        _caricamentoAltre = false;
       });
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Errore scadenze: $e')));
     }
+  }
+
+  void pianificaRicercaScadenze() {
+    setState(() {});
+    _ricercaDebounce?.cancel();
+    _ricercaDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) {
+        caricaScadenze();
+      }
+    });
   }
 
   Future<void> esportaExcelScadenze() async {
@@ -680,40 +750,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
     }
   }
 
-  List<Map<String, dynamic>> get scadenzeFiltrate {
-    final testoRicerca = _cercaController.text.toLowerCase();
-
-    return _scadenze.where((riga) {
-      final stato = calcolaStato(riga);
-
-      if (filtroStato == 'Scadute' && stato != 'Scaduto') {
-        return false;
-      }
-
-      if (filtroStato == 'In scadenza' && stato != 'In scadenza') {
-        return false;
-      }
-
-      if (filtroStato == 'Valide' && stato != 'Valido') {
-        return false;
-      }
-
-      final discente = riga['discente']?.toString().toLowerCase() ?? '';
-
-      final impresa = riga['impresa']?.toString().toLowerCase() ?? '';
-
-      final corso = riga['corso']?.toString().toLowerCase() ?? '';
-
-      if (testoRicerca.isNotEmpty &&
-          !discente.contains(testoRicerca) &&
-          !impresa.contains(testoRicerca) &&
-          !corso.contains(testoRicerca)) {
-        return false;
-      }
-
-      return true;
-    }).toList();
-  }
+  List<Map<String, dynamic>> get scadenzeFiltrate => _scadenze;
 
   String filtroStato = 'Tutte';
 
@@ -722,15 +759,10 @@ class _ScadenzePageState extends State<ScadenzePage> {
     final scadenzeVisibili = scadenzeFiltrate;
     final exportDisabilitato = scadenzeVisibili.isEmpty;
 
-    final scadute = _scadenze.where((s) => calcolaStato(s) == 'Scaduto').length;
-
-    final inScadenza = _scadenze
-        .where((s) => calcolaStato(s) == 'In scadenza')
-        .length;
-
-    final valide = _scadenze.where((s) => calcolaStato(s) == 'Valido').length;
-
-    final totale = _scadenze.length;
+    final scadute = _conteggioScadute;
+    final inScadenza = _conteggioInScadenza;
+    final valide = _conteggioValide;
+    final totale = _conteggioTotale;
 
     return Padding(
       padding: const EdgeInsets.all(24),
@@ -753,9 +785,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 valore: scadute,
                 colore: Color(0xFFDC2626),
                 onTap: () {
-                  setState(() {
-                    filtroStato = 'Scadute';
-                  });
+                  setState(() => filtroStato = 'Scadute');
+                  caricaScadenze();
                 },
               ),
 
@@ -764,9 +795,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 valore: inScadenza,
                 colore: Color(0xFFF59E0B),
                 onTap: () {
-                  setState(() {
-                    filtroStato = 'In scadenza';
-                  });
+                  setState(() => filtroStato = 'In scadenza');
+                  caricaScadenze();
                 },
               ),
 
@@ -775,9 +805,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 valore: valide,
                 colore: Color(0xFF16A34A),
                 onTap: () {
-                  setState(() {
-                    filtroStato = 'Valide';
-                  });
+                  setState(() => filtroStato = 'Valide');
+                  caricaScadenze();
                 },
               ),
 
@@ -786,9 +815,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
                 valore: totale,
                 colore: Color(0xFF2563EB),
                 onTap: () {
-                  setState(() {
-                    filtroStato = 'Tutte';
-                  });
+                  setState(() => filtroStato = 'Tutte');
+                  caricaScadenze();
                 },
               ),
             ],
@@ -806,9 +834,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
                       tooltip: 'Pulisci ricerca',
                       icon: const Icon(Icons.clear_rounded),
                       onPressed: () {
-                        setState(() {
-                          _cercaController.clear();
-                        });
+                        _cercaController.clear();
+                        caricaScadenze();
                       },
                     )
                   : null,
@@ -818,9 +845,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
               filled: true,
               fillColor: Colors.white,
             ),
-            onChanged: (_) {
-              setState(() {});
-            },
+            onChanged: (_) => pianificaRicercaScadenze(),
           ),
 
           const SizedBox(height: 16),
@@ -832,22 +857,34 @@ class _ScadenzePageState extends State<ScadenzePage> {
               _FiltroScadenzaChip(
                 label: 'Tutte',
                 attivo: filtroStato == 'Tutte',
-                onTap: () => setState(() => filtroStato = 'Tutte'),
+                onTap: () {
+                  setState(() => filtroStato = 'Tutte');
+                  caricaScadenze();
+                },
               ),
               _FiltroScadenzaChip(
                 label: 'Scadute',
                 attivo: filtroStato == 'Scadute',
-                onTap: () => setState(() => filtroStato = 'Scadute'),
+                onTap: () {
+                  setState(() => filtroStato = 'Scadute');
+                  caricaScadenze();
+                },
               ),
               _FiltroScadenzaChip(
                 label: 'In scadenza',
                 attivo: filtroStato == 'In scadenza',
-                onTap: () => setState(() => filtroStato = 'In scadenza'),
+                onTap: () {
+                  setState(() => filtroStato = 'In scadenza');
+                  caricaScadenze();
+                },
               ),
               _FiltroScadenzaChip(
                 label: 'Valide',
                 attivo: filtroStato == 'Valide',
-                onTap: () => setState(() => filtroStato = 'Valide'),
+                onTap: () {
+                  setState(() => filtroStato = 'Valide');
+                  caricaScadenze();
+                },
               ),
               Tooltip(
                 message: exportDisabilitato
@@ -886,6 +923,41 @@ class _ScadenzePageState extends State<ScadenzePage> {
           ),
 
           const SizedBox(height: 20),
+
+          if (!_caricamento && _totaleScadenzeFiltrate > 0)
+            Row(
+              children: [
+                Text(
+                  _scadenze.length >= _totaleScadenzeFiltrate
+                      ? 'Tutte le $_totaleScadenzeFiltrate scadenze sono visualizzate'
+                      : 'Visualizzate ${_scadenze.length} di $_totaleScadenzeFiltrate scadenze',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF64748B),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const Spacer(),
+                if (_scadenze.length < _totaleScadenzeFiltrate)
+                  OutlinedButton.icon(
+                    onPressed: _caricamentoAltre
+                        ? null
+                        : () => caricaScadenze(append: true),
+                    icon: _caricamentoAltre
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.expand_more_rounded, size: 18),
+                    label: Text(
+                      _caricamentoAltre ? 'Caricamento...' : 'Carica altri',
+                    ),
+                  ),
+              ],
+            ),
+
+          const SizedBox(height: 12),
 
           Expanded(
             child: _caricamento

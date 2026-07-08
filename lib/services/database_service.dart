@@ -42,6 +42,102 @@ class DatabaseService {
     return rows.map((e) => Discente.fromMap(e)).toList();
   }
 
+  Future<int> contaDiscenti({String ricerca = ''}) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+      whereParts.add('''
+        (
+          d.nome LIKE ?
+          OR d.cognome LIKE ?
+          OR (COALESCE(d.cognome, '') || ' ' || COALESCE(d.nome, '')) LIKE ?
+          OR (COALESCE(d.nome, '') || ' ' || COALESCE(d.cognome, '')) LIKE ?
+          OR d.luogo_nascita LIKE ?
+          OR d.data_nascita LIKE ?
+          OR d.codice_fiscale LIKE ?
+          OR i.intestazione LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q]);
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final result = await db.rawQuery('''
+      SELECT COUNT(*)
+      FROM discenti d
+      LEFT JOIN imprese i ON i.id = d.impresa_id
+      $whereSql
+      ''', args);
+
+    return Sqflite.firstIntValue(result) ?? 0;
+  }
+
+  Future<List<Discente>> getDiscentiPaged({
+    required int limit,
+    required int offset,
+    String ricerca = '',
+  }) async {
+    final db = await _db;
+    final whereParts = <String>[];
+    final args = <Object?>[];
+
+    final ricercaPulita = ricerca.trim();
+    if (ricercaPulita.isNotEmpty) {
+      final q = '%$ricercaPulita%';
+      whereParts.add('''
+        (
+          d.nome LIKE ?
+          OR d.cognome LIKE ?
+          OR (COALESCE(d.cognome, '') || ' ' || COALESCE(d.nome, '')) LIKE ?
+          OR (COALESCE(d.nome, '') || ' ' || COALESCE(d.cognome, '')) LIKE ?
+          OR d.luogo_nascita LIKE ?
+          OR d.data_nascita LIKE ?
+          OR d.codice_fiscale LIKE ?
+          OR i.intestazione LIKE ?
+        )
+      ''');
+
+      args.addAll([q, q, q, q, q, q, q, q]);
+    }
+
+    final whereSql = whereParts.isEmpty
+        ? ''
+        : 'WHERE ${whereParts.join(' AND ')}';
+
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        d.id,
+        d.nome,
+        d.cognome,
+        d.luogo_nascita,
+        d.data_nascita,
+        d.codice_fiscale,
+        d.impresa_id,
+        d.visita_medica_svolta,
+        d.data_visita_medica,
+        d.scadenza_visita_medica,
+        i.intestazione AS nome_impresa
+      FROM discenti d
+      LEFT JOIN imprese i ON i.id = d.impresa_id
+      $whereSql
+      ORDER BY d.cognome ASC, d.nome ASC, d.id ASC
+      LIMIT ? OFFSET ?
+      ''',
+      [...args, limit, offset],
+    );
+
+    return rows.map((e) => Discente.fromMap(e)).toList();
+  }
+
   Future<Discente?> getDiscenteById(int id) async {
     final db = await _db;
 

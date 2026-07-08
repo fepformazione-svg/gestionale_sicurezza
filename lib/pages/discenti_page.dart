@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:excel/excel.dart' as xls;
@@ -95,6 +96,13 @@ class _DiscentiPageState extends State<DiscentiPage> {
   List<Discente> discentiFiltrati = [];
   List<Impresa> imprese = [];
 
+  static const int _discentiPageSize = 120;
+  int _totaleDiscentiFiltrati = 0;
+  int _offsetDiscenti = 0;
+  bool _caricamentoAltri = false;
+  Timer? _ricercaDebounce;
+  final TextEditingController _ricercaController = TextEditingController();
+
   bool loading = true;
   int? sortColumnIndex;
   bool sortAscending = false;
@@ -109,6 +117,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
   @override
   void initState() {
     super.initState();
+    _ricercaController.text = widget.globalSearch;
     caricaDati();
   }
 
@@ -117,54 +126,70 @@ class _DiscentiPageState extends State<DiscentiPage> {
     super.didUpdateWidget(oldWidget);
 
     if (oldWidget.globalSearch != widget.globalSearch) {
-      cercaDiscenti(widget.globalSearch);
+      _ricercaController.text = widget.globalSearch;
+      caricaDati();
     }
   }
 
-  Future<void> caricaDati() async {
-    final datiDiscenti = await DatabaseService.instance.getDiscenti();
-    final datiImprese = await DatabaseService.instance.getImprese();
+  Future<void> caricaDati({bool append = false}) async {
+    if (append) {
+      if (_caricamentoAltri || discenti.length >= _totaleDiscentiFiltrati) {
+        return;
+      }
+
+      setState(() => _caricamentoAltri = true);
+    } else {
+      setState(() {
+        loading = true;
+        _offsetDiscenti = 0;
+      });
+    }
+
+    final ricerca = _ricercaController.text.trim();
+    final offset = append ? _offsetDiscenti : 0;
+
+    final totale = append
+        ? _totaleDiscentiFiltrati
+        : await DatabaseService.instance.contaDiscenti(ricerca: ricerca);
+
+    final datiDiscenti = await DatabaseService.instance.getDiscentiPaged(
+      limit: _discentiPageSize,
+      offset: offset,
+      ricerca: ricerca,
+    );
+
+    final datiImprese = append
+        ? imprese
+        : await DatabaseService.instance.getImprese();
 
     if (!mounted) return;
 
     setState(() {
-      discenti = datiDiscenti;
-      discentiFiltrati = datiDiscenti;
-      imprese = datiImprese;
+      if (append) {
+        discenti.addAll(datiDiscenti);
+      } else {
+        discenti = datiDiscenti;
+        imprese = datiImprese;
+        _totaleDiscentiFiltrati = totale;
+      }
+
+      discentiFiltrati = List<Discente>.from(discenti);
+      _offsetDiscenti = discenti.length;
       loading = false;
+      _caricamentoAltri = false;
     });
 
-    if (widget.globalSearch.trim().isNotEmpty) {
-      cercaDiscenti(widget.globalSearch);
+    if (!append && _verticalController.hasClients) {
+      _verticalController.jumpTo(0);
     }
   }
 
   void cercaDiscenti(String valore) {
-    final query = valore.toLowerCase().trim();
-
-    setState(() {
-      if (query.isEmpty) {
-        discentiFiltrati = discenti;
-        return;
+    _ricercaDebounce?.cancel();
+    _ricercaDebounce = Timer(const Duration(milliseconds: 350), () {
+      if (mounted) {
+        caricaDati();
       }
-
-      discentiFiltrati = discenti.where((d) {
-        final nome = d.nome.toLowerCase();
-        final cognome = d.cognome.toLowerCase();
-        final nominativo = d.nominativoCompleto.toLowerCase();
-        final luogo = (d.luogoNascita ?? '').toLowerCase();
-        final data = (d.dataNascita ?? '').toLowerCase();
-        final codiceFiscale = (d.codiceFiscale ?? '').toLowerCase();
-        final impresa = (d.nomeImpresa ?? '').toLowerCase();
-
-        return nome.contains(query) ||
-            cognome.contains(query) ||
-            nominativo.contains(query) ||
-            luogo.contains(query) ||
-            data.contains(query) ||
-            codiceFiscale.contains(query) ||
-            impresa.contains(query);
-      }).toList();
     });
   }
 
@@ -1434,6 +1459,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
           children: [
             Expanded(
               child: AppSearchBar(
+                controller: _ricercaController,
                 hintText: 'Cerca per nome, cognome, codice fiscale, impresa...',
                 onChanged: cercaDiscenti,
               ),
@@ -1523,7 +1549,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
                             ),
                           ),
                           Text(
-                            '${discentiFiltrati.length} ${discentiFiltrati.length == 1 ? 'record' : 'record'}',
+                            discentiFiltrati.length >= _totaleDiscentiFiltrati
+                                ? 'Tutti i $_totaleDiscentiFiltrati record visualizzati'
+                                : 'Visualizzati ${discentiFiltrati.length} di $_totaleDiscentiFiltrati record',
                             style: const TextStyle(
                               color: Color(0xFF6B7280),
                               fontWeight: FontWeight.w600,
@@ -1532,6 +1560,49 @@ class _DiscentiPageState extends State<DiscentiPage> {
                         ],
                       ),
                       const SizedBox(height: 18),
+
+                      if (_totaleDiscentiFiltrati > 0)
+                        Row(
+                          children: [
+                            Text(
+                              discentiFiltrati.length >= _totaleDiscentiFiltrati
+                                  ? 'Tutti i $_totaleDiscentiFiltrati discenti sono visualizzati'
+                                  : 'Visualizzati ${discentiFiltrati.length} di $_totaleDiscentiFiltrati discenti',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                color: Color(0xFF64748B),
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            if (discentiFiltrati.length <
+                                _totaleDiscentiFiltrati)
+                              OutlinedButton.icon(
+                                onPressed: _caricamentoAltri
+                                    ? null
+                                    : () => caricaDati(append: true),
+                                icon: _caricamentoAltri
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.expand_more_rounded,
+                                        size: 18,
+                                      ),
+                                label: Text(
+                                  _caricamentoAltri
+                                      ? 'Caricamento...'
+                                      : 'Carica altri',
+                                ),
+                              ),
+                          ],
+                        ),
+
+                      const SizedBox(height: 12),
                       Expanded(
                         child: discentiFiltrati.isEmpty
                             ? const Center(
@@ -1596,8 +1667,20 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                                       const ClampingScrollPhysics(),
                                                   itemExtent: discenteRowHeight,
                                                   itemCount:
-                                                      discentiFiltrati.length,
+                                                      discentiFiltrati.length +
+                                                      (_caricamentoAltri
+                                                          ? 1
+                                                          : 0),
                                                   itemBuilder: (context, index) {
+                                                    if (index >=
+                                                        discentiFiltrati
+                                                            .length) {
+                                                      return const Center(
+                                                        child:
+                                                            CircularProgressIndicator(),
+                                                      );
+                                                    }
+
                                                     final d =
                                                         discentiFiltrati[index];
 

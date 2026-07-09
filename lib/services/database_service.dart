@@ -750,6 +750,55 @@ class DatabaseService {
       ''');
         break;
 
+      case 'senza_discente':
+        condizioni.add('''
+        (
+          p.discente_id IS NULL
+          OR d.id IS NULL
+        )
+      ''');
+        break;
+
+      case 'aziendali_senza_discente':
+        condizioni.add('''
+        p.discente_id IS NULL
+        AND p.impresa_id IS NOT NULL
+        AND p.corso_id IS NOT NULL
+      ''');
+        break;
+
+      case 'senza_docente':
+        condizioni.add('''
+        (
+          p.docente_id IS NULL
+          OR (
+            p.docente_id IS NOT NULL
+            AND doc.id IS NULL
+          )
+        )
+      ''');
+        break;
+
+      case 'recenti_da_sistemare':
+        condizioni.add('''
+        p.id IN (
+          SELECT pr.id
+          FROM prenotazioni pr
+          ORDER BY pr.id DESC
+          LIMIT 250
+        )
+        AND (
+          p.discente_id IS NULL
+          OR d.id IS NULL
+          OR p.docente_id IS NULL
+          OR (
+            p.docente_id IS NOT NULL
+            AND doc.id IS NULL
+          )
+        )
+      ''');
+        break;
+
       case 'tutte':
       default:
         break;
@@ -817,6 +866,7 @@ class DatabaseService {
     LEFT JOIN discenti d ON d.id = p.discente_id
     LEFT JOIN imprese i ON i.id = p.impresa_id
     LEFT JOIN corsi c ON c.id = p.corso_id
+    LEFT JOIN docenti doc ON doc.id = p.docente_id
     $whereSql
   ''', args);
 
@@ -846,6 +896,22 @@ class DatabaseService {
       'da_fare': await contaPrenotazioniFiltrate(
         ricerca: ricerca,
         filtro: 'da_fare',
+      ),
+      'senza_discente': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'senza_discente',
+      ),
+      'aziendali_senza_discente': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'aziendali_senza_discente',
+      ),
+      'senza_docente': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'senza_docente',
+      ),
+      'recenti_da_sistemare': await contaPrenotazioniFiltrate(
+        ricerca: ricerca,
+        filtro: 'recenti_da_sistemare',
       ),
     };
   }

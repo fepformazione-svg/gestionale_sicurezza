@@ -865,6 +865,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         return 'Chiuse';
       case 'da_fare':
         return 'Da fare';
+      case 'senza_discente':
+        return 'Senza discente';
+      case 'aziendali_senza_discente':
+        return 'Aziendali senza discente';
+      case 'senza_docente':
+        return 'Senza docente';
+      case 'recenti_da_sistemare':
+        return 'Recenti da sistemare';
       case 'tutte':
       default:
         return 'Tutte';
@@ -881,6 +889,14 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         return 'Mostra solo le prenotazioni chiuse';
       case 'da_fare':
         return 'Mostra solo le prenotazioni da fare';
+      case 'senza_discente':
+        return 'Mostra le prenotazioni senza discente collegato o con discente non trovato';
+      case 'aziendali_senza_discente':
+        return 'Mostra le prenotazioni aziendali importate senza discente collegato';
+      case 'senza_docente':
+        return 'Mostra le prenotazioni senza docente collegato o con docente non trovato';
+      case 'recenti_da_sistemare':
+        return 'Mostra le ultime 250 prenotazioni con collegamenti mancanti da verificare';
       case 'tutte':
       default:
         return 'Mostra tutte le prenotazioni';
@@ -4644,6 +4660,34 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 "Da fare (${conteggioPrenotazioniDb('da_fare')})",
                             filtro: 'da_fare',
                             colore: Colors.red,
+                          ),
+
+                          filtroChip(
+                            titolo:
+                                "Senza discente (${conteggioPrenotazioniDb('senza_discente')})",
+                            filtro: 'senza_discente',
+                            colore: Colors.purple,
+                          ),
+
+                          filtroChip(
+                            titolo:
+                                "Aziendali senza discente (${conteggioPrenotazioniDb('aziendali_senza_discente')})",
+                            filtro: 'aziendali_senza_discente',
+                            colore: Colors.teal,
+                          ),
+
+                          filtroChip(
+                            titolo:
+                                "Senza docente (${conteggioPrenotazioniDb('senza_docente')})",
+                            filtro: 'senza_docente',
+                            colore: Colors.indigo,
+                          ),
+
+                          filtroChip(
+                            titolo:
+                                "Recenti da sistemare (${conteggioPrenotazioniDb('recenti_da_sistemare')})",
+                            filtro: 'recenti_da_sistemare',
+                            colore: Colors.deepOrange,
                           ),
 
                           if (prenotazioniSelezionateIds.isNotEmpty)

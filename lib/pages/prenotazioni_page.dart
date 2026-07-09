@@ -2524,7 +2524,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             content: SizedBox(
               width: 520,
               child: Text(
-                'La prenotazione di ${nomeDiscente(prenotazione)} non puÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² essere eliminata perchÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â© ÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â¨ giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  stata confermata.\n\n'
+                'La prenotazione di ${nomeDiscente(prenotazione)} non può essere eliminata perché è già stata confermata.\n\n'
                 'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
                 'Per mantenere coerenti Diario, Scadenze e Storico formativo, le prenotazioni confermate non vanno cancellate direttamente.',
                 style: const TextStyle(
@@ -2596,7 +2596,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           content: Text(
             'Vuoi eliminare la prenotazione di ${nomeDiscente(prenotazione)}?\n\n'
             'Corso: ${corsoPrenotazione.isEmpty ? '-' : corsoPrenotazione}\n\n'
-            'Questa operazione non puÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â² essere annullata.',
+            'Questa operazione non può essere annullata.',
             style: const TextStyle(height: 1.45, fontWeight: FontWeight.w500),
           ),
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 18),
@@ -3525,7 +3525,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                 pw.SizedBox(height: 24),
 
                 pw.Text(
-                  'La societÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  F&P S.r.l.s. Formazione e Privacy, in qualitÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  di soggetto formatore, dichiara che i lavoratori sotto indicati hanno partecipato al corso di formazione riportato nella presente dichiarazione.',
+                  'La società F&P S.r.l.s. Formazione e Privacy, in qualità di soggetto formatore, dichiara che i lavoratori sotto indicati hanno partecipato al corso di formazione riportato nella presente dichiarazione.',
                   textAlign: pw.TextAlign.justify,
                   style: const pw.TextStyle(fontSize: 11, lineSpacing: 3),
                 ),

@@ -1039,24 +1039,30 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           builder: (context, constraints) {
             final compatto = constraints.maxWidth < 760 || altezzaCompatta;
 
+            final altezzaFinestra = MediaQuery.of(context).size.height;
+            final altezzaMoltoRidotta = altezzaFinestra < 860;
+            final mostraDescrizione = !altezzaCompatta && !altezzaMoltoRidotta;
+            final mostraAzione = !altezzaCompatta;
+
             return Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
+                  spacing: 8,
+                  runSpacing: 6,
                   crossAxisAlignment: WrapCrossAlignment.center,
                   children: [
                     ConstrainedBox(
                       constraints: BoxConstraints(
                         maxWidth: compatto
                             ? constraints.maxWidth
-                            : constraints.maxWidth * 0.58,
+                            : constraints.maxWidth * 0.64,
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 7,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -1068,7 +1074,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           children: [
                             Icon(
                               iconaFiltroQualitaPrenotazioni(filtroLocale),
-                              size: 17,
+                              size: 16,
                               color: coloreTesto,
                             ),
                             const SizedBox(width: 7),
@@ -1079,7 +1085,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 overflow: TextOverflow.ellipsis,
                                 style: TextStyle(
                                   color: coloreTesto,
-                                  fontSize: 12.5,
+                                  fontSize: 12,
                                   fontWeight: FontWeight.w900,
                                 ),
                               ),
@@ -1092,12 +1098,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                       constraints: BoxConstraints(
                         maxWidth: compatto
                             ? constraints.maxWidth
-                            : constraints.maxWidth * 0.38,
+                            : constraints.maxWidth * 0.28,
                       ),
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
-                          vertical: 7,
+                          vertical: 6,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.white,
@@ -1110,7 +1116,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: coloreTesto,
-                            fontSize: 12.5,
+                            fontSize: 12,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -1118,97 +1124,47 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                     ),
                   ],
                 ),
-                if (!altezzaCompatta) ...[
-                  const SizedBox(height: 8),
+                if (mostraDescrizione) ...[
+                  const SizedBox(height: 6),
                   Text(
                     descrizioneFiltroQualitaPrenotazioni(filtroLocale),
-                    maxLines: compatto ? 3 : 2,
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       color: Color(0xFF334155),
-                      fontSize: 13,
-                      height: 1.28,
+                      fontSize: 12.5,
+                      height: 1.2,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
-                SizedBox(height: altezzaCompatta ? 5 : 8),
-                Wrap(
-                  spacing: 10,
-                  runSpacing: 8,
-                  crossAxisAlignment: WrapCrossAlignment.center,
-                  children: [
-                    ConstrainedBox(
-                      constraints: BoxConstraints(
-                        maxWidth: compatto
-                            ? constraints.maxWidth
-                            : constraints.maxWidth - 190,
+                if (mostraAzione) ...[
+                  const SizedBox(height: 5),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.tips_and_updates_outlined,
+                        size: 15,
+                        color: coloreTesto,
                       ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(
-                            Icons.tips_and_updates_outlined,
-                            size: 16,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          azioneFiltroQualitaPrenotazioni(filtroLocale),
+                          maxLines: altezzaMoltoRidotta ? 1 : 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
                             color: coloreTesto,
+                            fontSize: 12,
+                            height: 1.16,
+                            fontWeight: FontWeight.w800,
                           ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: Text(
-                              azioneFiltroQualitaPrenotazioni(filtroLocale),
-                              maxLines: altezzaCompatta
-                                  ? 1
-                                  : (compatto ? 2 : 1),
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                color: coloreTesto,
-                                fontSize: 12.5,
-                                height: 1.2,
-                                fontWeight: FontWeight.w800,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    OutlinedButton.icon(
-                      onPressed: () async {
-                        ricercaPrenotazioniDebounce?.cancel();
-
-                        setState(() {
-                          ricercaController.clear();
-                          filtroLocale = 'tutte';
-                          azzeraSelezionePrenotazioni();
-                        });
-
-                        await caricaPrenotazioni();
-
-                        if (!mounted) return;
-                        ripristinaFocusTabella();
-                      },
-                      icon: const Icon(Icons.restart_alt_rounded, size: 17),
-                      label: const Text(
-                        'Azzera filtri',
-                        style: TextStyle(
-                          fontSize: 12.5,
-                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                      style: OutlinedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: const Color(0xFF2563EB),
-                        side: const BorderSide(color: Color(0xFFBFDBFE)),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 9,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(999),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                    ],
+                  ),
+                ],
               ],
             );
           },
@@ -5482,544 +5438,564 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                 color: const Color(0xFFF1F5F9),
                               ),
                             ),
-                            child: SingleChildScrollView(
+                            child: Scrollbar(
                               controller: horizontalController,
-                              scrollDirection: Axis.horizontal,
-                              child: SizedBox(
-                                width: tableWidth,
-                                child: Column(
-                                  children: [
-                                    AnimatedContainer(
-                                      duration: const Duration(
-                                        milliseconds: 180,
-                                      ),
-                                      height: 39,
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFF8FAFC),
-                                        boxShadow: headerShadowVisible
-                                            ? [
-                                                BoxShadow(
-                                                  color: Colors.black
-                                                      .withValues(alpha: 0.06),
-                                                  blurRadius: 10,
-                                                  offset: const Offset(0, 3),
-                                                ),
-                                              ]
-                                            : [],
-                                      ),
-                                      child: SizedBox(
-                                        width: tableWidth,
-                                        child: PrenotazioneHeaderRow(
-                                          tablet: tablet,
-                                          headerBuilder: headerOrdinabile,
-                                          horizontalController:
-                                              horizontalController,
-                                          tutteSelezionate: statoCheckboxHeader,
-                                          onToggleSelezionaTutte:
-                                              toggleSelezionaTutteVisibili,
+                              thumbVisibility: true,
+                              trackVisibility: true,
+                              interactive: true,
+                              scrollbarOrientation: ScrollbarOrientation.bottom,
+                              notificationPredicate: (notification) =>
+                                  notification.metrics.axis == Axis.horizontal,
+                              radius: const Radius.circular(10),
+                              thickness: 8,
+                              child: SingleChildScrollView(
+                                controller: horizontalController,
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: tableWidth,
+                                  child: Column(
+                                    children: [
+                                      AnimatedContainer(
+                                        duration: const Duration(
+                                          milliseconds: 180,
                                         ),
-                                      ),
-                                    ),
-
-                                    const SizedBox(height: 0),
-
-                                    Expanded(
-                                      child: Container(
-                                        decoration: const BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border(
-                                            top: BorderSide(
-                                              color: Color(0xFFE5E7EB),
-                                              width: 1,
-                                            ),
+                                        height: 39,
+                                        decoration: BoxDecoration(
+                                          color: const Color(0xFFF8FAFC),
+                                          boxShadow: headerShadowVisible
+                                              ? [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withValues(
+                                                          alpha: 0.06,
+                                                        ),
+                                                    blurRadius: 10,
+                                                    offset: const Offset(0, 3),
+                                                  ),
+                                                ]
+                                              : [],
+                                        ),
+                                        child: SizedBox(
+                                          width: tableWidth,
+                                          child: PrenotazioneHeaderRow(
+                                            tablet: tablet,
+                                            headerBuilder: headerOrdinabile,
+                                            horizontalController:
+                                                horizontalController,
+                                            tutteSelezionate:
+                                                statoCheckboxHeader,
+                                            onToggleSelezionaTutte:
+                                                toggleSelezionaTutteVisibili,
                                           ),
                                         ),
-                                        child: KeyboardListener(
-                                          focusNode: tableFocusNode,
-                                          autofocus: true,
-                                          onKeyEvent: gestisciTasti,
-                                          child: prenotazioniVisibili.isEmpty
-                                              ? Center(
-                                                  child: Container(
-                                                    constraints:
-                                                        const BoxConstraints(
-                                                          maxWidth: 460,
-                                                        ),
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 22,
-                                                          vertical: 18,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color: const Color(
-                                                        0xFFF8FAFC,
-                                                      ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            18,
+                                      ),
+
+                                      const SizedBox(height: 0),
+
+                                      Expanded(
+                                        child: Container(
+                                          decoration: const BoxDecoration(
+                                            color: Colors.white,
+                                            border: Border(
+                                              top: BorderSide(
+                                                color: Color(0xFFE5E7EB),
+                                                width: 1,
+                                              ),
+                                            ),
+                                          ),
+                                          child: KeyboardListener(
+                                            focusNode: tableFocusNode,
+                                            autofocus: true,
+                                            onKeyEvent: gestisciTasti,
+                                            child: prenotazioniVisibili.isEmpty
+                                                ? Center(
+                                                    child: Container(
+                                                      constraints:
+                                                          const BoxConstraints(
+                                                            maxWidth: 460,
                                                           ),
-                                                      border: Border.all(
+                                                      padding:
+                                                          const EdgeInsets.symmetric(
+                                                            horizontal: 22,
+                                                            vertical: 18,
+                                                          ),
+                                                      decoration: BoxDecoration(
                                                         color: const Color(
-                                                          0xFFE2E8F0,
+                                                          0xFFF8FAFC,
                                                         ),
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        const Icon(
-                                                          Icons
-                                                              .search_off_rounded,
-                                                          size: 26,
-                                                          color: Color(
-                                                            0xFF94A3B8,
+                                                        borderRadius:
+                                                            BorderRadius.circular(
+                                                              18,
+                                                            ),
+                                                        border: Border.all(
+                                                          color: const Color(
+                                                            0xFFE2E8F0,
                                                           ),
                                                         ),
-                                                        const SizedBox(
-                                                          width: 12,
-                                                        ),
-                                                        Flexible(
-                                                          child: Column(
-                                                            mainAxisSize:
-                                                                MainAxisSize
-                                                                    .min,
-                                                            crossAxisAlignment:
-                                                                CrossAxisAlignment
-                                                                    .start,
-                                                            children: [
-                                                              const Text(
-                                                                'Nessuna prenotazione trovata',
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .left,
-                                                                style: TextStyle(
-                                                                  fontSize: 14,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w800,
-                                                                  color: Color(
-                                                                    0xFF374151,
+                                                      ),
+                                                      child: Row(
+                                                        mainAxisSize:
+                                                            MainAxisSize.min,
+                                                        children: [
+                                                          const Icon(
+                                                            Icons
+                                                                .search_off_rounded,
+                                                            size: 26,
+                                                            color: Color(
+                                                              0xFF94A3B8,
+                                                            ),
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                                          Flexible(
+                                                            child: Column(
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              children: [
+                                                                const Text(
+                                                                  'Nessuna prenotazione trovata',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .left,
+                                                                  style: TextStyle(
+                                                                    fontSize:
+                                                                        14,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w800,
+                                                                    color: Color(
+                                                                      0xFF374151,
+                                                                    ),
                                                                   ),
                                                                 ),
-                                                              ),
-                                                              const SizedBox(
-                                                                height: 4,
-                                                              ),
-                                                              Text(
-                                                                ricercaController
+                                                                const SizedBox(
+                                                                  height: 4,
+                                                                ),
+                                                                Text(
+                                                                  ricercaController
+                                                                              .text
+                                                                              .trim()
+                                                                              .isNotEmpty &&
+                                                                          filtroLocale !=
+                                                                              'tutte'
+                                                                      ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
+                                                                      : ricercaController
                                                                             .text
                                                                             .trim()
-                                                                            .isNotEmpty &&
-                                                                        filtroLocale !=
+                                                                            .isNotEmpty
+                                                                      ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati.'
+                                                                      : filtroLocale !=
                                                                             'tutte'
-                                                                    ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
-                                                                    : ricercaController
-                                                                          .text
-                                                                          .trim()
-                                                                          .isNotEmpty
-                                                                    ? 'La ricerca "${ricercaController.text.trim()}" non produce risultati.'
-                                                                    : filtroLocale !=
-                                                                          'tutte'
-                                                                    ? 'Non ci sono prenotazioni nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
-                                                                    : 'Non ci sono prenotazioni da visualizzare.',
-                                                                textAlign:
-                                                                    TextAlign
-                                                                        .left,
-                                                                style: const TextStyle(
-                                                                  fontSize: 12,
-                                                                  fontWeight:
-                                                                      FontWeight
-                                                                          .w600,
-                                                                  color: Color(
-                                                                    0xFF64748B,
-                                                                  ),
-                                                                ),
-                                                              ),
-                                                            ],
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                )
-                                              : Scrollbar(
-                                                  controller: _scrollController,
-                                                  thumbVisibility: true,
-                                                  radius: const Radius.circular(
-                                                    10,
-                                                  ),
-                                                  thickness: 7,
-                                                  child: ListView.builder(
-                                                    padding: EdgeInsets.zero,
-                                                    controller:
-                                                        _scrollController,
-                                                    primary: false,
-                                                    physics:
-                                                        const ClampingScrollPhysics(),
-                                                    itemExtent: 48,
-                                                    itemCount:
-                                                        prenotazioniVisibili
-                                                            .length +
-                                                        (caricamentoPaginaDb
-                                                            ? 1
-                                                            : 0),
-                                                    itemBuilder: (context, index) {
-                                                      if (index >=
-                                                          prenotazioniVisibili
-                                                              .length) {
-                                                        return const Padding(
-                                                          padding:
-                                                              EdgeInsets.all(
-                                                                18,
-                                                              ),
-                                                          child: Center(
-                                                            child:
-                                                                CircularProgressIndicator(),
-                                                          ),
-                                                        );
-                                                      }
-
-                                                      final p =
-                                                          prenotazioniVisibili[index];
-
-                                                      return SizedBox(
-                                                        width: tableWidth,
-                                                        child: PrenotazioneRow(
-                                                          prenotazione: p,
-                                                          tablet: tablet,
-
-                                                          horizontalController:
-                                                              horizontalController,
-                                                          selezionata:
-                                                              prenotazioniSelezionateIds
-                                                                  .contains(
-                                                                    p['id']
-                                                                        as int,
-                                                                  ),
-                                                          onSeleziona: () {
-                                                            gestisciSelezioneMassiva(
-                                                              index: index,
-                                                              prenotazione: p,
-                                                              ctrlPremuto:
-                                                                  HardwareKeyboard
-                                                                      .instance
-                                                                      .logicalKeysPressed
-                                                                      .contains(
-                                                                        LogicalKeyboardKey
-                                                                            .controlLeft,
-                                                                      ) ||
-                                                                  HardwareKeyboard
-                                                                      .instance
-                                                                      .logicalKeysPressed
-                                                                      .contains(
-                                                                        LogicalKeyboardKey
-                                                                            .controlRight,
-                                                                      ),
-                                                              shiftPremuto:
-                                                                  HardwareKeyboard
-                                                                      .instance
-                                                                      .logicalKeysPressed
-                                                                      .contains(
-                                                                        LogicalKeyboardKey
-                                                                            .shiftLeft,
-                                                                      ) ||
-                                                                  HardwareKeyboard
-                                                                      .instance
-                                                                      .logicalKeysPressed
-                                                                      .contains(
-                                                                        LogicalKeyboardKey
-                                                                            .shiftRight,
-                                                                      ),
-                                                            );
-
-                                                            tableFocusNode
-                                                                .requestFocus();
-                                                          },
-                                                          onDoppioClick: () {
-                                                            modificaPrenotazione(
-                                                              p,
-                                                            );
-                                                          },
-                                                          onTastoDestro: (details) async {
-                                                            final result = await showMenu<String>(
-                                                              context: context,
-                                                              position: RelativeRect.fromLTRB(
-                                                                details
-                                                                    .globalPosition
-                                                                    .dx,
-                                                                details
-                                                                    .globalPosition
-                                                                    .dy,
-                                                                details
-                                                                    .globalPosition
-                                                                    .dx,
-                                                                details
-                                                                    .globalPosition
-                                                                    .dy,
-                                                              ),
-                                                              items: const [
-                                                                PopupMenuItem(
-                                                                  value:
-                                                                      'modifica',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .edit_rounded,
-                                                                        size:
-                                                                            18,
-                                                                        color: Color(
-                                                                          0xFF0F172A,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      Text(
-                                                                        'Modifica prenotazione',
-                                                                        style: TextStyle(
-                                                                          color: Color(
-                                                                            0xFF0F172A,
-                                                                          ),
-                                                                          fontWeight:
-                                                                              FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                PopupMenuItem(
-                                                                  value: 'apri',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .lock_open_rounded,
-                                                                        size:
-                                                                            18,
-                                                                        color: Color(
-                                                                          0xFF2563EB,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      Text(
-                                                                        'Apri prenotazione',
-                                                                        style: TextStyle(
-                                                                          color: Color(
-                                                                            0xFF2563EB,
-                                                                          ),
-                                                                          fontWeight:
-                                                                              FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                PopupMenuItem(
-                                                                  value:
-                                                                      'chiudi',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .lock_rounded,
-                                                                        size:
-                                                                            18,
-                                                                        color: Color(
-                                                                          0xFF4B5563,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      Text(
-                                                                        'Chiudi prenotazione',
-                                                                        style: TextStyle(
-                                                                          color: Color(
-                                                                            0xFF4B5563,
-                                                                          ),
-                                                                          fontWeight:
-                                                                              FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                PopupMenuItem(
-                                                                  value:
-                                                                      'registro',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .fact_check_rounded,
-                                                                        size:
-                                                                            18,
-                                                                        color: Color(
-                                                                          0xFF7C3AED,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      Text(
-                                                                        'Segna registro',
-                                                                        style: TextStyle(
-                                                                          color: Color(
-                                                                            0xFF7C3AED,
-                                                                          ),
-                                                                          fontWeight:
-                                                                              FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ],
-                                                                  ),
-                                                                ),
-                                                                PopupMenuItem(
-                                                                  value:
-                                                                      'elimina',
-                                                                  child: Row(
-                                                                    children: [
-                                                                      Icon(
-                                                                        Icons
-                                                                            .delete_outline_rounded,
-                                                                        size:
-                                                                            18,
-                                                                        color: Color(
-                                                                          0xFFDC2626,
-                                                                        ),
-                                                                      ),
-                                                                      SizedBox(
-                                                                        width:
-                                                                            8,
-                                                                      ),
-                                                                      Text(
-                                                                        'Elimina prenotazione',
-                                                                        style: TextStyle(
-                                                                          color: Color(
-                                                                            0xFFDC2626,
-                                                                          ),
-                                                                          fontWeight:
-                                                                              FontWeight.w700,
-                                                                        ),
-                                                                      ),
-                                                                    ],
+                                                                      ? 'Non ci sono prenotazioni nel filtro ${etichettaFiltroPrenotazioni(filtroLocale)}.'
+                                                                      : 'Non ci sono prenotazioni da visualizzare.',
+                                                                  textAlign:
+                                                                      TextAlign
+                                                                          .left,
+                                                                  style: const TextStyle(
+                                                                    fontSize:
+                                                                        12,
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .w600,
+                                                                    color: Color(
+                                                                      0xFF64748B,
+                                                                    ),
                                                                   ),
                                                                 ),
                                                               ],
-                                                            );
-
-                                                            if (result ==
-                                                                null) {
-                                                              return;
-                                                            }
-
-                                                            if (result ==
-                                                                'modifica') {
-                                                              modificaPrenotazione(
-                                                                p,
-                                                              );
-                                                            }
-
-                                                            if (result ==
-                                                                'apri') {
-                                                              prenotazioniSelezionateIds =
-                                                                  {
-                                                                    p['id']
-                                                                        as int,
-                                                                  };
-                                                              await aggiornaStatoPrenotazioniSelezionate(
-                                                                aperto: 1,
-                                                                registro: 0,
-                                                                conferma: 0,
-                                                              );
-                                                            }
-
-                                                            if (result ==
-                                                                'chiudi') {
-                                                              prenotazioniSelezionateIds =
-                                                                  {
-                                                                    p['id']
-                                                                        as int,
-                                                                  };
-                                                              await aggiornaStatoPrenotazioniSelezionate(
-                                                                aperto: 0,
-                                                                registro: 0,
-                                                                conferma: 1,
-                                                              );
-                                                            }
-
-                                                            if (result ==
-                                                                'registro') {
-                                                              prenotazioniSelezionateIds =
-                                                                  {
-                                                                    p['id']
-                                                                        as int,
-                                                                  };
-                                                              await aggiornaStatoPrenotazioniSelezionate(
-                                                                aperto: 0,
-                                                                registro: 1,
-                                                                conferma: 0,
-                                                              );
-                                                            }
-
-                                                            if (result ==
-                                                                'elimina') {
-                                                              eliminaPrenotazione(
-                                                                p,
-                                                              );
-                                                            }
-                                                          },
-                                                          onModifica: () =>
-                                                              modificaPrenotazione(
-                                                                p,
-                                                              ),
-
-                                                          onRegistro: () =>
-                                                              apriDialogRegistroPresenze(
-                                                                p,
-                                                              ),
-
-                                                          onStampaRegistro: () =>
-                                                              stampaRegistroPresenze(
-                                                                p,
-                                                              ),
-
-                                                          onCollegaDiscente: () =>
-                                                              collegaDiscentePrenotazione(
-                                                                p,
-                                                              ),
-
-                                                          onCollegaDocente: () =>
-                                                              collegaDocentePrenotazione(
-                                                                p,
-                                                              ),
-
-                                                          onElimina: () =>
-                                                              eliminaPrenotazione(
-                                                                p,
-                                                              ),
-                                                          statoPrenotazione:
-                                                              statoPrenotazione,
-                                                          nomeDiscente:
-                                                              nomeDiscente,
-                                                          testo: testo,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  )
+                                                : Scrollbar(
+                                                    controller:
+                                                        _scrollController,
+                                                    thumbVisibility: true,
+                                                    radius:
+                                                        const Radius.circular(
+                                                          10,
                                                         ),
-                                                      );
-                                                    },
+                                                    thickness: 7,
+                                                    child: ListView.builder(
+                                                      padding: EdgeInsets.zero,
+                                                      controller:
+                                                          _scrollController,
+                                                      primary: false,
+                                                      physics:
+                                                          const ClampingScrollPhysics(),
+                                                      itemExtent: 48,
+                                                      itemCount:
+                                                          prenotazioniVisibili
+                                                              .length +
+                                                          (caricamentoPaginaDb
+                                                              ? 1
+                                                              : 0),
+                                                      itemBuilder: (context, index) {
+                                                        if (index >=
+                                                            prenotazioniVisibili
+                                                                .length) {
+                                                          return const Padding(
+                                                            padding:
+                                                                EdgeInsets.all(
+                                                                  18,
+                                                                ),
+                                                            child: Center(
+                                                              child:
+                                                                  CircularProgressIndicator(),
+                                                            ),
+                                                          );
+                                                        }
+
+                                                        final p =
+                                                            prenotazioniVisibili[index];
+
+                                                        return SizedBox(
+                                                          width: tableWidth,
+                                                          child: PrenotazioneRow(
+                                                            prenotazione: p,
+                                                            tablet: tablet,
+
+                                                            horizontalController:
+                                                                horizontalController,
+                                                            selezionata:
+                                                                prenotazioniSelezionateIds
+                                                                    .contains(
+                                                                      p['id']
+                                                                          as int,
+                                                                    ),
+                                                            onSeleziona: () {
+                                                              gestisciSelezioneMassiva(
+                                                                index: index,
+                                                                prenotazione: p,
+                                                                ctrlPremuto:
+                                                                    HardwareKeyboard
+                                                                        .instance
+                                                                        .logicalKeysPressed
+                                                                        .contains(
+                                                                          LogicalKeyboardKey
+                                                                              .controlLeft,
+                                                                        ) ||
+                                                                    HardwareKeyboard
+                                                                        .instance
+                                                                        .logicalKeysPressed
+                                                                        .contains(
+                                                                          LogicalKeyboardKey
+                                                                              .controlRight,
+                                                                        ),
+                                                                shiftPremuto:
+                                                                    HardwareKeyboard
+                                                                        .instance
+                                                                        .logicalKeysPressed
+                                                                        .contains(
+                                                                          LogicalKeyboardKey
+                                                                              .shiftLeft,
+                                                                        ) ||
+                                                                    HardwareKeyboard
+                                                                        .instance
+                                                                        .logicalKeysPressed
+                                                                        .contains(
+                                                                          LogicalKeyboardKey
+                                                                              .shiftRight,
+                                                                        ),
+                                                              );
+
+                                                              tableFocusNode
+                                                                  .requestFocus();
+                                                            },
+                                                            onDoppioClick: () {
+                                                              modificaPrenotazione(
+                                                                p,
+                                                              );
+                                                            },
+                                                            onTastoDestro: (details) async {
+                                                              final result = await showMenu<String>(
+                                                                context:
+                                                                    context,
+                                                                position: RelativeRect.fromLTRB(
+                                                                  details
+                                                                      .globalPosition
+                                                                      .dx,
+                                                                  details
+                                                                      .globalPosition
+                                                                      .dy,
+                                                                  details
+                                                                      .globalPosition
+                                                                      .dx,
+                                                                  details
+                                                                      .globalPosition
+                                                                      .dy,
+                                                                ),
+                                                                items: const [
+                                                                  PopupMenuItem(
+                                                                    value:
+                                                                        'modifica',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .edit_rounded,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFF0F172A,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Modifica prenotazione',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFF0F172A,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem(
+                                                                    value:
+                                                                        'apri',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .lock_open_rounded,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFF2563EB,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Apri prenotazione',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFF2563EB,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem(
+                                                                    value:
+                                                                        'chiudi',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .lock_rounded,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFF4B5563,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Chiudi prenotazione',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFF4B5563,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem(
+                                                                    value:
+                                                                        'registro',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .fact_check_rounded,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFF7C3AED,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Segna registro',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFF7C3AED,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem(
+                                                                    value:
+                                                                        'elimina',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .delete_outline_rounded,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFFDC2626,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Elimina prenotazione',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFFDC2626,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                ],
+                                                              );
+
+                                                              if (result ==
+                                                                  null) {
+                                                                return;
+                                                              }
+
+                                                              if (result ==
+                                                                  'modifica') {
+                                                                modificaPrenotazione(
+                                                                  p,
+                                                                );
+                                                              }
+
+                                                              if (result ==
+                                                                  'apri') {
+                                                                prenotazioniSelezionateIds =
+                                                                    {
+                                                                      p['id']
+                                                                          as int,
+                                                                    };
+                                                                await aggiornaStatoPrenotazioniSelezionate(
+                                                                  aperto: 1,
+                                                                  registro: 0,
+                                                                  conferma: 0,
+                                                                );
+                                                              }
+
+                                                              if (result ==
+                                                                  'chiudi') {
+                                                                prenotazioniSelezionateIds =
+                                                                    {
+                                                                      p['id']
+                                                                          as int,
+                                                                    };
+                                                                await aggiornaStatoPrenotazioniSelezionate(
+                                                                  aperto: 0,
+                                                                  registro: 0,
+                                                                  conferma: 1,
+                                                                );
+                                                              }
+
+                                                              if (result ==
+                                                                  'registro') {
+                                                                prenotazioniSelezionateIds =
+                                                                    {
+                                                                      p['id']
+                                                                          as int,
+                                                                    };
+                                                                await aggiornaStatoPrenotazioniSelezionate(
+                                                                  aperto: 0,
+                                                                  registro: 1,
+                                                                  conferma: 0,
+                                                                );
+                                                              }
+
+                                                              if (result ==
+                                                                  'elimina') {
+                                                                eliminaPrenotazione(
+                                                                  p,
+                                                                );
+                                                              }
+                                                            },
+                                                            onModifica: () =>
+                                                                modificaPrenotazione(
+                                                                  p,
+                                                                ),
+
+                                                            onRegistro: () =>
+                                                                apriDialogRegistroPresenze(
+                                                                  p,
+                                                                ),
+
+                                                            onStampaRegistro: () =>
+                                                                stampaRegistroPresenze(
+                                                                  p,
+                                                                ),
+
+                                                            onCollegaDiscente: () =>
+                                                                collegaDiscentePrenotazione(
+                                                                  p,
+                                                                ),
+
+                                                            onCollegaDocente: () =>
+                                                                collegaDocentePrenotazione(
+                                                                  p,
+                                                                ),
+
+                                                            onElimina: () =>
+                                                                eliminaPrenotazione(
+                                                                  p,
+                                                                ),
+                                                            statoPrenotazione:
+                                                                statoPrenotazione,
+                                                            nomeDiscente:
+                                                                nomeDiscente,
+                                                            testo: testo,
+                                                          ),
+                                                        );
+                                                      },
+                                                    ),
                                                   ),
-                                                ),
+                                          ),
                                         ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
+                                  ),
                                 ),
                               ),
                             ),

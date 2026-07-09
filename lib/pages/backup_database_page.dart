@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 import '../services/backup_service.dart';
@@ -10,12 +11,14 @@ class BackupDatabasePage extends StatefulWidget {
 }
 
 class _BackupDatabasePageState extends State<BackupDatabasePage> {
-  bool backupInCorso = false;
+  bool backupLocaleInCorso = false;
+  bool backupSecondarioInCorso = false;
   String? ultimoBackupCreato;
+  String? ultimoBackupSecondarioCreato;
 
   Future<void> eseguiBackupManuale() async {
     setState(() {
-      backupInCorso = true;
+      backupLocaleInCorso = true;
     });
 
     final percorsoBackup = await BackupService.eseguiBackupManuale();
@@ -23,7 +26,7 @@ class _BackupDatabasePageState extends State<BackupDatabasePage> {
     if (!mounted) return;
 
     setState(() {
-      backupInCorso = false;
+      backupLocaleInCorso = false;
       ultimoBackupCreato = percorsoBackup;
     });
 
@@ -37,6 +40,107 @@ class _BackupDatabasePageState extends State<BackupDatabasePage> {
               ? 'Backup non eseguito. Verificare che il database esista.'
               : 'Backup creato correttamente.',
         ),
+      ),
+    );
+  }
+
+  Future<void> scegliCartellaBackupSecondario() async {
+    try {
+      final selectedDirectory = await FilePicker.getDirectoryPath();
+
+      if (selectedDirectory == null) return;
+
+      await BackupService.salvaPercorsoBackupSecondario(selectedDirectory);
+
+      if (!mounted) return;
+
+      setState(() {
+        ultimoBackupSecondarioCreato = null;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Color(0xFF16A34A),
+          content: Text('Cartella backup secondario configurata.'),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: const Color(0xFFDC2626),
+          content: Text('Errore configurazione backup secondario: $e'),
+        ),
+      );
+    }
+  }
+
+  Future<void> rimuoviCartellaBackupSecondario() async {
+    final conferma = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Rimuovere backup secondario?'),
+          content: const Text(
+            'Verrà rimossa solo la configurazione del percorso. I backup già creati nella cartella secondaria non saranno eliminati.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Annulla'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFDC2626),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Rimuovi'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (conferma != true) return;
+
+    await BackupService.rimuoviPercorsoBackupSecondario();
+
+    if (!mounted) return;
+
+    setState(() {
+      ultimoBackupSecondarioCreato = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        backgroundColor: Color(0xFFF97316),
+        content: Text('Configurazione backup secondario rimossa.'),
+      ),
+    );
+  }
+
+  Future<void> eseguiBackupSecondario() async {
+    setState(() {
+      backupSecondarioInCorso = true;
+    });
+
+    final risultato = await BackupService.eseguiBackupSecondarioManuale();
+
+    if (!mounted) return;
+
+    setState(() {
+      backupSecondarioInCorso = false;
+      ultimoBackupSecondarioCreato = risultato.percorsoFile;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: risultato.riuscito
+            ? const Color(0xFF16A34A)
+            : const Color(0xFFDC2626),
+        content: Text(risultato.messaggio),
       ),
     );
   }
@@ -88,10 +192,21 @@ class _BackupDatabasePageState extends State<BackupDatabasePage> {
           ),
           const SizedBox(height: 16),
           _AzioneBackupCard(
-            backupInCorso: backupInCorso,
+            backupInCorso: backupLocaleInCorso,
             backupDisponibile: info.databaseEsistente,
             onBackup: eseguiBackupManuale,
             ultimoBackupCreato: ultimoBackupCreato,
+          ),
+          const SizedBox(height: 16),
+          _BackupSecondarioCard(
+            backupInCorso: backupSecondarioInCorso,
+            backupDisponibile: info.databaseEsistente,
+            percorso: info.percorsoBackupSecondario,
+            raggiungibile: info.backupSecondarioRaggiungibile,
+            onScegliCartella: scegliCartellaBackupSecondario,
+            onRimuoviCartella: rimuoviCartellaBackupSecondario,
+            onBackupSecondario: eseguiBackupSecondario,
+            ultimoBackupCreato: ultimoBackupSecondarioCreato,
           ),
           const SizedBox(height: 16),
           const _AvvisoRipristinoCard(),
@@ -130,6 +245,8 @@ class _BackupDatabaseInfo {
   final String? percorsoDatabase;
   final String? percorsoBackup;
   final String? percorsoExport;
+  final String? percorsoBackupSecondario;
+  final bool backupSecondarioRaggiungibile;
   final bool databaseEsistente;
   final int? dimensioneDatabaseBytes;
   final DateTime? ultimaModificaDatabase;
@@ -139,6 +256,8 @@ class _BackupDatabaseInfo {
     required this.percorsoDatabase,
     required this.percorsoBackup,
     required this.percorsoExport,
+    required this.percorsoBackupSecondario,
+    required this.backupSecondarioRaggiungibile,
     required this.databaseEsistente,
     required this.dimensioneDatabaseBytes,
     required this.ultimaModificaDatabase,
@@ -150,6 +269,10 @@ class _BackupDatabaseInfo {
       percorsoDatabase: BackupService.percorsoDatabase(),
       percorsoBackup: BackupService.percorsoBackup(),
       percorsoExport: BackupService.percorsoExport(),
+      percorsoBackupSecondario:
+          BackupService.percorsoBackupSecondarioConfigurato(),
+      backupSecondarioRaggiungibile:
+          BackupService.backupSecondarioRaggiungibile(),
       databaseEsistente: BackupService.databaseEsistente(),
       dimensioneDatabaseBytes: BackupService.dimensioneDatabaseBytes(),
       ultimaModificaDatabase: BackupService.ultimaModificaDatabase(),
@@ -424,6 +547,228 @@ class _AzioneBackupCard extends StatelessWidget {
                 fontSize: 12.5,
                 fontWeight: FontWeight.w600,
                 color: Color(0xFF166534),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _BackupSecondarioCard extends StatelessWidget {
+  final bool backupInCorso;
+  final bool backupDisponibile;
+  final String? percorso;
+  final bool raggiungibile;
+  final VoidCallback onScegliCartella;
+  final VoidCallback onRimuoviCartella;
+  final VoidCallback onBackupSecondario;
+  final String? ultimoBackupCreato;
+
+  const _BackupSecondarioCard({
+    required this.backupInCorso,
+    required this.backupDisponibile,
+    required this.percorso,
+    required this.raggiungibile,
+    required this.onScegliCartella,
+    required this.onRimuoviCartella,
+    required this.onBackupSecondario,
+    required this.ultimoBackupCreato,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final configurato = percorso != null && percorso!.trim().isNotEmpty;
+
+    final statoTesto = !configurato
+        ? 'Non configurato'
+        : raggiungibile
+        ? 'Configurato e raggiungibile'
+        : 'Configurato ma non raggiungibile';
+
+    final statoColore = !configurato
+        ? const Color(0xFFF97316)
+        : raggiungibile
+        ? const Color(0xFF16A34A)
+        : const Color(0xFFDC2626);
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xFFBFDBFE)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Backup secondario configurabile',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1E3A8A),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Permette una seconda copia del database operativo su NAS, disco esterno o cartella protetta. Il percorso viene salvato localmente e può essere cambiato in qualsiasi momento.',
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.35,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF1E40AF),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              _InfoBadge(
+                label: 'Stato',
+                valore: statoTesto,
+                icona: configurato && raggiungibile
+                    ? Icons.verified_rounded
+                    : Icons.warning_amber_rounded,
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 9,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: Text(
+                  configurato
+                      ? raggiungibile
+                            ? 'NAS/cartella OK'
+                            : 'NAS/cartella non raggiungibile'
+                      : 'Percorso da scegliere',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w900,
+                    color: statoColore,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: SelectableText(
+              percorso ?? 'Nessuna cartella secondaria configurata',
+              style: const TextStyle(
+                fontSize: 12.5,
+                color: Color(0xFF1E3A8A),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: [
+              ElevatedButton.icon(
+                onPressed: backupInCorso ? null : onScegliCartella,
+                icon: const Icon(Icons.folder_open_rounded),
+                label: Text(
+                  configurato ? 'Cambia cartella' : 'Scegli cartella',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF2563EB),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              OutlinedButton.icon(
+                onPressed: configurato && !backupInCorso
+                    ? onRimuoviCartella
+                    : null,
+                icon: const Icon(Icons.delete_outline_rounded),
+                label: const Text('Rimuovi configurazione'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFFDC2626),
+                  side: const BorderSide(color: Color(0xFFFCA5A5)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed:
+                    backupDisponibile &&
+                        configurato &&
+                        raggiungibile &&
+                        !backupInCorso
+                    ? onBackupSecondario
+                    : null,
+                icon: backupInCorso
+                    ? const SizedBox(
+                        width: 17,
+                        height: 17,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.cloud_upload_rounded),
+                label: Text(
+                  backupInCorso
+                      ? 'Backup secondario in corso...'
+                      : 'Esegui backup secondario',
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF1D4ED8),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 13,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          if (ultimoBackupCreato != null) ...[
+            const SizedBox(height: 12),
+            const Text(
+              'Ultimo backup secondario creato:',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1E3A8A),
+              ),
+            ),
+            const SizedBox(height: 6),
+            SelectableText(
+              ultimoBackupCreato!,
+              style: const TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF1D4ED8),
               ),
             ),
           ],

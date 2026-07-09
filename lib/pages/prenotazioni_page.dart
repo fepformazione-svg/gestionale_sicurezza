@@ -903,6 +903,320 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
   }
 
+  bool filtroQualitaPrenotazioniAttivo(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+      case 'aziendali_senza_discente':
+      case 'senza_docente':
+      case 'recenti_da_sistemare':
+        return true;
+      default:
+        return false;
+    }
+  }
+
+  String descrizioneFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return 'Sono elencate le prenotazioni senza discente collegato oppure con discente non trovato. Verificare se il record va collegato manualmente a un discente esistente.';
+      case 'aziendali_senza_discente':
+        return 'Sono elencate le prenotazioni aziendali importate senza discente collegato. Alcuni record possono essere corretti se il corso era realmente aziendale.';
+      case 'senza_docente':
+        return 'Sono elencate le prenotazioni senza docente collegato oppure con docente non trovato. Collegare il docente quando il dato è disponibile.';
+      case 'recenti_da_sistemare':
+        return 'Sono elencate le prenotazioni recenti con collegamenti mancanti, utili per la pulizia operativa dei record più attuali.';
+      default:
+        return '';
+    }
+  }
+
+  String azioneFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return 'Azione suggerita: aprire la riga e usare il collegamento manuale discente quando opportuno.';
+      case 'aziendali_senza_discente':
+        return 'Azione suggerita: distinguere i veri corsi aziendali dai record che richiedono un discente.';
+      case 'senza_docente':
+        return 'Azione suggerita: aprire la riga e collegare il docente corretto quando disponibile.';
+      case 'recenti_da_sistemare':
+        return 'Azione suggerita: partire dai record più recenti e sistemare prima quelli operativi.';
+      default:
+        return '';
+    }
+  }
+
+  IconData iconaFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return Icons.person_off_outlined;
+      case 'aziendali_senza_discente':
+        return Icons.business_outlined;
+      case 'senza_docente':
+        return Icons.co_present_outlined;
+      case 'recenti_da_sistemare':
+        return Icons.manage_search_rounded;
+      default:
+        return Icons.info_outline_rounded;
+    }
+  }
+
+  Color coloreTestoFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return const Color(0xFF7C2D12);
+      case 'aziendali_senza_discente':
+        return const Color(0xFF0F766E);
+      case 'senza_docente':
+        return const Color(0xFF3730A3);
+      case 'recenti_da_sistemare':
+        return const Color(0xFFC2410C);
+      default:
+        return const Color(0xFF334155);
+    }
+  }
+
+  Color coloreSfondoFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return const Color(0xFFFFF7ED);
+      case 'aziendali_senza_discente':
+        return const Color(0xFFF0FDFA);
+      case 'senza_docente':
+        return const Color(0xFFEEF2FF);
+      case 'recenti_da_sistemare':
+        return const Color(0xFFFFF7ED);
+      default:
+        return const Color(0xFFF8FAFC);
+    }
+  }
+
+  Color coloreBordoFiltroQualitaPrenotazioni(String filtro) {
+    switch (filtro) {
+      case 'senza_discente':
+        return const Color(0xFFFED7AA);
+      case 'aziendali_senza_discente':
+        return const Color(0xFF99F6E4);
+      case 'senza_docente':
+        return const Color(0xFFC7D2FE);
+      case 'recenti_da_sistemare':
+        return const Color(0xFFFDBA74);
+      default:
+        return const Color(0xFFE2E8F0);
+    }
+  }
+
+  Widget riquadroOperativoFiltroQualitaPrenotazioni() {
+    if (!filtroQualitaPrenotazioniAttivo(filtroLocale)) {
+      return const SizedBox.shrink();
+    }
+
+    final conteggioFiltro = conteggioPrenotazioniDb(filtroLocale);
+    final conteggioCorrente = totalePrenotazioniFiltroCorrente;
+    final ricercaAttiva = ricercaController.text.trim().isNotEmpty;
+    final altezzaCompatta = MediaQuery.of(context).size.height < 760;
+    final testoConteggio = ricercaAttiva && conteggioCorrente != conteggioFiltro
+        ? '$conteggioCorrente visualizzate su $conteggioFiltro del filtro'
+        : '$conteggioFiltro ${conteggioFiltro == 1 ? 'record' : 'record'}';
+
+    final coloreTesto = coloreTestoFiltroQualitaPrenotazioni(filtroLocale);
+    final coloreSfondo = coloreSfondoFiltroQualitaPrenotazioni(filtroLocale);
+    final coloreBordo = coloreBordoFiltroQualitaPrenotazioni(filtroLocale);
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Container(
+        width: double.infinity,
+        padding: EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: altezzaCompatta ? 8 : 12,
+        ),
+        decoration: BoxDecoration(
+          color: coloreSfondo,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: coloreBordo, width: 1.1),
+        ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final compatto = constraints.maxWidth < 760 || altezzaCompatta;
+
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: compatto
+                            ? constraints.maxWidth
+                            : constraints.maxWidth * 0.58,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: coloreBordo),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              iconaFiltroQualitaPrenotazioni(filtroLocale),
+                              size: 17,
+                              color: coloreTesto,
+                            ),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                'Filtro qualità: ${etichettaFiltroPrenotazioni(filtroLocale)}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: coloreTesto,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: compatto
+                            ? constraints.maxWidth
+                            : constraints.maxWidth * 0.38,
+                      ),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 7,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: coloreBordo),
+                        ),
+                        child: Text(
+                          testoConteggio,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: coloreTesto,
+                            fontSize: 12.5,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                if (!altezzaCompatta) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    descrizioneFiltroQualitaPrenotazioni(filtroLocale),
+                    maxLines: compatto ? 3 : 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: Color(0xFF334155),
+                      fontSize: 13,
+                      height: 1.28,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                SizedBox(height: altezzaCompatta ? 5 : 8),
+                Wrap(
+                  spacing: 10,
+                  runSpacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxWidth: compatto
+                            ? constraints.maxWidth
+                            : constraints.maxWidth - 190,
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.tips_and_updates_outlined,
+                            size: 16,
+                            color: coloreTesto,
+                          ),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: Text(
+                              azioneFiltroQualitaPrenotazioni(filtroLocale),
+                              maxLines: altezzaCompatta
+                                  ? 1
+                                  : (compatto ? 2 : 1),
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: coloreTesto,
+                                fontSize: 12.5,
+                                height: 1.2,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: () async {
+                        ricercaPrenotazioniDebounce?.cancel();
+
+                        setState(() {
+                          ricercaController.clear();
+                          filtroLocale = 'tutte';
+                          azzeraSelezionePrenotazioni();
+                        });
+
+                        await caricaPrenotazioni();
+
+                        if (!mounted) return;
+                        ripristinaFocusTabella();
+                      },
+                      icon: const Icon(Icons.restart_alt_rounded, size: 17),
+                      label: const Text(
+                        'Azzera filtri',
+                        style: TextStyle(
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: const Color(0xFF2563EB),
+                        side: const BorderSide(color: Color(0xFFBFDBFE)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 9,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
   String statoPrenotazione(Map<String, dynamic> p) {
     final conferma = p['conferma'] == 1;
     final registro = p['registro'] == 1;
@@ -4184,7 +4498,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
 
             Tooltip(
               message: mostraTutteLePrenotazioni
-                  ? 'Tutte le prenotazioni sono giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  visualizzate'
+                  ? 'Tutte le prenotazioni sono gia visualizzate'
                   : 'Carica tutte le prenotazioni',
               child: AppActionButton(
                 type: AppActionButtonType.aggiorna,
@@ -4572,57 +4886,62 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         ],
                       ),
 
-                      const SizedBox(height: 18),
-                      Wrap(
-                        spacing: 14,
-                        runSpacing: 10,
-                        children: [
-                          compactKpiCard(
-                            titolo: 'Totale',
-                            valore: conteggioPrenotazioniDb('tutte').toString(),
-                            colore: const Color(0xFF2563EB),
-                            filtro: 'tutte',
-                          ),
+                      if (MediaQuery.of(context).size.height >= 760) ...[
+                        const SizedBox(height: 14),
+                        Wrap(
+                          spacing: 14,
+                          runSpacing: 10,
+                          children: [
+                            compactKpiCard(
+                              titolo: 'Totale',
+                              valore: conteggioPrenotazioniDb(
+                                'tutte',
+                              ).toString(),
+                              colore: const Color(0xFF2563EB),
+                              filtro: 'tutte',
+                            ),
 
-                          compactKpiCard(
-                            titolo: 'Aperte',
-                            valore: conteggioPrenotazioniDb(
-                              'aperte',
-                            ).toString(),
-                            colore: Colors.green,
-                            filtro: 'aperte',
-                          ),
+                            compactKpiCard(
+                              titolo: 'Aperte',
+                              valore: conteggioPrenotazioniDb(
+                                'aperte',
+                              ).toString(),
+                              colore: Colors.green,
+                              filtro: 'aperte',
+                            ),
 
-                          compactKpiCard(
-                            titolo: 'Registro',
-                            valore: conteggioPrenotazioniDb(
-                              'registro',
-                            ).toString(),
-                            colore: Colors.orange,
-                            filtro: 'registro',
-                          ),
+                            compactKpiCard(
+                              titolo: 'Registro',
+                              valore: conteggioPrenotazioniDb(
+                                'registro',
+                              ).toString(),
+                              colore: Colors.orange,
+                              filtro: 'registro',
+                            ),
 
-                          compactKpiCard(
-                            titolo: 'Chiuse',
-                            valore: conteggioPrenotazioniDb(
-                              'chiuse',
-                            ).toString(),
-                            colore: Colors.grey,
-                            filtro: 'chiuse',
-                          ),
+                            compactKpiCard(
+                              titolo: 'Chiuse',
+                              valore: conteggioPrenotazioniDb(
+                                'chiuse',
+                              ).toString(),
+                              colore: Colors.grey,
+                              filtro: 'chiuse',
+                            ),
 
-                          compactKpiCard(
-                            titolo: 'Da fare',
-                            valore: conteggioPrenotazioniDb(
-                              'da_fare',
-                            ).toString(),
-                            colore: Colors.red,
-                            filtro: 'da_fare',
-                          ),
-                        ],
-                      ),
+                            compactKpiCard(
+                              titolo: 'Da fare',
+                              valore: conteggioPrenotazioniDb(
+                                'da_fare',
+                              ).toString(),
+                              colore: Colors.red,
+                              filtro: 'da_fare',
+                            ),
+                          ],
+                        ),
 
-                      const SizedBox(height: 2),
+                        const SizedBox(height: 2),
+                      ] else
+                        const SizedBox(height: 8),
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,
@@ -4732,6 +5051,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         ],
                       ),
 
+                      riquadroOperativoFiltroQualitaPrenotazioni(),
+
                       if (prenotazioniSelezionateIds.isNotEmpty) ...[
                         const SizedBox(height: 8),
 
@@ -4750,7 +5071,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                         ? 'Nessuna prenotazione attualmente visibile'
                                         : prenotazioniSelezionateIds.length ==
                                               prenotazioniVisibili.length
-                                        ? 'Le prenotazioni visibili sono giÃƒÆ’Ã†â€™Ãƒâ€ Ã¢â‚¬â„¢ÃƒÆ’Ã¢â‚¬Â ÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢ÃƒÆ’Ã†â€™ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â  selezionate'
+                                        ? 'Le prenotazioni visibili sono gia selezionate'
                                         : prenotazioniSelezionateIds.isNotEmpty
                                         ? 'Aggiungi alla selezione tutte le prenotazioni visibili'
                                         : 'Seleziona le prenotazioni attualmente visibili',

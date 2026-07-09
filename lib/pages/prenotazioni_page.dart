@@ -5776,11 +5776,160 @@ class PrenotazioneRow extends StatefulWidget {
 class _PrenotazioneRowState extends State<PrenotazioneRow> {
   bool hover = false;
 
+  bool _haIdValido(dynamic value) {
+    if (value == null) return false;
+
+    final testoId = value.toString().trim().toLowerCase();
+
+    return testoId.isNotEmpty && testoId != '0' && testoId != 'null';
+  }
+
+  String _testoDocente() {
+    final cognome = widget.testo(widget.prenotazione['docente_cognome']);
+    final nome = widget.testo(widget.prenotazione['docente_nome']);
+    final docente = '$cognome $nome'.trim();
+
+    return docente.isEmpty ? '-' : docente;
+  }
+
+  Widget _badgeCollegamentoMancante({
+    required String testo,
+    required String tooltip,
+    required IconData icona,
+    required Color coloreTesto,
+    required Color coloreSfondo,
+    required Color coloreBordo,
+    double fontSize = 11.3,
+  }) {
+    return Tooltip(
+      message: tooltip,
+      child: Container(
+        height: 26,
+        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
+        decoration: BoxDecoration(
+          color: coloreSfondo,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: coloreBordo, width: 1),
+        ),
+        child: Row(
+          children: [
+            Icon(icona, size: 14, color: coloreTesto),
+            const SizedBox(width: 5),
+            Expanded(
+              child: Text(
+                testo,
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
+                style: TextStyle(
+                  fontSize: fontSize,
+                  height: 1,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0.1,
+                  color: coloreTesto,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _cellaDocente() {
+    final docente = _testoDocente();
+    final haDocente = _haIdValido(widget.prenotazione['docente_id']);
+
+    if (!haDocente) {
+      return _badgeCollegamentoMancante(
+        testo: 'SENZA DOCENTE',
+        tooltip: 'Prenotazione senza docente collegato',
+        icona: Icons.co_present_outlined,
+        coloreTesto: const Color(0xFF3730A3),
+        coloreSfondo: const Color(0xFFEEF2FF),
+        coloreBordo: const Color(0xFFC7D2FE),
+        fontSize: 10.5,
+      );
+    }
+
+    if (docente == '-') {
+      return _badgeCollegamentoMancante(
+        testo: 'DOCENTE NON TROVATO',
+        tooltip:
+            'La prenotazione ha un docente_id, ma il docente non risulta trovato',
+        icona: Icons.warning_amber_rounded,
+        coloreTesto: const Color(0xFFB45309),
+        coloreSfondo: const Color(0xFFFFFBEB),
+        coloreBordo: const Color(0xFFFDE68A),
+        fontSize: 10.2,
+      );
+    }
+
+    return Text(
+      docente,
+      overflow: TextOverflow.ellipsis,
+      maxLines: 1,
+      style: const TextStyle(fontSize: 13, color: Color(0xFF111827)),
+    );
+  }
+
+  Widget _cellaDiscente() {
+    final discente = widget.nomeDiscente(widget.prenotazione);
+    final normalizzato = discente.trim().toUpperCase();
+
+    if (normalizzato == 'AZIENDALE / SENZA DISCENTE') {
+      return _badgeCollegamentoMancante(
+        testo: 'AZIENDALE / SENZA DISCENTE',
+        tooltip: 'Prenotazione aziendale importata senza discente collegato',
+        icona: Icons.business_outlined,
+        coloreTesto: const Color(0xFF0F766E),
+        coloreSfondo: const Color(0xFFF0FDFA),
+        coloreBordo: const Color(0xFF99F6E4),
+      );
+    }
+
+    if (normalizzato == 'PRENOTAZIONE NON CLASSIFICATA' ||
+        !_haIdValido(widget.prenotazione['discente_id'])) {
+      return _badgeCollegamentoMancante(
+        testo: 'SENZA DISCENTE',
+        tooltip: 'Prenotazione senza discente collegato',
+        icona: Icons.person_off_outlined,
+        coloreTesto: const Color(0xFFC2410C),
+        coloreSfondo: const Color(0xFFFFF7ED),
+        coloreBordo: const Color(0xFFFED7AA),
+      );
+    }
+
+    if (normalizzato == 'DISCENTE NON TROVATO') {
+      return _badgeCollegamentoMancante(
+        testo: 'DISCENTE NON TROVATO',
+        tooltip:
+            'La prenotazione ha un discente_id, ma il discente non risulta trovato',
+        icona: Icons.warning_amber_rounded,
+        coloreTesto: const Color(0xFFB91C1C),
+        coloreSfondo: const Color(0xFFFEF2F2),
+        coloreBordo: const Color(0xFFFECACA),
+      );
+    }
+
+    return Text(
+      discente,
+      overflow: TextOverflow.ellipsis,
+      style: TextStyle(
+        fontSize: 13,
+        height: 1.1,
+        fontWeight: widget.selezionata ? FontWeight.w700 : FontWeight.w500,
+        color: const Color(0xFF111827),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final stato = widget.statoPrenotazione(widget.prenotazione);
-    final puoCollegareDiscente = widget.prenotazione['discente_id'] == null;
-    final puoCollegareDocente = widget.prenotazione['docente_id'] == null;
+    final puoCollegareDiscente = !_haIdValido(
+      widget.prenotazione['discente_id'],
+    );
+    final puoCollegareDocente = !_haIdValido(widget.prenotazione['docente_id']);
 
     Color? rowColor;
 
@@ -5871,25 +6020,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                           width: colDocente,
                           child: Padding(
                             padding: const EdgeInsets.only(left: 4),
-                            child: Text(
-                              (() {
-                                final cognome = widget.testo(
-                                  widget.prenotazione['docente_cognome'],
-                                );
-                                final nome = widget.testo(
-                                  widget.prenotazione['docente_nome'],
-                                );
-                                final docente = '$cognome $nome'.trim();
-
-                                return docente.isEmpty ? '-' : docente;
-                              })(),
-                              overflow: TextOverflow.ellipsis,
-                              maxLines: 1,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                color: Color(0xFF111827),
-                              ),
-                            ),
+                            child: _cellaDocente(),
                           ),
                         ),
 
@@ -6114,18 +6245,7 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                         color: effectiveColor ?? Colors.white,
                         alignment: Alignment.centerLeft,
                         padding: const EdgeInsets.only(left: 16, right: 14),
-                        child: Text(
-                          widget.nomeDiscente(widget.prenotazione),
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            height: 1.1,
-                            fontWeight: widget.selezionata
-                                ? FontWeight.w700
-                                : FontWeight.w500,
-                            color: const Color(0xFF111827),
-                          ),
-                        ),
+                        child: _cellaDiscente(),
                       ),
                     ),
                   ],

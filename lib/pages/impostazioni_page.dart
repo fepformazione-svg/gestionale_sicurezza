@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'dati_azienda_page.dart';
+import 'backup_database_page.dart';
 import 'medici_strutture_page.dart';
 import 'visite_mediche_page.dart';
 import 'docenti_page.dart';
@@ -174,6 +175,11 @@ class ImpostazioniPage extends StatelessWidget {
             titolo: 'Backup e database',
             descrizione:
                 'Percorsi database, backup, esportazioni e future impostazioni tecniche.',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BackupDatabasePage()),
+              );
+            },
           ),
         ],
       ),

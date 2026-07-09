@@ -13,6 +13,56 @@ class BackupService {
     return join(userProfile, 'Documents', 'Gestionale Sicurezza');
   }
 
+  static String? percorsoBase() => _basePath();
+
+  static String? percorsoDatabase() {
+    final basePath = _basePath();
+    if (basePath == null) return null;
+
+    return join(basePath, 'gestionale_sicurezza.db');
+  }
+
+  static String? percorsoBackup() {
+    final basePath = _basePath();
+    if (basePath == null) return null;
+
+    return join(basePath, 'Backup');
+  }
+
+  static String? percorsoExport() {
+    final basePath = _basePath();
+    if (basePath == null) return null;
+
+    return join(basePath, 'Export');
+  }
+
+  static bool databaseEsistente() {
+    final dbPath = percorsoDatabase();
+    if (dbPath == null) return false;
+
+    return File(dbPath).existsSync();
+  }
+
+  static int? dimensioneDatabaseBytes() {
+    final dbPath = percorsoDatabase();
+    if (dbPath == null) return null;
+
+    final file = File(dbPath);
+    if (!file.existsSync()) return null;
+
+    return file.lengthSync();
+  }
+
+  static DateTime? ultimaModificaDatabase() {
+    final dbPath = percorsoDatabase();
+    if (dbPath == null) return null;
+
+    final file = File(dbPath);
+    if (!file.existsSync()) return null;
+
+    return file.lastModifiedSync();
+  }
+
   static Future<String?> eseguiBackupAvvio() async {
     return _eseguiBackup(silenzioso: true);
   }
@@ -23,11 +73,10 @@ class BackupService {
 
   static Future<String?> _eseguiBackup({required bool silenzioso}) async {
     try {
-      final basePath = _basePath();
-      if (basePath == null) return null;
+      final dbPath = percorsoDatabase();
+      final backupPath = percorsoBackup();
 
-      final dbPath = join(basePath, 'gestionale_sicurezza.db');
-      final backupPath = join(basePath, 'Backup');
+      if (dbPath == null || backupPath == null) return null;
 
       final dbFile = File(dbPath);
       if (!dbFile.existsSync()) return null;
@@ -43,7 +92,8 @@ class BackupService {
           '${now.month.toString().padLeft(2, '0')}_'
           '${now.day.toString().padLeft(2, '0')}_'
           '${now.hour.toString().padLeft(2, '0')}'
-          '${now.minute.toString().padLeft(2, '0')}';
+          '${now.minute.toString().padLeft(2, '0')}'
+          '${now.second.toString().padLeft(2, '0')}';
 
       final backupFile = join(
         backupPath,

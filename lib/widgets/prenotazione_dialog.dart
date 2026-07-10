@@ -336,6 +336,18 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
   void salva() {
     if (!formKey.currentState!.validate()) return;
 
+    if (discenteId == null || impresaId == null || corsoId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Seleziona discente, impresa e corso dall’elenco dei risultati prima di salvare.',
+          ),
+          backgroundColor: Color(0xFFF97316),
+        ),
+      );
+      return;
+    }
+
     final attrezzatureSelezionate = attrezzatureSelezionateIds.map((id) {
       final quantitaText =
           quantitaAttrezzatureControllers[id]?.text.trim().replaceAll(
@@ -424,7 +436,10 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                   controller: discenteController,
                   label: 'Discente',
                   risultati: discentiFiltrati,
-                  onChanged: filtraDiscenti,
+                  onChanged: (value) {
+                    discenteId = null;
+                    filtraDiscenti(value);
+                  },
                   getTitle: nomeDiscente,
                   getSubtitle: (item) =>
                       (item['nome_impresa'] ?? '').toString(),
@@ -448,7 +463,10 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                   controller: impresaController,
                   label: 'Impresa',
                   risultati: impreseFiltrate,
-                  onChanged: filtraImprese,
+                  onChanged: (value) {
+                    impresaId = null;
+                    filtraImprese(value);
+                  },
                   getTitle: nomeImpresa,
                   onSelect: (item) {
                     impresaId = item['id'];
@@ -466,7 +484,10 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                   controller: corsoController,
                   label: 'Corso',
                   risultati: corsiFiltrati,
-                  onChanged: filtraCorsi,
+                  onChanged: (value) {
+                    corsoId = null;
+                    filtraCorsi(value);
+                  },
                   getTitle: nomeCorso,
                   onSelect: (item) {
                     corsoId = item['id'];

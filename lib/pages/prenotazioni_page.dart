@@ -27,6 +27,20 @@ import 'package:intl/intl.dart';
 
 import '../models/registro_presenza.dart';
 
+extension _PrenotazioniLayoutSafety on Widget {
+  Widget hideWhenTooShort(double minimumHeight) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight < minimumHeight) {
+          return const SizedBox.shrink();
+        }
+
+        return this;
+      },
+    );
+  }
+}
+
 class PrenotazioniPage extends StatefulWidget {
   final String globalSearch;
   final String filtro;
@@ -441,12 +455,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         registro: registro,
         conferma: conferma,
       );
-
-      if (conferma == 1) {
-        await DatabaseService.instance.confermaPrenotazioneWorkflow(id);
-      } else {
-        await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(id);
-      }
     }
 
     if (!mounted) return;
@@ -461,6 +469,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             'conferma': conferma,
           };
         }
+
         return p;
       }).toList();
 
@@ -473,6 +482,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             'conferma': conferma,
           };
         }
+
         return p;
       }).toList();
 
@@ -482,7 +492,46 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       selectedRowIndex = null;
     });
 
+    Object? erroreWorkflow;
+    StackTrace? stackTraceWorkflow;
+
+    for (final id in ids) {
+      try {
+        if (conferma == 1) {
+          await DatabaseService.instance.confermaPrenotazioneWorkflow(id);
+        } else {
+          await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(
+            id,
+          );
+        }
+      } catch (e, stackTrace) {
+        erroreWorkflow = e;
+        stackTraceWorkflow = stackTrace;
+        break;
+      }
+    }
+
+    if (erroreWorkflow != null) {
+      debugPrint('Errore sincronizzazione Diario/Scadenze: $erroreWorkflow');
+
+      if (stackTraceWorkflow != null) {
+        debugPrintStack(stackTrace: stackTraceWorkflow);
+      }
+    }
+
     notificaDatiModificati();
+
+    if (!mounted || erroreWorkflow == null) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Stato prenotazione salvato, ma la sincronizzazione '
+          'Diario/Scadenze non è stata completata: $erroreWorkflow',
+        ),
+        backgroundColor: const Color(0xFFF97316),
+      ),
+    );
   }
 
   Future<void> caricaPrenotazioniIniziali() async {
@@ -1556,10 +1605,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         ),
       );
 
-      if (datiPuliti['conferma'] == 1) {
-        await DatabaseService.instance.confermaPrenotazioneWorkflow(nuovoId);
-      }
-
       await caricaPrenotazioni();
       notificaDatiModificati();
 
@@ -1607,16 +1652,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
           prenotazioneModificata['attrezzature_ids'] ?? [],
         ),
       );
-
-      if (datiPuliti['conferma'] == 1) {
-        await DatabaseService.instance.confermaPrenotazioneWorkflow(
-          prenotazione['id'],
-        );
-      } else {
-        await DatabaseService.instance.annullaConfermaPrenotazioneWorkflow(
-          prenotazione['id'],
-        );
-      }
 
       await caricaPrenotazioni();
       notificaDatiModificati();
@@ -5997,7 +6032,7 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                     ],
                                   ),
                                 ),
-                              ),
+                              ).hideWhenTooShort(39),
                             ),
                           ),
                         ),

@@ -1144,82 +1144,130 @@ FROM prenotazioni p
   Future<void> confermaPrenotazioneWorkflow(int prenotazioneId) async {
     final db = await _db;
 
-    final prenotazioni = await db.query(
-      'prenotazioni',
-      where: 'id = ?',
-      whereArgs: [prenotazioneId],
-      limit: 1,
-    );
-
-    if (prenotazioni.isEmpty) return;
-
-    final p = prenotazioni.first;
-
-    final esiste = await db.query(
-      'diario',
-      where: 'prenotazione_id = ?',
-      whereArgs: [prenotazioneId],
-      limit: 1,
-    );
-
-    final dataCorso = p['data']?.toString();
-    final corsoId = p['corso_id'];
-
-    String? scadenza;
-
-    if (dataCorso != null && dataCorso.isNotEmpty && corsoId != null) {
-      final corso = await db.query(
-        'corsi',
+    await db.transaction((txn) async {
+      final prenotazioni = await txn.query(
+        'prenotazioni',
         where: 'id = ?',
-        whereArgs: [corsoId],
+        whereArgs: [prenotazioneId],
         limit: 1,
       );
 
-      final validita = corso.isNotEmpty
-          ? corso.first['validita_anni'] as int? ?? 0
-          : 0;
+      if (prenotazioni.isEmpty) return;
 
-      scadenza = _calcolaScadenza(dataCorso, validita);
-    }
+      final p = prenotazioni.first;
 
-    final datiDiario = {
-      'prenotazione_id': prenotazioneId,
-      'discente_id': p['discente_id'],
-      'impresa_id': p['impresa_id'],
-      'corso_id': p['corso_id'],
-      'data': p['data'],
-      'prot': p['prot'],
-      'scadenza': scadenza,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
-
-    if (esiste.isEmpty) {
-      await db.insert('diario', {
-        ...datiDiario,
-        'created_at': DateTime.now().toIso8601String(),
-      });
-    } else {
-      await db.update(
+      final esiste = await txn.query(
         'diario',
-        datiDiario,
         where: 'prenotazione_id = ?',
         whereArgs: [prenotazioneId],
+        limit: 1,
       );
-    }
 
-    await aggiornaScadenzeDaDiario();
+      final dataCorso = p['data']?.toString();
+      final corsoId = p['corso_id'];
+
+      String? scadenza;
+
+      if (dataCorso != null && dataCorso.isNotEmpty && corsoId != null) {
+        final corso = await txn.query(
+          'corsi',
+          where: 'id = ?',
+          whereArgs: [corsoId],
+          limit: 1,
+        );
+
+        final validita = corso.isNotEmpty
+            ? corso.first['validita_anni'] as int? ?? 0
+            : 0;
+
+        scadenza = _calcolaScadenza(dataCorso, validita);
+      }
+
+      final adesso = DateTime.now().toIso8601String();
+
+      final datiDiario = {
+        'prenotazione_id': prenotazioneId,
+        'discente_id': p['discente_id'],
+        'impresa_id': p['impresa_id'],
+        'corso_id': p['corso_id'],
+        'data': p['data'],
+        'prot': p['prot'],
+        'scadenza': scadenza,
+        'updated_at': adesso,
+      };
+
+      final int diarioId;
+
+      if (esiste.isEmpty) {
+        diarioId = await txn.insert('diario', {
+          ...datiDiario,
+          'created_at': adesso,
+        });
+      } else {
+        diarioId = esiste.first['id'] as int;
+
+        await txn.update(
+          'diario',
+          datiDiario,
+          where: 'id = ?',
+          whereArgs: [diarioId],
+        );
+      }
+
+      final datiScadenza = {
+        'diario_id': diarioId,
+        'discente_id': p['discente_id'],
+        'impresa_id': p['impresa_id'],
+        'corso_id': p['corso_id'],
+        'data_corso': dataCorso,
+        'data_scadenza': scadenza,
+        'stato': _statoScadenza(scadenza),
+        'updated_at': adesso,
+      };
+
+      final scadenzaEsistente = await txn.query(
+        'scadenze',
+        columns: ['id'],
+        where: 'diario_id = ?',
+        whereArgs: [diarioId],
+        limit: 1,
+      );
+
+      if (scadenzaEsistente.isEmpty) {
+        await txn.insert('scadenze', datiScadenza);
+      } else {
+        await txn.update(
+          'scadenze',
+          datiScadenza,
+          where: 'diario_id = ?',
+          whereArgs: [diarioId],
+        );
+      }
+    });
   }
 
   Future<void> annullaConfermaPrenotazioneWorkflow(int prenotazioneId) async {
     final db = await _db;
 
-    await db.delete(
-      'diario',
-      where: 'prenotazione_id = ?',
-      whereArgs: [prenotazioneId],
-    );
+    await db.transaction((txn) async {
+      await txn.rawDelete(
+        '''
+        DELETE FROM scadenze
+        WHERE diario_id IN (
+          SELECT id
+          FROM diario
+          WHERE prenotazione_id = ?
+        )
+        ''',
+        [prenotazioneId],
+      );
 
-    await aggiornaScadenzeDaDiario();
+      await txn.delete(
+        'diario',
+        where: 'prenotazione_id = ?',
+        whereArgs: [prenotazioneId],
+      );
+    });
   }
 
   // =========================

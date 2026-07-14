@@ -11,9 +11,11 @@ import 'package:printing/printing.dart';
 import '../utils/pdf_azienda_helper.dart';
 
 import '../models/corso.dart';
+import '../models/corso_piattaforma.dart';
 import '../services/database_service.dart';
 
 import '../widgets/app_search_bar.dart';
+import '../widgets/corso_piattaforme_dialog.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 import '../widgets/app_action_button.dart';
@@ -28,6 +30,7 @@ class CorsiPage extends StatefulWidget {
 class _CorsiPageState extends State<CorsiPage> {
   List<Corso> corsi = [];
   List<Corso> corsiFiltrati = [];
+  Map<int, List<CorsoPiattaforma>> piattaformePerCorso = {};
 
   bool loading = true;
   String ricercaCorrente = '';
@@ -40,26 +43,111 @@ class _CorsiPageState extends State<CorsiPage> {
 
   Future<void> caricaCorsi() async {
     final dati = await DatabaseService.instance.getCorsi();
+    final collegamenti = await DatabaseService.instance.getCorsoPiattaforme(
+      soloAttive: true,
+    );
+
+    final raggruppati = <int, List<CorsoPiattaforma>>{};
+
+    for (final collegamento in collegamenti) {
+      raggruppati.putIfAbsent(collegamento.corsoId, () => []).add(collegamento);
+    }
 
     if (!mounted) return;
 
     setState(() {
       corsi = dati;
-      corsiFiltrati = dati;
+      piattaformePerCorso = raggruppati;
+      corsiFiltrati = filtraCorsi(dati, ricercaCorrente);
       loading = false;
     });
   }
 
-  void cercaCorsi(String valore) {
+  List<Corso> filtraCorsi(List<Corso> elenco, String valore) {
     final query = valore.toLowerCase().trim();
 
+    if (query.isEmpty) {
+      return List<Corso>.from(elenco);
+    }
+
+    return elenco.where((corso) {
+      if (corso.denominazione.toLowerCase().contains(query)) {
+        return true;
+      }
+
+      final id = corso.id;
+
+      if (id == null) return false;
+
+      final collegamenti =
+          piattaformePerCorso[id] ?? const <CorsoPiattaforma>[];
+
+      return collegamenti.any((collegamento) {
+        return collegamento.piattaforma.toLowerCase().contains(query) ||
+            collegamento.codice.toLowerCase().contains(query) ||
+            (collegamento.note ?? '').toLowerCase().contains(query);
+      });
+    }).toList();
+  }
+
+  void cercaCorsi(String valore) {
     setState(() {
       ricercaCorrente = valore.trim();
-
-      corsiFiltrati = corsi.where((c) {
-        return c.denominazione.toLowerCase().contains(query);
-      }).toList();
+      corsiFiltrati = filtraCorsi(corsi, ricercaCorrente);
     });
+  }
+
+  List<CorsoPiattaforma> codiciPiattaformaCorso(Corso corso) {
+    final id = corso.id;
+
+    if (id == null) {
+      return const <CorsoPiattaforma>[];
+    }
+
+    return piattaformePerCorso[id] ?? const <CorsoPiattaforma>[];
+  }
+
+  int numeroCodiciPiattaforma(Corso corso) {
+    return codiciPiattaformaCorso(corso).length;
+  }
+
+  String riepilogoCodiciPiattaforma(Corso corso) {
+    final codici = codiciPiattaformaCorso(corso);
+
+    if (codici.isEmpty) {
+      return 'Nessun codice configurato';
+    }
+
+    final voci = codici.take(2).map((collegamento) {
+      final stato = collegamento.attivo ? '' : ' (non attivo)';
+
+      return '${collegamento.piattaforma}: '
+          '${collegamento.codice}$stato';
+    }).toList();
+
+    final rimanenti = codici.length - voci.length;
+
+    if (rimanenti > 0) {
+      voci.add('+$rimanenti');
+    }
+
+    return voci.join(' | ');
+  }
+
+  Future<void> apriDialogCodiciPiattaforma(Corso corso) async {
+    if (corso.id == null) return;
+
+    final modificato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return CorsoPiattaformeDialog(corso: corso);
+      },
+    );
+
+    if (modificato == true) {
+      await caricaCorsi();
+    }
   }
 
   Future<void> esportaExcelCorsi() async {
@@ -618,7 +706,7 @@ class _CorsiPageState extends State<CorsiPage> {
         return Dialog(
           backgroundColor: Colors.transparent,
           child: Container(
-            width: 560,
+            width: 680,
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
               color: Colors.white,
@@ -640,7 +728,7 @@ class _CorsiPageState extends State<CorsiPage> {
                 const SizedBox(height: 6),
 
                 const Text(
-                  'Modifica denominazione, durata o validità del corso.',
+                  'Modifica i dati del corso e gestisci i codici delle piattaforme.',
                   style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                 ),
 
@@ -688,6 +776,55 @@ class _CorsiPageState extends State<CorsiPage> {
                       ),
                     ),
                   ],
+                ),
+
+                const SizedBox(height: 18),
+
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.hub_outlined, color: Color(0xFF2563EB)),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Piattaforme e codici',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              'Associa uno o pi? codici utilizzati sulle piattaforme formative.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: corso.id == null
+                            ? null
+                            : () async {
+                                await apriDialogCodiciPiattaforma(corso);
+                              },
+                        icon: const Icon(Icons.settings_outlined),
+                        label: const Text('Gestisci codici'),
+                      ),
+                    ],
+                  ),
                 ),
 
                 const SizedBox(height: 28),
@@ -888,7 +1025,7 @@ class _CorsiPageState extends State<CorsiPage> {
             children: [
               Expanded(
                 child: AppSearchBar(
-                  hintText: 'Cerca corso...',
+                  hintText: 'Cerca corso, piattaforma o codice...',
                   onChanged: cercaCorsi,
                 ),
               ),
@@ -968,6 +1105,57 @@ class _CorsiPageState extends State<CorsiPage> {
 
                         const SizedBox(height: 18),
 
+                        Container(
+                          height: 42,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8FAFC),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Row(
+                            children: [
+                              SizedBox(width: 38),
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  'Corso',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              Expanded(
+                                flex: 2,
+                                child: Text(
+                                  'Piattaforme / codici',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ),
+                              SizedBox(width: 12),
+                              SizedBox(
+                                width: 164,
+                                child: Align(
+                                  alignment: Alignment.centerRight,
+                                  child: Text(
+                                    'Azioni',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: Color(0xFF475569),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+
                         Expanded(
                           child: corsiFiltrati.isEmpty
                               ? const Center(
@@ -987,13 +1175,15 @@ class _CorsiPageState extends State<CorsiPage> {
                                   ),
                                   itemBuilder: (context, index) {
                                     final item = corsiFiltrati[index];
+                                    final numeroCodici =
+                                        numeroCodiciPiattaforma(item);
 
                                     return InkWell(
                                       onDoubleTap: () =>
                                           apriDialogModificaCorso(item),
                                       borderRadius: BorderRadius.circular(12),
                                       child: Container(
-                                        height: 72,
+                                        height: 80,
                                         padding: const EdgeInsets.symmetric(
                                           horizontal: 14,
                                         ),
@@ -1007,6 +1197,7 @@ class _CorsiPageState extends State<CorsiPage> {
                                             const SizedBox(width: 14),
 
                                             Expanded(
+                                              flex: 3,
                                               child: Column(
                                                 mainAxisAlignment:
                                                     MainAxisAlignment.center,
@@ -1036,6 +1227,75 @@ class _CorsiPageState extends State<CorsiPage> {
                                               ),
                                             ),
                                             const SizedBox(width: 12),
+
+                                            Expanded(
+                                              flex: 2,
+                                              child: Tooltip(
+                                                message:
+                                                    riepilogoCodiciPiattaforma(
+                                                      item,
+                                                    ),
+                                                child: Column(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.center,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      riepilogoCodiciPiattaforma(
+                                                        item,
+                                                      ),
+                                                      maxLines: 2,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontSize: 13,
+                                                        color: numeroCodici == 0
+                                                            ? const Color(
+                                                                0xFF9CA3AF,
+                                                              )
+                                                            : const Color(
+                                                                0xFF334155,
+                                                              ),
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                    const SizedBox(height: 3),
+                                                    Text(
+                                                      numeroCodici == 1
+                                                          ? '1 codice'
+                                                          : '$numeroCodici codici',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Color(
+                                                          0xFF64748B,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 12),
+
+                                            Tooltip(
+                                              message:
+                                                  'Gestisci codici piattaforma',
+                                              child: IconButton(
+                                                onPressed: () =>
+                                                    apriDialogCodiciPiattaforma(
+                                                      item,
+                                                    ),
+                                                icon: const Icon(
+                                                  Icons.hub_outlined,
+                                                ),
+                                                color: const Color(0xFF0F766E),
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 4),
 
                                             Tooltip(
                                               message: 'Modifica corso',

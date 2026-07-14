@@ -66,7 +66,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 10,
+        version: 11,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -190,6 +190,21 @@ updated_at TEXT NOT NULL
         validita_anni INTEGER DEFAULT 0,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS corso_piattaforme (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        corso_id INTEGER NOT NULL,
+        piattaforma TEXT NOT NULL,
+        codice TEXT NOT NULL,
+        note TEXT,
+        attivo INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        updated_at TEXT,
+        FOREIGN KEY (corso_id) REFERENCES corsi(id) ON DELETE CASCADE,
+        UNIQUE (corso_id, piattaforma, codice)
       )
     ''');
 
@@ -1344,6 +1359,21 @@ updated_at TEXT NOT NULL
 
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_corsi_validita_anni ON corsi(validita_anni)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_corso_piattaforme_corso '
+      'ON corso_piattaforme(corso_id)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_corso_piattaforme_piattaforma '
+      'ON corso_piattaforme(piattaforma)',
+    );
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_corso_piattaforme_attivo '
+      'ON corso_piattaforme(attivo)',
     );
 
     await db.execute(

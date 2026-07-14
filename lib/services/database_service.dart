@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../models/discente.dart';
 import '../models/impresa.dart';
 import '../models/corso.dart';
+import '../models/corso_piattaforma.dart';
 import '../models/prezzario.dart';
 import 'app_database.dart';
 
@@ -490,7 +491,96 @@ class DatabaseService {
   Future<void> deleteCorso(int id) async {
     final db = await _db;
 
-    await db.delete('corsi', where: 'id = ?', whereArgs: [id]);
+    await db.transaction((txn) async {
+      await txn.delete(
+        'corso_piattaforme',
+        where: 'corso_id = ?',
+        whereArgs: [id],
+      );
+
+      await txn.delete('corsi', where: 'id = ?', whereArgs: [id]);
+    });
+  }
+
+  Future<List<CorsoPiattaforma>> getCorsoPiattaforme({
+    int? corsoId,
+    bool soloAttive = false,
+  }) async {
+    final db = await _db;
+    final condizioni = <String>[];
+    final argomenti = <Object?>[];
+
+    if (corsoId != null) {
+      condizioni.add('corso_id = ?');
+      argomenti.add(corsoId);
+    }
+
+    if (soloAttive) {
+      condizioni.add('attivo = 1');
+    }
+
+    final righe = await db.query(
+      'corso_piattaforme',
+      where: condizioni.isEmpty ? null : condizioni.join(' AND '),
+      whereArgs: argomenti.isEmpty ? null : argomenti,
+      orderBy:
+          'corso_id ASC, '
+          'piattaforma COLLATE NOCASE ASC, '
+          'codice COLLATE NOCASE ASC',
+    );
+
+    return righe.map(CorsoPiattaforma.fromMap).toList();
+  }
+
+  Future<int> insertCorsoPiattaforma(CorsoPiattaforma collegamento) async {
+    final db = await _db;
+
+    return db.insert(
+      'corso_piattaforme',
+      collegamento.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.abort,
+    );
+  }
+
+  Future<void> updateCorsoPiattaforma(CorsoPiattaforma collegamento) async {
+    final id = collegamento.id;
+
+    if (id == null) {
+      throw ArgumentError(
+        'Impossibile aggiornare un codice piattaforma senza ID',
+      );
+    }
+
+    final db = await _db;
+
+    await db.update(
+      'corso_piattaforme',
+      collegamento.toMap(),
+      where: 'id = ?',
+      whereArgs: [id],
+      conflictAlgorithm: ConflictAlgorithm.abort,
+    );
+  }
+
+  Future<void> deleteCorsoPiattaforma(int id) async {
+    final db = await _db;
+
+    await db.delete('corso_piattaforme', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> contaCodiciPiattaformaCorso(int corsoId) async {
+    final db = await _db;
+
+    final risultato = await db.rawQuery(
+      '''
+      SELECT COUNT(*)
+      FROM corso_piattaforme
+      WHERE corso_id = ?
+      ''',
+      [corsoId],
+    );
+
+    return Sqflite.firstIntValue(risultato) ?? 0;
   }
 
   Future<List<Map<String, dynamic>>> getCorsiLookup() async {

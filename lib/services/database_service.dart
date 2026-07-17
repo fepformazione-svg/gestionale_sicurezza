@@ -1646,6 +1646,7 @@ FROM prenotazioni p
         d.impresa_id,
         d.corso_id,
         d.data,
+        d.rinnovo,
         c.validita_anni
       FROM diario d
       LEFT JOIN corsi c ON c.id = d.corso_id
@@ -1657,7 +1658,8 @@ FROM prenotazioni p
           int.tryParse(riga['validita_anni']?.toString() ?? '0') ?? 0;
 
       final dataScadenza = _calcolaScadenza(dataCorso, validitaAnni);
-      final stato = _statoScadenza(dataScadenza);
+      final rinnovato = riga['rinnovo']?.toString() == '1';
+      final stato = rinnovato ? 'RINNOVATO' : _statoScadenza(dataScadenza);
 
       final dati = {
         'diario_id': riga['id'],
@@ -1930,56 +1932,114 @@ FROM prenotazioni p
     required int idDiscente,
     required int idImpresa,
     required int idCorso,
+    int? idDiarioOrigine,
   }) async {
     final db = await _db;
+    final adesso = DateTime.now();
+    final data = adesso.toIso8601String().substring(0, 10);
+    final aggiornatoIl = adesso.toIso8601String();
 
-    final oggi = DateTime.now();
-    final data = oggi.toIso8601String().substring(0, 10);
+    await db.transaction((txn) async {
+      final corsoOrigine = await txn.query(
+        'corsi',
+        where: 'id = ?',
+        whereArgs: [idCorso],
+        limit: 1,
+      );
 
-    final duplicato = await db.query(
-      'diario',
-      where: '''
-      discente_id = ?
-      AND impresa_id = ?
-      AND corso_id = ?
-      AND data = ?
-    ''',
-      whereArgs: [idDiscente, idImpresa, idCorso, data],
-      limit: 1,
-    );
+      if (corsoOrigine.isEmpty) {
+        throw StateError('Corso originale non trovato.');
+      }
 
-    if (duplicato.isNotEmpty) {
-      return;
-    }
+      final denominazioneOrigine =
+          corsoOrigine.first['denominazione']?.toString().trim() ?? '';
 
-    final corso = await db.query(
-      'corsi',
-      where: 'id = ?',
-      whereArgs: [idCorso],
-      limit: 1,
-    );
+      var idCorsoRinnovo = idCorso;
 
-    final validita = corso.isNotEmpty
-        ? corso.first['validita_anni'] as int? ?? 0
-        : 0;
+      if (denominazioneOrigine.isNotEmpty &&
+          !denominazioneOrigine.toUpperCase().startsWith('AGG.')) {
+        final denominazioneAggiornamento = 'AGG. $denominazioneOrigine'
+            .toUpperCase();
 
-    final scadenza = validita > 0
-        ? DateTime(
-            oggi.year + validita,
-            oggi.month,
-            oggi.day,
-          ).toIso8601String().substring(0, 10)
-        : null;
+        final corsoAggiornamento = await txn.query(
+          'corsi',
+          where: 'UPPER(TRIM(denominazione)) = ?',
+          whereArgs: [denominazioneAggiornamento],
+          limit: 1,
+        );
 
-    await db.insert('diario', {
-      'discente_id': idDiscente,
-      'impresa_id': idImpresa,
-      'corso_id': idCorso,
-      'data': data,
-      'scadenza': scadenza,
-      'da_fatturare': 0,
-      'created_at': DateTime.now().toIso8601String(),
-      'updated_at': DateTime.now().toIso8601String(),
+        if (corsoAggiornamento.isNotEmpty) {
+          idCorsoRinnovo =
+              int.tryParse(corsoAggiornamento.first['id']?.toString() ?? '') ??
+              idCorso;
+        }
+      }
+
+      final corsoRinnovo = await txn.query(
+        'corsi',
+        where: 'id = ?',
+        whereArgs: [idCorsoRinnovo],
+        limit: 1,
+      );
+
+      if (corsoRinnovo.isEmpty) {
+        throw StateError('Corso di rinnovo non trovato.');
+      }
+
+      final validita =
+          int.tryParse(
+            corsoRinnovo.first['validita_anni']?.toString() ?? '0',
+          ) ??
+          0;
+
+      final scadenza = validita > 0
+          ? DateTime(
+              adesso.year + validita,
+              adesso.month,
+              adesso.day,
+            ).toIso8601String().substring(0, 10)
+          : null;
+
+      final duplicato = await txn.query(
+        'diario',
+        where: '''
+          discente_id = ?
+          AND impresa_id = ?
+          AND corso_id = ?
+          AND data = ?
+        ''',
+        whereArgs: [idDiscente, idImpresa, idCorsoRinnovo, data],
+        limit: 1,
+      );
+
+      if (duplicato.isEmpty) {
+        await txn.insert('diario', {
+          'discente_id': idDiscente,
+          'impresa_id': idImpresa,
+          'corso_id': idCorsoRinnovo,
+          'data': data,
+          'scadenza': scadenza,
+          'da_fatturare': 0,
+          'created_at': aggiornatoIl,
+          'updated_at': aggiornatoIl,
+        });
+      }
+
+      if (idDiarioOrigine != null) {
+        await txn.update(
+          'diario',
+          {'rinnovo': 1, 'updated_at': aggiornatoIl},
+          where: 'id = ? AND discente_id = ?',
+          whereArgs: [idDiarioOrigine, idDiscente],
+        );
+
+        await txn.update(
+          'scadenze',
+          {'stato': 'RINNOVATO', 'updated_at': aggiornatoIl},
+          where: 'diario_id = ?',
+          whereArgs: [idDiarioOrigine],
+        );
+      }
     });
 
     await aggiornaScadenzeDaDiario();
@@ -1994,7 +2054,9 @@ FROM prenotazioni p
       d.id,
       d.data,
       d.prot,
+      d.rinnovo,
       s.data_scadenza AS scadenza,
+      s.stato AS stato_db,
       c.denominazione AS corso,
       c.durata_ore,
       c.validita_anni

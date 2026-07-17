@@ -1056,7 +1056,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     showDialog(
       context: context,
       builder: (context) {
-        final stato = statoScadenzaCorso(r['scadenza']);
+        final stato = statoScadenzaCorso(
+          r['scadenza'],
+          rinnovo: r['rinnovo'],
+          statoDb: r['stato_db'],
+        );
 
         return AlertDialog(
           shape: RoundedRectangleBorder(
@@ -1188,7 +1192,10 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     Color coloreBordo = const Color(0xFFE2E8F0);
 
     if (evidenziaScadenza) {
-      if (stato == 'SCADUTO') {
+      if (stato == 'RINNOVATO') {
+        coloreSfondo = const Color(0xFFEFF6FF);
+        coloreBordo = const Color(0xFFBFDBFE);
+      } else if (stato == 'SCADUTO') {
         coloreSfondo = const Color(0xFFFEF2F2);
         coloreBordo = const Color(0xFFFECACA);
       } else if (stato == 'IN SCADENZA') {
@@ -1246,7 +1253,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     Color coloreTesto;
     IconData icona;
 
-    if (stato == 'SCADUTO') {
+    if (stato == 'RINNOVATO') {
+      coloreSfondo = const Color(0xFFEFF6FF);
+      coloreTesto = const Color(0xFF2563EB);
+      icona = Icons.refresh_rounded;
+    } else if (stato == 'SCADUTO') {
       coloreSfondo = const Color(0xFFFEE2E2);
       coloreTesto = const Color(0xFFB91C1C);
       icona = Icons.error_outline;
@@ -1386,15 +1397,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
   void applicaFiltroStorico() {
     final bool esistonoValidi = storico.any(
-      (r) => statoScadenzaCorso(r['scadenza']) == 'VALIDO',
+      (r) =>
+          statoScadenzaCorso(
+            r['scadenza'],
+            rinnovo: r['rinnovo'],
+            statoDb: r['stato_db'],
+          ) ==
+          'VALIDO',
     );
 
     final bool esistonoInScadenza = storico.any(
-      (r) => statoScadenzaCorso(r['scadenza']) == 'IN SCADENZA',
+      (r) =>
+          statoScadenzaCorso(
+            r['scadenza'],
+            rinnovo: r['rinnovo'],
+            statoDb: r['stato_db'],
+          ) ==
+          'IN SCADENZA',
     );
 
     final bool esistonoScaduti = storico.any(
-      (r) => statoScadenzaCorso(r['scadenza']) == 'SCADUTO',
+      (r) =>
+          statoScadenzaCorso(
+            r['scadenza'],
+            rinnovo: r['rinnovo'],
+            statoDb: r['stato_db'],
+          ) ==
+          'SCADUTO',
     );
 
     if (filtroStorico == 'validi' && !esistonoValidi) {
@@ -1420,15 +1449,33 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
         switch (filtroStorico) {
           case 'validi':
-            passaFiltro = statoScadenzaCorso(riga['scadenza']) == 'VALIDO';
+            passaFiltro =
+                statoScadenzaCorso(
+                  riga['scadenza'],
+                  rinnovo: riga['rinnovo'],
+                  statoDb: riga['stato_db'],
+                ) ==
+                'VALIDO';
             break;
 
           case 'in_scadenza':
-            passaFiltro = statoScadenzaCorso(riga['scadenza']) == 'IN SCADENZA';
+            passaFiltro =
+                statoScadenzaCorso(
+                  riga['scadenza'],
+                  rinnovo: riga['rinnovo'],
+                  statoDb: riga['stato_db'],
+                ) ==
+                'IN SCADENZA';
             break;
 
           case 'scaduti':
-            passaFiltro = statoScadenzaCorso(riga['scadenza']) == 'SCADUTO';
+            passaFiltro =
+                statoScadenzaCorso(
+                  riga['scadenza'],
+                  rinnovo: riga['rinnovo'],
+                  statoDb: riga['stato_db'],
+                ) ==
+                'SCADUTO';
             break;
         }
 
@@ -1753,7 +1800,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                         const Divider(height: 1, color: Color(0xFFE5E7EB)),
                     itemBuilder: (context, index) {
                       final r = storico[index];
-                      final stato = statoScadenzaCorso(r['scadenza']);
+                      final stato = statoScadenzaCorso(
+                        r['scadenza'],
+                        rinnovo: r['rinnovo'],
+                        statoDb: r['stato_db'],
+                      );
 
                       return GestureDetector(
                         onTap: eliminazioneCorsiInCorso
@@ -2056,7 +2107,20 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
     return '$giorno/$mese/$anno';
   }
 
-  String statoScadenzaCorso(dynamic scadenza) {
+  String statoScadenzaCorso(
+    dynamic scadenza, {
+    dynamic rinnovo,
+    dynamic statoDb,
+  }) {
+    final statoSalvato = statoDb?.toString().trim().toUpperCase();
+
+    final corsoRinnovato =
+        rinnovo?.toString() == '1' || statoSalvato == 'RINNOVATO';
+
+    if (corsoRinnovato) {
+      return 'RINNOVATO';
+    }
+
     final data = parseData(scadenza);
 
     if (data == null) return 'SENZA SCADENZA';
@@ -2078,6 +2142,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         return const Color(0xFF16A34A);
       case 'IN SCADENZA':
         return const Color(0xFFF59E0B);
+      case 'RINNOVATO':
+        return const Color(0xFF2563EB);
       case 'SCADUTO':
         return const Color(0xFFDC2626);
       default:
@@ -2091,6 +2157,8 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
         return const Color(0xFFEAF7EE);
       case 'IN SCADENZA':
         return const Color(0xFFFFF7E6);
+      case 'RINNOVATO':
+        return const Color(0xFFEFF6FF);
       case 'SCADUTO':
         return const Color(0xFFFEE2E2);
       default:
@@ -2175,7 +2243,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
       sheet.setColumnWidth(4, 14); // Stato
 
       for (final corso in corsiDaEsportare) {
-        final stato = statoScadenzaCorso(corso['scadenza']);
+        final stato = statoScadenzaCorso(
+          corso['scadenza'],
+          rinnovo: corso['rinnovo'],
+          statoDb: corso['stato_db'],
+        );
 
         sheet.appendRow([
           excel.TextCellValue(valore(corso['corso'])),
@@ -2303,7 +2375,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
             pw.TableHelper.fromTextArray(
               headers: ['Corso', 'Data corso', 'Scadenza', 'Ore', 'Stato'],
               data: corsiDaEsportare.map((corso) {
-                final stato = statoScadenzaCorso(corso['scadenza']);
+                final stato = statoScadenzaCorso(
+                  corso['scadenza'],
+                  rinnovo: corso['rinnovo'],
+                  statoDb: corso['stato_db'],
+                );
 
                 return [
                   valore(corso['corso']),
@@ -2696,13 +2772,37 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
 
     final totaleCorsi = storico.length;
     final corsiValidi = storico
-        .where((r) => statoScadenzaCorso(r['scadenza']) == 'VALIDO')
+        .where(
+          (r) =>
+              statoScadenzaCorso(
+                r['scadenza'],
+                rinnovo: r['rinnovo'],
+                statoDb: r['stato_db'],
+              ) ==
+              'VALIDO',
+        )
         .length;
     final corsiInScadenza = storico
-        .where((r) => statoScadenzaCorso(r['scadenza']) == 'IN SCADENZA')
+        .where(
+          (r) =>
+              statoScadenzaCorso(
+                r['scadenza'],
+                rinnovo: r['rinnovo'],
+                statoDb: r['stato_db'],
+              ) ==
+              'IN SCADENZA',
+        )
         .length;
     final corsiScaduti = storico
-        .where((r) => statoScadenzaCorso(r['scadenza']) == 'SCADUTO')
+        .where(
+          (r) =>
+              statoScadenzaCorso(
+                r['scadenza'],
+                rinnovo: r['rinnovo'],
+                statoDb: r['stato_db'],
+              ) ==
+              'SCADUTO',
+        )
         .length;
 
     final filtroAttivo =
@@ -3972,7 +4072,11 @@ class _DiscenteSchedaPageState extends State<DiscenteSchedaPage> {
                               ),
                               itemBuilder: (context, index) {
                                 final r = storicoFiltrato[index];
-                                final stato = statoScadenzaCorso(r['scadenza']);
+                                final stato = statoScadenzaCorso(
+                                  r['scadenza'],
+                                  rinnovo: r['rinnovo'],
+                                  statoDb: r['stato_db'],
+                                );
 
                                 return MouseRegion(
                                   onEnter: (_) {

@@ -597,6 +597,10 @@ class _ScadenzePageState extends State<ScadenzePage> {
   String calcolaStato(Map<String, dynamic> riga) {
     final statoDb = riga['stato']?.toString().toUpperCase();
 
+    if (statoDb == 'RINNOVATO') {
+      return 'Rinnovato';
+    }
+
     if (statoDb == 'SCADUTO') {
       return 'Scaduto';
     }
@@ -651,6 +655,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
         return const Color(0xFFF59E0B);
       case 'Scaduto':
         return const Color(0xFFDC2626);
+      case 'Rinnovato':
+        return const Color(0xFF2563EB);
       default:
         return const Color(0xFF6B7280);
     }
@@ -664,6 +670,8 @@ class _ScadenzePageState extends State<ScadenzePage> {
         return const Color(0xFFFFF7E6);
       case 'Scaduto':
         return const Color(0xFFFEE2E2);
+      case 'Rinnovato':
+        return const Color(0xFFEFF6FF);
       default:
         return const Color(0xFFF3F4F6);
     }
@@ -704,6 +712,7 @@ class _ScadenzePageState extends State<ScadenzePage> {
       idDiscente: riga['id_discente'],
       idImpresa: riga['id_impresa'],
       idCorso: riga['id_corso'],
+      idDiarioOrigine: riga['diario_id'],
     );
 
     await caricaScadenze();

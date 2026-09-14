@@ -967,7 +967,7 @@ class _DiarioPageState extends State<DiarioPage> {
     final dettaglioFiltro = [
       if (ricercaAttiva) 'ricerca "${_cercaController.text.trim()}"',
       if (filtroAttivo) 'solo Da fatturare',
-    ].join(' Ãƒâ€šÃ‚Â· ');
+    ].join(' · ');
 
     final infoStampa = stampaFiltrata
         ? 'Stampa diario filtrato - ${_diario.length} corsi - $dettaglioFiltro - ${formattaDataOra(adesso)}'
@@ -2655,13 +2655,13 @@ class _DiarioPageState extends State<DiarioPage> {
                                                             child: IconButton(
                                                               tooltip:
                                                                   corsoGiaRinnovato
-                                                                  ? 'Corso giÃƒÂ  rinnovato'
+                                                                  ? 'Corso già rinnovato'
                                                                   : rinnovoQuestaRiga
                                                                   ? 'Rinnovo corso in corso...'
                                                                   : (corsoGiaRinnovato ||
                                                                         rinnovoInCorsoId !=
                                                                             null)
-                                                                  ? 'Attendi il completamento del rinnovo giÃƒÂ  avviato'
+                                                                  ? 'Attendi il completamento del rinnovo già avviato'
                                                                   : 'Crea rinnovo corso',
                                                               padding:
                                                                   EdgeInsets
@@ -2770,7 +2770,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                                   'Vuoi creare un nuovo rinnovo per il corso '
                                                                                   '"${testo(riga['corso'])}" di '
                                                                                   '${testo(riga['cognome'])} ${testo(riga['nome'])}?\n\n'
-                                                                                  'Il gestionale userÃƒÂ  il corso di aggiornamento corrispondente, se presente, e aggiungerÃƒÂ  il nuovo record nel Diario.',
+                                                                                  'Il gestionale userà il corso di aggiornamento corrispondente, se presente, e aggiungerà il nuovo record nel Diario.',
                                                                                 ),
                                                                                 actions: [
                                                                                   TextButton(

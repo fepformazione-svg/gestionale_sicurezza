@@ -486,7 +486,7 @@ class _DiarioPageState extends State<DiarioPage> {
   Widget badgeDaFatturare(bool valore, {bool bloccato = false}) {
     return Tooltip(
       message: bloccato
-          ? 'Fattura giÃƒÆ’Ã‚Â  inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
+          ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
           : valore
           ? 'Da fatturare'
           : 'Non da fatturare',
@@ -2075,7 +2075,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                     height: 10,
                                                                   ),
                                                                   const Text(
-                                                                    'Salvando una fattura, il corso verrÃƒÆ’Ã‚Â  rimosso automaticamente dai Da fatturare.',
+                                                                    'Salvando una fattura, il corso verrà rimosso automaticamente dai Da fatturare.',
                                                                     style: TextStyle(
                                                                       fontSize:
                                                                           12.5,
@@ -2125,7 +2125,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                                 ],
                                                                               ),
                                                                               content: const Text(
-                                                                                'Vuoi rimuovere il riferimento fattura da questo corso? Dopo la rimozione, il campo Da fatturare tornerÃƒÆ’Ã‚Â  modificabile manualmente.',
+                                                                                'Vuoi rimuovere il riferimento fattura da questo corso? Dopo la rimozione, il campo Da fatturare tornerà modificabile manualmente.',
                                                                               ),
                                                                               actions: [
                                                                                 TextButton(
@@ -2255,7 +2255,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                       .trim()
                                                                       .isEmpty
                                                                   ? 'Riferimento fattura rimosso. Il campo Da fatturare torna modificabile manualmente.'
-                                                                  : 'Riferimento fattura salvato. Il corso ÃƒÆ’Ã‚Â¨ stato rimosso dai Da fatturare.',
+                                                                  : 'Riferimento fattura salvato. Il corso è stato rimosso dai Da fatturare.',
                                                             ),
                                                             backgroundColor:
                                                                 nuovaFattura
@@ -2558,11 +2558,11 @@ class _DiarioPageState extends State<DiarioPage> {
                                                           child: Tooltip(
                                                             message:
                                                                 fatturaPresente
-                                                                ? 'Fattura giÃƒÆ’Ã‚Â  inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
+                                                                ? 'Fattura già inserita. Svuota prima il riferimento fattura per modificare Da fatturare'
                                                                 : riga['da_fatturare'] ==
                                                                       1
-                                                                ? 'Il corso ÃƒÆ’Ã‚Â¨ da fatturare. Clicca per rimuoverlo dai Da fatturare'
-                                                                : 'Il corso non ÃƒÆ’Ã‚Â¨ da fatturare. Clicca per segnarlo come Da fatturare',
+                                                                ? 'Il corso è da fatturare. Clicca per rimuoverlo dai Da fatturare'
+                                                                : 'Il corso non è da fatturare. Clicca per segnarlo come Da fatturare',
                                                             child: InkWell(
                                                               borderRadius:
                                                                   BorderRadius.circular(
@@ -2576,7 +2576,7 @@ class _DiarioPageState extends State<DiarioPage> {
                                                                       ).showSnackBar(
                                                                         const SnackBar(
                                                                           content: Text(
-                                                                            'Fattura giÃƒÆ’Ã‚Â  inserita. Per modificare Da fatturare, svuota prima il riferimento fattura.',
+                                                                            'Fattura già inserita. Per modificare Da fatturare, svuota prima il riferimento fattura.',
                                                                           ),
                                                                           backgroundColor: Color(
                                                                             0xFF64748B,

@@ -38,6 +38,7 @@ class _HomePageState extends State<HomePage> {
       <GlobalSearchModuleResult>[];
   bool globalSearchLoading = false;
   int _globalSearchRequest = 0;
+  List<AssistenteOperativoItem> notificationItems = <AssistenteOperativoItem>[];
   String filtroScadenze = 'tutte';
   String filtroPrenotazioni = 'tutte';
   String filtroVisiteMediche = 'Tutte';
@@ -269,6 +270,86 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    _caricaNotificheOperative();
+  }
+
+  Future<void> _caricaNotificheOperative() async {
+    final assistenteService = AssistenteOperativoService(AppDatabase.instance);
+
+    final riepilogo = await assistenteService.generaRiepilogoOperativo();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      notificationItems = riepilogo;
+    });
+  }
+
+  void _apriPrioritaOperativa(AssistenteOperativoItem item) {
+    final titoloNormalizzato = item.titolo.toLowerCase();
+
+    setState(() {
+      _globalSearchRequest++;
+      globalSearch = '';
+      globalSearchResults = <GlobalSearchModuleResult>[];
+      globalSearchLoading = false;
+
+      switch (item.modulo) {
+        case ModuloAssistenteOperativo.prenotazioni:
+          filtroPrenotazioni = 'aperte';
+          selectedIndex = 1;
+          break;
+
+        case ModuloAssistenteOperativo.diario:
+          diarioSoloDaFatturare = true;
+          selectedIndex = 2;
+          break;
+
+        case ModuloAssistenteOperativo.scadenze:
+          if (titoloNormalizzato.contains('in scadenza')) {
+            filtroScadenze = 'in_scadenza';
+          } else if (titoloNormalizzato.contains('scadut')) {
+            filtroScadenze = 'scaduti';
+          } else {
+            filtroScadenze = 'tutte';
+          }
+
+          selectedIndex = 3;
+          break;
+
+        case ModuloAssistenteOperativo.discenti:
+          selectedIndex = 4;
+          break;
+
+        case ModuloAssistenteOperativo.imprese:
+          selectedIndex = 5;
+          break;
+
+        case ModuloAssistenteOperativo.visiteMediche:
+          if (titoloNormalizzato.contains('in scadenza')) {
+            filtroVisiteMediche = 'In scadenza';
+          } else if (titoloNormalizzato.contains('scadut')) {
+            filtroVisiteMediche = 'Scadute';
+          } else {
+            filtroVisiteMediche = 'Tutte';
+          }
+
+          selectedIndex = 8;
+          break;
+
+        case ModuloAssistenteOperativo.dashboard:
+        case ModuloAssistenteOperativo.consensiPrivacy:
+          selectedIndex = 0;
+          break;
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF3F4F6),
@@ -310,6 +391,9 @@ class _HomePageState extends State<HomePage> {
                   AppTopbar(
                     searchText: globalSearch,
                     onSearchChanged: aggiornaRicercaGlobale,
+                    notificationItems: notificationItems,
+                    onNotificationSelected: (item) =>
+                        _apriPrioritaOperativa(item),
                   ),
                   if (globalSearch.trim().isNotEmpty) ...[
                     const SizedBox(height: 12),
@@ -487,61 +571,34 @@ class _DashboardPageState extends State<DashboardPage> {
   }) {
     final homeState = context.findAncestorStateOfType<_HomePageState>();
 
-    if (homeState == null) return;
-    final titoloNormalizzato = titolo?.toLowerCase() ?? '';
+    if (homeState == null) {
+      return;
+    }
 
-    homeState.setState(() {
-      switch (modulo) {
-        case ModuloAssistenteOperativo.prenotazioni:
-          homeState.filtroPrenotazioni = 'aperte';
-          homeState.selectedIndex = 1;
-          break;
-        case ModuloAssistenteOperativo.diario:
-          homeState.diarioSoloDaFatturare = true;
-          homeState.selectedIndex = 2;
-          break;
-        case ModuloAssistenteOperativo.scadenze:
-          if (titoloNormalizzato.contains('in scadenza')) {
-            homeState.filtroScadenze = 'in_scadenza';
-          } else if (titoloNormalizzato.contains('scadut')) {
-            homeState.filtroScadenze = 'scaduti';
-          } else {
-            homeState.filtroScadenze = 'tutte';
-          }
-          homeState.selectedIndex = 3;
-          break;
-        case ModuloAssistenteOperativo.discenti:
-          homeState.selectedIndex = 4;
-          break;
-        case ModuloAssistenteOperativo.imprese:
-          homeState.selectedIndex = 5;
-          break;
-        case ModuloAssistenteOperativo.visiteMediche:
-          homeState.globalSearch = '';
+    AssistenteOperativoItem? itemDaAprire;
 
-          if (titoloNormalizzato.contains('in scadenza')) {
-            homeState.filtroVisiteMediche = 'In scadenza';
-          } else if (titoloNormalizzato.contains('scadut')) {
-            homeState.filtroVisiteMediche = 'Scadute';
-          } else {
-            homeState.filtroVisiteMediche = 'Tutte';
-          }
-
-          homeState.selectedIndex = 8;
-          break;
-        case ModuloAssistenteOperativo.dashboard:
-        case ModuloAssistenteOperativo.consensiPrivacy:
-          homeState.selectedIndex = 0;
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Modulo non ancora collegato alla navigazione rapida.',
-              ),
-            ),
-          );
-          break;
+    for (final item in assistenteItems) {
+      if (item.modulo != modulo) {
+        continue;
       }
-    });
+
+      if (titolo != null && item.titolo != titolo) {
+        continue;
+      }
+
+      itemDaAprire = item;
+      break;
+    }
+
+    itemDaAprire ??= AssistenteOperativoItem(
+      titolo: titolo ?? '',
+      descrizione: '',
+      conteggio: 0,
+      priorita: PrioritaAssistenteOperativo.bassa,
+      modulo: modulo,
+    );
+
+    homeState._apriPrioritaOperativa(itemDaAprire);
   }
 
   Widget riquadroAssistenteOperativo() {

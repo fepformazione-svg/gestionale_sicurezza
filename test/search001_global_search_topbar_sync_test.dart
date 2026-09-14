@@ -86,7 +86,7 @@ void main() {
 
     expect(
       homeSource,
-      contains("homeState.globalSearch = '';"),
+      contains("globalSearch = '';"),
       reason:
           'Il reset programmatico esistente deve restare '
           'compatibile con la sincronizzazione della topbar.',

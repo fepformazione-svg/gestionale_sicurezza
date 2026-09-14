@@ -772,6 +772,7 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                 const SizedBox(height: 18),
 
                 Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
                       child: TextFormField(

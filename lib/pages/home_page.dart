@@ -47,14 +47,18 @@ class _HomePageState extends State<HomePage> {
         });
       },
     ),
-    DiarioPage(soloDaFatturare: diarioSoloDaFatturare),
+    DiarioPage(
+      soloDaFatturare: diarioSoloDaFatturare,
+      globalSearch: globalSearch,
+    ),
     ScadenzePage(
       key: ValueKey('scadenze_$filtroScadenze'),
       filtro: filtroScadenze,
+      globalSearch: globalSearch,
     ),
     DiscentiPage(globalSearch: globalSearch),
-    const ImpresePage(),
-    const CorsiPage(),
+    ImpresePage(globalSearch: globalSearch),
+    CorsiPage(globalSearch: globalSearch),
     const PrezzarioPage(),
     VisiteMedichePage(
       key: ValueKey('visite_mediche_${globalSearch}_$filtroVisiteMediche'),
@@ -111,7 +115,10 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(28),
               child: Column(
                 children: [
-                  AppTopbar(onSearchChanged: aggiornaRicercaGlobale),
+                  AppTopbar(
+                    searchText: globalSearch,
+                    onSearchChanged: aggiornaRicercaGlobale,
+                  ),
                   const SizedBox(height: 24),
                   Expanded(child: pages[selectedIndex]),
                 ],

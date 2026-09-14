@@ -21,7 +21,9 @@ import '../widgets/section_card.dart';
 import '../widgets/app_action_button.dart';
 
 class CorsiPage extends StatefulWidget {
-  const CorsiPage({super.key});
+  final String globalSearch;
+
+  const CorsiPage({super.key, this.globalSearch = ''});
 
   @override
   State<CorsiPage> createState() => _CorsiPageState();
@@ -34,11 +36,36 @@ class _CorsiPageState extends State<CorsiPage> {
 
   bool loading = true;
   String ricercaCorrente = '';
+  final TextEditingController ricercaController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+
+    ricercaController.text = widget.globalSearch;
+    ricercaCorrente = widget.globalSearch.trim();
+
     caricaCorsi();
+  }
+
+  @override
+  void didUpdateWidget(covariant CorsiPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.globalSearch != widget.globalSearch) {
+      ricercaController.text = widget.globalSearch;
+      ricercaController.selection = TextSelection.collapsed(
+        offset: ricercaController.text.length,
+      );
+
+      cercaCorsi(widget.globalSearch);
+    }
+  }
+
+  @override
+  void dispose() {
+    ricercaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaCorsi() async {
@@ -1025,6 +1052,7 @@ class _CorsiPageState extends State<CorsiPage> {
             children: [
               Expanded(
                 child: AppSearchBar(
+                  controller: ricercaController,
                   hintText: 'Cerca corso, piattaforma o codice...',
                   onChanged: cercaCorsi,
                 ),

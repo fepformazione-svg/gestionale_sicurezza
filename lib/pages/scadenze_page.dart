@@ -17,8 +17,13 @@ import 'discente_scheda_page.dart';
 
 class ScadenzePage extends StatefulWidget {
   final String filtro;
+  final String globalSearch;
 
-  const ScadenzePage({super.key, this.filtro = 'tutte'});
+  const ScadenzePage({
+    super.key,
+    this.filtro = 'tutte',
+    this.globalSearch = '',
+  });
 
   @override
   State<ScadenzePage> createState() => _ScadenzePageState();
@@ -44,8 +49,27 @@ class _ScadenzePageState extends State<ScadenzePage> {
   @override
   void initState() {
     super.initState();
+
     filtroStato = _filtroStatoDaFiltroWidget(widget.filtro);
+    _cercaController.text = widget.globalSearch;
+
     caricaScadenze();
+  }
+
+  @override
+  void didUpdateWidget(covariant ScadenzePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.globalSearch != widget.globalSearch) {
+      _ricercaDebounce?.cancel();
+
+      _cercaController.text = widget.globalSearch;
+      _cercaController.selection = TextSelection.collapsed(
+        offset: _cercaController.text.length,
+      );
+
+      caricaScadenze();
+    }
   }
 
   String _filtroStatoDaFiltroWidget(String filtro) {

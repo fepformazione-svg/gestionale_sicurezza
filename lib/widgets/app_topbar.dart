@@ -1,15 +1,49 @@
 import 'package:flutter/material.dart';
 import '../pages/impostazioni_page.dart';
 
-class AppTopbar extends StatelessWidget {
+class AppTopbar extends StatefulWidget {
   final String userName;
+  final String searchText;
   final ValueChanged<String>? onSearchChanged;
 
   const AppTopbar({
     super.key,
     this.userName = 'Alessandro',
+    this.searchText = '',
     this.onSearchChanged,
   });
+
+  @override
+  State<AppTopbar> createState() => _AppTopbarState();
+}
+
+class _AppTopbarState extends State<AppTopbar> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.text = widget.searchText;
+  }
+
+  @override
+  void didUpdateWidget(covariant AppTopbar oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.searchText != widget.searchText &&
+        _searchController.text != widget.searchText) {
+      _searchController.text = widget.searchText;
+      _searchController.selection = TextSelection.collapsed(
+        offset: _searchController.text.length,
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +68,8 @@ class AppTopbar extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: TextField(
-              onChanged: onSearchChanged,
+              controller: _searchController,
+              onChanged: widget.onSearchChanged,
               decoration: const InputDecoration(
                 hintText: 'Ricerca globale...',
                 border: InputBorder.none,
@@ -83,7 +118,7 @@ class AppTopbar extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Text(
-            userName,
+            widget.userName,
             style: const TextStyle(
               color: Color(0xFF111827),
               fontWeight: FontWeight.bold,

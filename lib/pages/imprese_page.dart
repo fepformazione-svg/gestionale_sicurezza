@@ -20,7 +20,9 @@ import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 
 class ImpresePage extends StatefulWidget {
-  const ImpresePage({super.key});
+  final String globalSearch;
+
+  const ImpresePage({super.key, this.globalSearch = ''});
 
   @override
   State<ImpresePage> createState() => _ImpresePageState();
@@ -31,13 +33,38 @@ class _ImpresePageState extends State<ImpresePage> {
   List<Impresa> impreseFiltrate = [];
 
   String ricercaAttiva = '';
+  final TextEditingController ricercaController = TextEditingController();
 
   bool loading = true;
 
   @override
   void initState() {
     super.initState();
+
+    ricercaController.text = widget.globalSearch;
+    ricercaAttiva = widget.globalSearch.trim();
+
     caricaImprese();
+  }
+
+  @override
+  void didUpdateWidget(covariant ImpresePage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.globalSearch != widget.globalSearch) {
+      ricercaController.text = widget.globalSearch;
+      ricercaController.selection = TextSelection.collapsed(
+        offset: ricercaController.text.length,
+      );
+
+      cercaImprese(widget.globalSearch);
+    }
+  }
+
+  @override
+  void dispose() {
+    ricercaController.dispose();
+    super.dispose();
   }
 
   Future<void> caricaImprese() async {
@@ -50,6 +77,10 @@ class _ImpresePageState extends State<ImpresePage> {
       impreseFiltrate = dati;
       loading = false;
     });
+
+    if (ricercaAttiva.isNotEmpty) {
+      cercaImprese(ricercaAttiva);
+    }
   }
 
   void cercaImprese(String valore) {
@@ -792,6 +823,7 @@ class _ImpresePageState extends State<ImpresePage> {
             children: [
               Expanded(
                 child: AppSearchBar(
+                  controller: ricercaController,
                   hintText: 'Cerca impresa...',
                   onChanged: cercaImprese,
                 ),

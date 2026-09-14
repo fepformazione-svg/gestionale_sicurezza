@@ -18,8 +18,13 @@ import '../widgets/app_action_button.dart';
 
 class DiarioPage extends StatefulWidget {
   final bool soloDaFatturare;
+  final String globalSearch;
 
-  const DiarioPage({super.key, this.soloDaFatturare = false});
+  const DiarioPage({
+    super.key,
+    this.soloDaFatturare = false,
+    this.globalSearch = '',
+  });
 
   @override
   State<DiarioPage> createState() => _DiarioPageState();
@@ -74,7 +79,10 @@ class _DiarioPageState extends State<DiarioPage> {
   @override
   void initState() {
     super.initState();
+
     _soloDaFatturare = widget.soloDaFatturare;
+    _cercaController.text = widget.globalSearch;
+
     caricaDiario();
   }
 
@@ -82,8 +90,25 @@ class _DiarioPageState extends State<DiarioPage> {
   void didUpdateWidget(covariant DiarioPage oldWidget) {
     super.didUpdateWidget(oldWidget);
 
+    var deveRicaricare = false;
+
     if (oldWidget.soloDaFatturare != widget.soloDaFatturare) {
       _soloDaFatturare = widget.soloDaFatturare;
+      deveRicaricare = true;
+    }
+
+    if (oldWidget.globalSearch != widget.globalSearch) {
+      _ricercaDebounce?.cancel();
+
+      _cercaController.text = widget.globalSearch;
+      _cercaController.selection = TextSelection.collapsed(
+        offset: _cercaController.text.length,
+      );
+
+      deveRicaricare = true;
+    }
+
+    if (deveRicaricare) {
       caricaDiario();
     }
   }

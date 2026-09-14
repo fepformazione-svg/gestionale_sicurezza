@@ -141,6 +141,7 @@ class _DashboardPageState extends State<DashboardPage> {
     'prenotazioni_chiuse': 0,
     'diario': 0,
     'scadenze': 0,
+    'in_scadenza': 0,
     'scaduti': 0,
     'discenti': 0,
     'imprese': 0,
@@ -1233,13 +1234,13 @@ class _DashboardPageState extends State<DashboardPage> {
                       .findAncestorStateOfType<_HomePageState>();
 
                   homeState?.setState(() {
-                    homeState.filtroScadenze = 'tutte';
+                    homeState.filtroScadenze = 'in_scadenza';
                     homeState.selectedIndex = 3;
                   });
                 },
                 child: KpiCard(
-                  title: 'Scadenze',
-                  value: kpi['scadenze'].toString(),
+                  title: 'In scadenza',
+                  value: kpi['in_scadenza'].toString(),
                   icon: Icons.warning_amber,
                   color: const Color(0xFFDC2626),
                 ),

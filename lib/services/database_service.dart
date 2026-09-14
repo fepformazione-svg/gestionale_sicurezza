@@ -2093,6 +2093,9 @@ FROM prenotazioni p
       'prenotazioni': await count('SELECT COUNT(*) FROM prenotazioni'),
       'diario': await count('SELECT COUNT(*) FROM diario'),
       'scadenze': await count('SELECT COUNT(*) FROM scadenze'),
+      'in_scadenza': await count(
+        "SELECT COUNT(*) FROM scadenze WHERE stato = 'IN SCADENZA'",
+      ),
       'scaduti': await count(
         "SELECT COUNT(*) FROM scadenze WHERE stato = 'SCADUTO'",
       ),

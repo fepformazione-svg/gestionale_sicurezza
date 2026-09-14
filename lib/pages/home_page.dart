@@ -4,6 +4,7 @@ import '../models/assistente_operativo_item.dart';
 import '../services/app_database.dart';
 import '../services/assistente_operativo_service.dart';
 import '../services/database_service.dart';
+import '../services/global_search_service.dart';
 import '../services/backup_service.dart';
 import '../services/sessione_utente_service.dart';
 
@@ -31,6 +32,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   int selectedIndex = 0;
   String globalSearch = '';
+  final GlobalSearchService _globalSearchService =
+      GlobalSearchService.standard();
+  List<GlobalSearchModuleResult> globalSearchResults =
+      <GlobalSearchModuleResult>[];
+  bool globalSearchLoading = false;
+  int _globalSearchRequest = 0;
   String filtroScadenze = 'tutte';
   String filtroPrenotazioni = 'tutte';
   String filtroVisiteMediche = 'Tutte';
@@ -69,11 +76,196 @@ class _HomePageState extends State<HomePage> {
   ];
 
   void aggiornaRicercaGlobale(String value) {
+    final query = value.trim();
+    final request = ++_globalSearchRequest;
+
     setState(() {
       globalSearch = value;
+
+      if (query.isEmpty) {
+        globalSearchResults = <GlobalSearchModuleResult>[];
+        globalSearchLoading = false;
+      } else {
+        globalSearchLoading = true;
+      }
     });
 
     debugPrint('Ricerca globale: $globalSearch');
+
+    if (query.isEmpty) {
+      return;
+    }
+
+    _eseguiRicercaGlobale(query, request);
+  }
+
+  Future<void> _eseguiRicercaGlobale(String query, int request) async {
+    try {
+      final results = await _globalSearchService.search(query);
+
+      if (!mounted || request != _globalSearchRequest) {
+        return;
+      }
+
+      setState(() {
+        globalSearchResults = results;
+        globalSearchLoading = false;
+      });
+    } catch (error, stackTrace) {
+      debugPrint('Errore ricerca globale: $error\n$stackTrace');
+
+      if (!mounted || request != _globalSearchRequest) {
+        return;
+      }
+
+      setState(() {
+        globalSearchResults = <GlobalSearchModuleResult>[];
+        globalSearchLoading = false;
+      });
+    }
+  }
+
+  void _apriRisultatoRicercaGlobale(GlobalSearchModuleResult result) {
+    setState(() {
+      switch (result.pageIndex) {
+        case 1:
+          filtroPrenotazioni = 'tutte';
+          break;
+        case 2:
+          diarioSoloDaFatturare = false;
+          break;
+        case 3:
+          filtroScadenze = 'tutte';
+          break;
+        default:
+          break;
+      }
+
+      selectedIndex = result.pageIndex;
+    });
+  }
+
+  Widget _buildGlobalSearchResults() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(
+                Icons.manage_search,
+                size: 20,
+                color: Color(0xFF2563EB),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Risultati ricerca globale',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF0F172A),
+                ),
+              ),
+              const Spacer(),
+              Text(
+                '"${globalSearch.trim()}"',
+                style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (globalSearchLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 6),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 10),
+                  Text(
+                    'Ricerca in corso...',
+                    style: TextStyle(color: Color(0xFF64748B)),
+                  ),
+                ],
+              ),
+            )
+          else if (globalSearchResults.isEmpty)
+            const Text(
+              'Nessuna corrispondenza trovata nei moduli principali.',
+              style: TextStyle(color: Color(0xFF64748B)),
+            )
+          else
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: globalSearchResults.map((result) {
+                return InkWell(
+                  borderRadius: BorderRadius.circular(12),
+                  onTap: () => _apriRisultatoRicercaGlobale(result),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF8FAFC),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFE2E8F0)),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          result.moduleName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1E293B),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFDBEAFE),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            result.count.toString(),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: Color(0xFF1D4ED8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: Color(0xFF64748B),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -119,6 +311,10 @@ class _HomePageState extends State<HomePage> {
                     searchText: globalSearch,
                     onSearchChanged: aggiornaRicercaGlobale,
                   ),
+                  if (globalSearch.trim().isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    _buildGlobalSearchResults(),
+                  ],
                   const SizedBox(height: 24),
                   Expanded(child: pages[selectedIndex]),
                 ],

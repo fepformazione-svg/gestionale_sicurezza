@@ -29,7 +29,7 @@ class EnterpriseLookupRepository {
     return searchService.search(
       table: 'imprese',
       idColumn: 'id',
-      textColumn: 'nome',
+      textColumn: 'intestazione',
       query: query,
       limit: 20,
     );
@@ -43,7 +43,7 @@ class EnterpriseLookupRepository {
     return searchService.search(
       table: 'corsi',
       idColumn: 'id',
-      textColumn: 'nome',
+      textColumn: 'denominazione',
       query: query,
       limit: 20,
     );

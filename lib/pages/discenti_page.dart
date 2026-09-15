@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:excel/excel.dart' as xls;
+import 'package:dropdown_search/dropdown_search.dart';
 import 'package:flutter/material.dart';
 import 'package:open_file/open_file.dart';
 import 'package:path_provider/path_provider.dart';
@@ -448,6 +449,16 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
     int? impresaId = discente?.impresaId;
 
+    Impresa? impresaSelezionata;
+    if (impresaId != null) {
+      for (final impresa in imprese) {
+        if (impresa.id == impresaId) {
+          impresaSelezionata = impresa;
+          break;
+        }
+      }
+    }
+
     final salvato = await showDialog<bool>(
       context: context,
       builder: (context) {
@@ -820,24 +831,50 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
                       const SizedBox(height: 16),
 
-                      DropdownButtonFormField<int?>(
-                        initialValue: impresaId,
-                        decoration: _inputDecoration('Impresa di appartenenza'),
-                        items: [
-                          const DropdownMenuItem<int?>(
-                            value: null,
-                            child: Text('Nessuna impresa'),
-                          ),
-                          ...imprese.map(
-                            (impresa) => DropdownMenuItem<int?>(
-                              value: impresa.id,
-                              child: Text(impresa.nome),
+                      DropdownSearch<Impresa>(
+                        items: imprese,
+                        selectedItem: impresaSelezionata,
+                        compareFn: (impresa, selezionata) =>
+                            impresa.id == selezionata.id,
+                        itemAsString: (impresa) => impresa.nome,
+                        filterFn: (impresa, filtro) {
+                          final ricerca = filtro.trim().toLowerCase();
+
+                          if (ricerca.isEmpty) {
+                            return true;
+                          }
+
+                          final testoRicerca = [
+                            impresa.nome,
+                            impresa.partitaIva ?? '',
+                            impresa.codiceFiscale ?? '',
+                          ].join(' ').toLowerCase();
+
+                          return testoRicerca.contains(ricerca);
+                        },
+                        popupProps: PopupProps.menu(
+                          showSearchBox: true,
+                          searchFieldProps: const TextFieldProps(
+                            decoration: InputDecoration(
+                              labelText: 'Cerca impresa',
+                              hintText:
+                                  'Ragione sociale, P.IVA o codice fiscale',
+                              border: OutlineInputBorder(),
                             ),
                           ),
-                        ],
+                        ),
+                        clearButtonProps: const ClearButtonProps(
+                          isVisible: true,
+                        ),
+                        dropdownDecoratorProps: DropDownDecoratorProps(
+                          dropdownSearchDecoration: _inputDecoration(
+                            'Impresa di appartenenza',
+                          ).copyWith(hintText: 'Nessuna impresa'),
+                        ),
                         onChanged: (value) {
                           setDialogState(() {
-                            impresaId = value;
+                            impresaSelezionata = value;
+                            impresaId = value?.id;
                           });
                         },
                       ),

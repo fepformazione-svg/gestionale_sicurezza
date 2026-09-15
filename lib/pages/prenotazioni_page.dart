@@ -4933,6 +4933,45 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         const SizedBox(height: 2),
                       ] else
                         const SizedBox(height: 8),
+                      if (MediaQuery.of(context).size.height < 760) ...[
+                        Wrap(
+                          spacing: 10,
+                          runSpacing: 10,
+                          children: [
+                            filtroChip(
+                              titolo:
+                                  "Tutte (${conteggioPrenotazioniDb('tutte')})",
+                              filtro: 'tutte',
+                              colore: Colors.blue,
+                            ),
+                            filtroChip(
+                              titolo:
+                                  "Aperte (${conteggioPrenotazioniDb('aperte')})",
+                              filtro: 'aperte',
+                              colore: Colors.green,
+                            ),
+                            filtroChip(
+                              titolo:
+                                  "Registro (${conteggioPrenotazioniDb('registro')})",
+                              filtro: 'registro',
+                              colore: Colors.orange,
+                            ),
+                            filtroChip(
+                              titolo:
+                                  "Chiuse (${conteggioPrenotazioniDb('chiuse')})",
+                              filtro: 'chiuse',
+                              colore: Colors.grey,
+                            ),
+                            filtroChip(
+                              titolo:
+                                  "Da fare (${conteggioPrenotazioniDb('da_fare')})",
+                              filtro: 'da_fare',
+                              colore: Colors.red,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                      ],
                       Wrap(
                         spacing: 10,
                         runSpacing: 10,

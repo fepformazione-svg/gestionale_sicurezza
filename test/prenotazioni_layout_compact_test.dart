@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test(
-    'PREN012 evita la duplicazione dei filtri principali sopra la tabella',
+    'PREN013 mantiene i filtri principali sotto i 760 px',
     () {
       final source = File(
         'lib/pages/prenotazioni_page.dart',
@@ -30,6 +30,17 @@ void main() {
 
       final layoutSource = source.substring(start, end);
 
+      const fallbackMarker =
+          'if (MediaQuery.of(context).size.height < 760) ...[';
+
+      expect(
+        layoutSource.contains(fallbackMarker),
+        isTrue,
+        reason:
+            'Sotto i 760 px devono restare disponibili '
+            'i filtri principali in forma compatta.',
+      );
+
       const filtriPrincipali = <String>[
         "filtro: 'tutte'",
         "filtro: 'aperte'",
@@ -41,10 +52,10 @@ void main() {
       for (final filtro in filtriPrincipali) {
         expect(
           filtro.allMatches(layoutSource).length,
-          1,
+          2,
           reason:
-              'Ogni filtro principale deve comparire una sola volta '
-              'nel blocco superiore: nei KPI cliccabili, senza chip duplicato.',
+              'Ogni filtro principale deve comparire due volte: '
+              'nei KPI desktop e nel fallback compatto sotto i 760 px.',
         );
       }
 

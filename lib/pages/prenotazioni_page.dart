@@ -4939,41 +4939,6 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                         children: [
                           filtroChip(
                             titolo:
-                                "Tutte (${conteggioPrenotazioniDb('tutte')})",
-                            filtro: 'tutte',
-                            colore: Colors.blue,
-                          ),
-
-                          filtroChip(
-                            titolo:
-                                "Aperte (${conteggioPrenotazioniDb('aperte')})",
-                            filtro: 'aperte',
-                            colore: Colors.green,
-                          ),
-
-                          filtroChip(
-                            titolo:
-                                "Registro (${conteggioPrenotazioniDb('registro')})",
-                            filtro: 'registro',
-                            colore: Colors.orange,
-                          ),
-
-                          filtroChip(
-                            titolo:
-                                "Chiuse (${conteggioPrenotazioniDb('chiuse')})",
-                            filtro: 'chiuse',
-                            colore: Colors.grey,
-                          ),
-
-                          filtroChip(
-                            titolo:
-                                "Da fare (${conteggioPrenotazioniDb('da_fare')})",
-                            filtro: 'da_fare',
-                            colore: Colors.red,
-                          ),
-
-                          filtroChip(
-                            titolo:
                                 "Senza discente (${conteggioPrenotazioniDb('senza_discente')})",
                             filtro: 'senza_discente',
                             colore: Colors.purple,

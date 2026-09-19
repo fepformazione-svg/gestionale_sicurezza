@@ -15,6 +15,7 @@ import '../models/corso_piattaforma.dart';
 import '../services/database_service.dart';
 
 import '../widgets/app_search_bar.dart';
+import '../widgets/corso_documenti_dialog.dart';
 import '../widgets/corso_piattaforme_dialog.dart';
 import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
@@ -35,6 +36,7 @@ class _CorsiPageState extends State<CorsiPage> {
   Map<int, List<CorsoPiattaforma>> piattaformePerCorso = {};
 
   bool loading = true;
+  bool _modelliWordModificatiUltimaApertura = false;
   String ricercaCorrente = '';
   final TextEditingController ricercaController = TextEditingController();
 
@@ -173,6 +175,25 @@ class _CorsiPageState extends State<CorsiPage> {
     );
 
     if (modificato == true) {
+      await caricaCorsi();
+    }
+  }
+
+  Future<void> apriDialogModelliWord(Corso corso) async {
+    if (corso.id == null) return;
+
+    _modelliWordModificatiUltimaApertura = false;
+
+    final modificato = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return CorsoDocumentiDialog(corso: corso);
+      },
+    );
+
+    if (modificato == true) {
+      _modelliWordModificatiUltimaApertura = true;
       await caricaCorsi();
     }
   }
@@ -854,6 +875,62 @@ class _CorsiPageState extends State<CorsiPage> {
                   ),
                 ),
 
+                const SizedBox(height: 12),
+
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.description_outlined,
+                        color: Color(0xFF7C3AED),
+                      ),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Modelli Word',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF111827),
+                              ),
+                            ),
+                            SizedBox(height: 3),
+                            Text(
+                              'Associa i modelli Word per Test e Gradimento.',
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF6B7280),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      OutlinedButton.icon(
+                        onPressed: corso.id == null
+                            ? null
+                            : () async {
+                                await apriDialogModelliWord(corso);
+
+                                if (_modelliWordModificatiUltimaApertura &&
+                                    context.mounted) {
+                                  Navigator.pop(context);
+                                }
+                              },
+                        icon: const Icon(Icons.description_outlined),
+                        label: const Text('Gestisci modelli Word'),
+                      ),
+                    ],
+                  ),
+                ),
                 const SizedBox(height: 28),
 
                 Row(
@@ -885,6 +962,9 @@ class _CorsiPageState extends State<CorsiPage> {
                             denominazione: nome,
                             durataOre: durata,
                             validitaAnni: validita,
+                            modelloTestWordPath: corso.modelloTestWordPath,
+                            modelloGradimentoWordPath:
+                                corso.modelloGradimentoWordPath,
                           ),
                         );
                       },
@@ -1166,7 +1246,7 @@ class _CorsiPageState extends State<CorsiPage> {
                               ),
                               SizedBox(width: 12),
                               SizedBox(
-                                width: 164,
+                                width: 216,
                                 child: Align(
                                   alignment: Alignment.centerRight,
                                   child: Text(
@@ -1325,6 +1405,19 @@ class _CorsiPageState extends State<CorsiPage> {
 
                                             const SizedBox(width: 4),
 
+                                            Tooltip(
+                                              message: 'Gestisci modelli Word',
+                                              child: IconButton(
+                                                onPressed: () =>
+                                                    apriDialogModelliWord(item),
+                                                icon: const Icon(
+                                                  Icons.description_outlined,
+                                                ),
+                                                color: const Color(0xFF7C3AED),
+                                              ),
+                                            ),
+
+                                            const SizedBox(width: 4),
                                             Tooltip(
                                               message: 'Modifica corso',
                                               child: IconButton(

@@ -24,6 +24,13 @@ class AppDatabase {
 
   static Database? _database;
 
+  static String? _databasePathOverrideForTesting;
+
+  @visibleForTesting
+  static void setDatabasePathOverrideForTesting(String? path) {
+    _databasePathOverrideForTesting = path;
+  }
+
   static const String databaseName = 'gestionale_sicurezza.db';
 
   Future<Database> get database async {
@@ -33,6 +40,7 @@ class AppDatabase {
     databaseFactory = databaseFactoryFfi;
 
     final diagnosticDbPath =
+        _databasePathOverrideForTesting ??
         Platform.environment['GESTIONALE_SICUREZZA_DB_PATH'];
 
     final String path;
@@ -66,7 +74,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 11,
+        version: 12,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -188,6 +196,8 @@ updated_at TEXT NOT NULL
         denominazione TEXT NOT NULL,
         durata_ore INTEGER DEFAULT 0,
         validita_anni INTEGER DEFAULT 0,
+        modello_test_word_path TEXT,
+        modello_gradimento_word_path TEXT,
         created_at TEXT DEFAULT CURRENT_TIMESTAMP,
         updated_at TEXT
       )
@@ -906,6 +916,8 @@ updated_at TEXT NOT NULL
     await _ensureColumns(db, 'corsi', {
       'durata_ore': 'INTEGER DEFAULT 0',
       'validita_anni': 'INTEGER DEFAULT 0',
+      'modello_test_word_path': 'TEXT',
+      'modello_gradimento_word_path': 'TEXT',
       'created_at': 'TEXT DEFAULT CURRENT_TIMESTAMP',
       'updated_at': 'TEXT',
     });

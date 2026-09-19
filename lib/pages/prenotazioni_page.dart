@@ -2778,6 +2778,175 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     );
   }
 
+  Future<void> _apriModelloWordCorso(
+    String? percorso, {
+    required String etichetta,
+  }) async {
+    final percorsoPulito = percorso?.trim() ?? '';
+
+    if (percorsoPulito.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Nessun modello $etichetta associato a questo corso.'),
+        ),
+      );
+      return;
+    }
+
+    final file = File(percorsoPulito);
+
+    if (!await file.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Modello $etichetta non trovato nel percorso salvato.'),
+        ),
+      );
+      return;
+    }
+
+    await OpenFile.open(percorsoPulito);
+  }
+
+  Future<void> apriDocumentiCorsoPrenotazione(
+    Map<String, dynamic> prenotazione,
+  ) async {
+    final corsoIdValore = prenotazione['corso_id'];
+
+    final corsoId = corsoIdValore is int
+        ? corsoIdValore
+        : int.tryParse(corsoIdValore?.toString() ?? '');
+
+    if (corsoId == null || corsoId <= 0) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossibile aprire i documenti: corso non collegato alla prenotazione.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final corsi = await DatabaseService.instance.getCorsi();
+
+      final corsiTrovati = corsi.where((corso) => corso.id == corsoId);
+
+      if (corsiTrovati.isEmpty) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Il corso collegato alla prenotazione non è stato trovato.',
+            ),
+          ),
+        );
+        return;
+      }
+
+      final corso = corsiTrovati.first;
+
+      if (!mounted) return;
+
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) {
+          final testAssociato = (corso.modelloTestWordPath ?? '')
+              .trim()
+              .isNotEmpty;
+
+          final gradimentoAssociato = (corso.modelloGradimentoWordPath ?? '')
+              .trim()
+              .isNotEmpty;
+
+          return AlertDialog(
+            title: const Text('Documenti corso'),
+            content: SizedBox(
+              width: 520,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    corso.denominazione,
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 20),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.quiz_outlined),
+                    title: const Text('Test Word'),
+                    subtitle: Text(
+                      testAssociato
+                          ? 'Modello associato'
+                          : 'Nessun modello associato',
+                    ),
+                    trailing: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.of(dialogContext).pop();
+
+                        await _apriModelloWordCorso(
+                          corso.modelloTestWordPath,
+                          etichetta: 'Test Word',
+                        );
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: const Text('Apri'),
+                    ),
+                  ),
+                  const Divider(),
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: const Icon(Icons.rate_review_outlined),
+                    title: const Text('Gradimento Word'),
+                    subtitle: Text(
+                      gradimentoAssociato
+                          ? 'Modello associato'
+                          : 'Nessun modello associato',
+                    ),
+                    trailing: OutlinedButton.icon(
+                      onPressed: () async {
+                        Navigator.of(dialogContext).pop();
+
+                        await _apriModelloWordCorso(
+                          corso.modelloGradimentoWordPath,
+                          etichetta: 'Gradimento Word',
+                        );
+                      },
+                      icon: const Icon(Icons.open_in_new, size: 18),
+                      label: const Text('Apri'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+                child: const Text('Chiudi'),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Errore apertura documenti corso: $e')),
+      );
+    }
+  }
+
   Future<void> apriDialogRegistroPresenze(
     Map<String, dynamic> prenotazione,
   ) async {
@@ -5898,6 +6067,37 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   ),
                                                                   PopupMenuItem(
                                                                     value:
+                                                                        'documenti_corso',
+                                                                    child: Row(
+                                                                      children: [
+                                                                        Icon(
+                                                                          Icons
+                                                                              .description_outlined,
+                                                                          size:
+                                                                              18,
+                                                                          color: Color(
+                                                                            0xFF0F766E,
+                                                                          ),
+                                                                        ),
+                                                                        SizedBox(
+                                                                          width:
+                                                                              8,
+                                                                        ),
+                                                                        Text(
+                                                                          'Documenti corso',
+                                                                          style: TextStyle(
+                                                                            color: Color(
+                                                                              0xFF0F766E,
+                                                                            ),
+                                                                            fontWeight:
+                                                                                FontWeight.w700,
+                                                                          ),
+                                                                        ),
+                                                                      ],
+                                                                    ),
+                                                                  ),
+                                                                  PopupMenuItem(
+                                                                    value:
                                                                         'elimina',
                                                                     child: Row(
                                                                       children: [
@@ -5984,6 +6184,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                 );
                                                               }
 
+                                                              if (result ==
+                                                                  'documenti_corso') {
+                                                                await apriDocumentiCorsoPrenotazione(
+                                                                  p,
+                                                                );
+                                                              }
                                                               if (result ==
                                                                   'elimina') {
                                                                 eliminaPrenotazione(

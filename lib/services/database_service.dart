@@ -6,6 +6,7 @@ import '../models/corso.dart';
 import '../models/corso_piattaforma.dart';
 import '../models/prezzario.dart';
 import 'app_database.dart';
+import 'documento_word_context.dart';
 
 class DatabaseService {
   DatabaseService._();
@@ -1155,6 +1156,75 @@ FROM prenotazioni p
     }
   }
 
+  Future<DocumentoWordContext?> getDocumentoWordContextByPrenotazioneId(
+    int prenotazioneId,
+  ) async {
+    final db = await _db;
+
+    final rows = await db.rawQuery(
+      '''
+      SELECT
+        COALESCE(d.nome, '') AS nome,
+        COALESCE(d.cognome, '') AS cognome,
+        COALESCE(d.codice_fiscale, '') AS codice_fiscale,
+        COALESCE(d.luogo_nascita, '') AS luogo_nascita,
+        COALESCE(d.data_nascita, '') AS data_nascita,
+        COALESCE(c.denominazione, '') AS corso,
+        COALESCE(p.prot, '') AS protocollo,
+        COALESCE(p.data, '') AS data_corso,
+        COALESCE(aula.denominazione, '') AS sede,
+        COALESCE(aula.indirizzo, '') AS indirizzo_sede,
+        COALESCE(aula.comune, '') AS comune_sede,
+        COALESCE(doc.nome, '') AS docente_nome,
+        COALESCE(doc.cognome, '') AS docente_cognome,
+        COALESCE(doc.qualifica, '') AS docente_qualifica,
+        COALESCE(i.intestazione, '') AS impresa
+      FROM prenotazioni p
+      LEFT JOIN discenti d
+        ON d.id = p.discente_id
+      LEFT JOIN imprese i
+        ON i.id = p.impresa_id
+      LEFT JOIN corsi c
+        ON c.id = p.corso_id
+      LEFT JOIN docenti doc
+        ON doc.id = p.docente_id
+      LEFT JOIN aule_sedi aula
+        ON aula.id = p.aula_sede_id
+      WHERE p.id = ?
+      LIMIT 1
+      ''',
+      [prenotazioneId],
+    );
+
+    if (rows.isEmpty) {
+      return null;
+    }
+
+    final row = rows.first;
+
+    String testo(String campo) {
+      return row[campo]?.toString().trim() ?? '';
+    }
+
+    return DocumentoWordContext(
+      nome: testo('nome'),
+      cognome: testo('cognome'),
+      codiceFiscale: testo('codice_fiscale'),
+      luogoNascita: testo('luogo_nascita'),
+      dataNascita: testo('data_nascita'),
+      corso: testo('corso'),
+      protocollo: testo('protocollo'),
+      dataCorso: testo('data_corso'),
+      sede: testo('sede'),
+      indirizzoSede: testo('indirizzo_sede'),
+      comuneSede: testo('comune_sede'),
+      docenteNome: testo('docente_nome'),
+      docenteCognome: testo('docente_cognome'),
+      docenteQualifica: testo('docente_qualifica'),
+      impresa: testo('impresa'),
+    );
+  }
+
   Future<int> insertPrenotazione(Map<String, dynamic> dati) async {
     _validaCollegamentiPrenotazione(dati);
 
@@ -1164,6 +1234,9 @@ FROM prenotazioni p
       'discente_id': dati['discente_id'],
       'impresa_id': dati['impresa_id'],
       'corso_id': dati['corso_id'],
+      'docente_id': dati['docente_id'],
+      'aula_sede_id': dati['aula_sede_id'],
+      'ente_attestato_id': dati['ente_attestato_id'],
       'data': dati['data'],
       'prot': dati['prot'],
       'aperto': dati['aperto'] ?? 1,

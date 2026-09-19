@@ -11,6 +11,7 @@ import '../widgets/table_status_badge.dart';
 import '../widgets/app_action_button.dart';
 
 import '../services/app_database.dart';
+import '../services/documento_word_docx_service.dart';
 
 import '../utils/pdf_azienda_helper.dart';
 
@@ -2811,14 +2812,232 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     await OpenFile.open(percorsoPulito);
   }
 
+  Future<void> _generaDocumentoWordCorso({
+    required Map<String, dynamic> prenotazione,
+    required String? modelloPath,
+    required String etichetta,
+    required bool senzaCorsista,
+  }) async {
+    final percorsoModello = modelloPath?.trim() ?? '';
+
+    if (percorsoModello.isEmpty) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Nessun modello $etichetta associato a questo corso.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final modello = File(percorsoModello);
+
+    if (!await modello.exists()) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Modello $etichetta non trovato nel percorso salvato.',
+          ),
+          backgroundColor: const Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    final prenotazioneIdValore = prenotazione['id'];
+
+    final prenotazioneId = prenotazioneIdValore is int
+        ? prenotazioneIdValore
+        : int.tryParse(
+            prenotazioneIdValore?.toString() ?? '',
+          );
+
+    if (prenotazioneId == null || prenotazioneId <= 0) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Impossibile generare il documento: ID prenotazione mancante.',
+          ),
+          backgroundColor: Color(0xFFDC2626),
+        ),
+      );
+      return;
+    }
+
+    try {
+      final contestoBase = await DatabaseService.instance
+          .getDocumentoWordContextByPrenotazioneId(
+            prenotazioneId,
+          );
+
+      if (contestoBase == null) {
+        if (!mounted) return;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Impossibile recuperare i dati della prenotazione.',
+            ),
+            backgroundColor: Color(0xFFDC2626),
+          ),
+        );
+        return;
+      }
+
+      final contesto = senzaCorsista
+          ? contestoBase.senzaDiscente()
+          : contestoBase;
+
+      final documenti =
+          await getApplicationDocumentsDirectory();
+
+      const cartellaGestionale =
+          'Gestionale Sicurezza';
+
+      const cartellaDocumentiCorso =
+          'Documenti Corso';
+
+      final cartella = Directory(
+        '${documenti.path}'
+        '${Platform.pathSeparator}'
+        '$cartellaGestionale'
+        '${Platform.pathSeparator}'
+        '$cartellaDocumentiCorso',
+      );
+
+      await cartella.create(
+        recursive: true,
+      );
+
+      String segmentoNomeFile(
+        String valore,
+        String fallback,
+      ) {
+        var risultato =
+            _sanificaNomeFile(valore).trim();
+
+        if (risultato.isEmpty) {
+          risultato = fallback;
+        }
+
+        if (risultato.length > 60) {
+          risultato =
+              risultato.substring(0, 60);
+        }
+
+        return risultato;
+      }
+
+      final tipoDocumento =
+          segmentoNomeFile(
+        etichetta.replaceAll(
+          ' Word',
+          '',
+        ),
+        'documento',
+      );
+
+      final corsoNome =
+          segmentoNomeFile(
+        contesto.corso,
+        'corso',
+      );
+
+      final protocollo =
+          segmentoNomeFile(
+        contesto.protocollo,
+        'senza_protocollo',
+      );
+
+      final destinatario =
+          segmentoNomeFile(
+        senzaCorsista
+            ? 'senza_corsista'
+            : contesto.nomeCognome,
+        senzaCorsista
+            ? 'senza_corsista'
+            : 'corsista',
+      );
+
+      final univoco =
+          DateTime.now()
+              .microsecondsSinceEpoch;
+
+      final nomeFile =
+          '${tipoDocumento}_'
+          '${corsoNome}_'
+          '${protocollo}_'
+          '${destinatario}_'
+          '$univoco.docx';
+
+      final destinazionePath =
+          '${cartella.path}'
+          '${Platform.pathSeparator}'
+          '$nomeFile';
+
+      final percorsoGenerato =
+          await DocumentoWordDocxService()
+              .generaDaModello(
+        modelloPath: percorsoModello,
+        destinazionePath:
+            destinazionePath,
+        placeholderValues:
+            contesto.placeholderValues,
+      );
+
+      await OpenFile.open(
+        percorsoGenerato,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Documento $etichetta generato: '
+            '$percorsoGenerato',
+          ),
+          backgroundColor:
+              const Color(0xFF16A34A),
+          duration:
+              const Duration(seconds: 5),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Errore generazione $etichetta: $e',
+          ),
+          backgroundColor:
+              const Color(0xFFDC2626),
+          duration:
+              const Duration(seconds: 5),
+        ),
+      );
+    }
+  }
+
   Future<void> apriDocumentiCorsoPrenotazione(
     Map<String, dynamic> prenotazione,
   ) async {
-    final corsoIdValore = prenotazione['corso_id'];
+    final corsoIdValore =
+        prenotazione['corso_id'];
 
     final corsoId = corsoIdValore is int
         ? corsoIdValore
-        : int.tryParse(corsoIdValore?.toString() ?? '');
+        : int.tryParse(
+            corsoIdValore?.toString() ?? '',
+          );
 
     if (corsoId == null || corsoId <= 0) {
       if (!mounted) return;
@@ -2826,7 +3045,8 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'Impossibile aprire i documenti: corso non collegato alla prenotazione.',
+            'Impossibile aprire i documenti: '
+            'corso non collegato alla prenotazione.',
           ),
         ),
       );
@@ -2834,9 +3054,13 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     }
 
     try {
-      final corsi = await DatabaseService.instance.getCorsi();
+      final corsi =
+          await DatabaseService.instance.getCorsi();
 
-      final corsiTrovati = corsi.where((corso) => corso.id == corsoId);
+      final corsiTrovati =
+          corsi.where(
+        (corso) => corso.id == corsoId,
+      );
 
       if (corsiTrovati.isEmpty) {
         if (!mounted) return;
@@ -2844,84 +3068,204 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text(
-              'Il corso collegato alla prenotazione non è stato trovato.',
+              'Il corso collegato alla prenotazione '
+              'non è stato trovato.',
             ),
           ),
         );
         return;
       }
 
-      final corso = corsiTrovati.first;
+      final corso =
+          corsiTrovati.first;
 
       if (!mounted) return;
 
       await showDialog<void>(
         context: context,
         builder: (dialogContext) {
-          final testAssociato = (corso.modelloTestWordPath ?? '')
-              .trim()
-              .isNotEmpty;
+          final testAssociato =
+              (corso.modelloTestWordPath ?? '')
+                  .trim()
+                  .isNotEmpty;
 
-          final gradimentoAssociato = (corso.modelloGradimentoWordPath ?? '')
-              .trim()
-              .isNotEmpty;
+          final gradimentoAssociato =
+              (corso.modelloGradimentoWordPath ?? '')
+                  .trim()
+                  .isNotEmpty;
+
+          Widget menuAzioniDocumento({
+            required String? modelloPath,
+            required String etichetta,
+            required bool associato,
+          }) {
+            return PopupMenuButton<String>(
+              enabled: associato,
+              tooltip: associato
+                  ? 'Azioni $etichetta'
+                  : 'Nessun modello associato',
+              icon: Icon(
+                Icons.more_vert,
+                color: associato
+                    ? const Color(0xFF0F766E)
+                    : Colors.grey,
+              ),
+              onSelected: (azione) async {
+                Navigator.of(
+                  dialogContext,
+                ).pop();
+
+                if (azione == 'apri') {
+                  await _apriModelloWordCorso(
+                    modelloPath,
+                    etichetta: etichetta,
+                  );
+                  return;
+                }
+
+                if (azione ==
+                    'genera_personalizzato') {
+                  await _generaDocumentoWordCorso(
+                    prenotazione: prenotazione,
+                    modelloPath: modelloPath,
+                    etichetta: etichetta,
+                    senzaCorsista: false,
+                  );
+                  return;
+                }
+
+                if (azione ==
+                    'genera_senza_corsista') {
+                  await _generaDocumentoWordCorso(
+                    prenotazione: prenotazione,
+                    modelloPath: modelloPath,
+                    etichetta: etichetta,
+                    senzaCorsista: true,
+                  );
+                }
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem<String>(
+                  value: 'apri',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding:
+                        EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.open_in_new,
+                    ),
+                    title:
+                        Text('Apri modello'),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value:
+                      'genera_personalizzato',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding:
+                        EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.person_outline,
+                    ),
+                    title: Text(
+                      'Genera personalizzato',
+                    ),
+                  ),
+                ),
+                PopupMenuItem<String>(
+                  value:
+                      'genera_senza_corsista',
+                  child: ListTile(
+                    dense: true,
+                    contentPadding:
+                        EdgeInsets.zero,
+                    leading: Icon(
+                      Icons.person_off_outlined,
+                    ),
+                    title: Text(
+                      'Genera senza corsista',
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
 
           return AlertDialog(
-            title: const Text('Documenti corso'),
+            title:
+                const Text('Documenti corso'),
             content: SizedBox(
               width: 520,
               child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize:
+                    MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     corso.denominazione,
-                    style: const TextStyle(fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                      fontWeight:
+                          FontWeight.w700,
+                    ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Per ogni documento puoi aprire '
+                    'il modello originale oppure creare '
+                    'una nuova copia compilata.',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
                   ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.quiz_outlined),
-                    title: const Text('Test Word'),
+                    contentPadding:
+                        EdgeInsets.zero,
+                    leading: const Icon(
+                      Icons.quiz_outlined,
+                    ),
+                    title:
+                        const Text('Test Word'),
                     subtitle: Text(
                       testAssociato
                           ? 'Modello associato'
                           : 'Nessun modello associato',
                     ),
-                    trailing: OutlinedButton.icon(
-                      onPressed: () async {
-                        Navigator.of(dialogContext).pop();
-
-                        await _apriModelloWordCorso(
+                    trailing:
+                        menuAzioniDocumento(
+                      modelloPath:
                           corso.modelloTestWordPath,
-                          etichetta: 'Test Word',
-                        );
-                      },
-                      icon: const Icon(Icons.open_in_new, size: 18),
-                      label: const Text('Apri'),
+                      etichetta:
+                          'Test Word',
+                      associato:
+                          testAssociato,
                     ),
                   ),
                   const Divider(),
                   ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.rate_review_outlined),
-                    title: const Text('Gradimento Word'),
+                    contentPadding:
+                        EdgeInsets.zero,
+                    leading: const Icon(
+                      Icons.rate_review_outlined,
+                    ),
+                    title: const Text(
+                      'Gradimento Word',
+                    ),
                     subtitle: Text(
                       gradimentoAssociato
                           ? 'Modello associato'
                           : 'Nessun modello associato',
                     ),
-                    trailing: OutlinedButton.icon(
-                      onPressed: () async {
-                        Navigator.of(dialogContext).pop();
-
-                        await _apriModelloWordCorso(
-                          corso.modelloGradimentoWordPath,
-                          etichetta: 'Gradimento Word',
-                        );
-                      },
-                      icon: const Icon(Icons.open_in_new, size: 18),
-                      label: const Text('Apri'),
+                    trailing:
+                        menuAzioniDocumento(
+                      modelloPath: corso
+                          .modelloGradimentoWordPath,
+                      etichetta:
+                          'Gradimento Word',
+                      associato:
+                          gradimentoAssociato,
                     ),
                   ),
                 ],
@@ -2930,9 +3274,12 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
             actions: [
               TextButton(
                 onPressed: () {
-                  Navigator.of(dialogContext).pop();
+                  Navigator.of(
+                    dialogContext,
+                  ).pop();
                 },
-                child: const Text('Chiudi'),
+                child:
+                    const Text('Chiudi'),
               ),
             ],
           );
@@ -2942,7 +3289,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Errore apertura documenti corso: $e')),
+        SnackBar(
+          content: Text(
+            'Errore apertura documenti corso: $e',
+          ),
+        ),
       );
     }
   }

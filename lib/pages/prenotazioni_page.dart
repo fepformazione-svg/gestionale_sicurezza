@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../database/database_service.dart';
+import '../dialogs/discente_dialog.dart';
+
+import 'discente_scheda_page.dart';
 
 import '../widgets/app_search_bar.dart';
 import '../widgets/page_header.dart';
@@ -874,6 +877,97 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
     return 'DISCENTE NON TROVATO';
   }
 
+  Future<void> apriSchedaDiscenteDaPrenotazione(
+    Map<String, dynamic> prenotazione,
+  ) async {
+    final discenteIdRaw = prenotazione['discente_id'];
+
+    final discenteId = discenteIdRaw is int
+        ? discenteIdRaw
+        : int.tryParse(discenteIdRaw?.toString() ?? '');
+
+    if (discenteId == null || discenteId <= 0) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('La prenotazione non ha un discente collegato.'),
+        ),
+      );
+
+      return;
+    }
+
+    final discente = await DatabaseService.instance.getDiscenteById(
+      discenteId,
+    );
+
+    if (!mounted) return;
+
+    if (discente == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Discente collegato non trovato.'),
+        ),
+      );
+
+      return;
+    }
+
+    final risultato = await showDialog<Object?>(
+      context: context,
+      builder: (dialogContext) {
+        final dimensioni = MediaQuery.of(dialogContext).size;
+
+        final larghezza =
+            dimensioni.width > 1450 ? 1400.0 : dimensioni.width * 0.94;
+
+        final altezza =
+            dimensioni.height > 950 ? 880.0 : dimensioni.height * 0.92;
+
+        return Dialog(
+          insetPadding: const EdgeInsets.all(20),
+          clipBehavior: Clip.antiAlias,
+          child: SizedBox(
+            width: larghezza,
+            height: altezza,
+            child: DiscenteSchedaPage(
+              discente: discente,
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (risultato == 'modifica') {
+      final salvato = await apriDialogDiscente(
+        context: context,
+        discente: discente,
+      );
+
+      if (!mounted) return;
+
+      if (salvato) {
+        await caricaPrenotazioni();
+
+        if (!mounted) return;
+
+        notificaDatiModificati();
+      }
+
+      return;
+    }
+
+    if (risultato == true) {
+      await caricaPrenotazioni();
+
+      if (!mounted) return;
+
+      notificaDatiModificati();
+    }
+  }
   String testoDocentePrenotazione(Map<String, dynamic> prenotazione) {
     final cognome = prenotazione['docente_cognome']?.toString().trim() ?? '';
     final nome = prenotazione['docente_nome']?.toString().trim() ?? '';
@@ -6568,6 +6662,11 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
                                                                   p,
                                                                 ),
 
+                                                            onApriDiscente: () =>
+                                                                apriSchedaDiscenteDaPrenotazione(
+                                                                  p,
+                                                                ),
+
                                                             onCollegaDocente: () =>
                                                                 collegaDocentePrenotazione(
                                                                   p,
@@ -6632,6 +6731,7 @@ class PrenotazioneRow extends StatefulWidget {
   final VoidCallback onStampaRegistro;
   final VoidCallback onModifica;
   final VoidCallback onCollegaDiscente;
+  final VoidCallback onApriDiscente;
   final VoidCallback onCollegaDocente;
 
   final VoidCallback onElimina;
@@ -6653,6 +6753,7 @@ class PrenotazioneRow extends StatefulWidget {
     required this.onRegistro,
     required this.onStampaRegistro,
     required this.onCollegaDiscente,
+    required this.onApriDiscente,
     required this.onCollegaDocente,
     required this.onElimina,
     required this.statoPrenotazione,
@@ -6804,14 +6905,26 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
       );
     }
 
-    return Text(
-      discente,
-      overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 13,
-        height: 1.1,
-        fontWeight: widget.selezionata ? FontWeight.w700 : FontWeight.w500,
-        color: const Color(0xFF111827),
+    return Tooltip(
+      message: 'Apri scheda discente',
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onApriDiscente,
+          child: Text(
+            discente,
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+            style: TextStyle(
+              fontSize: 13,
+              height: 1.1,
+              fontWeight:
+                  widget.selezionata ? FontWeight.w700 : FontWeight.w600,
+              color: const Color(0xFF2563EB),
+            ),
+          ),
+        ),
       ),
     );
   }

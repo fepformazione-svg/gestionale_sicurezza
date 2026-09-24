@@ -459,9 +459,18 @@ class _DiscentiPageState extends State<DiscentiPage> {
       }
     }
 
+    late ModalRoute<bool> dialogRoute;
+    bool dialogRouteAcquisita = false;
+
     final salvato = await showDialog<bool>(
       context: context,
       builder: (context) {
+        final route = ModalRoute.of<bool>(context);
+        if (!dialogRouteAcquisita && route != null) {
+          dialogRoute = route;
+          dialogRouteAcquisita = true;
+        }
+
         return StatefulBuilder(
           builder: (context, setDialogState) {
             void ricalcolaCodiceFiscale() {
@@ -618,6 +627,7 @@ class _DiscentiPageState extends State<DiscentiPage> {
                       const SizedBox(height: 16),
 
                       Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Expanded(
                             child: TextField(
@@ -1130,6 +1140,10 @@ class _DiscentiPageState extends State<DiscentiPage> {
         );
       },
     );
+
+    if (dialogRouteAcquisita) {
+      await dialogRoute.completed;
+    }
 
     nomeController.dispose();
     cognomeController.dispose();

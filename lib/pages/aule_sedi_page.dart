@@ -68,6 +68,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
       final capienza = aulaSede.capienza?.toString() ?? '';
 
       final testo = [
+        aulaSede.codice,
         aulaSede.denominazione,
         aulaSede.tipo,
         aulaSede.indirizzo,
@@ -84,6 +85,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
   Future<void> apriDialogNuovaAulaSede() async {
     final formKey = GlobalKey<FormState>();
 
+    final codiceController = TextEditingController();
     final denominazioneController = TextEditingController();
     final indirizzoController = TextEditingController();
     final comuneController = TextEditingController();
@@ -108,6 +110,16 @@ class _AuleSediPageState extends State<AuleSediPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        TextFormField(
+                          controller: codiceController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: const InputDecoration(
+                            labelText: 'Codice',
+                            hintText: 'Es. UC',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
                         TextFormField(
                           controller: denominazioneController,
                           decoration: const InputDecoration(
@@ -224,6 +236,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
                     final capienzaTesto = capienzaController.text.trim();
 
                     final aulaSede = AulaSede(
+                      codice: codiceController.text.trim().toUpperCase(),
                       denominazione: denominazioneController.text.trim(),
                       tipo: tipoSelezionato,
                       indirizzo: indirizzoController.text.trim(),
@@ -248,6 +261,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
       },
     );
 
+    codiceController.dispose();
     denominazioneController.dispose();
     indirizzoController.dispose();
     comuneController.dispose();
@@ -658,6 +672,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
   Future<void> apriDialogModificaAulaSede(AulaSede aulaSede) async {
     final formKey = GlobalKey<FormState>();
 
+    final codiceController = TextEditingController(text: aulaSede.codice);
     final denominazioneController = TextEditingController(
       text: aulaSede.denominazione,
     );
@@ -686,6 +701,16 @@ class _AuleSediPageState extends State<AuleSediPage> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        TextFormField(
+                          controller: codiceController,
+                          textCapitalization: TextCapitalization.characters,
+                          decoration: const InputDecoration(
+                            labelText: 'Codice',
+                            hintText: 'Es. UC',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                        const SizedBox(height: 14),
                         TextFormField(
                           controller: denominazioneController,
                           decoration: const InputDecoration(
@@ -802,6 +827,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
                     final capienzaTesto = capienzaController.text.trim();
 
                     final aulaSedeAggiornata = aulaSede.copyWith(
+                      codice: codiceController.text.trim().toUpperCase(),
                       denominazione: denominazioneController.text.trim(),
                       tipo: tipoSelezionato,
                       indirizzo: indirizzoController.text.trim(),
@@ -828,6 +854,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
       },
     );
 
+    codiceController.dispose();
     denominazioneController.dispose();
     indirizzoController.dispose();
     comuneController.dispose();
@@ -979,7 +1006,8 @@ class _AuleSediPageState extends State<AuleSediPage> {
                                 setState(() {});
                               },
                             ),
-                      labelText: 'Cerca aula, sede, tipo, comune o note...',
+                      labelText:
+                          'Cerca codice, aula, sede, tipo, comune o note...',
                       border: const OutlineInputBorder(),
                     ),
                   ),
@@ -1091,6 +1119,7 @@ class _AuleSediPageState extends State<AuleSediPage> {
                               Colors.blueGrey.shade50,
                             ),
                             columns: const [
+                              DataColumn(label: Text('Codice')),
                               DataColumn(label: Text('Denominazione')),
                               DataColumn(label: Text('Tipo')),
                               DataColumn(label: Text('Indirizzo')),
@@ -1103,6 +1132,13 @@ class _AuleSediPageState extends State<AuleSediPage> {
                             rows: auleSediFiltrate.map((aulaSede) {
                               return DataRow(
                                 cells: [
+                                  DataCell(
+                                    Text(
+                                      aulaSede.codice.isEmpty
+                                          ? '-'
+                                          : aulaSede.codice,
+                                    ),
+                                  ),
                                   DataCell(
                                     Text(
                                       aulaSede.denominazione,

@@ -979,15 +979,21 @@ class _PrenotazioniPageState extends State<PrenotazioniPage> {
   }
 
   String testoAulaSedePrenotazione(Map<String, dynamic> prenotazione) {
+    final codice =
+        prenotazione['aula_sede_codice']?.toString().trim() ?? '';
     final denominazione =
         prenotazione['aula_sede_denominazione']?.toString().trim() ?? '';
     final comune = prenotazione['aula_sede_comune']?.toString().trim() ?? '';
 
-    if (denominazione.isEmpty && comune.isEmpty) return '-';
-    if (comune.isEmpty) return denominazione;
-    if (denominazione.isEmpty) return comune;
+    final parti = [
+      if (codice.isNotEmpty) codice,
+      if (denominazione.isNotEmpty) denominazione,
+      if (comune.isNotEmpty) comune,
+    ];
 
-    return '$denominazione - $comune';
+    if (parti.isEmpty) return '-';
+
+    return parti.join(' - ');
   }
 
   String testoEnteAttestatoPrenotazione(Map<String, dynamic> prenotazione) {
@@ -7036,6 +7042,9 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                             padding: const EdgeInsets.only(left: 4),
                             child: Text(
                               (() {
+                                final codice = widget.testo(
+                                  widget.prenotazione['aula_sede_codice'],
+                                );
                                 final denominazione = widget.testo(
                                   widget
                                       .prenotazione['aula_sede_denominazione'],
@@ -7044,13 +7053,15 @@ class _PrenotazioneRowState extends State<PrenotazioneRow> {
                                   widget.prenotazione['aula_sede_comune'],
                                 );
 
-                                if (denominazione.isEmpty && comune.isEmpty) {
-                                  return '-';
-                                }
-                                if (comune.isEmpty) return denominazione;
-                                if (denominazione.isEmpty) return comune;
+                                final parti = [
+                                  if (codice.isNotEmpty) codice,
+                                  if (denominazione.isNotEmpty) denominazione,
+                                  if (comune.isNotEmpty) comune,
+                                ];
 
-                                return '$denominazione - $comune';
+                                if (parti.isEmpty) return '-';
+
+                                return parti.join(' - ');
                               })(),
                               overflow: TextOverflow.ellipsis,
                               maxLines: 1,

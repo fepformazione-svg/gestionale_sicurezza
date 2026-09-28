@@ -1,5 +1,6 @@
 class AulaSede {
   final int? id;
+  final String codice;
   final String denominazione;
   final String tipo;
   final String indirizzo;
@@ -12,6 +13,7 @@ class AulaSede {
 
   AulaSede({
     this.id,
+    this.codice = '',
     required this.denominazione,
     required this.tipo,
     required this.indirizzo,
@@ -26,6 +28,7 @@ class AulaSede {
   factory AulaSede.fromMap(Map<String, dynamic> map) {
     return AulaSede(
       id: map['id'] as int?,
+      codice: map['codice'] as String? ?? '',
       denominazione: map['denominazione'] as String? ?? '',
       tipo: map['tipo'] as String? ?? 'Aula',
       indirizzo: map['indirizzo'] as String? ?? '',
@@ -41,6 +44,7 @@ class AulaSede {
   Map<String, dynamic> toMap() {
     return {
       'id': id,
+      'codice': codice,
       'denominazione': denominazione,
       'tipo': tipo,
       'indirizzo': indirizzo,
@@ -55,6 +59,7 @@ class AulaSede {
 
   AulaSede copyWith({
     int? id,
+    String? codice,
     String? denominazione,
     String? tipo,
     String? indirizzo,
@@ -67,6 +72,7 @@ class AulaSede {
   }) {
     return AulaSede(
       id: id ?? this.id,
+      codice: codice ?? this.codice,
       denominazione: denominazione ?? this.denominazione,
       tipo: tipo ?? this.tipo,
       indirizzo: indirizzo ?? this.indirizzo,

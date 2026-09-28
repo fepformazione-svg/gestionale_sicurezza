@@ -74,7 +74,7 @@ class AppDatabase {
     _database = await databaseFactory.openDatabase(
       path,
       options: OpenDatabaseOptions(
-        version: 12,
+        version: 13,
         onCreate: _onCreate,
         onUpgrade: _onUpgrade,
         onOpen: _onOpen,
@@ -141,6 +141,19 @@ updated_at TEXT NOT NULL
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     await _createTables(db);
+
+    if (oldVersion < 13) {
+      final colonne = await db.rawQuery('PRAGMA table_info(aule_sedi)');
+      final codicePresente = colonne.any(
+        (riga) => riga['name']?.toString() == 'codice',
+      );
+
+      if (!codicePresente) {
+        await db.execute(
+          "ALTER TABLE aule_sedi ADD COLUMN codice TEXT NOT NULL DEFAULT ''",
+        );
+      }
+    }
     await _ensureAllColumns(db);
     await _createIndexes(db);
   }
@@ -418,6 +431,7 @@ updated_at TEXT NOT NULL
   CREATE TABLE IF NOT EXISTS aule_sedi (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     denominazione TEXT NOT NULL,
+    codice TEXT NOT NULL DEFAULT '',
     tipo TEXT NOT NULL DEFAULT 'Aula',
     indirizzo TEXT NOT NULL DEFAULT '',
     comune TEXT NOT NULL DEFAULT '',

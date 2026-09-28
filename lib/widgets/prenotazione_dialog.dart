@@ -550,23 +550,22 @@ class _PrenotazioneDialogState extends State<PrenotazioneDialog> {
                       child: Text('Nessuna aula/sede selezionata'),
                     ),
                     ...auleSedi.map((item) {
+                      final codice = (item['codice'] ?? '').toString();
                       final denominazione = (item['denominazione'] ?? '')
                           .toString();
                       final tipo = (item['tipo'] ?? '').toString();
                       final comune = (item['comune'] ?? '').toString();
 
-                      final dettagli = [
+                      final descrizione = [
+                        if (codice.isNotEmpty) codice,
+                        denominazione,
                         if (tipo.isNotEmpty) tipo,
                         if (comune.isNotEmpty) comune,
                       ].join(' - ');
 
                       return DropdownMenuItem<int?>(
                         value: item['id'] as int,
-                        child: Text(
-                          dettagli.isEmpty
-                              ? denominazione
-                              : '$denominazione ($dettagli)',
-                        ),
+                        child: Text(descrizione),
                       );
                     }),
                   ],

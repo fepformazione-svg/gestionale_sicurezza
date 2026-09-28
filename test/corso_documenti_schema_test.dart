@@ -92,7 +92,7 @@ void main() {
 
         final versione = await db.rawQuery('PRAGMA user_version');
 
-        expect(versione.first.values.first, 12);
+        expect(versione.first.values.first, 13);
       } finally {
         await AppDatabase.instance.close();
 

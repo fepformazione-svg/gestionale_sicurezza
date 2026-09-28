@@ -644,6 +644,7 @@ class DatabaseService {
     return await db.rawQuery('''
     SELECT
       id,
+      codice,
       denominazione,
       tipo,
       indirizzo,
@@ -1057,6 +1058,7 @@ class DatabaseService {
       doc.cognome AS docente_cognome,
       doc.qualifica AS docente_qualifica,
 
+      aula.codice AS aula_sede_codice,
       aula.denominazione AS aula_sede_denominazione,
       aula.comune AS aula_sede_comune,
 

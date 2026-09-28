@@ -36,6 +36,7 @@ void main() {
         '{{CORSO}}': 'Formazione lavoratori rischio alto',
         '{{PROTOCOLLO}}': 'FP-2026-123',
         '{{DATA_CORSO}}': '19/09/2026',
+        '{{SEDE_CORSO}}': 'Aula Roma - Via Esempio 10 - Roma',
         '{{SEDE}}': 'Aula Roma',
         '{{INDIRIZZO_SEDE}}': 'Via Esempio 10',
         '{{COMUNE_SEDE}}': 'Roma',

@@ -45,6 +45,13 @@ class DocumentoWordContext {
     return '$docenteNome $docenteCognome'.trim();
   }
 
+  String get sedeCorso {
+    return [sede, indirizzoSede, comuneSede]
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .join(' - ');
+  }
+
   Map<String, String> get placeholderValues {
     return {
       '{{NOME}}': nome,
@@ -56,6 +63,7 @@ class DocumentoWordContext {
       '{{CORSO}}': corso,
       '{{PROTOCOLLO}}': protocollo,
       '{{DATA_CORSO}}': dataCorso,
+      '{{SEDE_CORSO}}': sedeCorso,
       '{{SEDE}}': sede,
       '{{INDIRIZZO_SEDE}}': indirizzoSede,
       '{{COMUNE_SEDE}}': comuneSede,

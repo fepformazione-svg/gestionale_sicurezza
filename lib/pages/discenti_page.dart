@@ -85,14 +85,21 @@ bool _dataNascitaValida(String valore) {
 
 class DiscentiPage extends StatefulWidget {
   final String globalSearch;
+  final Future<List<Map<String, dynamic>>> Function()? lanDiscentiProvider;
 
-  const DiscentiPage({super.key, this.globalSearch = ''});
+  const DiscentiPage({
+    super.key,
+    this.globalSearch = '',
+    this.lanDiscentiProvider,
+  });
 
   @override
   State<DiscentiPage> createState() => _DiscentiPageState();
 }
 
 class _DiscentiPageState extends State<DiscentiPage> {
+  bool get _modalitaLanSolaLettura => widget.lanDiscentiProvider != null;
+
   List<Discente> discenti = [];
   List<Discente> discentiFiltrati = [];
   List<Impresa> imprese = [];
@@ -133,6 +140,11 @@ class _DiscentiPageState extends State<DiscentiPage> {
   }
 
   Future<void> caricaDati({bool append = false}) async {
+    if (_modalitaLanSolaLettura) {
+      await _caricaDatiLan(append: append);
+      return;
+    }
+
     if (append) {
       if (_caricamentoAltri || discenti.length >= _totaleDiscentiFiltrati) {
         return;
@@ -182,6 +194,68 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
     if (!append && _verticalController.hasClients) {
       _verticalController.jumpTo(0);
+    }
+  }
+
+  Future<void> _caricaDatiLan({required bool append}) async {
+    if (append) {
+      return;
+    }
+
+    setState(() {
+      loading = true;
+      _caricamentoAltri = false;
+      _offsetDiscenti = 0;
+    });
+
+    try {
+      final provider = widget.lanDiscentiProvider!;
+      final rawItems = await provider();
+
+      final tutti = rawItems
+          .map((item) => Discente.fromMap(Map<String, dynamic>.from(item)))
+          .toList();
+
+      final ricerca = _ricercaController.text.trim().toLowerCase();
+
+      final filtrati = ricerca.isEmpty
+          ? tutti
+          : tutti.where((discente) {
+              final testo = [
+                discente.nome,
+                discente.cognome,
+                discente.nomeImpresa ?? '',
+              ].join(' ').toLowerCase();
+
+              return testo.contains(ricerca);
+            }).toList();
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        discenti = tutti;
+        discentiFiltrati = filtrati;
+        imprese = [];
+        _totaleDiscentiFiltrati = filtrati.length;
+        _offsetDiscenti = filtrati.length;
+        loading = false;
+        _caricamentoAltri = false;
+      });
+
+      if (_verticalController.hasClients) {
+        _verticalController.jumpTo(0);
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() {
+          loading = false;
+          _caricamentoAltri = false;
+        });
+      }
+
+      rethrow;
     }
   }
 
@@ -1496,7 +1570,8 @@ class _DiscentiPageState extends State<DiscentiPage> {
 
   @override
   Widget build(BuildContext context) {
-    final exportDisabilitato = discentiFiltrati.isEmpty;
+    final exportDisabilitato =
+        discentiFiltrati.isEmpty || _modalitaLanSolaLettura;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1505,6 +1580,31 @@ class _DiscentiPageState extends State<DiscentiPage> {
           title: 'Discenti',
           subtitle: 'Archivio partecipanti, anagrafiche e storico formativo.',
         ),
+        if (_modalitaLanSolaLettura) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFEFF6FF),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFBFDBFE)),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.lan_outlined, size: 18, color: Color(0xFF1D4ED8)),
+                SizedBox(width: 8),
+                Text(
+                  'Modalità LAN sola lettura',
+                  style: TextStyle(
+                    color: Color(0xFF1D4ED8),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
         const SizedBox(height: 28),
         Row(
           children: [
@@ -1575,7 +1675,9 @@ class _DiscentiPageState extends State<DiscentiPage> {
             const SizedBox(width: 12),
             AppActionButton(
               type: AppActionButtonType.nuovo,
-              onPressed: () => apriDialogDiscente(),
+              onPressed: _modalitaLanSolaLettura
+                  ? null
+                  : () => apriDialogDiscente(),
               label: 'Nuovo discente',
             ),
           ],
@@ -1746,35 +1848,46 @@ class _DiscentiPageState extends State<DiscentiPage> {
                                                               d.id;
                                                         });
                                                       },
-                                                      onDoppioClick: () async {
-                                                        final risultato =
-                                                            await Navigator.of(
-                                                              context,
-                                                            ).push(
-                                                              MaterialPageRoute(
-                                                                builder: (_) =>
-                                                                    DiscenteSchedaPage(
-                                                                      discente:
-                                                                          d,
+                                                      onDoppioClick:
+                                                          _modalitaLanSolaLettura
+                                                          ? null
+                                                          : () async {
+                                                              final risultato =
+                                                                  await Navigator.of(
+                                                                    context,
+                                                                  ).push(
+                                                                    MaterialPageRoute(
+                                                                      builder: (_) =>
+                                                                          DiscenteSchedaPage(
+                                                                            discente:
+                                                                                d,
+                                                                          ),
                                                                     ),
-                                                              ),
-                                                            );
+                                                                  );
 
-                                                        if (risultato ==
-                                                            'modifica') {
-                                                          await apriDialogDiscente(
-                                                            discente: d,
-                                                          );
-                                                        }
+                                                              if (risultato ==
+                                                                  'modifica') {
+                                                                await apriDialogDiscente(
+                                                                  discente: d,
+                                                                );
+                                                              }
 
-                                                        await caricaDati();
-                                                      },
-                                                      onModifica: () =>
-                                                          apriDialogDiscente(
-                                                            discente: d,
-                                                          ),
-                                                      onElimina: () =>
-                                                          eliminaDiscente(d),
+                                                              await caricaDati();
+                                                            },
+                                                      onModifica:
+                                                          _modalitaLanSolaLettura
+                                                          ? null
+                                                          : () =>
+                                                                apriDialogDiscente(
+                                                                  discente: d,
+                                                                ),
+                                                      onElimina:
+                                                          _modalitaLanSolaLettura
+                                                          ? null
+                                                          : () =>
+                                                                eliminaDiscente(
+                                                                  d,
+                                                                ),
                                                     );
                                                   },
                                                 ),
@@ -1877,12 +1990,16 @@ class _HeaderCell extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       child: Row(
         children: [
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF374151),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF374151),
+              ),
             ),
           ),
           if (ordinata) ...[
@@ -1932,9 +2049,9 @@ class DiscenteRow extends StatelessWidget {
   final bool selezionata;
 
   final VoidCallback onSeleziona;
-  final VoidCallback onModifica;
-  final VoidCallback onElimina;
-  final VoidCallback onDoppioClick;
+  final VoidCallback? onModifica;
+  final VoidCallback? onElimina;
+  final VoidCallback? onDoppioClick;
 
   const DiscenteRow({
     super.key,

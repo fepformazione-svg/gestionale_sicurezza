@@ -1,7 +1,16 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 
+typedef DiscentiProvider = Future<List<Map<String, dynamic>>> Function();
+
 class LanServerService {
+  LanServerService({DiscentiProvider? discentiProvider})
+    : this._(discentiProvider);
+
+  LanServerService._(this._discentiProvider);
+
+  final DiscentiProvider? _discentiProvider;
+
   HttpServer? _server;
 
   int get port {
@@ -21,52 +30,67 @@ class LanServerService {
     required int port,
   }) async {
     if (_server != null) {
-      throw StateError('Server LAN già avviato.');
+      throw StateError('Server LAN giÃ  avviato.');
     }
 
-    final server = await HttpServer.bind(
-      address,
-      port,
-    );
+    final server = await HttpServer.bind(address, port);
 
     _server = server;
 
     server.listen(_handleRequest);
   }
 
-  Future<void> _handleRequest(
-    HttpRequest request,
-  ) async {
-    if (
-        request.method == 'GET' &&
-        request.uri.path == '/health'
-    ) {
-      request.response.statusCode = HttpStatus.ok;
-      request.response.headers.contentType =
-          ContentType.json;
+  Future<void> _handleRequest(HttpRequest request) async {
+    if (request.method == 'GET' && request.uri.path == '/health') {
+      await _writeJson(request, HttpStatus.ok, {
+        'status': 'ok',
+        'service': 'gestionale_sicurezza',
+      });
 
-      request.response.write(
-        jsonEncode({
-          'status': 'ok',
-          'service': 'gestionale_sicurezza',
-        }),
-      );
-
-      await request.response.close();
       return;
     }
 
-    request.response.statusCode =
-        HttpStatus.notFound;
+    if (request.method == 'GET' && request.uri.path == '/api/discenti') {
+      final provider = _discentiProvider;
 
-    request.response.headers.contentType =
-        ContentType.json;
+      if (provider == null) {
+        await _writeJson(request, HttpStatus.serviceUnavailable, {
+          'error': 'discenti_provider_not_configured',
+        });
 
-    request.response.write(
-      jsonEncode({
-        'error': 'not_found',
-      }),
-    );
+        return;
+      }
+
+      try {
+        final items = await provider();
+
+        await _writeJson(request, HttpStatus.ok, {
+          'sola_lettura': true,
+          'count': items.length,
+          'items': items,
+        });
+      } catch (_) {
+        await _writeJson(request, HttpStatus.internalServerError, {
+          'error': 'discenti_read_failed',
+        });
+      }
+
+      return;
+    }
+
+    await _writeJson(request, HttpStatus.notFound, {'error': 'not_found'});
+  }
+
+  Future<void> _writeJson(
+    HttpRequest request,
+    int statusCode,
+    Map<String, dynamic> body,
+  ) async {
+    request.response.statusCode = statusCode;
+
+    request.response.headers.contentType = ContentType.json;
+
+    request.response.write(jsonEncode(body));
 
     await request.response.close();
   }
@@ -80,8 +104,6 @@ class LanServerService {
 
     _server = null;
 
-    await server.close(
-      force: true,
-    );
+    await server.close(force: true);
   }
 }

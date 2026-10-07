@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:gestionale_sicurezza/services/lan_discenti_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
 
 Future<void> main(List<String> args) async {
   var host = '127.0.0.1';
   var port = 8765;
+  String? databasePath;
 
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '--host' && i + 1 < args.length) {
@@ -23,6 +25,11 @@ Future<void> main(List<String> args) async {
       }
 
       port = parsedPort;
+      continue;
+    }
+
+    if (args[i] == '--db' && i + 1 < args.length) {
+      databasePath = args[++i];
     }
   }
 
@@ -34,12 +41,35 @@ Future<void> main(List<String> args) async {
     return;
   }
 
-  final server = LanServerService();
+  if (databasePath != null) {
+    final databaseFile = File(databasePath);
+
+    if (!await databaseFile.exists()) {
+      stderr.writeln('Database non trovato.');
+      exitCode = 66;
+      return;
+    }
+  }
+
+  final configuredDatabasePath = databasePath;
+
+  final server = LanServerService(
+    discentiProvider: configuredDatabasePath == null
+        ? null
+        : () => loadLanDiscentiReadOnly(configuredDatabasePath),
+  );
 
   await server.start(address: address, port: port);
 
   stdout.writeln('GESTIONALE SICUREZZA LAN SERVER ATTIVO');
+
   stdout.writeln('http://$host:${server.port}/health');
+
+  stdout.writeln(
+    configuredDatabasePath == null
+        ? 'Discenti READ-ONLY: non configurati'
+        : 'Discenti READ-ONLY: attivi',
+  );
 
   final stopCompleter = Completer<void>();
 

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/assistente_operativo_item.dart';
@@ -5,6 +7,7 @@ import '../services/app_database.dart';
 import '../services/assistente_operativo_service.dart';
 import '../services/database_service.dart';
 import '../services/global_search_service.dart';
+import '../services/lan_client_runtime.dart';
 import '../services/backup_service.dart';
 import '../services/sessione_utente_service.dart';
 
@@ -23,7 +26,16 @@ import 'visite_mediche_page.dart';
 import 'assistente_ai_page.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({super.key, this.lanRuntime});
+
+  final LanClientRuntime? lanRuntime;
+
+  DiscentiPage buildDiscentiPage({required String globalSearch}) {
+    return DiscentiPage(
+      globalSearch: globalSearch,
+      lanDiscentiProvider: lanRuntime?.discentiProvider,
+    );
+  }
 
   @override
   State<HomePage> createState() => _HomePageState();
@@ -64,7 +76,7 @@ class _HomePageState extends State<HomePage> {
       filtro: filtroScadenze,
       globalSearch: globalSearch,
     ),
-    DiscentiPage(globalSearch: globalSearch),
+    widget.buildDiscentiPage(globalSearch: globalSearch),
     ImpresePage(globalSearch: globalSearch),
     CorsiPage(globalSearch: globalSearch),
     const PrezzarioPage(),
@@ -273,6 +285,17 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     _caricaNotificheOperative();
+  }
+
+  @override
+  void dispose() {
+    final lanRuntime = widget.lanRuntime;
+
+    if (lanRuntime != null) {
+      unawaited(lanRuntime.close());
+    }
+
+    super.dispose();
   }
 
   Future<void> _caricaNotificheOperative() async {

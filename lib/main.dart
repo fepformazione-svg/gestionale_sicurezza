@@ -1,8 +1,12 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 import 'pages/home_page.dart';
 import 'services/backup_service.dart';
+import 'services/lan_app_bootstrap.dart';
+import 'services/lan_client_runtime.dart';
 
 import 'config/app_config.dart';
 import 'pages/login_page.dart';
@@ -18,11 +22,19 @@ void main() async {
 
   await BackupService.eseguiBackupAvvio();
 
-  runApp(const MyApp());
+  final lanRuntime = LanAppBootstrap.fromEnvironment(Platform.environment);
+
+  runApp(MyApp(lanRuntime: lanRuntime));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  const MyApp({super.key, this.lanRuntime});
+
+  final LanClientRuntime? lanRuntime;
+
+  HomePage buildHomePage() {
+    return HomePage(lanRuntime: lanRuntime);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -39,11 +51,11 @@ class MyApp extends StatelessWidget {
           ? LoginPage(
               onLoginRiuscito: () {
                 navigatorKey.currentState?.pushReplacement(
-                  MaterialPageRoute(builder: (_) => const HomePage()),
+                  MaterialPageRoute(builder: (_) => buildHomePage()),
                 );
               },
             )
-          : const HomePage(),
+          : buildHomePage(),
     );
   }
 }

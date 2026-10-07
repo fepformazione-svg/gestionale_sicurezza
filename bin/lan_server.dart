@@ -4,6 +4,39 @@ import 'dart:io';
 import 'package:gestionale_sicurezza/services/lan_discenti_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
 
+const lanTokenEnvironmentVariable = 'GESTIONALE_SICUREZZA_LAN_TOKEN';
+
+void validateLanServerConfiguration({
+  required String? databasePath,
+  required String? apiToken,
+}) {
+  if (databasePath == null) {
+    return;
+  }
+
+  if (apiToken == null || apiToken.trim().isEmpty) {
+    throw ArgumentError(
+      'Token API obbligatorio quando il database è configurato.',
+    );
+  }
+}
+
+String? readLanApiTokenFromEnvironment() {
+  final value = Platform.environment[lanTokenEnvironmentVariable];
+
+  if (value == null) {
+    return null;
+  }
+
+  final trimmed = value.trim();
+
+  if (trimmed.isEmpty) {
+    return null;
+  }
+
+  return trimmed;
+}
+
 Future<void> main(List<String> args) async {
   var host = '127.0.0.1';
   var port = 8765;
@@ -41,6 +74,19 @@ Future<void> main(List<String> args) async {
     return;
   }
 
+  final apiToken = readLanApiTokenFromEnvironment();
+
+  try {
+    validateLanServerConfiguration(
+      databasePath: databasePath,
+      apiToken: apiToken,
+    );
+  } on ArgumentError catch (error) {
+    stderr.writeln(error.message);
+    exitCode = 64;
+    return;
+  }
+
   if (databasePath != null) {
     final databaseFile = File(databasePath);
 
@@ -54,6 +100,7 @@ Future<void> main(List<String> args) async {
   final configuredDatabasePath = databasePath;
 
   final server = LanServerService(
+    apiToken: apiToken,
     discentiProvider: configuredDatabasePath == null
         ? null
         : () => loadLanDiscentiReadOnly(configuredDatabasePath),
@@ -69,6 +116,12 @@ Future<void> main(List<String> args) async {
     configuredDatabasePath == null
         ? 'Discenti READ-ONLY: non configurati'
         : 'Discenti READ-ONLY: attivi',
+  );
+
+  stdout.writeln(
+    configuredDatabasePath == null
+        ? 'Autenticazione API: non richiesta'
+        : 'Autenticazione API: attiva',
   );
 
   final stopCompleter = Completer<void>();

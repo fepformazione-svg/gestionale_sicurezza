@@ -81,6 +81,69 @@ class LanApiClient {
     return List<Map<String, dynamic>>.unmodifiable(items);
   }
 
+  Future<List<Map<String, dynamic>>> loadImprese() async {
+    _ensureOpen();
+
+    final uri = _baseUri.replace(
+      path: '${_normalizedBasePath(_baseUri.path)}/api/imprese',
+      query: null,
+      fragment: null,
+    );
+
+    final request = await _httpClient.getUrl(uri);
+
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_apiToken');
+
+    request.headers.set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
+
+    final response = await request.close();
+
+    final body = await utf8.decoder.bind(response).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'Richiesta LAN fallita: HTTP ${response.statusCode}.',
+        uri: uri,
+      );
+    }
+
+    final decoded = jsonDecode(body);
+
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Risposta API LAN non valida.');
+    }
+
+    if (decoded['sola_lettura'] != true) {
+      throw const FormatException(
+        'Risposta API LAN non marcata come sola lettura.',
+      );
+    }
+
+    final rawItems = decoded['items'];
+
+    if (rawItems is! List) {
+      throw const FormatException('Elenco imprese API LAN non valido.');
+    }
+
+    final items = <Map<String, dynamic>>[];
+
+    for (final item in rawItems) {
+      if (item is! Map) {
+        throw const FormatException('Elemento imprese API LAN non valido.');
+      }
+
+      items.add(Map<String, dynamic>.from(item));
+    }
+
+    final count = decoded['count'];
+
+    if (count is! int || count != items.length) {
+      throw const FormatException('Conteggio imprese API LAN non coerente.');
+    }
+
+    return List<Map<String, dynamic>>.unmodifiable(items);
+  }
+
   Future<void> close() async {
     if (_closed) {
       return;
@@ -95,7 +158,7 @@ class LanApiClient {
 
   void _ensureOpen() {
     if (_closed) {
-      throw StateError('Client LAN già chiuso.');
+      throw StateError('Client LAN giÃ  chiuso.');
     }
   }
 

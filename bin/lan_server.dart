@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:gestionale_sicurezza/services/lan_discenti_readonly_service.dart';
+import 'package:gestionale_sicurezza/services/lan_imprese_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
 
 const lanTokenEnvironmentVariable = 'GESTIONALE_SICUREZZA_LAN_TOKEN';
@@ -104,6 +105,9 @@ Future<void> main(List<String> args) async {
     discentiProvider: configuredDatabasePath == null
         ? null
         : () => loadLanDiscentiReadOnly(configuredDatabasePath),
+    impreseProvider: configuredDatabasePath == null
+        ? null
+        : () => loadLanImpreseReadOnly(configuredDatabasePath),
   );
 
   await server.start(address: address, port: port);
@@ -116,6 +120,12 @@ Future<void> main(List<String> args) async {
     configuredDatabasePath == null
         ? 'Discenti READ-ONLY: non configurati'
         : 'Discenti READ-ONLY: attivi',
+  );
+
+  stdout.writeln(
+    configuredDatabasePath == null
+        ? 'Imprese READ-ONLY: non configurate'
+        : 'Imprese READ-ONLY: attive',
   );
 
   stdout.writeln(

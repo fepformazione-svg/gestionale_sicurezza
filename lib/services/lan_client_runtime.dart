@@ -2,6 +2,7 @@ import 'lan_api_client.dart';
 import 'lan_client_configuration.dart';
 
 typedef LanDiscentiProvider = Future<List<Map<String, dynamic>>> Function();
+typedef LanImpreseProvider = Future<List<Map<String, dynamic>>> Function();
 
 typedef LanCloseCallback = Future<void> Function();
 
@@ -9,9 +10,14 @@ typedef LanClientBindingsFactory =
     LanClientBindings Function(LanClientConfiguration configuration);
 
 class LanClientBindings {
-  const LanClientBindings({required this.loadDiscenti, required this.close});
+  const LanClientBindings({
+    required this.loadDiscenti,
+    this.loadImprese,
+    required this.close,
+  });
 
   final LanDiscentiProvider loadDiscenti;
+  final LanImpreseProvider? loadImprese;
   final LanCloseCallback close;
 }
 
@@ -19,6 +25,7 @@ class LanClientRuntime {
   LanClientRuntime._({
     required this.enabled,
     required this.discentiProvider,
+    required this.impreseProvider,
     required this._closeCallback,
   });
 
@@ -30,6 +37,7 @@ class LanClientRuntime {
       return LanClientRuntime._(
         enabled: false,
         discentiProvider: null,
+        impreseProvider: null,
         closeCallback: null,
       );
     }
@@ -41,12 +49,16 @@ class LanClientRuntime {
     return LanClientRuntime._(
       enabled: true,
       discentiProvider: bindings.loadDiscenti,
+      impreseProvider: bindings.loadImprese,
       closeCallback: bindings.close,
     );
   }
 
   final bool enabled;
+
   final LanDiscentiProvider? discentiProvider;
+
+  final LanImpreseProvider? impreseProvider;
 
   final LanCloseCallback? _closeCallback;
 
@@ -76,6 +88,7 @@ class LanClientRuntime {
 
     return LanClientBindings(
       loadDiscenti: client.loadDiscenti,
+      loadImprese: client.loadImprese,
       close: client.close,
     );
   }

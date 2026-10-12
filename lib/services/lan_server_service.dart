@@ -2,14 +2,23 @@ import 'dart:convert';
 import 'dart:io';
 
 typedef DiscentiProvider = Future<List<Map<String, dynamic>>> Function();
+typedef ImpreseProvider = Future<List<Map<String, dynamic>>> Function();
 
 class LanServerService {
-  LanServerService({DiscentiProvider? discentiProvider, String? apiToken})
-    : this._(discentiProvider, apiToken);
+  LanServerService({
+    DiscentiProvider? discentiProvider,
+    ImpreseProvider? impreseProvider,
+    String? apiToken,
+  }) : this._(discentiProvider, impreseProvider, apiToken);
 
-  LanServerService._(this._discentiProvider, this._apiToken);
+  LanServerService._(
+    this._discentiProvider,
+    this._impreseProvider,
+    this._apiToken,
+  );
 
   final DiscentiProvider? _discentiProvider;
+  final ImpreseProvider? _impreseProvider;
   final String? _apiToken;
 
   HttpServer? _server;
@@ -81,6 +90,42 @@ class LanServerService {
       } catch (_) {
         await _writeJson(request.response, HttpStatus.internalServerError, {
           'error': 'discenti_read_failed',
+        });
+      }
+
+      return;
+    }
+
+    if (request.method == 'GET' && request.uri.path == '/api/imprese') {
+      if (!_isAuthorized(request)) {
+        await _writeJson(request.response, HttpStatus.unauthorized, {
+          'error': 'unauthorized',
+        });
+
+        return;
+      }
+
+      final provider = _impreseProvider;
+
+      if (provider == null) {
+        await _writeJson(request.response, HttpStatus.serviceUnavailable, {
+          'error': 'imprese_provider_not_configured',
+        });
+
+        return;
+      }
+
+      try {
+        final items = await provider();
+
+        await _writeJson(request.response, HttpStatus.ok, {
+          'sola_lettura': true,
+          'count': items.length,
+          'items': items,
+        });
+      } catch (_) {
+        await _writeJson(request.response, HttpStatus.internalServerError, {
+          'error': 'imprese_read_failed',
         });
       }
 

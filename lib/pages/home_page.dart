@@ -37,6 +37,13 @@ class HomePage extends StatefulWidget {
     );
   }
 
+  ImpresePage buildImpresePage({required String globalSearch}) {
+    return ImpresePage(
+      globalSearch: globalSearch,
+      lanImpreseProvider: lanRuntime?.impreseProvider,
+    );
+  }
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -77,7 +84,7 @@ class _HomePageState extends State<HomePage> {
       globalSearch: globalSearch,
     ),
     widget.buildDiscentiPage(globalSearch: globalSearch),
-    ImpresePage(globalSearch: globalSearch),
+    widget.buildImpresePage(globalSearch: globalSearch),
     CorsiPage(globalSearch: globalSearch),
     const PrezzarioPage(),
     VisiteMedichePage(
@@ -627,7 +634,7 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget riquadroAssistenteOperativo() {
     String testoCosaFareOggi() {
       if (assistenteItems.isEmpty) {
-        return 'Nessuna attività urgente: il gestionale non segnala interventi immediati.';
+        return 'Nessuna attivitÃ  urgente: il gestionale non segnala interventi immediati.';
       }
 
       final dettagli = assistenteItems
@@ -680,26 +687,26 @@ class _DashboardPageState extends State<DashboardPage> {
       final titolo = assistenteItems.first.titolo.toLowerCase();
 
       if (titolo.contains('scadenze scadute')) {
-        return 'Priorità massima: scadenze scadute.';
+        return 'PrioritÃ  massima: scadenze scadute.';
       }
 
       if (titolo.contains('visite mediche scadute')) {
-        return 'Priorità massima: visite mediche scadute.';
+        return 'PrioritÃ  massima: visite mediche scadute.';
       }
 
       if (titolo.contains('pratiche da fatturare')) {
-        return 'Priorità massima: pratiche da fatturare.';
+        return 'PrioritÃ  massima: pratiche da fatturare.';
       }
 
       if (titolo.contains('scadenze in scadenza')) {
-        return 'Priorità massima: scadenze in scadenza.';
+        return 'PrioritÃ  massima: scadenze in scadenza.';
       }
 
       if (titolo.contains('visite mediche in scadenza')) {
-        return 'Priorità massima: visite mediche in scadenza.';
+        return 'PrioritÃ  massima: visite mediche in scadenza.';
       }
 
-      return 'Priorità massima: ${assistenteItems.first.titolo.toLowerCase()}.';
+      return 'PrioritÃ  massima: ${assistenteItems.first.titolo.toLowerCase()}.';
     }
 
     bool prioritaMassimaScaduta() {
@@ -899,7 +906,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
                       SizedBox(height: 4),
                       Text(
-                        'Controllo locale delle priorità del gestionale',
+                        'Controllo locale delle prioritÃ  del gestionale',
                         style: TextStyle(
                           fontSize: 14,
                           color: Color(0xFF6B7280),
@@ -925,7 +932,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Ordine operativo: scaduti → da gestire → in scadenza',
+                      'Ordine operativo: scaduti â†’ da gestire â†’ in scadenza',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
@@ -992,7 +999,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         if (tuttoSottoControllo) ...[
                           const SizedBox(height: 4),
                           Text(
-                            'Non risultano attività urgenti o in scadenza.',
+                            'Non risultano attivitÃ  urgenti o in scadenza.',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -1097,8 +1104,8 @@ class _DashboardPageState extends State<DashboardPage> {
                           const SizedBox(height: 8),
                           Text(
                             totalePrioritaOperative == 1
-                                ? 'È presente 1 priorità operativa da gestire.'
-                                : 'Sono presenti $totalePrioritaOperative priorità operative da gestire.',
+                                ? 'Ãˆ presente 1 prioritÃ  operativa da gestire.'
+                                : 'Sono presenti $totalePrioritaOperative prioritÃ  operative da gestire.',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
@@ -1135,7 +1142,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Nessuna priorità operativa aperta.',
+                            'Nessuna prioritÃ  operativa aperta.',
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: Color(0xFF166534),
@@ -1211,7 +1218,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            'Clicca una voce per aprire il modulo collegato e gestire la priorità.',
+                            'Clicca una voce per aprire il modulo collegato e gestire la prioritÃ .',
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
@@ -1226,7 +1233,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ...assistenteItems.map((item) {
                     final colore = colorePriorita(item.priorita);
                     final etichettaPriorita = switch (item.priorita) {
-                      PrioritaAssistenteOperativo.alta => 'PRIORITÀ ALTA',
+                      PrioritaAssistenteOperativo.alta => 'PRIORITÃ€ ALTA',
                       PrioritaAssistenteOperativo.media => 'IN SCADENZA',
                       PrioritaAssistenteOperativo.bassa => 'DA MONITORARE',
                     };

@@ -21,14 +21,21 @@ import '../widgets/section_card.dart';
 
 class ImpresePage extends StatefulWidget {
   final String globalSearch;
+  final Future<List<Map<String, dynamic>>> Function()? lanImpreseProvider;
 
-  const ImpresePage({super.key, this.globalSearch = ''});
+  const ImpresePage({
+    super.key,
+    this.globalSearch = '',
+    this.lanImpreseProvider,
+  });
 
   @override
   State<ImpresePage> createState() => _ImpresePageState();
 }
 
 class _ImpresePageState extends State<ImpresePage> {
+  bool get _modalitaLanSolaLettura => widget.lanImpreseProvider != null;
+
   List<Impresa> imprese = [];
   List<Impresa> impreseFiltrate = [];
 
@@ -68,7 +75,17 @@ class _ImpresePageState extends State<ImpresePage> {
   }
 
   Future<void> caricaImprese() async {
-    final dati = await DatabaseService.instance.getImprese();
+    final provider = widget.lanImpreseProvider;
+
+    final List<Impresa> dati;
+
+    if (provider == null) {
+      dati = await DatabaseService.instance.getImprese();
+    } else {
+      final rows = await provider();
+
+      dati = rows.map(Impresa.fromMap).toList(growable: false);
+    }
 
     if (!mounted) return;
 
@@ -576,7 +593,7 @@ class _ImpresePageState extends State<ImpresePage> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Inserisci i dati dell’impresa.',
+                    'Inserisci i dati dellâ€™impresa.',
                     style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 24),
@@ -630,7 +647,7 @@ class _ImpresePageState extends State<ImpresePage> {
                           controller: viaController,
                           textCapitalization: TextCapitalization.words,
                           decoration: InputDecoration(
-                            labelText: 'Via / Piazza / Località',
+                            labelText: 'Via / Piazza / LocalitÃ ',
                             hintText: 'Es. Via Roma',
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -817,6 +834,32 @@ class _ImpresePageState extends State<ImpresePage> {
             subtitle: 'Archivio aziende, clienti e anagrafiche operative.',
           ),
 
+          if (_modalitaLanSolaLettura) ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_outline, size: 20, color: Color(0xFF2563EB)),
+                  SizedBox(width: 10),
+                  Text(
+                    'Modalità LAN sola lettura',
+                    style: TextStyle(
+                      color: Color(0xFF1D4ED8),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 28),
 
           Row(
@@ -864,7 +907,9 @@ class _ImpresePageState extends State<ImpresePage> {
               const SizedBox(width: 12),
               AppActionButton(
                 type: AppActionButtonType.nuovo,
-                onPressed: apriDialogNuovaImpresa,
+                onPressed: _modalitaLanSolaLettura
+                    ? null
+                    : apriDialogNuovaImpresa,
                 label: 'Nuova impresa',
               ),
             ],
@@ -924,29 +969,35 @@ class _ImpresePageState extends State<ImpresePage> {
                                     final item = impreseFiltrate[index];
 
                                     return InkWell(
-                                      onDoubleTap: () async {
-                                        final risultato = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) => ImpresaSchedaPage(
-                                              impresa: item,
-                                            ),
-                                          ),
-                                        );
+                                      onDoubleTap: _modalitaLanSolaLettura
+                                          ? null
+                                          : () async {
+                                              final risultato =
+                                                  await Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                      builder: (_) =>
+                                                          ImpresaSchedaPage(
+                                                            impresa: item,
+                                                          ),
+                                                    ),
+                                                  );
 
-                                        if (risultato == 'eliminata') {
-                                          await caricaImprese();
-                                        }
+                                              if (risultato == 'eliminata') {
+                                                await caricaImprese();
+                                              }
 
-                                        if (risultato == 'aggiorna') {
-                                          await caricaImprese();
-                                        }
+                                              if (risultato == 'aggiorna') {
+                                                await caricaImprese();
+                                              }
 
-                                        if (risultato == 'modifica') {
-                                          await apriDialogModificaImpresa(item);
-                                          await caricaImprese();
-                                        }
-                                      },
+                                              if (risultato == 'modifica') {
+                                                await apriDialogModificaImpresa(
+                                                  item,
+                                                );
+                                                await caricaImprese();
+                                              }
+                                            },
                                       child: Container(
                                         height: 72,
                                         padding: const EdgeInsets.symmetric(
@@ -993,7 +1044,7 @@ class _ImpresePageState extends State<ImpresePage> {
                                                       if ((item.telefono ?? '')
                                                           .isNotEmpty)
                                                         'Tel: ${item.telefono}',
-                                                    ].join('   •   '),
+                                                    ].join('   â€¢   '),
                                                     style: const TextStyle(
                                                       fontSize: 13,
                                                       color: Color(0xFF6B7280),
@@ -1065,7 +1116,7 @@ class _ImpresePageState extends State<ImpresePage> {
                   ),
                   const SizedBox(height: 6),
                   const Text(
-                    'Aggiorna i dati dell’impresa.',
+                    'Aggiorna i dati dellâ€™impresa.',
                     style: TextStyle(fontSize: 14, color: Color(0xFF6B7280)),
                   ),
                   const SizedBox(height: 24),

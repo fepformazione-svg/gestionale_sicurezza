@@ -3,6 +3,8 @@ import 'lan_client_configuration.dart';
 
 typedef LanDiscentiProvider = Future<List<Map<String, dynamic>>> Function();
 typedef LanImpreseProvider = Future<List<Map<String, dynamic>>> Function();
+typedef LanCorsiProvider = Future<List<Map<String, dynamic>>> Function();
+typedef LanIntestazioneAziendaProvider = Future<Map<String, String>> Function();
 
 typedef LanCloseCallback = Future<void> Function();
 
@@ -13,11 +15,15 @@ class LanClientBindings {
   const LanClientBindings({
     required this.loadDiscenti,
     this.loadImprese,
+    this.loadCorsi,
+    this.loadIntestazioneAzienda,
     required this.close,
   });
 
   final LanDiscentiProvider loadDiscenti;
   final LanImpreseProvider? loadImprese;
+  final LanCorsiProvider? loadCorsi;
+  final LanIntestazioneAziendaProvider? loadIntestazioneAzienda;
   final LanCloseCallback close;
 }
 
@@ -26,6 +32,8 @@ class LanClientRuntime {
     required this.enabled,
     required this.discentiProvider,
     required this.impreseProvider,
+    required this.corsiProvider,
+    required this.intestazioneAziendaProvider,
     required this._closeCallback,
   });
 
@@ -38,6 +46,8 @@ class LanClientRuntime {
         enabled: false,
         discentiProvider: null,
         impreseProvider: null,
+        corsiProvider: null,
+        intestazioneAziendaProvider: null,
         closeCallback: null,
       );
     }
@@ -50,6 +60,8 @@ class LanClientRuntime {
       enabled: true,
       discentiProvider: bindings.loadDiscenti,
       impreseProvider: bindings.loadImprese,
+      corsiProvider: bindings.loadCorsi,
+      intestazioneAziendaProvider: bindings.loadIntestazioneAzienda,
       closeCallback: bindings.close,
     );
   }
@@ -59,6 +71,8 @@ class LanClientRuntime {
   final LanDiscentiProvider? discentiProvider;
 
   final LanImpreseProvider? impreseProvider;
+  final LanCorsiProvider? corsiProvider;
+  final LanIntestazioneAziendaProvider? intestazioneAziendaProvider;
 
   final LanCloseCallback? _closeCallback;
 
@@ -89,6 +103,8 @@ class LanClientRuntime {
     return LanClientBindings(
       loadDiscenti: client.loadDiscenti,
       loadImprese: client.loadImprese,
+      loadCorsi: client.loadCorsi,
+      loadIntestazioneAzienda: client.loadIntestazioneAzienda,
       close: client.close,
     );
   }

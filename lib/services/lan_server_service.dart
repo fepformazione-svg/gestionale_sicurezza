@@ -3,22 +3,36 @@ import 'dart:io';
 
 typedef DiscentiProvider = Future<List<Map<String, dynamic>>> Function();
 typedef ImpreseProvider = Future<List<Map<String, dynamic>>> Function();
+typedef CorsiProvider = Future<List<Map<String, dynamic>>> Function();
+typedef IntestazioneAziendaProvider = Future<Map<String, dynamic>?> Function();
 
 class LanServerService {
   LanServerService({
     DiscentiProvider? discentiProvider,
     ImpreseProvider? impreseProvider,
+    CorsiProvider? corsiProvider,
+    IntestazioneAziendaProvider? intestazioneAziendaProvider,
     String? apiToken,
-  }) : this._(discentiProvider, impreseProvider, apiToken);
+  }) : this._(
+         discentiProvider,
+         impreseProvider,
+         corsiProvider,
+         intestazioneAziendaProvider,
+         apiToken,
+       );
 
   LanServerService._(
     this._discentiProvider,
     this._impreseProvider,
+    this._corsiProvider,
+    this._intestazioneAziendaProvider,
     this._apiToken,
   );
 
   final DiscentiProvider? _discentiProvider;
   final ImpreseProvider? _impreseProvider;
+  final CorsiProvider? _corsiProvider;
+  final IntestazioneAziendaProvider? _intestazioneAziendaProvider;
   final String? _apiToken;
 
   HttpServer? _server;
@@ -90,6 +104,82 @@ class LanServerService {
       } catch (_) {
         await _writeJson(request.response, HttpStatus.internalServerError, {
           'error': 'discenti_read_failed',
+        });
+      }
+
+      return;
+    }
+
+    if (request.method == 'GET' &&
+        request.uri.path == '/api/intestazione-azienda') {
+      if (!_isAuthorized(request)) {
+        await _writeJson(request.response, HttpStatus.unauthorized, {
+          'error': 'unauthorized',
+        });
+        return;
+      }
+
+      final provider = _intestazioneAziendaProvider;
+
+      if (provider == null) {
+        await _writeJson(request.response, HttpStatus.serviceUnavailable, {
+          'error': 'intestazione_azienda_provider_not_configured',
+        });
+        return;
+      }
+
+      try {
+        final dati = await provider();
+
+        final intestazione = <String, String>{
+          'titolo': dati?['titolo']?.toString() ?? '',
+          'sottotitolo': dati?['sottotitolo']?.toString() ?? '',
+          'dettaglio': dati?['dettaglio']?.toString() ?? '',
+        };
+
+        await _writeJson(request.response, HttpStatus.ok, {
+          'sola_lettura': true,
+          'intestazione': intestazione,
+        });
+      } catch (_) {
+        await _writeJson(request.response, HttpStatus.internalServerError, {
+          'error': 'intestazione_azienda_unavailable',
+        });
+      }
+
+      return;
+    }
+
+    if (request.method == 'GET' && request.uri.path == '/api/corsi') {
+      if (!_isAuthorized(request)) {
+        await _writeJson(request.response, HttpStatus.unauthorized, {
+          'error': 'unauthorized',
+        });
+
+        return;
+      }
+
+      final provider = _corsiProvider;
+
+      if (provider == null) {
+        await _writeJson(request.response, HttpStatus.serviceUnavailable, {
+          'error': 'corsi_provider_not_configured',
+        });
+
+        return;
+      }
+
+      try {
+        final items = await provider();
+
+        await _writeJson(request.response, HttpStatus.ok, {
+          'sola_lettura': true,
+          'count': items.length,
+          'items': items,
+        });
+      } catch (_) {
+        await _writeJson(request.response, HttpStatus.internalServerError, {
+          'error': 'corsi_read_failed',
         });
       }
 

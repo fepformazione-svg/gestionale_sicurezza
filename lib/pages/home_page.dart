@@ -44,6 +44,14 @@ class HomePage extends StatefulWidget {
     );
   }
 
+  CorsiPage buildCorsiPage({required String globalSearch}) {
+    return CorsiPage(
+      globalSearch: globalSearch,
+      lanCorsiProvider: lanRuntime?.corsiProvider,
+      lanIntestazioneAziendaProvider: lanRuntime?.intestazioneAziendaProvider,
+    );
+  }
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -85,7 +93,7 @@ class _HomePageState extends State<HomePage> {
     ),
     widget.buildDiscentiPage(globalSearch: globalSearch),
     widget.buildImpresePage(globalSearch: globalSearch),
-    CorsiPage(globalSearch: globalSearch),
+    widget.buildCorsiPage(globalSearch: globalSearch),
     const PrezzarioPage(),
     VisiteMedichePage(
       key: ValueKey('visite_mediche_${globalSearch}_$filtroVisiteMediche'),

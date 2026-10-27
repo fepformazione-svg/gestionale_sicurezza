@@ -21,10 +21,22 @@ import '../widgets/page_header.dart';
 import '../widgets/section_card.dart';
 import '../widgets/app_action_button.dart';
 
+import '../services/lan_client_runtime.dart';
+
 class CorsiPage extends StatefulWidget {
   final String globalSearch;
 
-  const CorsiPage({super.key, this.globalSearch = ''});
+  const CorsiPage({
+    super.key,
+    this.globalSearch = '',
+    this.lanCorsiProvider,
+    this.lanIntestazioneAziendaProvider,
+  });
+
+  final LanCorsiProvider? lanCorsiProvider;
+  final LanIntestazioneAziendaProvider? lanIntestazioneAziendaProvider;
+
+  bool get modalitaLanSolaLettura => lanCorsiProvider != null;
 
   @override
   State<CorsiPage> createState() => _CorsiPageState();
@@ -71,15 +83,27 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> caricaCorsi() async {
-    final dati = await DatabaseService.instance.getCorsi();
-    final collegamenti = await DatabaseService.instance.getCorsoPiattaforme(
-      soloAttive: true,
-    );
+    final provider = widget.lanCorsiProvider;
 
+    final List<Corso> dati;
     final raggruppati = <int, List<CorsoPiattaforma>>{};
 
-    for (final collegamento in collegamenti) {
-      raggruppati.putIfAbsent(collegamento.corsoId, () => []).add(collegamento);
+    if (provider == null) {
+      dati = await DatabaseService.instance.getCorsi();
+
+      final collegamenti = await DatabaseService.instance.getCorsoPiattaforme(
+        soloAttive: true,
+      );
+
+      for (final collegamento in collegamenti) {
+        raggruppati
+            .putIfAbsent(collegamento.corsoId, () => [])
+            .add(collegamento);
+      }
+    } else {
+      final rows = await provider();
+
+      dati = rows.map(Corso.fromMap).toList(growable: false);
     }
 
     if (!mounted) return;
@@ -164,6 +188,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> apriDialogCodiciPiattaforma(Corso corso) async {
+    if (widget.modalitaLanSolaLettura) return;
     if (corso.id == null) return;
 
     final modificato = await showDialog<bool>(
@@ -180,6 +205,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> apriDialogModelliWord(Corso corso) async {
+    if (widget.modalitaLanSolaLettura) return;
     if (corso.id == null) return;
 
     _modelliWordModificatiUltimaApertura = false;
@@ -307,6 +333,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> esportaPdfCorsi() async {
+    if (widget.modalitaLanSolaLettura) return;
     if (corsiFiltrati.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -455,6 +482,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> stampaCorsi() async {
+    if (widget.modalitaLanSolaLettura) return;
     if (corsiFiltrati.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -583,6 +611,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> apriDialogNuovoCorso() async {
+    if (widget.modalitaLanSolaLettura) return;
     final nomeController = TextEditingController();
     final durataController = TextEditingController();
     final validitaController = TextEditingController();
@@ -740,6 +769,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> apriDialogModificaCorso(Corso corso) async {
+    if (widget.modalitaLanSolaLettura) return;
     final nomeController = TextEditingController(text: corso.denominazione);
     final durataController = TextEditingController(
       text: corso.durataOre.toString(),
@@ -1013,6 +1043,7 @@ class _CorsiPageState extends State<CorsiPage> {
   }
 
   Future<void> eliminaCorso(Corso corso) async {
+    if (widget.modalitaLanSolaLettura) return;
     final id = corso.id;
 
     if (id == null) {
@@ -1126,6 +1157,32 @@ class _CorsiPageState extends State<CorsiPage> {
             subtitle: 'Archivio corsi, formazione e configurazioni didattiche.',
           ),
 
+          if (widget.modalitaLanSolaLettura) ...[
+            const SizedBox(height: 12),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEFF6FF),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: const Color(0xFFBFDBFE)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.lock_outline, color: Color(0xFF1D4ED8)),
+                  SizedBox(width: 10),
+                  Text(
+                    'Modalità LAN sola lettura',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF1D4ED8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const SizedBox(height: 28),
 
           Row(
@@ -1155,7 +1212,9 @@ class _CorsiPageState extends State<CorsiPage> {
                     : 'Esporta ${corsiFiltrati.length} corsi in PDF',
                 child: AppActionButton(
                   type: AppActionButtonType.pdf,
-                  onPressed: exportDisabilitato ? null : esportaPdfCorsi,
+                  onPressed: exportDisabilitato || widget.modalitaLanSolaLettura
+                      ? null
+                      : esportaPdfCorsi,
                   label: 'PDF (${corsiFiltrati.length})',
                 ),
               ),
@@ -1166,14 +1225,18 @@ class _CorsiPageState extends State<CorsiPage> {
                     : 'Stampa ${corsiFiltrati.length} corsi',
                 child: AppActionButton(
                   type: AppActionButtonType.stampa,
-                  onPressed: exportDisabilitato ? null : stampaCorsi,
+                  onPressed: exportDisabilitato || widget.modalitaLanSolaLettura
+                      ? null
+                      : stampaCorsi,
                   label: 'Stampa (${corsiFiltrati.length})',
                 ),
               ),
               const SizedBox(width: 12),
               AppActionButton(
                 type: AppActionButtonType.nuovo,
-                onPressed: apriDialogNuovoCorso,
+                onPressed: widget.modalitaLanSolaLettura
+                    ? null
+                    : apriDialogNuovoCorso,
                 label: 'Nuovo corso',
               ),
             ],
@@ -1287,8 +1350,9 @@ class _CorsiPageState extends State<CorsiPage> {
                                         numeroCodiciPiattaforma(item);
 
                                     return InkWell(
-                                      onDoubleTap: () =>
-                                          apriDialogModificaCorso(item),
+                                      onDoubleTap: widget.modalitaLanSolaLettura
+                                          ? null
+                                          : () => apriDialogModificaCorso(item),
                                       borderRadius: BorderRadius.circular(12),
                                       child: Container(
                                         height: 80,
@@ -1392,10 +1456,14 @@ class _CorsiPageState extends State<CorsiPage> {
                                               message:
                                                   'Gestisci codici piattaforma',
                                               child: IconButton(
-                                                onPressed: () =>
-                                                    apriDialogCodiciPiattaforma(
-                                                      item,
-                                                    ),
+                                                onPressed:
+                                                    widget
+                                                        .modalitaLanSolaLettura
+                                                    ? null
+                                                    : () =>
+                                                          apriDialogCodiciPiattaforma(
+                                                            item,
+                                                          ),
                                                 icon: const Icon(
                                                   Icons.hub_outlined,
                                                 ),
@@ -1408,8 +1476,14 @@ class _CorsiPageState extends State<CorsiPage> {
                                             Tooltip(
                                               message: 'Gestisci modelli Word',
                                               child: IconButton(
-                                                onPressed: () =>
-                                                    apriDialogModelliWord(item),
+                                                onPressed:
+                                                    widget
+                                                        .modalitaLanSolaLettura
+                                                    ? null
+                                                    : () =>
+                                                          apriDialogModelliWord(
+                                                            item,
+                                                          ),
                                                 icon: const Icon(
                                                   Icons.description_outlined,
                                                 ),
@@ -1421,10 +1495,14 @@ class _CorsiPageState extends State<CorsiPage> {
                                             Tooltip(
                                               message: 'Modifica corso',
                                               child: IconButton(
-                                                onPressed: () =>
-                                                    apriDialogModificaCorso(
-                                                      item,
-                                                    ),
+                                                onPressed:
+                                                    widget
+                                                        .modalitaLanSolaLettura
+                                                    ? null
+                                                    : () =>
+                                                          apriDialogModificaCorso(
+                                                            item,
+                                                          ),
                                                 icon: const Icon(
                                                   Icons.edit_rounded,
                                                 ),
@@ -1435,8 +1513,11 @@ class _CorsiPageState extends State<CorsiPage> {
                                             Tooltip(
                                               message: 'Elimina corso',
                                               child: IconButton(
-                                                onPressed: () =>
-                                                    eliminaCorso(item),
+                                                onPressed:
+                                                    widget
+                                                        .modalitaLanSolaLettura
+                                                    ? null
+                                                    : () => eliminaCorso(item),
                                                 icon: const Icon(
                                                   Icons.delete_outline,
                                                 ),

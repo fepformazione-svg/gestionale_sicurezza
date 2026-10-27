@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:gestionale_sicurezza/services/lan_discenti_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_imprese_readonly_service.dart';
+import 'package:gestionale_sicurezza/services/lan_corsi_readonly_service.dart';
+import 'package:gestionale_sicurezza/services/lan_intestazione_azienda_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
 
 const lanTokenEnvironmentVariable = 'GESTIONALE_SICUREZZA_LAN_TOKEN';
@@ -36,6 +38,27 @@ String? readLanApiTokenFromEnvironment() {
   }
 
   return trimmed;
+}
+
+LanServerService buildLanServerService({
+  required String? databasePath,
+  required String? apiToken,
+}) {
+  return LanServerService(
+    apiToken: apiToken,
+    discentiProvider: databasePath == null
+        ? null
+        : () => loadLanDiscentiReadOnly(databasePath),
+    impreseProvider: databasePath == null
+        ? null
+        : () => loadLanImpreseReadOnly(databasePath),
+    corsiProvider: databasePath == null
+        ? null
+        : () => loadLanCorsiReadOnly(databasePath),
+    intestazioneAziendaProvider: databasePath == null
+        ? null
+        : () => loadLanIntestazioneAziendaReadOnly(databasePath),
+  );
 }
 
 Future<void> main(List<String> args) async {
@@ -100,14 +123,9 @@ Future<void> main(List<String> args) async {
 
   final configuredDatabasePath = databasePath;
 
-  final server = LanServerService(
+  final server = buildLanServerService(
+    databasePath: configuredDatabasePath,
     apiToken: apiToken,
-    discentiProvider: configuredDatabasePath == null
-        ? null
-        : () => loadLanDiscentiReadOnly(configuredDatabasePath),
-    impreseProvider: configuredDatabasePath == null
-        ? null
-        : () => loadLanImpreseReadOnly(configuredDatabasePath),
   );
 
   await server.start(address: address, port: port);
@@ -126,6 +144,12 @@ Future<void> main(List<String> args) async {
     configuredDatabasePath == null
         ? 'Imprese READ-ONLY: non configurate'
         : 'Imprese READ-ONLY: attive',
+  );
+
+  stdout.writeln(
+    configuredDatabasePath == null
+        ? 'Corsi READ-ONLY: non configurati'
+        : 'Corsi READ-ONLY: attivi',
   );
 
   stdout.writeln(

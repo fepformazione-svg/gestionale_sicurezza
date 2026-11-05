@@ -5,6 +5,25 @@ typedef DiscentiProvider = Future<List<Map<String, dynamic>>> Function();
 typedef ImpreseProvider = Future<List<Map<String, dynamic>>> Function();
 typedef CorsiProvider = Future<List<Map<String, dynamic>>> Function();
 typedef IntestazioneAziendaProvider = Future<Map<String, dynamic>?> Function();
+typedef PrenotazioniProvider =
+    Future<Map<String, dynamic>> Function({
+      required int limit,
+      required int offset,
+      required String ricerca,
+      required String filtro,
+    });
+
+const _validPrenotazioniFilters = <String>{
+  'tutte',
+  'aperte',
+  'registro',
+  'chiuse',
+  'da_fare',
+  'senza_discente',
+  'aziendali_senza_discente',
+  'senza_docente',
+  'recenti_da_sistemare',
+};
 
 class LanServerService {
   LanServerService({
@@ -12,12 +31,14 @@ class LanServerService {
     ImpreseProvider? impreseProvider,
     CorsiProvider? corsiProvider,
     IntestazioneAziendaProvider? intestazioneAziendaProvider,
+    PrenotazioniProvider? prenotazioniProvider,
     String? apiToken,
   }) : this._(
          discentiProvider,
          impreseProvider,
          corsiProvider,
          intestazioneAziendaProvider,
+         prenotazioniProvider,
          apiToken,
        );
 
@@ -26,6 +47,7 @@ class LanServerService {
     this._impreseProvider,
     this._corsiProvider,
     this._intestazioneAziendaProvider,
+    this._prenotazioniProvider,
     this._apiToken,
   );
 
@@ -33,6 +55,7 @@ class LanServerService {
   final ImpreseProvider? _impreseProvider;
   final CorsiProvider? _corsiProvider;
   final IntestazioneAziendaProvider? _intestazioneAziendaProvider;
+  final PrenotazioniProvider? _prenotazioniProvider;
   final String? _apiToken;
 
   HttpServer? _server;
@@ -183,6 +206,73 @@ class LanServerService {
         });
       }
 
+      return;
+    }
+
+    if (request.method == 'GET' && request.uri.path == '/api/prenotazioni') {
+      if (!_isAuthorized(request)) {
+        await _writeJson(request.response, HttpStatus.unauthorized, {
+          'error': 'unauthorized',
+        });
+        return;
+      }
+
+      final provider = _prenotazioniProvider;
+      if (provider == null) {
+        await _writeJson(request.response, HttpStatus.serviceUnavailable, {
+          'error': 'prenotazioni_provider_not_configured',
+        });
+        return;
+      }
+
+      final query = request.uri.queryParameters;
+      final limit = int.tryParse(query['limit'] ?? '50');
+      final offset = int.tryParse(query['offset'] ?? '0');
+      final ricerca = query['ricerca'] ?? '';
+      final filtro = query['filtro'] ?? 'tutte';
+
+      if (limit == null ||
+          limit < 1 ||
+          limit > 100 ||
+          offset == null ||
+          offset < 0 ||
+          ricerca.trim().length > 160 ||
+          !_validPrenotazioniFilters.contains(filtro)) {
+        await _writeJson(request.response, HttpStatus.badRequest, {
+          'error': 'invalid_prenotazioni_parameters',
+        });
+        return;
+      }
+
+      try {
+        final data = await provider(
+          limit: limit,
+          offset: offset,
+          ricerca: ricerca,
+          filtro: filtro,
+        );
+        final items = data['items'];
+        final conteggi = data['conteggi'];
+
+        if (items is! List || conteggi is! Map) {
+          throw const FormatException(
+            'Risposta provider Prenotazioni non valida.',
+          );
+        }
+
+        await _writeJson(request.response, HttpStatus.ok, {
+          'sola_lettura': true,
+          'count': items.length,
+          'limit': limit,
+          'offset': offset,
+          'items': items,
+          'conteggi': conteggi,
+        });
+      } catch (_) {
+        await _writeJson(request.response, HttpStatus.internalServerError, {
+          'error': 'prenotazioni_read_failed',
+        });
+      }
       return;
     }
 

@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:gestionale_sicurezza/services/lan_discenti_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_imprese_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_corsi_readonly_service.dart';
+import 'package:gestionale_sicurezza/services/lan_prenotazioni_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_intestazione_azienda_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
 
@@ -55,6 +56,20 @@ LanServerService buildLanServerService({
     corsiProvider: databasePath == null
         ? null
         : () => loadLanCorsiReadOnly(databasePath),
+    prenotazioniProvider: databasePath == null
+        ? null
+        : ({
+            required int limit,
+            required int offset,
+            required String ricerca,
+            required String filtro,
+          }) => loadLanPrenotazioniReadOnly(
+            databasePath,
+            limit: limit,
+            offset: offset,
+            ricerca: ricerca,
+            filtro: filtro,
+          ),
     intestazioneAziendaProvider: databasePath == null
         ? null
         : () => loadLanIntestazioneAziendaReadOnly(databasePath),
@@ -150,6 +165,11 @@ Future<void> main(List<String> args) async {
     configuredDatabasePath == null
         ? 'Corsi READ-ONLY: non configurati'
         : 'Corsi READ-ONLY: attivi',
+  );
+  stdout.writeln(
+    configuredDatabasePath == null
+        ? 'Prenotazioni READ-ONLY: non configurate'
+        : 'Prenotazioni READ-ONLY: attive',
   );
 
   stdout.writeln(

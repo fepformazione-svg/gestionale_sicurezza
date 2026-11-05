@@ -16,6 +16,7 @@ import '../widgets/kpi_card.dart';
 import '../widgets/app_topbar.dart';
 
 import 'prenotazioni_page.dart';
+import 'prenotazioni_lan_page.dart';
 import 'diario_page.dart';
 import 'scadenze_page.dart';
 import 'discenti_page.dart';
@@ -29,6 +30,26 @@ class HomePage extends StatefulWidget {
   const HomePage({super.key, this.lanRuntime});
 
   final LanClientRuntime? lanRuntime;
+
+  Widget buildPrenotazioniPage({
+    required String globalSearch,
+    required String filtro,
+    VoidCallback? onDatiModificati,
+  }) {
+    if (lanRuntime?.enabled == true) {
+      return PrenotazioniLanPage(
+        globalSearch: globalSearch,
+        filtro: filtro,
+        prenotazioniProvider: lanRuntime?.prenotazioniProvider,
+      );
+    }
+
+    return PrenotazioniPage(
+      globalSearch: globalSearch,
+      filtro: filtro,
+      onDatiModificati: onDatiModificati,
+    );
+  }
 
   DiscentiPage buildDiscentiPage({required String globalSearch}) {
     return DiscentiPage(
@@ -73,7 +94,7 @@ class _HomePageState extends State<HomePage> {
   int dashboardRefresh = 0;
   List<Widget> get pages => [
     DashboardPage(key: ValueKey(dashboardRefresh)),
-    PrenotazioniPage(
+    widget.buildPrenotazioniPage(
       globalSearch: globalSearch,
       filtro: filtroPrenotazioni,
       onDatiModificati: () {

@@ -104,6 +104,22 @@ class _CorsiPageState extends State<CorsiPage> {
       final rows = await provider();
 
       dati = rows.map(Corso.fromMap).toList(growable: false);
+
+      for (final row in rows) {
+        final id = int.tryParse((row['id'] ?? '').toString());
+        final rawPiattaforme = row['piattaforme'];
+        if (id == null || rawPiattaforme is! List) continue;
+
+        for (final rawPiattaforma in rawPiattaforme) {
+          if (rawPiattaforma is! Map) continue;
+          final collegamento = CorsoPiattaforma.fromMap(
+            Map<String, dynamic>.from(rawPiattaforma),
+          );
+          if (collegamento.corsoId == id && collegamento.attivo) {
+            raggruppati.putIfAbsent(id, () => []).add(collegamento);
+          }
+        }
+      }
     }
 
     if (!mounted) return;

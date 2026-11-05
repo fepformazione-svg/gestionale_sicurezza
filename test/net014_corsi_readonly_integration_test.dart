@@ -31,6 +31,17 @@ void main() {
           )
         ''');
 
+        await database.execute('''
+          CREATE TABLE corso_piattaforme (
+            id INTEGER PRIMARY KEY,
+            corso_id INTEGER NOT NULL,
+            piattaforma TEXT NOT NULL,
+            codice TEXT NOT NULL,
+            note TEXT,
+            attivo INTEGER NOT NULL DEFAULT 1
+          )
+        ''');
+
         await database.insert('corsi', {
           'id': 7,
           'denominazione': 'PONTEGGI - 28 ORE',
@@ -38,6 +49,14 @@ void main() {
           'validita_anni': 4,
           'modello_test_word_path': 'RISERVATO/test.docx',
           'modello_gradimento_word_path': 'RISERVATO/gradimento.docx',
+        });
+        await database.insert('corso_piattaforme', {
+          'id': 31,
+          'corso_id': 7,
+          'piattaforma': 'OPN',
+          'codice': 'PON-28',
+          'note': null,
+          'attivo': 1,
         });
       } finally {
         await database.close();
@@ -93,6 +112,16 @@ void main() {
           'denominazione': 'PONTEGGI - 28 ORE',
           'durata_ore': 28,
           'validita_anni': 4,
+          'piattaforme': [
+            {
+              'id': 31,
+              'corso_id': 7,
+              'piattaforma': 'OPN',
+              'codice': 'PON-28',
+              'note': null,
+              'attivo': 1,
+            },
+          ],
         });
       } finally {
         client.close(force: true);

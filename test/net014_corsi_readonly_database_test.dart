@@ -32,6 +32,17 @@ void main() {
           )
         ''');
 
+        await database.execute('''
+          CREATE TABLE corso_piattaforme (
+            id INTEGER PRIMARY KEY,
+            corso_id INTEGER NOT NULL,
+            piattaforma TEXT NOT NULL,
+            codice TEXT NOT NULL,
+            note TEXT,
+            attivo INTEGER NOT NULL DEFAULT 1
+          )
+        ''');
+
         await database.insert('corsi', {
           'id': 7,
           'denominazione': 'PONTEGGI - 28 ORE',
@@ -46,6 +57,23 @@ void main() {
           'denominazione': 'ANTINCENDIO LIVELLO 2',
           'durata_ore': 8,
           'validita_anni': 5,
+        });
+
+        await database.insert('corso_piattaforme', {
+          'id': 11,
+          'corso_id': 7,
+          'piattaforma': 'OPN',
+          'codice': 'PON-28',
+          'note': 'Codice attivo',
+          'attivo': 1,
+        });
+        await database.insert('corso_piattaforme', {
+          'id': 12,
+          'corso_id': 7,
+          'piattaforma': 'ALTRO ENTE',
+          'codice': 'DISATTIVATO',
+          'note': null,
+          'attivo': 0,
         });
       } finally {
         await database.close();
@@ -65,7 +93,18 @@ void main() {
         'denominazione': 'PONTEGGI - 28 ORE',
         'durata_ore': 28,
         'validita_anni': 4,
+        'piattaforme': [
+          {
+            'id': 11,
+            'corso_id': 7,
+            'piattaforma': 'OPN',
+            'codice': 'PON-28',
+            'note': 'Codice attivo',
+            'attivo': 1,
+          },
+        ],
       });
+      expect(corsi.first['piattaforme'], isEmpty);
 
       for (final corso in corsi) {
         expect(corso.keys.toSet(), {
@@ -73,6 +112,7 @@ void main() {
           'denominazione',
           'durata_ore',
           'validita_anni',
+          'piattaforme',
         });
       }
     } finally {

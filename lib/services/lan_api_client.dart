@@ -207,6 +207,87 @@ class LanApiClient {
     return List<Map<String, dynamic>>.unmodifiable(items);
   }
 
+  Future<Map<String, dynamic>> loadPrenotazioni({
+    required int limit,
+    required int offset,
+    required String ricerca,
+    required String filtro,
+  }) async {
+    _ensureOpen();
+
+    if (limit < 1 || limit > 100 || offset < 0 || ricerca.trim().length > 160) {
+      throw ArgumentError('Parametri di paginazione o ricerca non validi.');
+    }
+
+    final uri = _baseUri.replace(
+      path: '${_normalizedBasePath(_baseUri.path)}/api/prenotazioni',
+      queryParameters: {
+        'limit': '$limit',
+        'offset': '$offset',
+        'ricerca': ricerca,
+        'filtro': filtro,
+      },
+      fragment: null,
+    );
+
+    final request = await _httpClient.getUrl(uri);
+    request.headers.set(HttpHeaders.authorizationHeader, 'Bearer $_apiToken');
+    request.headers.set(HttpHeaders.acceptHeader, ContentType.json.mimeType);
+
+    final response = await request.close();
+    final body = await utf8.decoder.bind(response).join();
+
+    if (response.statusCode != HttpStatus.ok) {
+      throw HttpException(
+        'Richiesta LAN fallita: HTTP ${response.statusCode}.',
+        uri: uri,
+      );
+    }
+
+    final decoded = jsonDecode(body);
+    if (decoded is! Map<String, dynamic> || decoded['sola_lettura'] != true) {
+      throw const FormatException('Risposta Prenotazioni API LAN non valida.');
+    }
+
+    final rawItems = decoded['items'];
+    if (rawItems is! List) {
+      throw const FormatException('Elenco Prenotazioni API LAN non valido.');
+    }
+    final items = <Map<String, dynamic>>[];
+    for (final item in rawItems) {
+      if (item is! Map) {
+        throw const FormatException('Prenotazione API LAN non valida.');
+      }
+      items.add(Map<String, dynamic>.from(item));
+    }
+
+    if (decoded['count'] is! int ||
+        decoded['count'] != items.length ||
+        decoded['limit'] != limit ||
+        decoded['offset'] != offset) {
+      throw const FormatException('Paginazione Prenotazioni API non coerente.');
+    }
+
+    final rawConteggi = decoded['conteggi'];
+    if (rawConteggi is! Map) {
+      throw const FormatException('Conteggi Prenotazioni API LAN non validi.');
+    }
+    final conteggi = <String, int>{};
+    for (final voce in rawConteggi.entries) {
+      if (voce.key is! String || voce.value is! int) {
+        throw const FormatException('Valore conteggi Prenotazioni non valido.');
+      }
+      conteggi[voce.key as String] = voce.value as int;
+    }
+
+    return <String, dynamic>{
+      'items': List<Map<String, dynamic>>.unmodifiable(items),
+      'conteggi': Map<String, int>.unmodifiable(conteggi),
+      'limit': limit,
+      'offset': offset,
+    };
+  }
+
   Future<Map<String, String>> loadIntestazioneAzienda() async {
     _ensureOpen();
 

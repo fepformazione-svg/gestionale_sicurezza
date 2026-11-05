@@ -4,6 +4,13 @@ import 'lan_client_configuration.dart';
 typedef LanDiscentiProvider = Future<List<Map<String, dynamic>>> Function();
 typedef LanImpreseProvider = Future<List<Map<String, dynamic>>> Function();
 typedef LanCorsiProvider = Future<List<Map<String, dynamic>>> Function();
+typedef LanPrenotazioniProvider =
+    Future<Map<String, dynamic>> Function({
+      required int limit,
+      required int offset,
+      required String ricerca,
+      required String filtro,
+    });
 typedef LanIntestazioneAziendaProvider = Future<Map<String, String>> Function();
 
 typedef LanCloseCallback = Future<void> Function();
@@ -16,6 +23,7 @@ class LanClientBindings {
     required this.loadDiscenti,
     this.loadImprese,
     this.loadCorsi,
+    this.loadPrenotazioni,
     this.loadIntestazioneAzienda,
     required this.close,
   });
@@ -23,6 +31,7 @@ class LanClientBindings {
   final LanDiscentiProvider loadDiscenti;
   final LanImpreseProvider? loadImprese;
   final LanCorsiProvider? loadCorsi;
+  final LanPrenotazioniProvider? loadPrenotazioni;
   final LanIntestazioneAziendaProvider? loadIntestazioneAzienda;
   final LanCloseCallback close;
 }
@@ -33,6 +42,7 @@ class LanClientRuntime {
     required this.discentiProvider,
     required this.impreseProvider,
     required this.corsiProvider,
+    required this.prenotazioniProvider,
     required this.intestazioneAziendaProvider,
     required this._closeCallback,
   });
@@ -47,6 +57,7 @@ class LanClientRuntime {
         discentiProvider: null,
         impreseProvider: null,
         corsiProvider: null,
+        prenotazioniProvider: null,
         intestazioneAziendaProvider: null,
         closeCallback: null,
       );
@@ -61,6 +72,7 @@ class LanClientRuntime {
       discentiProvider: bindings.loadDiscenti,
       impreseProvider: bindings.loadImprese,
       corsiProvider: bindings.loadCorsi,
+      prenotazioniProvider: bindings.loadPrenotazioni,
       intestazioneAziendaProvider: bindings.loadIntestazioneAzienda,
       closeCallback: bindings.close,
     );
@@ -72,6 +84,7 @@ class LanClientRuntime {
 
   final LanImpreseProvider? impreseProvider;
   final LanCorsiProvider? corsiProvider;
+  final LanPrenotazioniProvider? prenotazioniProvider;
   final LanIntestazioneAziendaProvider? intestazioneAziendaProvider;
 
   final LanCloseCallback? _closeCallback;
@@ -104,6 +117,7 @@ class LanClientRuntime {
       loadDiscenti: client.loadDiscenti,
       loadImprese: client.loadImprese,
       loadCorsi: client.loadCorsi,
+      loadPrenotazioni: client.loadPrenotazioni,
       loadIntestazioneAzienda: client.loadIntestazioneAzienda,
       close: client.close,
     );

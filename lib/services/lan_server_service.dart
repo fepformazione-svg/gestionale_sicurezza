@@ -12,6 +12,8 @@ typedef PrenotazioniProvider =
       required String ricerca,
       required String filtro,
     });
+typedef PrenotazioniInsertProvider =
+    Future<int> Function(Map<String, dynamic> dati);
 
 const _validPrenotazioniFilters = <String>{
   'tutte',
@@ -32,6 +34,7 @@ class LanServerService {
     CorsiProvider? corsiProvider,
     IntestazioneAziendaProvider? intestazioneAziendaProvider,
     PrenotazioniProvider? prenotazioniProvider,
+    PrenotazioniInsertProvider? prenotazioniInsertProvider,
     String? apiToken,
   }) : this._(
          discentiProvider,
@@ -39,6 +42,7 @@ class LanServerService {
          corsiProvider,
          intestazioneAziendaProvider,
          prenotazioniProvider,
+         prenotazioniInsertProvider,
          apiToken,
        );
 
@@ -48,6 +52,7 @@ class LanServerService {
     this._corsiProvider,
     this._intestazioneAziendaProvider,
     this._prenotazioniProvider,
+    this._prenotazioniInsertProvider,
     this._apiToken,
   );
 
@@ -56,6 +61,7 @@ class LanServerService {
   final CorsiProvider? _corsiProvider;
   final IntestazioneAziendaProvider? _intestazioneAziendaProvider;
   final PrenotazioniProvider? _prenotazioniProvider;
+  final PrenotazioniInsertProvider? _prenotazioniInsertProvider;
   final String? _apiToken;
 
   HttpServer? _server;
@@ -271,6 +277,76 @@ class LanServerService {
       } catch (_) {
         await _writeJson(request.response, HttpStatus.internalServerError, {
           'error': 'prenotazioni_read_failed',
+        });
+      }
+      return;
+    }
+
+    // Il provider non viene configurato da bin/lan_server.dart: il server
+    // operativo continua a restituire 503 per ogni richiesta di inserimento.
+    if (request.method == 'POST' && request.uri.path == '/api/prenotazioni') {
+      // Scritture sempre fail-closed, anche nei server di test senza token.
+      final token = _apiToken;
+      if (token == null || token.trim().isEmpty || !_isAuthorized(request)) {
+        await _writeJson(request.response, HttpStatus.unauthorized, {
+          'error': 'unauthorized',
+        });
+        return;
+      }
+
+      final provider = _prenotazioniInsertProvider;
+      if (provider == null) {
+        await _writeJson(request.response, HttpStatus.serviceUnavailable, {
+          'error': 'prenotazioni_write_not_configured',
+        });
+        return;
+      }
+
+      if (request.headers.contentType?.mimeType != ContentType.json.mimeType) {
+        await _writeJson(request.response, HttpStatus.unsupportedMediaType, {
+          'error': 'json_required',
+        });
+        return;
+      }
+
+      try {
+        const dimensioneMassima = 16 * 1024;
+        final corpo = <int>[];
+        await for (final blocco in request) {
+          if (corpo.length + blocco.length > dimensioneMassima) {
+            await _writeJson(
+              request.response,
+              HttpStatus.requestEntityTooLarge,
+              {'error': 'payload_too_large'},
+            );
+            return;
+          }
+          corpo.addAll(blocco);
+        }
+
+        final payload = jsonDecode(utf8.decode(corpo));
+        if (payload is! Map<String, dynamic> ||
+            payload.length != 1 ||
+            payload['dati'] is! Map<String, dynamic>) {
+          throw const FormatException('Payload Prenotazioni non valido.');
+        }
+
+        final id = await provider(payload['dati'] as Map<String, dynamic>);
+        if (id <= 0) {
+          throw StateError('ID Prenotazione non valido.');
+        }
+        await _writeJson(request.response, HttpStatus.created, {'id': id});
+      } on FormatException {
+        await _writeJson(request.response, HttpStatus.badRequest, {
+          'error': 'invalid_json',
+        });
+      } on ArgumentError {
+        await _writeJson(request.response, HttpStatus.badRequest, {
+          'error': 'invalid_prenotazione',
+        });
+      } catch (_) {
+        await _writeJson(request.response, HttpStatus.internalServerError, {
+          'error': 'prenotazione_insert_failed',
         });
       }
       return;

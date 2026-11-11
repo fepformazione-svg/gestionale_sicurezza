@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'lan_api_client.dart';
 import 'lan_client_configuration.dart';
 
@@ -108,9 +110,25 @@ class LanClientRuntime {
   static LanClientBindings _defaultBindingsFactory(
     LanClientConfiguration configuration,
   ) {
+    final caCertificatePath = configuration.caCertificatePath;
+    SecurityContext? securityContext;
+
+    if (caCertificatePath != null) {
+      if (caCertificatePath.trim().isEmpty ||
+          Uri.parse(configuration.baseUrl).scheme != 'https') {
+        throw ArgumentError('Certificato CA LAN utilizzabile solo con HTTPS.');
+      }
+
+      // Contesto isolato: solo la CA LAN esplicitamente fornita e attendibile.
+      // Nessun badCertificateCallback che aggiri la verifica TLS.
+      securityContext = SecurityContext()
+        ..setTrustedCertificates(caCertificatePath);
+    }
+
     final client = LanApiClient(
       baseUrl: configuration.baseUrl,
       apiToken: configuration.apiToken,
+      securityContext: securityContext,
     );
 
     return LanClientBindings(

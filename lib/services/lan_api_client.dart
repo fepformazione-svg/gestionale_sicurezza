@@ -6,9 +6,10 @@ class LanApiClient {
     required String baseUrl,
     required String apiToken,
     HttpClient? httpClient,
+    SecurityContext? securityContext,
   }) : _baseUri = _parseBaseUri(baseUrl),
        _apiToken = _validateApiToken(apiToken),
-       _httpClient = httpClient ?? HttpClient(),
+       _httpClient = httpClient ?? HttpClient(context: securityContext),
        _ownsHttpClient = httpClient == null;
 
   final Uri _baseUri;

@@ -7,6 +7,7 @@ import 'package:gestionale_sicurezza/services/lan_corsi_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_prenotazioni_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_intestazione_azienda_readonly_service.dart';
 import 'package:gestionale_sicurezza/services/lan_server_service.dart';
+import 'package:gestionale_sicurezza/services/lan_tls_server_configuration.dart';
 
 const lanTokenEnvironmentVariable = 'GESTIONALE_SICUREZZA_LAN_TOKEN';
 
@@ -80,6 +81,8 @@ Future<void> main(List<String> args) async {
   var host = '127.0.0.1';
   var port = 8765;
   String? databasePath;
+  String? tlsCertificatePath;
+  String? tlsPrivateKeyPath;
 
   for (var i = 0; i < args.length; i++) {
     if (args[i] == '--host' && i + 1 < args.length) {
@@ -102,6 +105,29 @@ Future<void> main(List<String> args) async {
 
     if (args[i] == '--db' && i + 1 < args.length) {
       databasePath = args[++i];
+      continue;
+    }
+
+    if (args[i] == '--tls-cert') {
+      if (i + 1 >= args.length || args[i + 1].startsWith('--')) {
+        stderr.writeln('Percorso certificato TLS mancante.');
+        exitCode = 64;
+        return;
+      }
+
+      tlsCertificatePath = args[++i];
+      continue;
+    }
+
+    if (args[i] == '--tls-key') {
+      if (i + 1 >= args.length || args[i + 1].startsWith('--')) {
+        stderr.writeln('Percorso chiave privata TLS mancante.');
+        exitCode = 64;
+        return;
+      }
+
+      tlsPrivateKeyPath = args[++i];
+      continue;
     }
   }
 
@@ -136,6 +162,18 @@ Future<void> main(List<String> args) async {
     }
   }
 
+  SecurityContext? tlsContext;
+  try {
+    tlsContext = LanTlsServerConfiguration.fromFiles(
+      certificatePath: tlsCertificatePath,
+      privateKeyPath: tlsPrivateKeyPath,
+    );
+  } on Exception catch (error) {
+    stderr.writeln('Configurazione TLS non valida: $error');
+    exitCode = 64;
+    return;
+  }
+
   final configuredDatabasePath = databasePath;
 
   final server = buildLanServerService(
@@ -143,11 +181,12 @@ Future<void> main(List<String> args) async {
     apiToken: apiToken,
   );
 
-  await server.start(address: address, port: port);
+  await server.start(address: address, port: port, securityContext: tlsContext);
 
   stdout.writeln('GESTIONALE SICUREZZA LAN SERVER ATTIVO');
 
-  stdout.writeln('http://$host:${server.port}/health');
+  final protocol = tlsContext == null ? 'http' : 'https';
+  stdout.writeln('$protocol://$host:${server.port}/health');
 
   stdout.writeln(
     configuredDatabasePath == null

@@ -81,12 +81,15 @@ class LanServerService {
   Future<void> start({
     required InternetAddress address,
     required int port,
+    SecurityContext? securityContext,
   }) async {
     if (_server != null) {
       throw StateError('Server LAN già avviato.');
     }
 
-    final server = await HttpServer.bind(address, port);
+    final server = securityContext == null
+        ? await HttpServer.bind(address, port)
+        : await HttpServer.bindSecure(address, port, securityContext);
 
     _server = server;
 
